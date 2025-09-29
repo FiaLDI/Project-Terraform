@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
@@ -7,8 +7,15 @@ public class PlayerController : MonoBehaviour
     [Header("Movement Settings")]
     public float walkSpeed = 5f;
     public float runSpeed = 10f;
+    public float sneakSpeed = 2f;      // рџ‘€ РќРѕРІР°СЏ СЃРєРѕСЂРѕСЃС‚СЊ РґР»СЏ РєСЂР°РґСѓС‰РµР№СЃСЏ С…РѕРґСЊР±С‹
     public float jumpHeight = 2f;
     public float gravity = -9.81f;
+
+    [Header("Crouch Settings")]
+    public float crouchHeight = 1f;    // рџ‘€ Р’С‹СЃРѕС‚Р° РєР°РїСЃСѓР»С‹ РІ РїСЂРёСЃРµРґРµ
+    public float standHeight = 2f;     // рџ‘€ Р’С‹СЃРѕС‚Р° РєР°РїСЃСѓР»С‹ СЃС‚РѕСЏ
+    public float crouchSpeed = 2.5f;   // рџ‘€ РЎРєРѕСЂРѕСЃС‚СЊ РїСЂРё РїСЂРёСЃРµРґР°РЅРёРё
+    public float crouchTransitionSpeed = 10f;
 
     [Header("Camera Settings")]
     public float mouseSensitivity = 100f;
@@ -17,11 +24,11 @@ public class PlayerController : MonoBehaviour
     [Header("Cameras")]
     public Camera firstPersonCamera;
     public Camera thirdPersonCamera;
-    public Transform thirdPersonPivot;      // точка позади игрока (пустышка)
-    public float thirdPersonDistance = 3f;  // базовое расстояние камеры
-    public float minDistance = 0.5f;        // минимальная дистанция, если стена близко
-    public float smooth = 10f;              // плавность смещения
-    public LayerMask collisionMask;         // слои для коллизий
+    public Transform thirdPersonPivot;
+    public float thirdPersonDistance = 3f;
+    public float minDistance = 0.5f;
+    public float smooth = 10f;
+    public LayerMask collisionMask;
 
     private CharacterController controller;
     private Vector2 moveInput;
@@ -29,6 +36,8 @@ public class PlayerController : MonoBehaviour
     private Vector3 velocity;
     private bool isGrounded;
     private bool isRunning;
+    private bool isSneaking;
+    private bool isCrouching;
     private bool jumpPressed = false;
     private float xRotation = 0f;
     private bool isFirstPerson = true;
@@ -39,14 +48,35 @@ public class PlayerController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
 
+        // С„РёРєСЃРёСЂСѓРµРј РІС‹СЃРѕС‚Сѓ Рё С†РµРЅС‚СЂ РєРѕР»Р»Р°Р№РґРµСЂР°
+        controller.height = standHeight;
+        controller.center = new Vector3(0, controller.height / 2f, 0);
+
+        // С‡С‚РѕР±С‹ РїРµСЂСЃРѕРЅР°Р¶ СЃС‚РѕСЏР» РЅР° РїРѕРІРµСЂС…РЅРѕСЃС‚Рё (РёСЃРєР»СЋС‡Р°РµРј РїСЂРѕРІР°Р»РёРІР°РЅРёРµ)
+        Vector3 pos = transform.position;
+        pos.y = controller.height / 2f;
+        transform.position = pos;
+
         SetCameraMode(true);
         currentDistance = thirdPersonDistance;
+
+        // С„РёРєСЃРёСЂСѓРµРј РЅР°С‡Р°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РєР°РјРµСЂС‹ РїРѕРґ СЂРѕСЃС‚ РёРіСЂРѕРєР°
+        Vector3 camPos = firstPersonCamera.transform.localPosition;
+        camPos.y = standHeight - 0.2f;
+        firstPersonCamera.transform.localPosition = camPos;
+
+        Vector3 pivotPos = thirdPersonPivot.localPosition;
+        pivotPos.y = standHeight - 0.2f;
+        thirdPersonPivot.localPosition = pivotPos;
     }
+
+
 
     private void Update()
     {
         HandleMovement();
         HandleCamera();
+        HandleCrouch();
     }
 
     private void HandleMovement()
@@ -56,10 +86,19 @@ public class PlayerController : MonoBehaviour
             velocity.y = -2f;
 
         Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
-        float speed = isRunning ? runSpeed : walkSpeed;
+
+        float speed = walkSpeed;
+
+        if (isCrouching)
+            speed = crouchSpeed;
+        else if (isSneaking)
+            speed = sneakSpeed;
+        else if (isRunning)
+            speed = runSpeed;
+
         controller.Move(move * speed * Time.deltaTime);
 
-        if (jumpPressed && isGrounded)
+        if (jumpPressed && isGrounded && !isCrouching) // рџ‘€ РЅРµР»СЊР·СЏ РїСЂС‹РіРЅСѓС‚СЊ РІ РїСЂРёСЃРµРґРµ
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             jumpPressed = false;
@@ -79,12 +118,10 @@ public class PlayerController : MonoBehaviour
 
         if (isFirstPerson)
         {
-            // Камера от 1-го лица
             firstPersonCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         }
         else
         {
-            // Камера от 3-го лица
             thirdPersonPivot.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
             HandleThirdPersonCollision();
         }
@@ -97,12 +134,10 @@ public class PlayerController : MonoBehaviour
         Vector3 pivotPos = thirdPersonPivot.position;
         Vector3 desiredCameraPos = pivotPos - thirdPersonPivot.forward * thirdPersonDistance;
 
-        // Направление и расстояние
         Vector3 dir = desiredCameraPos - pivotPos;
         float distance = dir.magnitude;
         dir.Normalize();
 
-        // Сразу ставим камеру на безопасное расстояние
         if (Physics.SphereCast(pivotPos, 0.3f, dir, out RaycastHit hit, thirdPersonDistance, collisionMask))
         {
             currentDistance = Mathf.Clamp(hit.distance - 0.1f, minDistance, thirdPersonDistance);
@@ -112,11 +147,37 @@ public class PlayerController : MonoBehaviour
             currentDistance = thirdPersonDistance;
         }
 
-        // Позиция камеры всегда безопасна
         thirdPersonCamera.transform.position = pivotPos - thirdPersonPivot.forward * currentDistance;
         thirdPersonCamera.transform.rotation = thirdPersonPivot.rotation;
     }
 
+    private void HandleCrouch()
+    {
+        // С†РµР»РµРІР°СЏ РІС‹СЃРѕС‚Р° РєРѕР»Р»Р°Р№РґРµСЂР°
+        float targetHeight = isCrouching ? crouchHeight : standHeight;
+
+        // РїР»Р°РІРЅРѕРµ РёР·РјРµРЅРµРЅРёРµ РІС‹СЃРѕС‚С‹ РєР°РїСЃСѓР»С‹
+        controller.height = Mathf.Lerp(controller.height, targetHeight, Time.deltaTime * crouchTransitionSpeed);
+        controller.center = new Vector3(0, controller.height / 2f, 0);
+
+        // --- Р Р°Р±РѕС‚Р° СЃ РєР°РјРµСЂР°РјРё ---
+        float targetCamY = isCrouching ? crouchHeight - 0.2f : standHeight - 0.2f;
+
+        if (isFirstPerson)
+        {
+            // РґРІРёР¶РµРЅРёРµ РєР°РјРµСЂС‹ РѕС‚ РїРµСЂРІРѕРіРѕ Р»РёС†Р°
+            Vector3 camPos = firstPersonCamera.transform.localPosition;
+            camPos.y = Mathf.Lerp(camPos.y, targetCamY, Time.deltaTime * crouchTransitionSpeed);
+            firstPersonCamera.transform.localPosition = camPos;
+        }
+        else
+        {
+            // РґРІРёР¶РµРЅРёРµ pivot'Р° РґР»СЏ РєР°РјРµСЂС‹ РѕС‚ С‚СЂРµС‚СЊРµРіРѕ Р»РёС†Р°
+            Vector3 pivotPos = thirdPersonPivot.localPosition;
+            pivotPos.y = Mathf.Lerp(pivotPos.y, targetCamY, Time.deltaTime * crouchTransitionSpeed);
+            thirdPersonPivot.localPosition = pivotPos;
+        }
+    }
 
 
     private void SetCameraMode(bool firstPerson)
@@ -126,12 +187,11 @@ public class PlayerController : MonoBehaviour
         thirdPersonCamera.enabled = !firstPerson;
 
         if (firstPerson)
-        {
             Cursor.lockState = CursorLockMode.Locked;
-        }
     }
 
-    // ----- Input System -----
+    // ==== INPUT ACTIONS ====
+
     public void OnMovement(InputAction.CallbackContext context) =>
         moveInput = context.ReadValue<Vector2>();
 
@@ -146,6 +206,12 @@ public class PlayerController : MonoBehaviour
 
     public void OnRun(InputAction.CallbackContext context) =>
         isRunning = context.ReadValueAsButton();
+
+    public void OnSneak(InputAction.CallbackContext context) =>
+        isSneaking = context.ReadValueAsButton();   // рџ‘€ Sneak (X)
+
+    public void OnCrouch(InputAction.CallbackContext context) =>
+        isCrouching = context.ReadValueAsButton();  // рџ‘€ Crouch (CTRL)
 
     public void OnSwitchView(InputAction.CallbackContext context)
     {
