@@ -5,72 +5,70 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float walkSpeed = 5f;
-    public float runSpeed = 10f;
-    public float sneakSpeed = 2f;      // 👈 Новая скорость для крадущейся ходьбы
-    public float jumpHeight = 2f;
-    public float gravity = -9.81f;
+    public float WalkSpeed = 5f;
+    public float RunSpeed = 10f;
+    public float SneakSpeed = 2f;
+    public float JumpHeight = 2f;
+    public float Gravity = -9.81f;
 
     [Header("Crouch Settings")]
-    public float crouchHeight = 1f;    // 👈 Высота капсулы в приседе
-    public float standHeight = 2f;     // 👈 Высота капсулы стоя
-    public float crouchSpeed = 2.5f;   // 👈 Скорость при приседании
-    public float crouchTransitionSpeed = 10f;
+    public float CrouchHeight = 1f;
+    public float StandHeight = 2f;
+    public float CrouchSpeed = 2.5f;
+    public float CrouchTransitionSpeed = 10f;
 
     [Header("Camera Settings")]
-    public float mouseSensitivity = 100f;
-    public float maxLookAngle = 80f;
+    [Tooltip("Базовая чувствительность мыши. Подбирается под комфорт.")]
+    public float MouseSensitivity = 5f;
+    public float MaxLookAngle = 80f;             // для 1-го лица
+    public float ThirdPersonMaxLookAngle = 45f; // для 3-го лица
+    [Tooltip("Плавность вращения камеры 3-го лица")]
+    public float ThirdPersonSmooth = 10f;
 
     [Header("Cameras")]
-    public Camera firstPersonCamera;
-    public Camera thirdPersonCamera;
-    public Transform thirdPersonPivot;
-    public float thirdPersonDistance = 3f;
-    public float minDistance = 0.5f;
-    public float smooth = 10f;
-    public LayerMask collisionMask;
+    public Camera FirstPersonCamera;
+    public Camera ThirdPersonCamera;
+    public Transform ThirdPersonPivot;
+    public float ThirdPersonDistance = 3f;
+    public float MinDistance = 0.5f;
+    public LayerMask CollisionMask;
 
-    private CharacterController controller;
-    private Vector2 moveInput;
-    private Vector2 lookInput;
-    private Vector3 velocity;
-    private bool isGrounded;
-    private bool isRunning;
-    private bool isSneaking;
-    private bool isCrouching;
-    private bool jumpPressed = false;
-    private float xRotation = 0f;
-    private bool isFirstPerson = true;
-    private float currentDistance;
+    private CharacterController _controller;
+    private Vector2 _moveInput;
+    private Vector2 _lookInput;
+    private Vector3 _velocity;
+    private bool _isGrounded;
+    private bool _isRunning;
+    private bool _isSneaking;
+    private bool _isCrouching;
+    private bool _jumpPressed = false;
+    private float _xRotation = 0f;
+    private bool _isFirstPerson = true;
+    private float _currentDistance;
+
+    // Для плавного сглаживания третьего лица
+    private float _currentXRotation;
+    private float _xRotationVelocity;
 
     private void Start()
     {
-        controller = GetComponent<CharacterController>();
+        _controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
 
-        // фиксируем высоту и центр коллайдера
-        controller.height = standHeight;
-        controller.center = new Vector3(0, controller.height / 2f, 0);
-
-        // чтобы персонаж стоял на поверхности (исключаем проваливание)
-        Vector3 pos = transform.position;
-        pos.y = controller.height / 2f;
-        transform.position = pos;
+        _controller.height = StandHeight;
+        _controller.center = new Vector3(0, StandHeight / 2f, 0);
 
         SetCameraMode(true);
-        currentDistance = thirdPersonDistance;
+        _currentDistance = ThirdPersonDistance;
 
-        // фиксируем начальное положение камеры под рост игрока
-        Vector3 camPos = firstPersonCamera.transform.localPosition;
-        camPos.y = standHeight - 0.2f;
-        firstPersonCamera.transform.localPosition = camPos;
+        Vector3 camPos = FirstPersonCamera.transform.localPosition;
+        camPos.y = StandHeight - 0.2f;
+        FirstPersonCamera.transform.localPosition = camPos;
 
-        Vector3 pivotPos = thirdPersonPivot.localPosition;
-        pivotPos.y = standHeight - 0.2f;
-        thirdPersonPivot.localPosition = pivotPos;
+        Vector3 pivotPos = ThirdPersonPivot.localPosition;
+        pivotPos.y = StandHeight - 0.2f;
+        ThirdPersonPivot.localPosition = pivotPos;
     }
-
-
 
     private void Update()
     {
@@ -81,48 +79,55 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        isGrounded = controller.isGrounded;
-        if (isGrounded && velocity.y < 0)
-            velocity.y = -2f;
+        _isGrounded = _controller.isGrounded;
+        if (_isGrounded && _velocity.y < 0)
+            _velocity.y = -2f;
 
-        Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
+        Vector3 move = transform.right * _moveInput.x + transform.forward * _moveInput.y;
 
-        float speed = walkSpeed;
+        float speed = WalkSpeed;
 
-        if (isCrouching)
-            speed = crouchSpeed;
-        else if (isSneaking)
-            speed = sneakSpeed;
-        else if (isRunning)
-            speed = runSpeed;
+        if (_isCrouching)
+            speed = CrouchSpeed;
+        else if (_isSneaking)
+            speed = SneakSpeed;
+        else if (_isRunning)
+            speed = RunSpeed;
 
-        controller.Move(move * speed * Time.deltaTime);
+        _controller.Move(move * speed * Time.deltaTime);
 
-        if (jumpPressed && isGrounded && !isCrouching) // 👈 нельзя прыгнуть в приседе
+        if (_jumpPressed && _isGrounded && !_isCrouching)
         {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            jumpPressed = false;
+            _velocity.y = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+            _jumpPressed = false;
         }
 
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+        _velocity.y += Gravity * Time.deltaTime;
+        _controller.Move(_velocity * Time.deltaTime);
     }
 
     private void HandleCamera()
     {
-        float mouseX = lookInput.x * mouseSensitivity * Time.deltaTime;
-        float mouseY = lookInput.y * mouseSensitivity * Time.deltaTime;
+        float mouseX = _lookInput.x * MouseSensitivity * Time.deltaTime;
+        float mouseY = _lookInput.y * MouseSensitivity * Time.deltaTime;
 
-        xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, -maxLookAngle, maxLookAngle);
+        _xRotation -= mouseY;
 
-        if (isFirstPerson)
+        if (_isFirstPerson)
         {
-            firstPersonCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+            // Ограничение 1-го лица
+            _xRotation = Mathf.Clamp(_xRotation, -MaxLookAngle, MaxLookAngle);
+            FirstPersonCamera.transform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
         }
         else
         {
-            thirdPersonPivot.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+            // Ограничение 3-го лица
+            _xRotation = Mathf.Clamp(_xRotation, -ThirdPersonMaxLookAngle, ThirdPersonMaxLookAngle);
+
+            // Плавное сглаживание
+            _currentXRotation = Mathf.SmoothDamp(_currentXRotation, _xRotation, ref _xRotationVelocity, 1f / ThirdPersonSmooth);
+
+            ThirdPersonPivot.localRotation = Quaternion.Euler(_currentXRotation, 0f, 0f);
             HandleThirdPersonCollision();
         }
 
@@ -131,91 +136,81 @@ public class PlayerController : MonoBehaviour
 
     private void HandleThirdPersonCollision()
     {
-        Vector3 pivotPos = thirdPersonPivot.position;
-        Vector3 desiredCameraPos = pivotPos - thirdPersonPivot.forward * thirdPersonDistance;
+        Vector3 pivotPos = ThirdPersonPivot.position;
+        Vector3 desiredCameraPos = pivotPos - ThirdPersonPivot.forward * ThirdPersonDistance;
 
         Vector3 dir = desiredCameraPos - pivotPos;
-        float distance = dir.magnitude;
         dir.Normalize();
 
-        if (Physics.SphereCast(pivotPos, 0.3f, dir, out RaycastHit hit, thirdPersonDistance, collisionMask))
+        if (Physics.SphereCast(pivotPos, 0.3f, dir, out RaycastHit hit, ThirdPersonDistance, CollisionMask))
         {
-            currentDistance = Mathf.Clamp(hit.distance - 0.1f, minDistance, thirdPersonDistance);
+            _currentDistance = Mathf.Clamp(hit.distance - 0.1f, MinDistance, ThirdPersonDistance);
         }
         else
         {
-            currentDistance = thirdPersonDistance;
+            _currentDistance = ThirdPersonDistance;
         }
 
-        thirdPersonCamera.transform.position = pivotPos - thirdPersonPivot.forward * currentDistance;
-        thirdPersonCamera.transform.rotation = thirdPersonPivot.rotation;
+        ThirdPersonCamera.transform.position = pivotPos - ThirdPersonPivot.forward * _currentDistance;
+        ThirdPersonCamera.transform.rotation = ThirdPersonPivot.rotation;
     }
 
     private void HandleCrouch()
     {
-        // целевая высота коллайдера
-        float targetHeight = isCrouching ? crouchHeight : standHeight;
+        float targetHeight = _isCrouching ? CrouchHeight : StandHeight;
 
-        // плавное изменение высоты капсулы
-        controller.height = Mathf.Lerp(controller.height, targetHeight, Time.deltaTime * crouchTransitionSpeed);
-        controller.center = new Vector3(0, controller.height / 2f, 0);
+        _controller.height = Mathf.Lerp(_controller.height, targetHeight, Time.deltaTime * CrouchTransitionSpeed);
+        _controller.center = new Vector3(0, _controller.height / 2f, 0);
 
-        // --- Работа с камерами ---
-        float targetCamY = isCrouching ? crouchHeight - 0.2f : standHeight - 0.2f;
+        float targetCamY = _isCrouching ? CrouchHeight - 0.2f : StandHeight - 0.2f;
 
-        if (isFirstPerson)
+        if (_isFirstPerson)
         {
-            // движение камеры от первого лица
-            Vector3 camPos = firstPersonCamera.transform.localPosition;
-            camPos.y = Mathf.Lerp(camPos.y, targetCamY, Time.deltaTime * crouchTransitionSpeed);
-            firstPersonCamera.transform.localPosition = camPos;
+            Vector3 camPos = FirstPersonCamera.transform.localPosition;
+            camPos.y = Mathf.Lerp(camPos.y, targetCamY, Time.deltaTime * CrouchTransitionSpeed);
+            FirstPersonCamera.transform.localPosition = camPos;
         }
         else
         {
-            // движение pivot'а для камеры от третьего лица
-            Vector3 pivotPos = thirdPersonPivot.localPosition;
-            pivotPos.y = Mathf.Lerp(pivotPos.y, targetCamY, Time.deltaTime * crouchTransitionSpeed);
-            thirdPersonPivot.localPosition = pivotPos;
+            Vector3 pivotPos = ThirdPersonPivot.localPosition;
+            pivotPos.y = Mathf.Lerp(pivotPos.y, targetCamY, Time.deltaTime * CrouchTransitionSpeed);
+            ThirdPersonPivot.localPosition = pivotPos;
         }
     }
 
-
     private void SetCameraMode(bool firstPerson)
     {
-        isFirstPerson = firstPerson;
-        firstPersonCamera.enabled = firstPerson;
-        thirdPersonCamera.enabled = !firstPerson;
+        _isFirstPerson = firstPerson;
+        FirstPersonCamera.enabled = firstPerson;
+        ThirdPersonCamera.enabled = !firstPerson;
 
-        if (firstPerson)
-            Cursor.lockState = CursorLockMode.Locked;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
-    // ==== INPUT ACTIONS ====
-
     public void OnMovement(InputAction.CallbackContext context) =>
-        moveInput = context.ReadValue<Vector2>();
+        _moveInput = context.ReadValue<Vector2>();
 
     public void OnLook(InputAction.CallbackContext context) =>
-        lookInput = context.ReadValue<Vector2>();
+        _lookInput = context.ReadValue<Vector2>();
 
     public void OnJump(InputAction.CallbackContext context)
     {
         if (context.performed)
-            jumpPressed = true;
+            _jumpPressed = true;
     }
 
     public void OnRun(InputAction.CallbackContext context) =>
-        isRunning = context.ReadValueAsButton();
+        _isRunning = context.ReadValueAsButton();
 
     public void OnSneak(InputAction.CallbackContext context) =>
-        isSneaking = context.ReadValueAsButton();   // 👈 Sneak (X)
+        _isSneaking = context.ReadValueAsButton();
 
     public void OnCrouch(InputAction.CallbackContext context) =>
-        isCrouching = context.ReadValueAsButton();  // 👈 Crouch (CTRL)
+        _isCrouching = context.ReadValueAsButton();
 
     public void OnSwitchView(InputAction.CallbackContext context)
     {
         if (context.performed)
-            SetCameraMode(!isFirstPerson);
+            SetCameraMode(!_isFirstPerson);
     }
 }
