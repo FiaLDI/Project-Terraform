@@ -23,18 +23,18 @@ public class PlayerMovement : MonoBehaviour
 
 
 
-    [Header("Настройки камеры")]
-    [SerializeField] private Transform _playerCamera; // Камера игрока
-    [SerializeField] private float _mouseSensitivity = 50f;
-    [SerializeField][Range(-90f, 0f)] private float _minPitch = -60f; // Ограничение взгляда вниз
-    [SerializeField][Range(0f, 90f)] private float _maxPitch = 80f;  // Ограничение взгляда вверх
+    //[Header("Настройки камеры")]
+    //[SerializeField] private Transform _playerCamera; // Камера игрока
+    //[SerializeField] private float _mouseSensitivity = 50f;
+    //[SerializeField][Range(-90f, 0f)] private float _minPitch = -60f; // Ограничение взгляда вниз
+    //[SerializeField][Range(0f, 90f)] private float _maxPitch = 80f;  // Ограничение взгляда вверх
+    //private float _cameraPitch = 0f; // Текущий вертикальный угол камеры
+    //private Vector2 _lookInput;
+
 
     [Header("Управляемость в воздухе")]
     [SerializeField][Range(0f, 1f)] private float _airControl = 0.3f; // Управляемость движением во время полёта (0 = нет, 1 = полный контроль)
-
-
-    private Vector2 _lookInput;
-    private float _cameraPitch = 0f; // Текущий вертикальный угол камеры
+    
     private Vector3 _playerVelocity; // Вектор, хранящий реальную скорость игрока, включая гравитацию
 
     private void Awake()
@@ -53,9 +53,9 @@ public class PlayerMovement : MonoBehaviour
 
         
 
-        //Подписка на события мыши
-        _inputSystemAction.Player.Look.performed += context => _lookInput = context.ReadValue<Vector2>();
-        _inputSystemAction.Player.Look.canceled += context => _lookInput = Vector2.zero;
+        ////Подписка на события мыши
+        //_inputSystemAction.Player.Look.performed += context => _lookInput = context.ReadValue<Vector2>();
+        //_inputSystemAction.Player.Look.canceled += context => _lookInput = Vector2.zero;
 
         //Подписка на нажатие клавиш CTRL и SHIFT
         _inputSystemAction.Player.Sprint.performed += context => _isSprinting = true;
@@ -72,11 +72,11 @@ public class PlayerMovement : MonoBehaviour
     {
         HandleMovement();
     }
-    private void LateUpdate()
-    {
-        // Логику камеры лучше выполнять в LateUpdate, чтобы избежать дерганий
-        HandleLook();
-    }
+    //private void LateUpdate()
+    //{
+    //    // Логику камеры лучше выполнять в LateUpdate, чтобы избежать дерганий
+    //    HandleLook();
+    //}
 
     private void HandleMovement()
     {
@@ -119,24 +119,24 @@ public class PlayerMovement : MonoBehaviour
         _characterController.Move(_playerVelocity * Time.deltaTime);
     }
 
-    private void HandleLook()
-    {
-        // 1. Горизонтальное вращение (вокруг оси Y)
-        // Вращаем весь объект Player, чтобы тело и камера поворачивались вместе
-        float mouseX = _lookInput.x * _mouseSensitivity * Time.deltaTime;
-        transform.Rotate(Vector3.up * mouseX);
+    //private void HandleLook()
+    //{
+    //    // 1. Горизонтальное вращение (вокруг оси Y)
+    //    // Вращаем весь объект Player, чтобы тело и камера поворачивались вместе
+    //    float mouseX = _lookInput.x * _mouseSensitivity * Time.deltaTime;
+    //    transform.Rotate(Vector3.up * mouseX);
 
-        // 2. Вертикальное вращение (вокруг оси X)
-        // Вращаем только камеру, чтобы тело не наклонялось
-        float mouseY = _lookInput.y * _mouseSensitivity * Time.deltaTime;
-        _cameraPitch -= mouseY; // Инвертируем, т.к. движение мыши вверх должно давать отрицательный угол
+    //    // 2. Вертикальное вращение (вокруг оси X)
+    //    // Вращаем только камеру, чтобы тело не наклонялось
+    //    float mouseY = _lookInput.y * _mouseSensitivity * Time.deltaTime;
+    //    _cameraPitch -= mouseY; // Инвертируем, т.к. движение мыши вверх должно давать отрицательный угол
 
-        // 3. Ограничение вертикального угла
-        _cameraPitch = Mathf.Clamp(_cameraPitch, _minPitch, _maxPitch);
+    //    // 3. Ограничение вертикального угла
+    //    _cameraPitch = Mathf.Clamp(_cameraPitch, _minPitch, _maxPitch);
 
-        // Применяем вращение к камере
-        _playerCamera.localRotation = Quaternion.Euler(_cameraPitch, 0f, 0f);
-    }
+    //    // Применяем вращение к камере
+    //    _playerCamera.localRotation = Quaternion.Euler(_cameraPitch, 0f, 0f);
+    //}
 
 
     private void Start()
