@@ -20,8 +20,8 @@ public class PlayerController : MonoBehaviour
     [Header("Camera Settings")]
     [Tooltip("Базовая чувствительность мыши. Подбирается под комфорт.")]
     public float MouseSensitivity = 5f;
-    public float MaxLookAngle = 80f;             // для 1-го лица
-    public float ThirdPersonMaxLookAngle = 45f; // для 3-го лица
+    public float MaxLookAngle = 80f;             
+    public float ThirdPersonMaxLookAngle = 45f; 
     [Tooltip("Плавность вращения камеры 3-го лица")]
     public float ThirdPersonSmooth = 10f;
 
@@ -46,7 +46,6 @@ public class PlayerController : MonoBehaviour
     private bool _isFirstPerson = true;
     private float _currentDistance;
 
-    // Для плавного сглаживания третьего лица
     private float _currentXRotation;
     private float _xRotationVelocity;
 
@@ -115,16 +114,13 @@ public class PlayerController : MonoBehaviour
 
         if (_isFirstPerson)
         {
-            // Ограничение 1-го лица
             _xRotation = Mathf.Clamp(_xRotation, -MaxLookAngle, MaxLookAngle);
             FirstPersonCamera.transform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
         }
         else
         {
-            // Ограничение 3-го лица
             _xRotation = Mathf.Clamp(_xRotation, -ThirdPersonMaxLookAngle, ThirdPersonMaxLookAngle);
 
-            // Плавное сглаживание
             _currentXRotation = Mathf.SmoothDamp(_currentXRotation, _xRotation, ref _xRotationVelocity, 1f / ThirdPersonSmooth);
 
             ThirdPersonPivot.localRotation = Quaternion.Euler(_currentXRotation, 0f, 0f);
