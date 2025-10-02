@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _jumpForce = 5f;
 
     [Header("Приседание")]
-    [SerializeField] private float _standHeight = 2f;
+    [SerializeField] private float _standHeight = 2.93f;
     [SerializeField] private float _crouchHeight = 1.2f;
 
     public bool IsCrouching { get; private set; } = false;
