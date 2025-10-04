@@ -27,7 +27,7 @@ public class PlayerMovement : MonoBehaviour
 
     public bool IsCrouching { get; private set; } = false;
 
-    private Vector2 moveInput = Vector2.zero;
+    public Vector2 moveInput = Vector2.zero;
     private Vector3 velocity = Vector3.zero;
     private CharacterController controller;
     private bool isSprinting = false;
@@ -58,6 +58,7 @@ public class PlayerMovement : MonoBehaviour
         if (controller.isGrounded && !IsCrouching)
         {
             velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+            animator.SetTrigger("jump");
         }
     }
 
@@ -68,15 +69,15 @@ public class PlayerMovement : MonoBehaviour
             if (CanStandUp())
             {
                 IsCrouching = false;
-                controller.height = standHeight;
-                controller.center = new Vector3(0, standHeight / 2f, 0);
+                controller.height = 3;
+                controller.center = new Vector3(0, 1.5f, 0);
             }
         }
         else
         {
             IsCrouching = true;
-            controller.height = crouchHeight;
-            controller.center = new Vector3(0, crouchHeight / 2f, 0);
+            controller.height = 2.5f;
+            controller.center = new Vector3(0, 1.25f, 0);
         }
     }
 
@@ -125,6 +126,8 @@ public class PlayerMovement : MonoBehaviour
         return !Physics.SphereCast(start, controller.radius, Vector3.up, out hit, checkDistance);
     }
 
+
+
     private void HandleAnimation()
     {
         float planarSpeed = new Vector2(velocity.x, velocity.z).magnitude;
@@ -132,5 +135,14 @@ public class PlayerMovement : MonoBehaviour
 
         animator.SetBool("walk", isMoving);
         animator.SetBool("run", isMoving && isSprinting);
+        //animator.SetBool("crouch", IsCrouching && !isMoving);
+        animator.SetBool("crouch", IsCrouching );
+        animator.SetBool("sit_walk", IsCrouching && isMoving);
+
+        bool movingForwardBackward = Mathf.Abs(moveInput.y) > 0.1f;
+
+ 
+        bool turning = !movingForwardBackward && Mathf.Abs(moveInput.x) > 0.1f;
+        animator.SetBool("turn", turning);
     }
 }
