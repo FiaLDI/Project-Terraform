@@ -5,7 +5,15 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform movementReference;
+    [SerializeField] private Transform cameraReference;
     [SerializeField] private Animator animator;
+
+    [Header("Rotation alignment")]
+    [SerializeField] private Transform headTransform;  
+    [SerializeField] private float alignSpeed = 120f;  
+    [SerializeField] private float alignThreshold = 1f; 
+    [SerializeField] private float alignStartAngle = 5f; 
+
 
     [Header("Movement Parameters")]
     [SerializeField] private float baseSpeed = 5f;
@@ -32,6 +40,7 @@ public class PlayerMovement : MonoBehaviour
     private CharacterController controller;
     private bool isSprinting = false;
     private bool isWalking = false;
+    private bool isAligning = false;
 
     private void Awake()
     {
@@ -116,6 +125,48 @@ public class PlayerMovement : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+
+        if (moveInput.y > 0.1f && cameraReference != null && movementReference != null)
+        {
+            Vector3 bodyForward = movementReference.forward;
+            Vector3 camForward = cameraReference.forward;
+            bodyForward.y = 0;
+            camForward.y = 0;
+
+            float signedAngle = Vector3.SignedAngle(bodyForward, camForward, Vector3.up);
+
+            if (Mathf.Abs(signedAngle) > alignStartAngle)
+            {
+                isAligning = true;
+            }
+
+            if (isAligning)
+            {
+                float turnDir = Mathf.Sign(signedAngle);
+                float turnAmount = alignSpeed * Time.deltaTime * turnDir;
+
+                if (Mathf.Abs(signedAngle) <= alignThreshold)
+                {
+                    isAligning = false;
+                }
+                else
+                {
+                    if (Mathf.Abs(turnAmount) > Mathf.Abs(signedAngle))
+                        turnAmount = signedAngle;
+
+                    movementReference.Rotate(Vector3.up * turnAmount, Space.World);
+
+                    if (headTransform != null)
+                    {
+                        headTransform.Rotate(Vector3.up * -turnAmount, Space.World);
+                    }
+                }
+            }
+        }
+        else
+        {
+            isAligning = false;
+        }
     }
 
     private bool CanStandUp()
@@ -135,7 +186,6 @@ public class PlayerMovement : MonoBehaviour
 
         animator.SetBool("walk", isMoving);
         animator.SetBool("run", isMoving && isSprinting);
-        //animator.SetBool("crouch", IsCrouching && !isMoving);
         animator.SetBool("crouch", IsCrouching );
         animator.SetBool("sit_walk", IsCrouching && isMoving);
 

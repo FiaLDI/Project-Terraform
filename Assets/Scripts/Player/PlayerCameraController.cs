@@ -23,6 +23,10 @@ public class PlayerCameraController : MonoBehaviour
     [SerializeField] private float cameraCollisionRadius = 0.3f;
     [SerializeField] private float minCameraDistance = 0.5f;
 
+    [Header("Body rotation (TPS)")]
+    [SerializeField] private float headYawLimit = 90f;   
+    [SerializeField] private float bodyTurnSpeed = 5f;     
+
     private bool isFirstPerson = true;
     private bool justSwitchedView = false;
     private float tpsCamDistance = 3f;
@@ -72,7 +76,8 @@ public class PlayerCameraController : MonoBehaviour
         }
         else
         {
-            //TPS-view
+            // === TPS view ===
+
             cameraPivot.Rotate(Vector3.up * mouseX, Space.World);
 
             cameraPitch -= mouseY;
@@ -80,6 +85,41 @@ public class PlayerCameraController : MonoBehaviour
 
             Vector3 pivotEuler = cameraPivot.localEulerAngles;
             cameraPivot.localRotation = Quaternion.Euler(cameraPitch, pivotEuler.y, 0f);
+
+            Vector3 bodyForward = playerBody.forward;
+            Vector3 camForward = cameraPivot.forward;
+            bodyForward.y = 0;
+            camForward.y = 0;
+
+            float angle = Vector3.SignedAngle(bodyForward, camForward, Vector3.up);
+
+            if (headTransform != null)
+            {
+                float limitedAngle = Mathf.Clamp(angle, -40f, 40f);
+                headTransform.localRotation = Quaternion.Euler(cameraPitch, limitedAngle, 0f);
+            }
+            if (Mathf.Abs(angle) > 40f)
+            {
+                float turnDir = Mathf.Sign(angle);
+                float turnAmount = turnDir * 120f * Time.deltaTime;
+
+                float oldYaw = playerBody.eulerAngles.y;
+                playerBody.Rotate(Vector3.up * turnAmount);
+                float newYaw = playerBody.eulerAngles.y;
+
+                float appliedDelta = Mathf.DeltaAngle(oldYaw, newYaw);
+                headTransform.Rotate(Vector3.up, -appliedDelta, Space.World);
+
+                bodyForward = playerBody.forward;
+                bodyForward.y = 0;
+                angle = Vector3.SignedAngle(bodyForward, cameraPivot.forward, Vector3.up);
+
+                if (Mathf.Abs(angle) <= 90f)
+                {
+                    float limitedAngle = Mathf.Clamp(angle, -90f, 90f);
+                    headTransform.localRotation = Quaternion.Euler(cameraPitch, limitedAngle, 0f);
+                }
+            }
         }
     }
 
