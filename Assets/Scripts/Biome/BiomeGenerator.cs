@@ -3,6 +3,7 @@ using UnityEngine;
 public class BiomeGenerator : MonoBehaviour
 {
     public BiomeConfig biome;
+    public int chunkSize = 32; // размер чанка
 
     void Start()
     {
@@ -11,14 +12,24 @@ public class BiomeGenerator : MonoBehaviour
 
     public void Generate()
     {
-        if (biome == null) return;
+        if (biome == null)
+        {
+            Debug.LogWarning("❌ BiomeConfig не назначен!");
+            return;
+        }
+
+        if (biome.skyboxMaterial != null)
+        {
+            RenderSettings.skybox = biome.skyboxMaterial;
+            DynamicGI.UpdateEnvironment();
+            Debug.Log($"🌌 Skybox для биома '{biome.biomeName}' применён.");
+        }
 
         int width = biome.width;
         int height = biome.height;
 
         GameObject biomeRoot = new GameObject(biome.biomeName + "_Generated");
 
-        int chunkSize = 32; // размер чанка
         for (int cz = 0; cz < height; cz += chunkSize)
         {
             for (int cx = 0; cx < width; cx += chunkSize)
@@ -30,8 +41,6 @@ public class BiomeGenerator : MonoBehaviour
                 chunk.transform.parent = biomeRoot.transform;
             }
         }
-
-        Debug.Log($"✅ Biome '{biome.biomeName}' сгенерирован чанками!");
     }
 
     private GameObject GenerateChunk(int startX, int startZ, int width, int height, BiomeConfig biome)
@@ -42,7 +51,6 @@ public class BiomeGenerator : MonoBehaviour
         Vector3[] vertices = new Vector3[(width + 1) * (height + 1)];
         int[] triangles = new int[width * height * 6];
 
-        // вершины
         for (int z = 0, i = 0; z <= height; z++)
         {
             for (int x = 0; x <= width; x++, i++)
@@ -56,7 +64,6 @@ public class BiomeGenerator : MonoBehaviour
             }
         }
 
-        // треугольники
         for (int z = 0, vert = 0, tris = 0; z < height; z++, vert++)
         {
             for (int x = 0; x < width; x++, vert++, tris += 6)

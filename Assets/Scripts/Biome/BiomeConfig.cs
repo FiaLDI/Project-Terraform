@@ -31,4 +31,7 @@ public class BiomeConfig : ScriptableObject
     [Header("Эффекты")]
     public GameObject[] weatherPrefabs;
     public AudioClip[] ambientSounds;
+
+    [Header("Небо")]
+    public Material skyboxMaterial;
 }

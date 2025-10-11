@@ -10,20 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2547b368ae8e73f4388c7ef1dec7d14f, type: 3}
-  m_Name: Desert
+  m_Name: DesertRed
   m_EditorClassIdentifier: 
-  biomeName: 
-  mapColor: {r: 0, g: 0, b: 0, a: 0}
-  width: 100
-  height: 100
-  groundMaterial: {fileID: 0}
+  biomeName: DesertRed
+  mapColor: {r: 0.3509434, g: 0, b: 0, a: 0}
+  width: 400
+  height: 400
+  groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
   terrainScale: 10
   heightMultiplier: 5
   environmentPrefabs: []
-  environmentDensity: 0.05
+  environmentDensity: 0
   resourcePrefabs: []
-  resourceDensity: 0.02
+  resourceDensity: 0
   questPrefabs: []
   questSpawnChance: 0.01
   weatherPrefabs: []
   ambientSounds: []
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
