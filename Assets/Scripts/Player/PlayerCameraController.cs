@@ -24,8 +24,8 @@ public class PlayerCameraController : MonoBehaviour
     [SerializeField] private float minCameraDistance = 0.5f;
 
     [Header("Body rotation (TPS)")]
-    [SerializeField] private float headYawLimit = 90f;   
-    [SerializeField] private float bodyTurnSpeed = 5f;     
+    [SerializeField] private float headYawLimit = 90f;
+    [SerializeField] private float bodyTurnSpeed = 5f;
 
     private bool isFirstPerson = true;
     private bool justSwitchedView = false;
@@ -108,22 +108,22 @@ public class PlayerCameraController : MonoBehaviour
                 float newYaw = playerBody.eulerAngles.y;
 
                 float appliedDelta = Mathf.DeltaAngle(oldYaw, newYaw);
-                headTransform.Rotate(Vector3.up, -appliedDelta, Space.World);
+                cameraPivot.Rotate(Vector3.up, -appliedDelta, Space.World);
 
                 bodyForward = playerBody.forward;
                 bodyForward.y = 0;
                 angle = Vector3.SignedAngle(bodyForward, cameraPivot.forward, Vector3.up);
 
-                if (Mathf.Abs(angle) <= 90f)
+                if (Mathf.Abs(angle) <= 40f)
                 {
-                    float limitedAngle = Mathf.Clamp(angle, -90f, 90f);
-                    headTransform.localRotation = Quaternion.Euler(cameraPitch, limitedAngle, 0f);
+                    float limitedAngle = Mathf.Clamp(angle, -40f, 40f);
+                    cameraPivot.localRotation = Quaternion.Euler(cameraPitch, limitedAngle, 0f);
                 }
             }
         }
     }
 
-    
+
     private void HandleCameraPosition()
     {
         Transform currentFpsPoint = fpsPoint;
@@ -152,4 +152,3 @@ public class PlayerCameraController : MonoBehaviour
     }
 
 }
-
