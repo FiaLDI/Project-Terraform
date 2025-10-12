@@ -9,51 +9,74 @@ public class BiomeConfigEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        serializedObject.Update(); // синхронизируем сериализацию
+        serializedObject.Update();
         BiomeConfig config = (BiomeConfig)target;
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("⚙️ Biome Configuration", EditorStyles.boldLabel);
 
+        // Основное
         EditorGUILayout.PropertyField(serializedObject.FindProperty("biomeName"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("mapColor"));
 
         EditorGUILayout.Space();
 
+        // Размер карты
         EditorGUILayout.PropertyField(serializedObject.FindProperty("width"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("height"));
 
         EditorGUILayout.Space();
 
+        // Рельеф
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("terrainType"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("groundMaterial"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("terrainScale"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("heightMultiplier"));
 
+        // ✅ Параметры для FractalMountains
+        if (config.terrainType == TerrainType.FractalMountains)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Fractal Mountains Settings", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("fractalOctaves"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("fractalPersistence"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("fractalLacunarity"));
+        }
+
         EditorGUILayout.Space();
 
+        // Окружение
         EditorGUILayout.PropertyField(serializedObject.FindProperty("environmentPrefabs"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("environmentDensity"));
 
+        // Ресурсы
         EditorGUILayout.PropertyField(serializedObject.FindProperty("resourcePrefabs"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceDensity"));
 
+        // Квесты
         EditorGUILayout.PropertyField(serializedObject.FindProperty("questPrefabs"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("questSpawnChance"));
 
+        // Эффекты
         EditorGUILayout.PropertyField(serializedObject.FindProperty("weatherPrefabs"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("ambientSounds"), true);
 
         EditorGUILayout.Space();
 
+        // Небо
         EditorGUILayout.PropertyField(serializedObject.FindProperty("skyboxMaterial"));
 
-        serializedObject.ApplyModifiedProperties(); // сохраняем изменения в .asset
+        serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("⚒️ Генерация", EditorStyles.boldLabel);
 
         if (GUILayout.Button("▶ Generate Biome in Scene"))
         {
+            if (lastGenerated != null)
+            {
+                DestroyImmediate(lastGenerated); // очистим старое перед новой генерацией
+            }
             lastGenerated = GenerateBiome(config);
         }
 
@@ -61,7 +84,7 @@ public class BiomeConfigEditor : Editor
         {
             if (GUILayout.Button("❌ Delete Last Generated"))
             {
-                Undo.DestroyObjectImmediate(lastGenerated);
+                DestroyImmediate(lastGenerated);
                 lastGenerated = null;
             }
         }

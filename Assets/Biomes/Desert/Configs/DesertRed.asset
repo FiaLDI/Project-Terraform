@@ -13,18 +13,22 @@ MonoBehaviour:
   m_Name: DesertRed
   m_EditorClassIdentifier: 
   biomeName: DesertRed
-  mapColor: {r: 0.3509434, g: 0, b: 0, a: 0}
-  width: 400
-  height: 400
+  mapColor: {r: 0.6603774, g: 0, b: 0, a: 1}
+  width: 500
+  height: 500
+  terrainType: 7
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
-  terrainScale: 10
-  heightMultiplier: 5
+  terrainScale: 2
+  heightMultiplier: 20
+  fractalOctaves: 8
+  fractalPersistence: 0.511
+  fractalLacunarity: 2
   environmentPrefabs: []
   environmentDensity: 0
   resourcePrefabs: []
   resourceDensity: 0
   questPrefabs: []
-  questSpawnChance: 0.01
+  questSpawnChance: 0
   weatherPrefabs: []
   ambientSounds: []
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}

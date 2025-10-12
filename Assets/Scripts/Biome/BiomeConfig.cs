@@ -1,4 +1,16 @@
-using UnityEngine;   // <-- using всегда в начале файла
+using UnityEngine;
+
+public enum TerrainType
+{
+    SmoothHills,
+    SharpMountains,
+    Plateaus,
+    Craters,
+    Dunes,
+    Islands,
+    Canyons,
+    FractalMountains
+}
 
 [CreateAssetMenu(menuName = "Game/Biome Config")]
 public class BiomeConfig : ScriptableObject
@@ -11,10 +23,16 @@ public class BiomeConfig : ScriptableObject
     public int width = 100;
     public int height = 100;
 
-    [Header("Ландшафт")]
+    [Header("Рельеф")]
+    public TerrainType terrainType = TerrainType.SmoothHills;
     public Material groundMaterial;
     public float terrainScale = 10f;
     public float heightMultiplier = 5f;
+
+    [Header("Fractal Mountains (только если выбран этот тип)")]
+    [Range(1, 8)] public int fractalOctaves = 5;      // количество слоёв шума
+    [Range(0.1f, 1f)] public float fractalPersistence = 0.5f; // уменьшение амплитуды
+    [Range(1.5f, 4f)] public float fractalLacunarity = 2f;    // увеличение частоты
 
     [Header("Объекты окружения")]
     public GameObject[] environmentPrefabs;
