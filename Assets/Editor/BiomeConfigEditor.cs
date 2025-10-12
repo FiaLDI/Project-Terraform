@@ -6,6 +6,7 @@ using System.IO;
 public class BiomeConfigEditor : Editor
 {
     GameObject lastGenerated;
+    BiomeGenerator generator;
 
     public override void OnInspectorGUI()
     {
@@ -66,6 +67,26 @@ public class BiomeConfigEditor : Editor
         // Небо
         EditorGUILayout.PropertyField(serializedObject.FindProperty("skyboxMaterial"));
 
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("🌫 Fog Settings", EditorStyles.boldLabel);
+
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("enableFog"));
+        if (config.enableFog)
+        {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("fogMode"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("fogColor"));
+
+            if (config.fogMode == FogMode.Linear)
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("fogLinearStart"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("fogLinearEnd"));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("fogDensity"));
+            }
+        }
+
         serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
@@ -75,8 +96,10 @@ public class BiomeConfigEditor : Editor
         {
             if (lastGenerated != null)
             {
-                DestroyImmediate(lastGenerated); // очистим старое перед новой генерацией
+                DestroyImmediate(lastGenerated);
+                lastGenerated = null;
             }
+
             lastGenerated = GenerateBiome(config);
         }
 
@@ -86,6 +109,20 @@ public class BiomeConfigEditor : Editor
             {
                 DestroyImmediate(lastGenerated);
                 lastGenerated = null;
+                generator = null;
+            }
+
+            if (GUILayout.Button("🌀 Sandstorm Test (5s)"))
+            {
+                if (generator != null)
+                {
+                    generator.StartSandstorm(5f);
+                    EditorApplication.delayCall += () =>
+                    {
+                        if (generator != null)
+                            generator.EndSandstorm(5f);
+                    };
+                }
             }
         }
 
@@ -103,7 +140,7 @@ public class BiomeConfigEditor : Editor
         GameObject biomeRoot = new GameObject(config.biomeName + "_Generated");
         Undo.RegisterCreatedObjectUndo(biomeRoot, "Generate Biome");
 
-        BiomeGenerator generator = biomeRoot.AddComponent<BiomeGenerator>();
+        generator = biomeRoot.AddComponent<BiomeGenerator>();
         generator.biome = config;
         generator.Generate();
 

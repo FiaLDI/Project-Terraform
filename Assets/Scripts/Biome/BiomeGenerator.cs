@@ -1,9 +1,13 @@
 using UnityEngine;
+using System.Collections;
 
 public class BiomeGenerator : MonoBehaviour
 {
     public BiomeConfig biome;
     public int chunkSize = 32; // размер чанка
+
+    private Coroutine fogRoutine;
+    private GameObject biomeRoot; // чтобы убирать предыдущую генерацию
 
     void Start()
     {
@@ -18,6 +22,13 @@ public class BiomeGenerator : MonoBehaviour
             return;
         }
 
+        // Удалим предыдущую генерацию, если была
+        if (biomeRoot != null)
+        {
+            DestroyImmediate(biomeRoot);
+            biomeRoot = null;
+        }
+
         // ✅ Установка skybox
         if (biome.skyboxMaterial != null)
         {
@@ -26,10 +37,13 @@ public class BiomeGenerator : MonoBehaviour
             Debug.Log($"🌌 Skybox для биома '{biome.biomeName}' применён.");
         }
 
+        // ✅ Установка тумана
+        ApplyFogFromBiome();
+
         int width = biome.width;
         int height = biome.height;
 
-        GameObject biomeRoot = new GameObject(biome.biomeName + "_Generated");
+        biomeRoot = new GameObject(biome.biomeName + "_Generated");
 
         for (int cz = 0; cz < height; cz += chunkSize)
         {
@@ -59,7 +73,7 @@ public class BiomeGenerator : MonoBehaviour
         {
             for (int x = 0; x <= width; x++, i++)
             {
-                float noise = Mathf.PerlinNoise(
+                float baseNoise = Mathf.PerlinNoise(
                     (startX + x) * biome.terrainScale * 0.01f,
                     (startZ + z) * biome.terrainScale * 0.01f
                 );
@@ -69,45 +83,58 @@ public class BiomeGenerator : MonoBehaviour
                 switch (biome.terrainType)
                 {
                     case TerrainType.SmoothHills:
-                        y = noise * biome.heightMultiplier;
+                        y = baseNoise * biome.heightMultiplier;
                         break;
 
                     case TerrainType.SharpMountains:
-                        y = Mathf.Pow(noise, 3f) * biome.heightMultiplier;
+                        y = Mathf.Pow(baseNoise, 3f) * biome.heightMultiplier;
                         break;
 
                     case TerrainType.Plateaus:
-                        y = Mathf.Round(noise * 3f) / 3f * biome.heightMultiplier;
+                        y = Mathf.Round(baseNoise * 3f) / 3f * biome.heightMultiplier;
                         break;
 
                     case TerrainType.Craters:
-                        y = (1f - Mathf.Abs(noise * 2f - 1f)) * biome.heightMultiplier;
+                        y = (1f - Mathf.Abs(baseNoise * 2f - 1f)) * biome.heightMultiplier;
                         break;
 
                     case TerrainType.Dunes:
-                        float dune = Mathf.PerlinNoise((startX + x) * biome.terrainScale * 0.05f, 0f);
-                        y = dune * biome.heightMultiplier * 0.5f;
-                        break;
+                        {
+                            float dune = Mathf.PerlinNoise(
+                                (startX + x) * biome.terrainScale * 0.05f, 0f);
+                            y = dune * biome.heightMultiplier * 0.5f;
+                            break;
+                        }
 
                     case TerrainType.Islands:
-                        float dist = Vector2.Distance(new Vector2(startX + x, startZ + z),
-                                                      new Vector2(biome.width / 2f, biome.height / 2f));
-                        float gradient = Mathf.Clamp01(1f - dist / (biome.width / 2f));
-                        y = noise * biome.heightMultiplier * gradient;
-                        break;
+                        {
+                            float dist = Vector2.Distance(
+                                new Vector2(startX + x, startZ + z),
+                                new Vector2(biome.width / 2f, biome.height / 2f));
+                            float gradient = Mathf.Clamp01(1f - dist / (biome.width / 2f));
+                            y = baseNoise * biome.heightMultiplier * gradient;
+                            break;
+                        }
 
                     case TerrainType.Canyons:
-                        float canyon = Mathf.Abs(Mathf.PerlinNoise((startX + x) * 0.05f, 0f) - 0.5f) * 2f;
-                        y = noise * biome.heightMultiplier * canyon;
-                        break;
+                        {
+                            float canyon = Mathf.Abs(
+                                Mathf.PerlinNoise((startX + x) * 0.05f, 0f) - 0.5f) * 2f;
+                            y = baseNoise * biome.heightMultiplier * canyon;
+                            break;
+                        }
 
                     case TerrainType.FractalMountains:
-                        y = RidgedNoise(startX + x, startZ + z,
-                                        biome.terrainScale * 0.01f,
-                                        biome.fractalOctaves,
-                                        biome.fractalPersistence,
-                                        biome.fractalLacunarity) * biome.heightMultiplier;
-                        break;
+                        {
+                            y = RidgedNoise(
+                                    startX + x, startZ + z,
+                                    biome.terrainScale * 0.01f,
+                                    biome.fractalOctaves,
+                                    biome.fractalPersistence,
+                                    biome.fractalLacunarity
+                                ) * biome.heightMultiplier;
+                            break;
+                        }
                 }
 
                 vertices[i] = new Vector3(startX + x, y, startZ + z);
@@ -137,13 +164,14 @@ public class BiomeGenerator : MonoBehaviour
         MeshCollider mc = chunkObj.AddComponent<MeshCollider>();
 
         mf.sharedMesh = mesh;
-        mr.sharedMaterial = biome.groundMaterial;
+        if (biome.groundMaterial != null)
+            mr.sharedMaterial = biome.groundMaterial;
         mc.sharedMesh = mesh;
 
         return chunkObj;
     }
 
-    // ✅ Фрактальный ridged-шум
+    // ✅ Фрактальный ridged-шум (то самое, что у тебя не находилось)
     private float RidgedNoise(float x, float z, float scale, int octaves, float persistence, float lacunarity)
     {
         float total = 0f;
@@ -158,10 +186,73 @@ public class BiomeGenerator : MonoBehaviour
             total += n * amplitude;
 
             maxValue += amplitude;
-            amplitude *= persistence;   // 0.5–0.7
-            frequency *= lacunarity;    // 2.0
+            amplitude *= persistence;
+            frequency *= lacunarity;
         }
 
-        return total / maxValue;
+        return (maxValue > 0f) ? total / maxValue : 0f;
+    }
+
+    // ✅ Применение тумана из конфига
+    private void ApplyFogFromBiome()
+    {
+        if (biome.enableFog)
+        {
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = biome.fogMode;
+            RenderSettings.fogColor = biome.fogColor;
+
+            if (biome.fogMode == FogMode.Linear)
+            {
+                RenderSettings.fogStartDistance = biome.fogLinearStart;
+                RenderSettings.fogEndDistance = biome.fogLinearEnd;
+            }
+            else
+            {
+                RenderSettings.fogDensity = biome.fogDensity;
+            }
+
+            Debug.Log($"🌫 Fog применён для биома '{biome.biomeName}'");
+        }
+        else
+        {
+            RenderSettings.fog = false;
+        }
+    }
+
+    // ✅ Плавная анимация тумана
+    private IEnumerator LerpFog(Color targetColor, float targetDensity, float duration)
+    {
+        Color startColor = RenderSettings.fogColor;
+        float startDensity = RenderSettings.fogDensity;
+        float time = 0f;
+
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+            float t = time / duration;
+
+            RenderSettings.fogColor = Color.Lerp(startColor, targetColor, t);
+            RenderSettings.fogDensity = Mathf.Lerp(startDensity, targetDensity, t);
+
+            yield return null;
+        }
+
+        RenderSettings.fogColor = targetColor;
+        RenderSettings.fogDensity = targetDensity;
+    }
+
+    // ✅ Включение песчаной бури
+    public void StartSandstorm(float duration = 5f)
+    {
+        if (fogRoutine != null) StopCoroutine(fogRoutine);
+        fogRoutine = StartCoroutine(LerpFog(new Color(1f, 0.35f, 0.1f), 0.05f, duration));
+    }
+
+    // ✅ Возврат к значениям биома
+    public void EndSandstorm(float duration = 5f)
+    {
+        if (fogRoutine != null) StopCoroutine(fogRoutine);
+        fogRoutine = StartCoroutine(LerpFog(biome.fogColor, biome.fogDensity, duration));
     }
 }

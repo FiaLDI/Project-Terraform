@@ -14,10 +14,10 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  m_FogMode: 3
-  m_FogDensity: 0.01
+  m_Fog: 1
+  m_FogColor: {r: 0.2830189, g: 0.10119111, b: 0, a: 0.32941177}
+  m_FogMode: 2
+  m_FogDensity: 0.1
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 1458296908}
   - component: {fileID: 1458296907}
   m_Layer: 0
-  m_Name: Global Volume
+  m_Name: GlobalVolume_Desert
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -152,7 +152,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: 7d6af6911321e654f80da9bfa38ca591, type: 2}
+  sharedProfile: {fileID: 11400000, guid: 42738d4d6a060a545bec7ac7423383cc, type: 2}
 --- !u!4 &1458296908
 Transform:
   m_ObjectHideFlags: 0

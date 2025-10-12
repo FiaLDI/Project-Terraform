@@ -29,12 +29,12 @@ public class BiomeConfig : ScriptableObject
     public float terrainScale = 10f;
     public float heightMultiplier = 5f;
 
-    [Header("Fractal Mountains (только если выбран этот тип)")]
-    [Range(1, 8)] public int fractalOctaves = 5;      // количество слоёв шума
-    [Range(0.1f, 1f)] public float fractalPersistence = 0.5f; // уменьшение амплитуды
-    [Range(1.5f, 4f)] public float fractalLacunarity = 2f;    // увеличение частоты
+    [Header("Fractal Mountains (только для FractalMountains)")]
+    [Range(1, 8)] public int fractalOctaves = 5;
+    [Range(0.1f, 1f)] public float fractalPersistence = 0.5f;
+    [Range(1.5f, 4f)] public float fractalLacunarity = 2f;
 
-    [Header("Объекты окружения")]
+    [Header("Окружение")]
     public GameObject[] environmentPrefabs;
     [Range(0f, 1f)] public float environmentDensity = 0.05f;
 
@@ -46,10 +46,16 @@ public class BiomeConfig : ScriptableObject
     public GameObject[] questPrefabs;
     [Range(0f, 1f)] public float questSpawnChance = 0.01f;
 
-    [Header("Эффекты")]
+    [Header("Эффекты окружения")]
     public GameObject[] weatherPrefabs;
     public AudioClip[] ambientSounds;
-
-    [Header("Небо")]
     public Material skyboxMaterial;
+
+    [Header("Fog Settings")]
+    public bool enableFog = true;
+    public FogMode fogMode = FogMode.Exponential;
+    public Color fogColor = new Color(0.9f, 0.45f, 0.2f);
+    public float fogDensity = 0.02f;
+    public float fogLinearStart = 0f;
+    public float fogLinearEnd = 200f;
 }

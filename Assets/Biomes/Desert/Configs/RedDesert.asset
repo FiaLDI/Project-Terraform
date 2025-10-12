@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2547b368ae8e73f4388c7ef1dec7d14f, type: 3}
-  m_Name: DesertRed
+  m_Name: RedDesert
   m_EditorClassIdentifier: 
-  biomeName: DesertRed
-  mapColor: {r: 0.6603774, g: 0, b: 0, a: 1}
-  width: 500
-  height: 500
+  biomeName: RedDesert
+  mapColor: {r: 0.4339623, g: 0, b: 0, a: 0}
+  width: 400
+  height: 400
   terrainType: 7
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
   terrainScale: 2
   heightMultiplier: 20
   fractalOctaves: 8
-  fractalPersistence: 0.511
+  fractalPersistence: 0.5
   fractalLacunarity: 2
   environmentPrefabs: []
   environmentDensity: 0
@@ -32,3 +32,9 @@ MonoBehaviour:
   weatherPrefabs: []
   ambientSounds: []
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.2830189, g: 0.10119111, b: 0, a: 0.32941177}
+  fogDensity: 0.1
+  fogLinearStart: 0
+  fogLinearEnd: 200
