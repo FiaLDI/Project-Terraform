@@ -65,7 +65,7 @@ public class PlayerCameraController : MonoBehaviour
             //FPS-view
             playerBody.Rotate(Vector3.up * mouseX);
 
-            cameraPitch += mouseY;
+            cameraPitch -= mouseY;
             cameraPitch = Mathf.Clamp(cameraPitch, minPitch, maxPitch);
 
             if (headTransform != null)
