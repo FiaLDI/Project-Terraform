@@ -3,11 +3,11 @@ using UnityEngine;
 
 public class SimpleEnemy : MonoBehaviour
 {
-    [Header("Настройки врага")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ")]
     public int health = 3;
     public string enemyType = "Basic";
 
-    [Header("Визуальные эффекты")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")]
     public Material damageMaterial; 
     private Material originalMaterial;
     private Renderer enemyRenderer;
@@ -20,13 +20,13 @@ public class SimpleEnemy : MonoBehaviour
             originalMaterial = enemyRenderer.material;
         }
 
-        Debug.Log($"Враг создан: {gameObject.name}, здоровье: {health}");
+        Debug.Log($"пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ: {gameObject.name}, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {health}");
     }
 
     public void TakeDamage(int damage)
     {
         health -= damage;
-        Debug.Log($"{gameObject.name} получил урон: {damage}. Осталось здоровья: {health}");
+        Debug.Log($"{gameObject.name} пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ: {damage}. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {health}");
 
         if (enemyRenderer != null && damageMaterial != null)
         {
@@ -50,7 +50,7 @@ public class SimpleEnemy : MonoBehaviour
 
     void Die()
     {
-        Debug.Log($"{gameObject.name} уничтожен!");
+        Debug.Log($"{gameObject.name} пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!");
 
         NotifyQuestSystem();
 
@@ -63,11 +63,12 @@ public class SimpleEnemy : MonoBehaviour
         {
             foreach (var quest in QuestManager.Instance.activeQuests)
             {
-                if (quest.questName.Contains("уничтож") || quest.questName.Contains("очист") ||
-                    quest.questName.Contains("враг") || quest.questID.Contains("clear"))
+                if (quest.questName.Contains("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ") || quest.questName.Contains("пїЅпїЅпїЅпїЅпїЅ") ||
+                    quest.questName.Contains("пїЅпїЅпїЅпїЅ") || quest.questID.Contains("clear"))
                 {
-                    QuestManager.Instance.UpdateQuestProgress(quest, 1);
-                    Debug.Log($"Прогресс квеста '{quest.questName}' обновлен");
+                    QuestManager.Instance.UpdateQuestProgress(quest);
+
+                    Debug.Log($"пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ '{quest.questName}' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
                     break;
                 }
             }
@@ -76,7 +77,7 @@ public class SimpleEnemy : MonoBehaviour
 
     void OnMouseDown()
     {
-        Debug.Log($"Клик по врагу: {gameObject.name}");
+        Debug.Log($"пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: {gameObject.name}");
         TakeDamage(3);
     }
 

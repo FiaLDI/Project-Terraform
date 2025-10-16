@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections;
+using Quests;
 
 public class BiomeGenerator : MonoBehaviour
 {
     public BiomeConfig biome;
     public int chunkSize = 32; // размер чанка
+    public bool autoSpawnQuests = true; // ⚡ режим автоспавна квестов
 
     private Coroutine fogRoutine;
     private GameObject biomeRoot; // чтобы убирать предыдущую генерацию
@@ -22,14 +24,14 @@ public class BiomeGenerator : MonoBehaviour
             return;
         }
 
-        // Удалим предыдущую генерацию, если была
+        // Удалим предыдущую генерацию
         if (biomeRoot != null)
         {
             DestroyImmediate(biomeRoot);
             biomeRoot = null;
         }
 
-        // ✅ Установка skybox
+        // ✅ Skybox
         if (biome.skyboxMaterial != null)
         {
             RenderSettings.skybox = biome.skyboxMaterial;
@@ -37,13 +39,13 @@ public class BiomeGenerator : MonoBehaviour
             Debug.Log($"🌌 Skybox для биома '{biome.biomeName}' применён.");
         }
 
-        // ✅ Установка тумана
+        // ✅ Fog
         ApplyFogFromBiome();
+
+        biomeRoot = new GameObject(biome.biomeName + "_Generated");
 
         int width = biome.width;
         int height = biome.height;
-
-        biomeRoot = new GameObject(biome.biomeName + "_Generated");
 
         for (int cz = 0; cz < height; cz += chunkSize)
         {
@@ -57,7 +59,16 @@ public class BiomeGenerator : MonoBehaviour
             }
         }
 
-        Debug.Log($"✅ Biome '{biome.biomeName}' сгенерирован чанками!");
+        // ✅ Квесты — только если включён автоспавн
+        if (autoSpawnQuests)
+        {
+            SpawnQuests();
+            Debug.Log($"✅ Biome '{biome.biomeName}' сгенерирован и квесты заспавнены!");
+        }
+        else
+        {
+            Debug.Log($"✅ Biome '{biome.biomeName}' сгенерирован (квесты ожидаются в сцене вручную).");
+        }
     }
 
     private GameObject GenerateChunk(int startX, int startZ, int width, int height, BiomeConfig biome)
@@ -79,62 +90,43 @@ public class BiomeGenerator : MonoBehaviour
                 );
 
                 float y = 0f;
-
                 switch (biome.terrainType)
                 {
                     case TerrainType.SmoothHills:
                         y = baseNoise * biome.heightMultiplier;
                         break;
-
                     case TerrainType.SharpMountains:
                         y = Mathf.Pow(baseNoise, 3f) * biome.heightMultiplier;
                         break;
-
                     case TerrainType.Plateaus:
                         y = Mathf.Round(baseNoise * 3f) / 3f * biome.heightMultiplier;
                         break;
-
                     case TerrainType.Craters:
                         y = (1f - Mathf.Abs(baseNoise * 2f - 1f)) * biome.heightMultiplier;
                         break;
-
                     case TerrainType.Dunes:
-                        {
-                            float dune = Mathf.PerlinNoise(
-                                (startX + x) * biome.terrainScale * 0.05f, 0f);
-                            y = dune * biome.heightMultiplier * 0.5f;
-                            break;
-                        }
-
+                        float dune = Mathf.PerlinNoise((startX + x) * biome.terrainScale * 0.05f, 0f);
+                        y = dune * biome.heightMultiplier * 0.5f;
+                        break;
                     case TerrainType.Islands:
-                        {
-                            float dist = Vector2.Distance(
-                                new Vector2(startX + x, startZ + z),
-                                new Vector2(biome.width / 2f, biome.height / 2f));
-                            float gradient = Mathf.Clamp01(1f - dist / (biome.width / 2f));
-                            y = baseNoise * biome.heightMultiplier * gradient;
-                            break;
-                        }
-
+                        float dist = Vector2.Distance(
+                            new Vector2(startX + x, startZ + z),
+                            new Vector2(biome.width / 2f, biome.height / 2f));
+                        float gradient = Mathf.Clamp01(1f - dist / (biome.width / 2f));
+                        y = baseNoise * biome.heightMultiplier * gradient;
+                        break;
                     case TerrainType.Canyons:
-                        {
-                            float canyon = Mathf.Abs(
-                                Mathf.PerlinNoise((startX + x) * 0.05f, 0f) - 0.5f) * 2f;
-                            y = baseNoise * biome.heightMultiplier * canyon;
-                            break;
-                        }
-
+                        float canyon = Mathf.Abs(Mathf.PerlinNoise((startX + x) * 0.05f, 0f) - 0.5f) * 2f;
+                        y = baseNoise * biome.heightMultiplier * canyon;
+                        break;
                     case TerrainType.FractalMountains:
-                        {
-                            y = RidgedNoise(
-                                    startX + x, startZ + z,
-                                    biome.terrainScale * 0.01f,
-                                    biome.fractalOctaves,
-                                    biome.fractalPersistence,
-                                    biome.fractalLacunarity
-                                ) * biome.heightMultiplier;
-                            break;
-                        }
+                        y = RidgedNoise(startX + x, startZ + z,
+                                        biome.terrainScale * 0.01f,
+                                        biome.fractalOctaves,
+                                        biome.fractalPersistence,
+                                        biome.fractalLacunarity
+                                        ) * biome.heightMultiplier;
+                        break;
                 }
 
                 vertices[i] = new Vector3(startX + x, y, startZ + z);
@@ -171,18 +163,14 @@ public class BiomeGenerator : MonoBehaviour
         return chunkObj;
     }
 
-    // ✅ Фрактальный ridged-шум (то самое, что у тебя не находилось)
     private float RidgedNoise(float x, float z, float scale, int octaves, float persistence, float lacunarity)
     {
-        float total = 0f;
-        float frequency = 1f;
-        float amplitude = 1f;
-        float maxValue = 0f;
+        float total = 0f, frequency = 1f, amplitude = 1f, maxValue = 0f;
 
         for (int i = 0; i < octaves; i++)
         {
             float n = Mathf.PerlinNoise(x * scale * frequency, z * scale * frequency);
-            n = 1f - Mathf.Abs(n * 2f - 1f); // ridged
+            n = 1f - Mathf.Abs(n * 2f - 1f);
             total += n * amplitude;
 
             maxValue += amplitude;
@@ -193,7 +181,6 @@ public class BiomeGenerator : MonoBehaviour
         return (maxValue > 0f) ? total / maxValue : 0f;
     }
 
-    // ✅ Применение тумана из конфига
     private void ApplyFogFromBiome()
     {
         if (biome.enableFog)
@@ -220,7 +207,6 @@ public class BiomeGenerator : MonoBehaviour
         }
     }
 
-    // ✅ Плавная анимация тумана
     private IEnumerator LerpFog(Color targetColor, float targetDensity, float duration)
     {
         Color startColor = RenderSettings.fogColor;
@@ -242,17 +228,65 @@ public class BiomeGenerator : MonoBehaviour
         RenderSettings.fogDensity = targetDensity;
     }
 
-    // ✅ Включение песчаной бури
     public void StartSandstorm(float duration = 5f)
     {
         if (fogRoutine != null) StopCoroutine(fogRoutine);
         fogRoutine = StartCoroutine(LerpFog(new Color(1f, 0.35f, 0.1f), 0.05f, duration));
     }
 
-    // ✅ Возврат к значениям биома
     public void EndSandstorm(float duration = 5f)
     {
         if (fogRoutine != null) StopCoroutine(fogRoutine);
         fogRoutine = StartCoroutine(LerpFog(biome.fogColor, biome.fogDensity, duration));
     }
+
+    public void SpawnQuests()
+    {
+        if (biome.possibleQuests == null || biome.possibleQuests.Length == 0) return;
+
+        foreach (var entry in biome.possibleQuests)
+        {
+            if (entry.questAsset == null || entry.questPointPrefab == null) continue;
+            if (UnityEngine.Random.value > entry.spawnChance) continue;
+
+            // ⚡ сброс прогресса перед генерацией целей
+            entry.questAsset.ResetProgress();
+
+            int targetsCount = UnityEngine.Random.Range(entry.minTargets, entry.maxTargets + 1);
+
+            for (int i = 0; i < targetsCount; i++)
+            {
+                Vector3 pos = new Vector3(
+                    UnityEngine.Random.Range(0f, biome.width),
+                    1000f,
+                    UnityEngine.Random.Range(0f, biome.height)
+                );
+
+                if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 2000f))
+                    pos = hit.point + Vector3.up * 0.5f;
+                else
+                    pos.y = 0f;
+
+                GameObject pointObj = Instantiate(entry.questPointPrefab, pos, Quaternion.identity, biomeRoot.transform);
+
+                QuestPoint qp = pointObj.GetComponent<QuestPoint>();
+                if (qp != null)
+                {
+                    qp.linkedQuest = entry.questAsset;
+
+                    // передаём трансформ в поведение
+                    if (qp.linkedQuest.behaviour is ApproachPointQuestBehaviour approach)
+                        approach.targetPoint = qp.transform;
+                    else if (qp.linkedQuest.behaviour is StandOnPointQuestBehaviour stand)
+                        stand.targetPoint = qp.transform;
+                }
+            }
+
+            // ⚡ после того как цели появятся, активируем квест
+            QuestManager.Instance?.StartQuest(entry.questAsset);
+
+            Debug.Log($"✅ Сгенерирован квест '{entry.questAsset.questName}' с {targetsCount} целями");
+        }
+    }
+
 }

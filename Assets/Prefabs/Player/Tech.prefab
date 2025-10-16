@@ -5569,7 +5569,7 @@ GameObject:
   - component: {fileID: 2111788090879197436}
   m_Layer: 0
   m_Name: Tech
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5739,6 +5739,10 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 9caa3d8a-6b2f-4e8e-8bad-6ede561bd9be
     m_ActionName: UI/TrackedDeviceOrientation
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 25925bd1-0bc5-4368-ac38-3e39e38f5e1b
+    m_ActionName: 'UI/ToggleQuests[/Keyboard/tab]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player

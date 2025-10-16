@@ -1,4 +1,5 @@
 using UnityEngine;
+using Quests;
 
 public enum TerrainType
 {
@@ -12,12 +13,32 @@ public enum TerrainType
     FractalMountains
 }
 
+[System.Serializable]
+public class QuestEntry
+{
+    [Header("Квест и префаб")]
+    public QuestAsset questAsset;          // какой квест
+    public GameObject questPointPrefab;    // какой префаб для его целей
+
+    [Header("Спавн")]
+    [Range(0f, 1f)] 
+    public float spawnChance = 1f;         // шанс появления (1 = всегда, 0.5 = 50%)
+
+    public int minTargets = 1;             // минимум целей для этого квеста
+    public int maxTargets = 3;             // максимум целей для этого квеста
+}
+
+
 [CreateAssetMenu(menuName = "Game/Biome Config")]
 public class BiomeConfig : ScriptableObject
 {
+    
     [Header("Основное")]
     public string biomeName;
     public Color mapColor;
+
+    [Header("Генерация")]
+    public bool isGenerate = true;
 
     [Header("Размер карты")]
     public int width = 100;
@@ -42,9 +63,10 @@ public class BiomeConfig : ScriptableObject
     public GameObject[] resourcePrefabs;
     [Range(0f, 1f)] public float resourceDensity = 0.02f;
 
-    [Header("Квестовые точки")]
-    public GameObject[] questPrefabs;
-    [Range(0f, 1f)] public float questSpawnChance = 0.01f;
+    [Header("Квесты")]
+    public QuestEntry[] possibleQuests; // список (квест + префаб)
+    public int questTargetsMin = 2;
+    public int questTargetsMax = 5;
 
     [Header("Эффекты окружения")]
     public GameObject[] weatherPrefabs;
@@ -58,4 +80,5 @@ public class BiomeConfig : ScriptableObject
     public float fogDensity = 0.02f;
     public float fogLinearStart = 0f;
     public float fogLinearEnd = 200f;
+
 }

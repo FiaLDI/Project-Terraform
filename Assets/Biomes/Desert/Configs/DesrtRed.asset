@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2547b368ae8e73f4388c7ef1dec7d14f, type: 3}
+  m_Name: DesrtRed
+  m_EditorClassIdentifier: 
+  biomeName: DesrtRed
+  mapColor: {r: 0.4641509, g: 0, b: 0, a: 0}
+  isGenerate: 1
+  width: 400
+  height: 400
+  terrainType: 7
+  groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
+  terrainScale: 2
+  heightMultiplier: 10
+  fractalOctaves: 8
+  fractalPersistence: 0.5
+  fractalLacunarity: 2
+  environmentPrefabs: []
+  environmentDensity: 0
+  resourcePrefabs: []
+  resourceDensity: 0
+  possibleQuests:
+  - questAsset: {fileID: 11400000, guid: 48aca5642d5e234489a0bdd19e0fd50f, type: 2}
+    questPointPrefab: {fileID: 683551827570343295, guid: 6160fe5af0eccf045a00bfbab1a7b177, type: 3}
+    spawnChance: 1
+    minTargets: 1
+    maxTargets: 3
+  - questAsset: {fileID: 11400000, guid: b17c45ccb26efce43bbe50f072c74349, type: 2}
+    questPointPrefab: {fileID: 4058017315821378120, guid: 9db30774ed8400d448279ecd03329d72, type: 3}
+    spawnChance: 1
+    minTargets: 1
+    maxTargets: 6
+  questTargetsMin: 2
+  questTargetsMax: 5
+  weatherPrefabs: []
+  ambientSounds: []
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.9, g: 0.45, b: 0.2, a: 1}
+  fogDensity: 0.02
+  fogLinearStart: 0
+  fogLinearEnd: 200
