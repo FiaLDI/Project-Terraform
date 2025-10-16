@@ -282,8 +282,7 @@ public class BiomeGenerator : MonoBehaviour
                 }
             }
 
-            // ⚡ после того как цели появятся, активируем квест
-            QuestManager.Instance?.StartQuest(entry.questAsset);
+            
 
             Debug.Log($"✅ Сгенерирован квест '{entry.questAsset.questName}' с {targetsCount} целями");
         }
