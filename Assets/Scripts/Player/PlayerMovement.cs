@@ -12,7 +12,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Transform headTransform;  
     [SerializeField] private float alignSpeed = 120f;  
     [SerializeField] private float alignThreshold = 1f; 
-    [SerializeField] private float alignStartAngle = 5f; 
+    [SerializeField] private float alignStartAngle = 5f;
+    [SerializeField] private Transform cameraPivot;
 
 
     [Header("Movement Parameters")]
@@ -158,7 +159,7 @@ public class PlayerMovement : MonoBehaviour
 
                     if (headTransform != null)
                     {
-                        headTransform.Rotate(Vector3.up * -turnAmount, Space.World);
+                        cameraPivot.Rotate(Vector3.up * -turnAmount, Space.World);
                     }
                 }
             }

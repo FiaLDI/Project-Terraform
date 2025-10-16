@@ -26,6 +26,7 @@ public class PlayerCameraController : MonoBehaviour
     [Header("Body rotation (TPS)")]
     [SerializeField] private float headYawLimit = 90f;
     [SerializeField] private float bodyTurnSpeed = 5f;
+    [SerializeField, Range(0f, 180f)] private float bodyTurnAngleLimit = 40f;
 
     private bool isFirstPerson = true;
     private bool justSwitchedView = false;
@@ -95,10 +96,10 @@ public class PlayerCameraController : MonoBehaviour
 
             if (headTransform != null)
             {
-                float limitedAngle = Mathf.Clamp(angle, -40f, 40f);
+                float limitedAngle = Mathf.Clamp(angle, -90f, 90f);
                 headTransform.localRotation = Quaternion.Euler(cameraPitch, limitedAngle, 0f);
             }
-            if (Mathf.Abs(angle) > 40f)
+            if (Mathf.Abs(angle) > bodyTurnAngleLimit)
             {
                 float turnDir = Mathf.Sign(angle);
                 float turnAmount = turnDir * 120f * Time.deltaTime;
@@ -114,9 +115,9 @@ public class PlayerCameraController : MonoBehaviour
                 bodyForward.y = 0;
                 angle = Vector3.SignedAngle(bodyForward, cameraPivot.forward, Vector3.up);
 
-                if (Mathf.Abs(angle) <= 40f)
+                if (Mathf.Abs(angle) <= bodyTurnAngleLimit)
                 {
-                    float limitedAngle = Mathf.Clamp(angle, -40f, 40f);
+                    float limitedAngle = Mathf.Clamp(angle, -bodyTurnAngleLimit, bodyTurnAngleLimit);
                     cameraPivot.localRotation = Quaternion.Euler(cameraPitch, limitedAngle, 0f);
                 }
             }
