@@ -64,6 +64,12 @@ MonoBehaviour:
   - prefab: {fileID: 4847349441893556243, guid: e58dc6611475ab947b34c123a86b394d, type: 3}
     spawnChance: 0.476
     weight: 3.63
+  - prefab: {fileID: 446898736554410602, guid: a72576b62e7f1df468c0a0138ce9048b, type: 3}
+    spawnChance: 0.058
+    weight: 1.94
+  - prefab: {fileID: 4134070511397754261, guid: 7d483971e54451f41b9feb03149d6408, type: 3}
+    spawnChance: 0.085
+    weight: 0.41
   environmentDensity: 0.019
   resourcePrefabs: []
   resourceDensity: 0
