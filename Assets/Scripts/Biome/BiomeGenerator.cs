@@ -59,7 +59,6 @@ public class BiomeGenerator : MonoBehaviour
             }
         }
 
-        // ✅ Квесты — только если включён автоспавн
         if (autoSpawnQuests)
         {
             SpawnQuests();
@@ -69,6 +68,8 @@ public class BiomeGenerator : MonoBehaviour
         {
             Debug.Log($"✅ Biome '{biome.biomeName}' сгенерирован (квесты ожидаются в сцене вручную).");
         }
+
+        SpawnEnvironment();
     }
 
     private GameObject GenerateChunk(int startX, int startZ, int width, int height, BiomeConfig biome)
@@ -287,5 +288,85 @@ public class BiomeGenerator : MonoBehaviour
             Debug.Log($"✅ Сгенерирован квест '{entry.questAsset.questName}' с {targetsCount} целями");
         }
     }
+
+    private IEnumerator SpawnEnvironmentDelayed()
+    {
+        // ждём один кадр, чтобы коллайдеры чанков успели обновиться
+        yield return new WaitForEndOfFrame();
+        SpawnEnvironment();
+    }
+
+    private void SpawnEnvironment()
+    {
+        if (biome.environmentPrefabs == null || biome.environmentPrefabs.Length == 0)
+        {
+            Debug.Log($"⚠️ У биома '{biome.biomeName}' нет environmentPrefabs.");
+            return;
+        }
+
+        int totalCount = Mathf.RoundToInt(biome.width * biome.height * biome.environmentDensity);
+        int spawned = 0;
+
+        for (int i = 0; i < totalCount; i++)
+        {
+            EnvironmentEntry entry = GetWeightedRandomEntry(biome.environmentPrefabs);
+            if (entry == null || entry.prefab == null)
+                continue;
+
+            // 🎯 проверяем индивидуальный шанс спавна
+            if (Random.value > entry.spawnChance)
+                continue;
+
+            Vector3 pos = new Vector3(
+                Random.Range(0f, biome.width),
+                1000f,
+                Random.Range(0f, biome.height)
+            );
+
+            if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 2000f))
+            {
+                Vector3 normal = hit.normal;
+                float slope = Vector3.Angle(normal, Vector3.up);
+                if (slope > 55f) continue;
+
+                pos = hit.point;
+                pos.y -= 0.15f;
+
+                Quaternion rot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                float scale = Random.Range(0.9f, 1.1f);
+
+                float heightFactor = Mathf.InverseLerp(0f, biome.heightMultiplier * 0.8f, hit.point.y);
+                float probability = Mathf.Lerp(1f, 0.4f, heightFactor);
+                if (Random.value > probability)
+                    continue;
+
+                GameObject obj = Instantiate(entry.prefab, pos, rot, biomeRoot.transform);
+                obj.transform.localScale *= scale;
+                obj.transform.up = Vector3.Lerp(obj.transform.up, normal, 0.4f);
+
+                spawned++;
+            }
+        }
+
+        Debug.Log($"🌿 Окружение '{biome.biomeName}': {spawned}/{totalCount} объектов заспавнено.");
+    }
+
+    private EnvironmentEntry GetWeightedRandomEntry(EnvironmentEntry[] entries)
+    {
+        float totalWeight = 0f;
+        foreach (var e in entries)
+            totalWeight += Mathf.Max(0.01f, e.weight);
+
+        float r = Random.Range(0f, totalWeight);
+        float sum = 0f;
+        foreach (var e in entries)
+        {
+            sum += Mathf.Max(0.01f, e.weight);
+            if (r <= sum)
+                return e;
+        }
+        return entries.Length > 0 ? entries[0] : null;
+    }
+
 
 }

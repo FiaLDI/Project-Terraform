@@ -24,8 +24,47 @@ MonoBehaviour:
   fractalOctaves: 8
   fractalPersistence: 0.5
   fractalLacunarity: 2
-  environmentPrefabs: []
-  environmentDensity: 0
+  environmentPrefabs:
+  - prefab: {fileID: 7520983420995058829, guid: 928def6e7399e514cb59b9d5709d0fde, type: 3}
+    spawnChance: 0.027
+    weight: 0.13
+  - prefab: {fileID: 5326277133637406116, guid: 411970a4856016a4a92352ad0dfa3bbc, type: 3}
+    spawnChance: 0.092
+    weight: 2.69
+  - prefab: {fileID: 6878953529727457157, guid: 8b0053eb7e2301f4289691ef3f8fcd0c, type: 3}
+    spawnChance: 0.058
+    weight: 2.64
+  - prefab: {fileID: 1367159471447171536, guid: 9dbaf46afa1a17a47be809599c78af79, type: 3}
+    spawnChance: 0.732
+    weight: 3.04
+  - prefab: {fileID: 7673769172564692307, guid: e89d3e43f602dc448b66a14d6eda6c38, type: 3}
+    spawnChance: 0.383
+    weight: 3
+  - prefab: {fileID: 8690899481457946423, guid: 1421ab68a270a3e4ba817cf66644d542, type: 3}
+    spawnChance: 0.466
+    weight: 2.25
+  - prefab: {fileID: 5941025411037162252, guid: 6043aa188b274ec4b99e696243de7039, type: 3}
+    spawnChance: 0.521
+    weight: 1.95
+  - prefab: {fileID: 7634424498100518801, guid: 1160df34491c4c8448079710733d36d5, type: 3}
+    spawnChance: 0.432
+    weight: 1
+  - prefab: {fileID: 337696929378042279, guid: 2245301a85b17484fbf3ee84405c487c, type: 3}
+    spawnChance: 0.668
+    weight: 1
+  - prefab: {fileID: 8761926070466752017, guid: 4b7a930f9d0174941848cac503293382, type: 3}
+    spawnChance: 0.191
+    weight: 0.24
+  - prefab: {fileID: 2097749192493358636, guid: 57a3809dd179eb849ab0b2aece876e23, type: 3}
+    spawnChance: 0.448
+    weight: 2.99
+  - prefab: {fileID: 2659721705622926809, guid: 7237aa9f6d58eb34bb9ce65dd0399bd7, type: 3}
+    spawnChance: 0.506
+    weight: 2.45
+  - prefab: {fileID: 4847349441893556243, guid: e58dc6611475ab947b34c123a86b394d, type: 3}
+    spawnChance: 0.476
+    weight: 3.63
+  environmentDensity: 0.019
   resourcePrefabs: []
   resourceDensity: 0
   possibleQuests:
@@ -47,6 +86,6 @@ MonoBehaviour:
   enableFog: 1
   fogMode: 2
   fogColor: {r: 0.9, g: 0.45, b: 0.2, a: 1}
-  fogDensity: 0.02
+  fogDensity: 0.03
   fogLinearStart: 0
   fogLinearEnd: 200

@@ -28,6 +28,18 @@ public class QuestEntry
     public int maxTargets = 3;             // максимум целей для этого квеста
 }
 
+[System.Serializable]
+public class EnvironmentEntry
+{
+    [Header("Префаб окружения")]
+    public GameObject prefab;
+
+    [Header("Шанс спавна (0–1)")]
+    [Range(0f, 1f)] public float spawnChance = 1f;
+
+    [Header("Вес (вероятность выбора типа)")]
+    [Range(0f, 10f)] public float weight = 1f;
+}
 
 [CreateAssetMenu(menuName = "Game/Biome Config")]
 public class BiomeConfig : ScriptableObject
@@ -56,8 +68,9 @@ public class BiomeConfig : ScriptableObject
     [Range(1.5f, 4f)] public float fractalLacunarity = 2f;
 
     [Header("Окружение")]
-    public GameObject[] environmentPrefabs;
+    public EnvironmentEntry[] environmentPrefabs;
     [Range(0f, 1f)] public float environmentDensity = 0.05f;
+
 
     [Header("Ресурсы")]
     public GameObject[] resourcePrefabs;
