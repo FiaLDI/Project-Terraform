@@ -26,7 +26,7 @@ namespace Quests
             Transform player = GameObject.FindGameObjectWithTag("Player").transform;
             float dist = Vector3.Distance(player.position, targetPoint.position);
 
-            if (dist < 2f) // радиус
+            if (dist < 2f)
             {
                 stayTimer += Time.deltaTime;
 
@@ -58,7 +58,7 @@ namespace Quests
         public override bool IsActive => active;
         public override bool IsCompleted => completed;
 
-        public override int CurrentProgress => 0; // чтобы UI показывал только 0/1
+        public override int CurrentProgress => 0;
         public override int TargetProgress => 1;
 
         public override QuestBehaviour Clone() => (StandOnPointQuestBehaviour)MemberwiseClone();

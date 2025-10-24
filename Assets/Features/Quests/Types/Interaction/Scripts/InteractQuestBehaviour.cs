@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Quests
@@ -6,8 +6,11 @@ namespace Quests
     [System.Serializable]
     public class InteractQuestBehaviour : QuestBehaviour
     {
+        [Tooltip("Точка взаимодействия (назначается автоматически QuestPoint'ом)")]
         public Transform targetPoint;
-        public float interactDistance = 2f;
+
+        [Tooltip("Дистанция, в пределах которой можно взаимодействовать")]
+        public float requiredDistance = 2f;
 
         private bool active;
         private bool completed;
@@ -20,12 +23,18 @@ namespace Quests
 
         public override void UpdateProgress(QuestAsset quest, int amount = 1)
         {
-            if (!active || completed || targetPoint == null) return;
+            if (!active || completed || targetPoint == null)
+                return;
 
-            Transform player = GameObject.FindGameObjectWithTag("Player").transform;
+            Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
+            if (player == null)
+                return;
+
             float dist = Vector3.Distance(player.position, targetPoint.position);
 
-            if (dist <= interactDistance && Keyboard.current.eKey.wasPressedThisFrame)
+            if (dist <= requiredDistance &&
+                Keyboard.current != null &&
+                Keyboard.current.eKey.wasPressedThisFrame)
             {
                 CompleteQuest(quest);
             }
@@ -34,6 +43,7 @@ namespace Quests
         public override void CompleteQuest(QuestAsset quest)
         {
             if (completed) return;
+
             completed = true;
             active = false;
         }
@@ -49,6 +59,7 @@ namespace Quests
         public override int CurrentProgress => completed ? 1 : 0;
         public override int TargetProgress => 1;
 
-        public override QuestBehaviour Clone() => (InteractQuestBehaviour)MemberwiseClone();
+        public override QuestBehaviour Clone()
+            => (InteractQuestBehaviour)MemberwiseClone();
     }
 }

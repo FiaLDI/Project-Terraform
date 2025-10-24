@@ -10,7 +10,6 @@ namespace Quests
 
         private bool isCompleted;
 
-        // Важно! Каждая точка имеет свой локальный экземпляр поведения
         private QuestBehaviour localBehaviour;
 
         private void Awake()
@@ -26,7 +25,6 @@ namespace Quests
             {
                 linkedQuest.RegisterTarget();
 
-                // создаём копию поведения под этот QuestPoint
                 if (linkedQuest.behaviour != null)
                 {
                     localBehaviour = linkedQuest.behaviour.Clone();
@@ -35,8 +33,8 @@ namespace Quests
                         approach.targetPoint = transform;
                     else if (localBehaviour is StandOnPointQuestBehaviour stand)
                         stand.targetPoint = transform;
-
-                    // НЕ переписываем linkedQuest.behaviour!
+                    else if (localBehaviour is InteractQuestBehaviour interact)
+                        interact.targetPoint = transform;
                 }
 
                 Debug.Log($"Новая цель зарегистрирована в квесте '{linkedQuest.questName}'. Всего целей: {linkedQuest.targetProgress}");
@@ -77,8 +75,15 @@ namespace Quests
             {
                 return stand.IsCompleted;
             }
+            else if (localBehaviour is InteractQuestBehaviour interact)
+            {
+                return interact.IsCompleted;
+            }
+
 
             return localBehaviour == null;
+
+
         }
 
         private void Complete()
