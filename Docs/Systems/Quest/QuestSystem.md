@@ -142,16 +142,17 @@ QuestChain / QuestChainManager | ScriptableObject + MonoBehaviour | Органи
 </ul>
 <p data-start="1838" data-end="1853"><strong data-start="1838" data-end="1853">Наследники:</strong></p>
 <div class="_tableContainer_1rjym_1"><div tabindex="-1" class="group _tableWrapper_1rjym_13 flex w-fit flex-col-reverse">
-Класс | Описание
--- | --
-ApproachPointQuestBehaviour | Игрок должен подойти к точке
-StandOnPointQuestBehaviour | Игрок должен простоять на точке N секунд
-InteractQuestBehaviour | Игрок должен взаимодействовать (нажать E)
-KillEnemiesQuestBehaviour | Игрок должен убить N врагов с тегом Enemy
+Вот таблица с наследниками и их описанием:
 
-</div></div>
-<p data-start="2192" data-end="2292"><strong data-start="2192" data-end="2201">Роль:</strong><br data-start="2201" data-end="2204">
-Инкапсулирует конкретную <strong data-start="2229" data-end="2250">логику выполнения</strong> квеста, вызываемую менеджером или сценой.</p>
+| Класс | Описание |
+|-------|-----------|
+| `ApproachPointQuestBehaviour` | Игрок должен подойти к точке |
+| `StandOnPointQuestBehaviour` | Игрок должен простоять на точке N секунд |
+| `InteractQuestBehaviour` | Игрок должен взаимодействовать (нажать E) |
+| `KillEnemiesQuestBehaviour` | Игрок должен убить N врагов с тегом "Enemy" |
+
+**Роль:** Инкапсулирует конкретную логику выполнения квеста, вызываемую менеджером или сценой.
+
 <hr data-start="2294" data-end="2297">
 <h3 data-start="2299" data-end="2320"><strong data-start="2303" data-end="2320">3. QuestPoint</strong></h3>
 <p data-start="2321" data-end="2408"><strong data-start="2321" data-end="2329">Тип:</strong> <code data-start="2330" data-end="2345">MonoBehaviour</code><br data-start="2345" data-end="2348">
