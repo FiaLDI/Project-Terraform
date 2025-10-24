@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: Q_Interact_Console_Quest
   m_EditorClassIdentifier: Assembly-CSharp::Quests.QuestAsset
   questID: 
-  questName: 
+  questName: Interact
   description: 
-  currentProgress: 0
-  targetProgress: 0
+  currentProgress: 2
+  targetProgress: 2
   behaviour:
-    rid: 683826425092374612
+    rid: 683826425092374613
   references:
     version: 2
     RefIds:
-    - rid: 683826425092374612
-      type: {class: ApproachPointQuestBehaviour, ns: Quests, asm: Assembly-CSharp}
+    - rid: 683826425092374613
+      type: {class: InteractQuestBehaviour, ns: Quests, asm: Assembly-CSharp}
       data:
-        targetPoint: {fileID: 0}
+        targetPoint: {fileID: 4667826628763640194, guid: 61bc74625d96ee34985e6eab591d485d, type: 3}
         requiredDistance: 3
