@@ -1326,7 +1326,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2156e8db4ae496743b1c941f91bdb759, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activeQuests: []
+  activeQuests:
+  - {fileID: 11400000, guid: 48aca5642d5e234489a0bdd19e0fd50f, type: 2}
+  - {fileID: 11400000, guid: 605e0337b97e711478f6b0520413155c, type: 2}
   completedQuests: []
   questUI: {fileID: 3021330901083057152}
 --- !u!1 &6469987169216238858

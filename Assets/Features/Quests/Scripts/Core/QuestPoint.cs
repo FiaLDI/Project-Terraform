@@ -10,6 +10,9 @@ namespace Quests
 
         private bool isCompleted;
 
+        // Важно! Каждая точка имеет свой локальный экземпляр поведения
+        private QuestBehaviour localBehaviour;
+
         private void Awake()
         {
             SphereCollider col = GetComponent<SphereCollider>();
@@ -26,26 +29,25 @@ namespace Quests
                 // создаём копию поведения под этот QuestPoint
                 if (linkedQuest.behaviour != null)
                 {
-                    var clone = linkedQuest.behaviour.Clone();
+                    localBehaviour = linkedQuest.behaviour.Clone();
 
-                    if (clone is ApproachPointQuestBehaviour approach)
+                    if (localBehaviour is ApproachPointQuestBehaviour approach)
                         approach.targetPoint = transform;
-                    else if (clone is StandOnPointQuestBehaviour stand)
+                    else if (localBehaviour is StandOnPointQuestBehaviour stand)
                         stand.targetPoint = transform;
 
-                    linkedQuest.behaviour = clone;
+                    // НЕ переписываем linkedQuest.behaviour!
                 }
 
                 Debug.Log($"Новая цель зарегистрирована в квесте '{linkedQuest.questName}'. Всего целей: {linkedQuest.targetProgress}");
             }
         }
 
-
         private void Update()
         {
             if (linkedQuest == null || isCompleted) return;
 
-            linkedQuest.behaviour?.UpdateProgress(linkedQuest);
+            localBehaviour?.UpdateProgress(linkedQuest);
 
             if (CheckGoalComplete())
             {
@@ -58,7 +60,7 @@ namespace Quests
             if (linkedQuest == null || isCompleted) return;
             if (!other.CompareTag("Player")) return;
 
-            linkedQuest.behaviour?.UpdateProgress(linkedQuest);
+            localBehaviour?.UpdateProgress(linkedQuest);
 
             if (CheckGoalComplete())
                 Complete();
@@ -66,17 +68,17 @@ namespace Quests
 
         private bool CheckGoalComplete()
         {
-            if (linkedQuest.behaviour is ApproachPointQuestBehaviour approach)
+            if (localBehaviour is ApproachPointQuestBehaviour approach)
             {
                 Transform player = GameObject.FindGameObjectWithTag("Player").transform;
                 return Vector3.Distance(player.position, transform.position) <= approach.requiredDistance;
             }
-            else if (linkedQuest.behaviour is StandOnPointQuestBehaviour stand)
+            else if (localBehaviour is StandOnPointQuestBehaviour stand)
             {
                 return stand.IsCompleted;
             }
 
-            return linkedQuest.behaviour == null;
+            return localBehaviour == null;
         }
 
         private void Complete()
@@ -85,7 +87,7 @@ namespace Quests
             isCompleted = true;
 
             linkedQuest.TargetCompleted();
-            linkedQuest.behaviour?.CompleteQuest(linkedQuest);
+            localBehaviour?.CompleteQuest(linkedQuest);
 
             QuestManager.Instance?.UpdateQuestProgress(linkedQuest);
 
@@ -95,3 +97,4 @@ namespace Quests
         }
     }
 }
+
