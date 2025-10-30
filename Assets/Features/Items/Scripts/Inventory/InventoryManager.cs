@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,8 +24,9 @@ public class InventoryManager : MonoBehaviour
     private InventorySlotUI[] mainInventoryUI;
     private InventorySlotUI[] hotbarUI;
 
-    [Header("World Interaction")]
-    [SerializeField] private Transform playerTransform;
+    //[Header("World Interaction")]
+    //[SerializeField] 
+    private Transform playerTransform;
 
     [Header("Drag & Drop")]
     [SerializeField] public Image draggableItem;
@@ -47,14 +49,45 @@ public class InventoryManager : MonoBehaviour
 
     private void Start()
     {
+        // Безопасно ищем Player при запуске
+        StartCoroutine(WaitForPlayerReference());
         UpdateAllUI();
         mainInventoryPanel.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         SelectHotbarSlot(0);
     }
+    /// <summary>
+    /// Безопасно ждёт, пока на сцене появится объект с тегом Player, и сохраняет его Transform.
+    /// </summary>
+    private IEnumerator WaitForPlayerReference()
+    {
+        // Если ссылка уже есть — выходим
+        if (playerTransform != null) yield break;
 
-    // ⬇️ Новый метод для PlayerController
+        GameObject playerObj = null;
+        // Ожидаем появления объекта Player
+        while (playerObj == null)
+        {
+            playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                playerTransform = playerObj.transform;
+                Debug.Log("[InventoryManager] Player найден и привязан успешно.");
+                yield break;
+            }
+            yield return new WaitForSeconds(0.1f); // проверяем каждые 100 мс
+        }
+    }
+    private Vector3 GetSafeDropPosition()
+    {
+        if (playerTransform == null)
+        {
+            Debug.LogWarning("[InventoryManager] Игрок ещё не найден, выбрасывание предмета невозможно.");
+            return Vector3.zero;
+        }
+        return playerTransform.position + playerTransform.forward * 1.5f + playerTransform.up * 2f;
+    }
     public bool IsOpen => mainInventoryPanel.activeSelf;
     public void SetOpen(bool state)
     {
@@ -191,10 +224,24 @@ public class InventoryManager : MonoBehaviour
             return;
         }
 
+        if (playerTransform == null)
+        {
+            Debug.LogWarning("[InventoryManager] PlayerTransform отсутствует. Пропускаем выброс предмета.");
+            return;
+        }
+
         Item itemToDrop = slotToDrop.ItemData;
+        Vector3 dropPosition = GetSafeDropPosition();
+        if (slotToDrop.ItemData == null)
+        {
+            Debug.Log("Слот пуст, нечего выбрасывать.");
+            return;
+        }
+
+        //Item itemToDrop = slotToDrop.ItemData;
 
         // Определяем позицию для спавна предмета перед игроком
-        Vector3 dropPosition = playerTransform.position + playerTransform.forward * 1.5f+playerTransform.up*2;
+        //Vector3 dropPosition = playerTransform.position + playerTransform.forward * 1.5f+playerTransform.up*2;
 
         // Используем префаб, указанный в самом предмете!
         GameObject spawnedObject = Instantiate(itemToDrop.worldPrefab, dropPosition, Quaternion.identity);

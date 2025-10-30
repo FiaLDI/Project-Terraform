@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using TMPro;
 
 public class PlayerInteraction : MonoBehaviour
@@ -6,7 +6,8 @@ public class PlayerInteraction : MonoBehaviour
     [Header("Interaction Settings")]
     [SerializeField] private Camera playerCamera;
     [SerializeField] private float interactionDistance = 3f;
-    [SerializeField] private TextMeshProUGUI interactionPromptText;
+    //[SerializeField] 
+    private TextMeshProUGUI interactionPromptText;
 
     private RaycastHit lastHit;
     private bool canInteract = false;
@@ -14,12 +15,22 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Start()
     {
+        // === РђРІС‚РѕРїРѕРёСЃРє РѕР±СЉРµРєС‚Р° InteractionPrompt_Text ===
+        if (interactionPromptText == null)
+        {
+            GameObject promptObj = GameObject.Find("InteractionPrompt_Text");
+            if (promptObj != null)
+                interactionPromptText = promptObj.GetComponent<TextMeshProUGUI>();
+            else
+                Debug.LogWarning("PlayerInteraction: РѕР±СЉРµРєС‚ 'InteractionPrompt_Text' РЅРµ РЅР°Р№РґРµРЅ РЅР° СЃС†РµРЅРµ!");
+        }
+
         interactionPromptText.text = "";
     }
 
     private void Update()
     {
-        // Луч от центра экрана
+        // Р›СѓС‡ РѕС‚ С†РµРЅС‚СЂР° СЌРєСЂР°РЅР°
         Ray ray = playerCamera.ScreenPointToRay(
             new Vector3(Screen.width / 2f, Screen.height / 2f));
         if (Physics.Raycast(ray, out lastHit, interactionDistance))
@@ -27,7 +38,7 @@ public class PlayerInteraction : MonoBehaviour
             IInteractable interactable = lastHit.collider.GetComponent<IInteractable>();
             targetItem = lastHit.collider.GetComponent<ItemObject>();
 
-            // Подсказка для IInteractable
+            // РџРѕРґСЃРєР°Р·РєР° РґР»СЏ IInteractable
             if (interactable != null)
             {
                 interactionPromptText.text = interactable.InteractionPrompt;
@@ -35,28 +46,28 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // Подсказка для предмета
+            // РџРѕРґСЃРєР°Р·РєР° РґР»СЏ РїСЂРµРґРјРµС‚Р°
             if (targetItem != null)
             {
-                interactionPromptText.text = "Нажмите [E], чтобы подобрать";
+                Debug.Log("РџРѕСЏРІР»РµРЅРёРµ РЅР°РґРїРёСЃРё РїСЂРё РЅР°РІРµРґРµРЅРёРё ");
+                interactionPromptText.text = "РќР°Р¶РјРёС‚Рµ [E], С‡С‚РѕР±С‹ РїРѕРґРѕР±СЂР°С‚СЊ";
                 canInteract = true;
                 return;
             }
         }
 
-        // Если ничего не нашли — убираем подсказку
+        // Р•СЃР»Рё РЅРёС‡РµРіРѕ РЅРµ РЅР°С€Р»Рё вЂ” СѓР±РёСЂР°РµРј РїРѕРґСЃРєР°Р·РєСѓ
         canInteract = false;
         targetItem = null;
         interactionPromptText.text = "";
     }
 
-    // Метод, вызываемый из PlayerController 
     public void TryInteract()
     {
         Debug.Log(">>> TryInteract() called");
         if (!canInteract) return;
 
-        // Взаимодействие с объектом
+        // Р’Р·Р°РёРјРѕРґРµР№СЃС‚РІРёРµ СЃ РѕР±СЉРµРєС‚РѕРј
         if (lastHit.collider == null) return;
 
         var interactable = lastHit.collider.GetComponent<IInteractable>();
@@ -67,7 +78,7 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        // Подбор предмета
+        // РџРѕРґР±РѕСЂ РїСЂРµРґРјРµС‚Р°
         if (targetItem != null)
         {
             InventoryManager.instance.AddItem(
@@ -80,7 +91,7 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
-    // Метод для выброса предмета 
+    // РњРµС‚РѕРґ РґР»СЏ РІС‹Р±СЂРѕСЃР° РїСЂРµРґРјРµС‚Р° 
     public void DropCurrentItem(bool dropFullStack)
     {
         if (dropFullStack)

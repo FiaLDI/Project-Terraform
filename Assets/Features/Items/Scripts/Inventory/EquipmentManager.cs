@@ -1,15 +1,17 @@
-using TMPro;
+п»їusing TMPro;
 using UnityEngine;
 
 public class EquipmentManager : MonoBehaviour
 {
     public static EquipmentManager instance;
     [SerializeField] private Rigidbody playerRigidbody;
-    // Камера, использующаяся для стрельбы
+    // РљР°РјРµСЂР°, РёСЃРїРѕР»СЊР·СѓСЋС‰Р°СЏСЃСЏ РґР»СЏ СЃС‚СЂРµР»СЊР±С‹
     [Header("Shooting")]
-    [SerializeField] private Camera playerCamera;
-    [SerializeField] private Transform adsPoint; // точка прицеливания
-    [SerializeField] private Transform handTransform; // Точка в руке, где будет появляться оружие
+    //[SerializeField] 
+    private Camera playerCamera;
+    [SerializeField] private Transform adsPoint; // С‚РѕС‡РєР° РїСЂРёС†РµР»РёРІР°РЅРёСЏ
+    //[SerializeField] 
+    private Transform handTransform; // РўРѕС‡РєР° РІ СЂСѓРєРµ, РіРґРµ Р±СѓРґРµС‚ РїРѕСЏРІР»СЏС‚СЊСЃСЏ РѕСЂСѓР¶РёРµ
     private GameObject currentWeaponObject;
     [Header("Weapon State")]
     private Weapon currentWeaponData;
@@ -22,91 +24,109 @@ public class EquipmentManager : MonoBehaviour
     {
         if (instance == null) instance = this;
         else Destroy(gameObject);
+        // === РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРёР№ РїРѕРёСЃРє РєР°РјРµСЂС‹ Рё С‚РѕС‡РєРё СѓРґРµСЂР¶Р°РЅРёСЏ ===
+        if (playerCamera == null)
+        {
+            GameObject camObj = GameObject.Find("FirstPersonCamera");
+            if (camObj != null)
+                playerCamera = camObj.GetComponent<Camera>();
+            else
+                Debug.LogWarning("EquipmentManager: РѕР±СЉРµРєС‚ 'FirstPersonCamera' РЅРµ РЅР°Р№РґРµРЅ РЅР° СЃС†РµРЅРµ!");
+        }
+
+        if (handTransform == null)
+        {
+            GameObject handObj = GameObject.Find("HandleEquipPoint");
+            if (handObj != null)
+                handTransform = handObj.transform;
+            else
+                Debug.LogWarning("EquipmentManager: РѕР±СЉРµРєС‚ 'HandleEquipPoint' РЅРµ РЅР°Р№РґРµРЅ РЅР° СЃС†РµРЅРµ!");
+        }
     }
     private void Update()
     {
-        // Если в руках нет оружия (или экипированный предмет - не оружие), то выходим.
+        // Р•СЃР»Рё РІ СЂСѓРєР°С… РЅРµС‚ РѕСЂСѓР¶РёСЏ (РёР»Рё СЌРєРёРїРёСЂРѕРІР°РЅРЅС‹Р№ РїСЂРµРґРјРµС‚ - РЅРµ РѕСЂСѓР¶РёРµ), С‚Рѕ РІС‹С…РѕРґРёРј.
         if (currentWeaponData == null)
         {
             return;
         }
 
-        //// Обработка стрельбы по нажатию Левой Кнопки Мыши.
+        //// РћР±СЂР°Р±РѕС‚РєР° СЃС‚СЂРµР»СЊР±С‹ РїРѕ РЅР°Р¶Р°С‚РёСЋ Р›РµРІРѕР№ РљРЅРѕРїРєРё РњС‹С€Рё.
         //if (Input.GetMouseButtonDown(0))
         //{
-        //    // Вызываем метод Shoot, который теперь сам проверяет наличие патронов в магазине.
+        //    // Р’С‹Р·С‹РІР°РµРј РјРµС‚РѕРґ Shoot, РєРѕС‚РѕСЂС‹Р№ С‚РµРїРµСЂСЊ СЃР°Рј РїСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ РїР°С‚СЂРѕРЅРѕРІ РІ РјР°РіР°Р·РёРЅРµ.
         //    Shoot(currentWeaponData);
         //}
 
-        //// Обработка перезарядки по нажатию клавиши R.
+        //// РћР±СЂР°Р±РѕС‚РєР° РїРµСЂРµР·Р°СЂСЏРґРєРё РїРѕ РЅР°Р¶Р°С‚РёСЋ РєР»Р°РІРёС€Рё R.
         //if (Input.GetKeyDown(KeyCode.R))
         //{
         //    Reload();
         //}
     }
 
-    // Вспомогательный метод для получения данных об оружии
+    // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РґР°РЅРЅС‹С… РѕР± РѕСЂСѓР¶РёРё
     private Weapon GetCurrentWeaponData()
     {
         if (currentWeaponObject == null) return null;
 
-        // Предполагаем, что на префабе оружия висит ItemObject
+        // РџСЂРµРґРїРѕР»Р°РіР°РµРј, С‡С‚Рѕ РЅР° РїСЂРµС„Р°Р±Рµ РѕСЂСѓР¶РёСЏ РІРёСЃРёС‚ ItemObject
         ItemObject itemObj = currentWeaponObject.GetComponent<ItemObject>();
         if (itemObj != null)
         {
-            // Пробуем преобразовать Item в Weapon
+            // РџСЂРѕР±СѓРµРј РїСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ Item РІ Weapon
             return itemObj.itemData as Weapon;
         }
         return null;
     }
     public void EquipItem(Item itemToEquip)
     {
-        // 1. Уничтожаем старый предмет в руке
+        // 1. РЈРЅРёС‡С‚РѕР¶Р°РµРј СЃС‚Р°СЂС‹Р№ РїСЂРµРґРјРµС‚ РІ СЂСѓРєРµ
         if (currentWeaponObject != null)
         {
             Destroy(currentWeaponObject);
         }
 
-        // 2. Сбрасываем состояние
+        // 2. РЎР±СЂР°СЃС‹РІР°РµРј СЃРѕСЃС‚РѕСЏРЅРёРµ
         currentWeaponData = null;
         //currentWeaponAnimator = null;
 
-        // 3. Если слот пуст или у предмета нет 3D-модели, выходим
+        // 3. Р•СЃР»Рё СЃР»РѕС‚ РїСѓСЃС‚ РёР»Рё Сѓ РїСЂРµРґРјРµС‚Р° РЅРµС‚ 3D-РјРѕРґРµР»Рё, РІС‹С…РѕРґРёРј
         if (itemToEquip == null || itemToEquip.worldPrefab == null)
         {
             UpdateAmmoUI();
             return;
         }
 
-        // 4. Создаем новый предмет и сбрасываем его позицию
+        // 4. РЎРѕР·РґР°РµРј РЅРѕРІС‹Р№ РїСЂРµРґРјРµС‚ Рё СЃР±СЂР°СЃС‹РІР°РµРј РµРіРѕ РїРѕР·РёС†РёСЋ
         currentWeaponObject = Instantiate(itemToEquip.worldPrefab, handTransform);
         currentWeaponObject.transform.localPosition = Vector3.zero;
         currentWeaponObject.transform.localRotation = Quaternion.identity;
 
-        // 5. Отключаем физику для предмета в руках
+        // 5. РћС‚РєР»СЋС‡Р°РµРј С„РёР·РёРєСѓ РґР»СЏ РїСЂРµРґРјРµС‚Р° РІ СЂСѓРєР°С…
         Rigidbody rb = currentWeaponObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.isKinematic = true;
         }
 
-        // 6. Инициализируем HeldItemController, если он есть
+        // 6. РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј HeldItemController, РµСЃР»Рё РѕРЅ РµСЃС‚СЊ
         HeldItemController itemController = currentWeaponObject.GetComponent<HeldItemController>();
         if (itemController != null)
         {
-            // Передаем все три необходимые ссылки
+            // РџРµСЂРµРґР°РµРј РІСЃРµ С‚СЂРё РЅРµРѕР±С…РѕРґРёРјС‹Рµ СЃСЃС‹Р»РєРё
             itemController.Initialize(playerCamera, playerRigidbody, adsPoint);
         }
 
-        // 7. Проверяем, является ли предмет оружием, и настраиваем его
+        // 7. РџСЂРѕРІРµСЂСЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё РїСЂРµРґРјРµС‚ РѕСЂСѓР¶РёРµРј, Рё РЅР°СЃС‚СЂР°РёРІР°РµРј РµРіРѕ
         currentWeaponData = itemToEquip as Weapon;
 
-        // 8. Обновляем UI в самом конце, когда все готово
+        // 8. РћР±РЅРѕРІР»СЏРµРј UI РІ СЃР°РјРѕРј РєРѕРЅС†Рµ, РєРѕРіРґР° РІСЃРµ РіРѕС‚РѕРІРѕ
         UpdateAmmoUI();
     }
     private void Shoot(Weapon weaponData)
     {
-        // Получаем текущее количество патронов из слота
+        // РџРѕР»СѓС‡Р°РµРј С‚РµРєСѓС‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїР°С‚СЂРѕРЅРѕРІ РёР· СЃР»РѕС‚Р°
         int ammoInMag = InventoryManager.instance.GetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex);
 
         if (ammoInMag <= 0)
@@ -115,34 +135,34 @@ public class EquipmentManager : MonoBehaviour
             return;
         }
 
-        // Уменьшаем количество и сохраняем новое значение обратно в слот
+        // РЈРјРµРЅСЊС€Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Рё СЃРѕС…СЂР°РЅСЏРµРј РЅРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ РѕР±СЂР°С‚РЅРѕ РІ СЃР»РѕС‚
         ammoInMag--;
         InventoryManager.instance.SetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex, ammoInMag);
 
         UpdateAmmoUI();
-        Debug.Log("Произведен выстрел.");
+        Debug.Log("РџСЂРѕРёР·РІРµРґРµРЅ РІС‹СЃС‚СЂРµР».");
 
-        // Создаем луч из камеры вперед
+        // РЎРѕР·РґР°РµРј Р»СѓС‡ РёР· РєР°РјРµСЂС‹ РІРїРµСЂРµРґ
         Ray ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
         RaycastHit hitInfo;
-        float weaponRange = 100f; // Максимальная дальность стрельбы
+        float weaponRange = 100f; // РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР°Р»СЊРЅРѕСЃС‚СЊ СЃС‚СЂРµР»СЊР±С‹
 
-        // Пускаем луч
+        // РџСѓСЃРєР°РµРј Р»СѓС‡
         if (Physics.Raycast(ray, out hitInfo, weaponRange))
         {
-            // Если луч во что-то попал, пытаемся получить у этого объекта компонент IDamageable
+            // Р•СЃР»Рё Р»СѓС‡ РІРѕ С‡С‚Рѕ-С‚Рѕ РїРѕРїР°Р», РїС‹С‚Р°РµРјСЃСЏ РїРѕР»СѓС‡РёС‚СЊ Сѓ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р° РєРѕРјРїРѕРЅРµРЅС‚ IDamageable
             IDamageable damageableTarget = hitInfo.collider.GetComponent<IDamageable>();
 
-            // Проверяем, удалось ли его найти
+            // РџСЂРѕРІРµСЂСЏРµРј, СѓРґР°Р»РѕСЃСЊ Р»Рё РµРіРѕ РЅР°Р№С‚Рё
             if (damageableTarget != null)
             {
-                // Если да - наносим урон
+                // Р•СЃР»Рё РґР° - РЅР°РЅРѕСЃРёРј СѓСЂРѕРЅ
                 damageableTarget.TakeDamage(weaponData.damage);
             }
             else
             {
-                // Если у объекта нет IDamageable, можно, например, создать эффект попадания в стену
-                Debug.Log("Попадание в объект без IDamageable: " + hitInfo.collider.name);
+                // Р•СЃР»Рё Сѓ РѕР±СЉРµРєС‚Р° РЅРµС‚ IDamageable, РјРѕР¶РЅРѕ, РЅР°РїСЂРёРјРµСЂ, СЃРѕР·РґР°С‚СЊ СЌС„С„РµРєС‚ РїРѕРїР°РґР°РЅРёСЏ РІ СЃС‚РµРЅСѓ
+                Debug.Log("РџРѕРїР°РґР°РЅРёРµ РІ РѕР±СЉРµРєС‚ Р±РµР· IDamageable: " + hitInfo.collider.name);
             }
         }
     }
@@ -161,7 +181,7 @@ public class EquipmentManager : MonoBehaviour
             Debug.Log("Reloading...");
             InventoryManager.instance.ConsumeAmmo(currentWeaponData.requiredAmmoType, ammoToReload);
 
-            // Устанавливаем новое, пополненное значение патронов в слоте
+            // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅРѕРІРѕРµ, РїРѕРїРѕР»РЅРµРЅРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РїР°С‚СЂРѕРЅРѕРІ РІ СЃР»РѕС‚Рµ
             InventoryManager.instance.SetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex, ammoInMag + ammoToReload);
 
             UpdateAmmoUI();
@@ -180,20 +200,6 @@ public class EquipmentManager : MonoBehaviour
         else
         {
             ammoText.text = "";
-        }
-    }
-    void UpdateAmmoUIOld()
-    {
-        if (ammoText == null) return;
-
-        if (currentWeaponData != null)
-        {
-            int ammoInInventory = InventoryManager.instance.GetAmmoCount(currentWeaponData.requiredAmmoType);
-            ammoText.text = $"{currentAmmoInMag} / {ammoInInventory}";
-        }
-        else
-        {
-            ammoText.text = ""; // Очищаем текст, если в руках не оружие
         }
     }
 }
