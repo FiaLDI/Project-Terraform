@@ -6,6 +6,7 @@ public class InventoryManager : MonoBehaviour
 {
     public static bool isInventoryOpen;
     public static InventoryManager instance;
+    public static event System.Action<Item, int> OnItemAdded;
 
     [Header("Hotbar")]
     [SerializeField] private RectTransform selectionHighlight;
@@ -88,6 +89,7 @@ public class InventoryManager : MonoBehaviour
                 {
                     // Передаем патроны при обновлении слота
                     emptySlot.UpdateSlotData(itemToAdd, 1, ammoInMagazine);
+
                 }
                 else
                 {
@@ -149,7 +151,7 @@ public class InventoryManager : MonoBehaviour
                 quantityRemaining -= amountToTransfer;
             }
         }
-
+        OnItemAdded?.Invoke(itemToAdd, quantityToAdd);
         UpdateAllUI();
         UpdateEquippedItem();
     }

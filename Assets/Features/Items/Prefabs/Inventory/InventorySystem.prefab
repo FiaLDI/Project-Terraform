@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3811561428684570481}
   - component: {fileID: 267636698527708262}
   - component: {fileID: 6338778658404895075}
+  - component: {fileID: 5390892398608612590}
   m_Layer: 0
   m_Name: InventorySystem
   m_TagString: Untagged
@@ -67,3 +68,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   testWeapon: {fileID: 11400000, guid: 660e963e56988e04388a65c3e46239ba, type: 2}
   testAmmo: {fileID: 11400000, guid: 01a3b506b4e9aa54fab46828ad14dbad, type: 2}
+--- !u!114 &5390892398608612590
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8067383726898605373}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 467ee51601801b644a6a2ce209aaa758, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryInputHandler
+  playerCameraController: {fileID: 0}
+  inventoryManager: {fileID: 267636698527708262}
+  equipmentManager: {fileID: 0}
+  playerInteraction: {fileID: 0}
