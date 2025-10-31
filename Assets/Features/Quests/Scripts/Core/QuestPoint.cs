@@ -23,6 +23,13 @@ namespace Quests
         {
             if (linkedQuest != null)
             {
+                if (!QuestManager.Instance.activeQuests.Contains(linkedQuest) &&
+                    !QuestManager.Instance.completedQuests.Contains(linkedQuest))
+                {
+                    QuestManager.Instance.StartQuest(linkedQuest);
+                    Debug.Log($"Квест '{linkedQuest.questName}' запущен через QuestManager.");
+                }
+
                 linkedQuest.RegisterTarget();
 
                 if (linkedQuest.behaviour != null)
@@ -40,6 +47,8 @@ namespace Quests
                 Debug.Log($"Новая цель зарегистрирована в квесте '{linkedQuest.questName}'. Всего целей: {linkedQuest.targetProgress}");
             }
         }
+
+
 
         private void Update()
         {
