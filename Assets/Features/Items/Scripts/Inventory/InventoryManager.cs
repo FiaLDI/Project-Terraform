@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,7 @@ public class InventoryManager : MonoBehaviour
 
     [Header("Hotbar")]
     [SerializeField] private RectTransform selectionHighlight;
+    
     public int selectedHotbarIndex = 0;
 
     [Header("UI Panels")]
@@ -39,7 +41,7 @@ public class InventoryManager : MonoBehaviour
     {
         if (instance == null) instance = this;
         else { Destroy(gameObject); return; }
-
+   
         for (int i = 0; i < MAIN_INVENTORY_SIZE; i++) mainInventorySlots.Add(new InventorySlot());
         for (int i = 0; i < HOTBAR_SIZE; i++) hotbarSlots.Add(new InventorySlot());
 
@@ -55,6 +57,14 @@ public class InventoryManager : MonoBehaviour
         mainInventoryPanel.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        SelectHotbarSlot(0);
+        // Вызываем через кадр, чтобы UI успел инициализироваться
+        StartCoroutine(DelayedHotbarSelection());
+    }
+
+    private IEnumerator DelayedHotbarSelection()
+    {
+        yield return null; // Ждем один кадр
         SelectHotbarSlot(0);
     }
     /// <summary>
@@ -213,6 +223,7 @@ public class InventoryManager : MonoBehaviour
         {
             hotbarUI[i].UpdateSlot(hotbarSlots[i]);
         }
+        UpdateEquippedItem();
     }
     public void DropItem(int hotbarIndex)
     {
@@ -276,47 +287,7 @@ public class InventoryManager : MonoBehaviour
         // И сразу после этого обновляем предмет в руке!
         UpdateEquippedItem();
     }
-    public void DropItemOld(int hotbarIndex)
-    {
-        // Проверяем, есть ли предмет в указанном слоте хотбара
-        if (hotbarSlots[hotbarIndex].ItemData == null)
-        {
-            Debug.Log("Слот пуст, нечего выбрасывать.");
-            return;
-        }
-        Item itemToDrop = hotbarSlots[hotbarIndex].ItemData;
-        // Определяем позицию для спавна предмета перед игроком
-        Vector3 dropPosition = playerTransform.position + playerTransform.forward * 1.5f;
 
-        // Создаем объект предмета в мире из префаба
-        //GameObject spawnedObject = Instantiate(worldItemPrefab, dropPosition, Quaternion.identity);
-        // Используем префаб, указанный в самом предмете!
-        GameObject spawnedObject = Instantiate(itemToDrop.worldPrefab, dropPosition, Quaternion.identity);
-        // Передаем созданному объекту данные о предмете, который мы выбрасываем
-        spawnedObject.GetComponent<ItemObject>().itemData = itemToDrop;
-
-        // Включаем физику для выброшенного предмета
-        Rigidbody rb = spawnedObject.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = false;
-            // Можно также явно включить гравитацию, если она была отключена на префабе
-            rb.useGravity = true;
-        }
-        // Уменьшаем количество предмета в слоте
-        hotbarSlots[hotbarIndex].RemoveFromStack(1);
-
-        // Если предметов в слоте не осталось, очищаем его
-        if (hotbarSlots[hotbarIndex].Amount <= 0)
-        {
-            hotbarSlots[hotbarIndex].ClearSlot();
-        }
-
-        // Обновляем UI
-        UpdateAllUI();
-        // И сразу после этого обновляем предмет в руке!
-        UpdateEquippedItem();
-    }
     public bool HasItem(Item itemToCheck)
     {
         if (itemToCheck == null) return false;
@@ -369,7 +340,7 @@ public class InventoryManager : MonoBehaviour
 
         // Перемещаем данные из draggedSlot (которые мы сохранили) в dropSlot
         dropSlot.UpdateSlotData(draggedItemData, draggedItemAmount, draggedAmmo);
-
+       
         UpdateAllUI();
     }
 
@@ -465,38 +436,7 @@ public class InventoryManager : MonoBehaviour
 
         UpdateAllUI();
     }
-    public void ConsumeAmmoOld(Ammo ammoType)
-    {
-        // Ищем слот с патронами и уменьшаем их количество
-        // Ищем в обратном порядке, чтобы сначала тратить патроны из последних слотов
-        for (int i = mainInventorySlots.Count - 1; i >= 0; i--)
-        {
-            if (mainInventorySlots[i].ItemData != null && mainInventorySlots[i].ItemData.id == ammoType.id)
-            {
-                mainInventorySlots[i].RemoveFromStack(1);
-                if (mainInventorySlots[i].Amount <= 0)
-                {
-                    mainInventorySlots[i].ClearSlot();
-                }
-                UpdateAllUI();
-                return;
-            }
-        }
-
-        for (int i = hotbarSlots.Count - 1; i >= 0; i--)
-        {
-            if (hotbarSlots[i].ItemData != null && hotbarSlots[i].ItemData.id == ammoType.id)
-            {
-                hotbarSlots[i].RemoveFromStack(1);
-                if (hotbarSlots[i].Amount <= 0)
-                {
-                    hotbarSlots[i].ClearSlot();
-                }
-                UpdateAllUI();
-                return;
-            }
-        }
-    }
+    
     public void DropFullStackFromHotbar(int hotbarIndex)
     {
         // Проверяем, есть ли предмет в указанном слоте хотбара
@@ -558,11 +498,13 @@ public class InventoryManager : MonoBehaviour
             rb.useGravity = true;
         }
 
+
         // Очищаем слот, из которого мы тащили предмет
         draggedSlot.ClearSlot();
 
         UpdateAllUI();
         UpdateEquippedItem();
+
     }
     // Получает количество патронов в магазине для предмета в указанном слоте хотбара
     public int GetMagazineAmmoForSlot(int hotbarIndex)

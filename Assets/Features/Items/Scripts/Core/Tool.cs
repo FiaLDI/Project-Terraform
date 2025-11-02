@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Items/Tool")]
+[CreateAssetMenu(menuName = "Inventory/Items/Tool")]
 public class Tool : Item
 {
     [Header("Tool Settings")]

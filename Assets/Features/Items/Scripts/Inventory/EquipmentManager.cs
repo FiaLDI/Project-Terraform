@@ -81,6 +81,7 @@ public class EquipmentManager : MonoBehaviour
     }
     public void EquipItem(Item itemToEquip)
     {
+        Debug.Log("Предмет экипирован");
         // 1. Уничтожаем старый предмет в руке
         if (currentWeaponObject != null)
         {
