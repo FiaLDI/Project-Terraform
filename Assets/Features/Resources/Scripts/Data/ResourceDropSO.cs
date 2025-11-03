@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "ResourceDrop", menuName = "Resources/Resource Drop")]
 public class ResourceDropSO : ScriptableObject
 {
     [System.Serializable]

@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "ResourceNode", menuName = "Resources/Resource Node")]
 public class ResourceNodeSO : ScriptableObject
 {
     [Header("Identification")]

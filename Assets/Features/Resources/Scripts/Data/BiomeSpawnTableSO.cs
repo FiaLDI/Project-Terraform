@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "BiomeSpawnTable", menuName = "Resources/Biome Spawn Table")]
 public class BiomeSpawnTableSO : ScriptableObject
 {
     [System.Serializable]
