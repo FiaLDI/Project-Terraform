@@ -1,60 +1,64 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class ResourceSpawner : MonoBehaviour
 {
     [Header("Spawn Settings")]
     public int seed = 12345;
-    public Vector2Int chunkSize = new Vector2Int(64, 64);
+    public Vector2 areaSize = new Vector2(64, 64);
 
     [Header("Biome Data")]
     public BiomeSpawnTableSO biomeSpawnTable;
 
-    private List<Vector3> spawnedPositions = new List<Vector3>();
+    private readonly List<Vector3> spawnedPositions = new List<Vector3>();
 
     public void GenerateResources()
     {
         if (biomeSpawnTable == null)
         {
-            Debug.LogWarning("BiomeSpawnTable not assigned!");
+            Debug.LogWarning($"⚠️ {name}: BiomeSpawnTable не назначен!");
             return;
         }
 
         Random.InitState(seed);
 
-        foreach (var nodeEntry in biomeSpawnTable.resourceNodes)
+        int totalSpawned = 0;
+
+        foreach (var entry in biomeSpawnTable.resourceNodes)
         {
-            ResourceNodeSO nodeSO = nodeEntry.resourceNode;
+            if (entry.resourceNode == null || entry.resourceNode.prefab == null)
+                continue;
+
+            ResourceNodeSO nodeSO = entry.resourceNode;
             GameObject prefab = nodeSO.prefab;
 
-            if (prefab == null)
+            for (int i = 0; i < 30; i++)
             {
-                Debug.LogWarning($"Prefab missing for {nodeSO.name}");
-                continue;
-            }
+                if (Random.value > entry.spawnChance)
+                    continue;
 
-            int attempts = 200;
-            for (int i = 0; i < attempts; i++)
-            {
-                Vector3 pos = new Vector3(
-                    Random.Range(0, chunkSize.x),
-                    0.5f,
-                    Random.Range(0, chunkSize.y)
+                Vector3 offset = new Vector3(
+                    Random.Range(-areaSize.x / 2f, areaSize.x / 2f),
+                    1000f,
+                    Random.Range(-areaSize.y / 2f, areaSize.y / 2f)
                 );
 
-                float noise = Mathf.PerlinNoise(
-                    (pos.x + seed) * 0.05f,
-                    (pos.z + seed) * 0.05f
-                );
+                Vector3 worldPos = transform.position + offset;
 
-                if (noise > nodeSO.noiseThreshold && IsFarEnough(pos, nodeSO.minDistance))
+                if (Physics.Raycast(worldPos, Vector3.down, out RaycastHit hit, 2000f))
                 {
-                    GameObject node = Instantiate(prefab, pos, Quaternion.identity, transform);
-                    node.name = $"{nodeSO.nodeName}_Node";
-                    spawnedPositions.Add(pos);
+                    if (IsFarEnough(hit.point, nodeSO.minDistance))
+                    {
+                        Vector3 finalPos = hit.point + Vector3.up * 0.3f;
+                        Instantiate(prefab, finalPos, Quaternion.identity, transform);
+                        spawnedPositions.Add(finalPos);
+                        totalSpawned++;
+                    }
                 }
             }
         }
+
+        Debug.Log($"✅ {name}: ресурсы заспавнены по таблице ({biomeSpawnTable.name}), всего {totalSpawned} узлов.");
     }
 
     private bool IsFarEnough(Vector3 position, float minDistance)
@@ -81,4 +85,5 @@ public class ResourceSpawner : MonoBehaviour
         spawnedPositions.Clear();
     }
 }
+
 

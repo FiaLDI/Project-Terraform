@@ -17,15 +17,15 @@ public enum TerrainType
 public class QuestEntry
 {
     [Header("Квест и префаб")]
-    public QuestAsset questAsset;          // какой квест
-    public GameObject questPointPrefab;    // какой префаб для его целей
+    public QuestAsset questAsset;          
+    public GameObject questPointPrefab;   
 
     [Header("Спавн")]
     [Range(0f, 1f)] 
-    public float spawnChance = 1f;         // шанс появления (1 = всегда, 0.5 = 50%)
+    public float spawnChance = 1f;        
 
-    public int minTargets = 1;             // минимум целей для этого квеста
-    public int maxTargets = 3;             // максимум целей для этого квеста
+    public int minTargets = 1;             
+    public int maxTargets = 3;            
 }
 
 [System.Serializable]
@@ -75,9 +75,15 @@ public class BiomeConfig : ScriptableObject
     [Header("Ресурсы")]
     public GameObject[] resourcePrefabs;
     [Range(0f, 1f)] public float resourceDensity = 0.02f;
+    [Header("Resource Spawning Advanced")]
+    public GameObject resourceSpawnerPrefab;   
+    [Range(0f, 1f)] public float resourceSpawnerDensity = 0.001f; 
+    public ScriptableObject resourceSpawnTable; 
+    public float resourceSpawnYOffset = 0.3f;  
+
 
     [Header("Квесты")]
-    public QuestEntry[] possibleQuests; // список (квест + префаб)
+    public QuestEntry[] possibleQuests; 
     public int questTargetsMin = 2;
     public int questTargetsMax = 5;
 

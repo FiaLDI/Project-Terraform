@@ -64,6 +64,13 @@ public class BiomeConfigEditor : Editor
         // Ресурсы
         EditorGUILayout.PropertyField(serializedObject.FindProperty("resourcePrefabs"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceDensity"));
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("⛏️ Resource Spawning", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnerPrefab"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnerDensity"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnTable"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnYOffset"));
+
 
         // --- КВЕСТЫ ---
         EditorGUILayout.Space();

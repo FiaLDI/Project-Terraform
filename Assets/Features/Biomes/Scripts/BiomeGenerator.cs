@@ -70,6 +70,8 @@ public class BiomeGenerator : MonoBehaviour
         }
 
         SpawnEnvironment();
+        SpawnResources();
+
     }
 
     private GameObject GenerateChunk(int startX, int startZ, int width, int height, BiomeConfig biome)
@@ -368,5 +370,59 @@ public class BiomeGenerator : MonoBehaviour
         return entries.Length > 0 ? entries[0] : null;
     }
 
+    private IEnumerator SpawnResourcesDelayed()
+    {
+        yield return new WaitForSeconds(0.5f);
+        SpawnResources();
+    }
 
+    private void SpawnResources()
+    {
+        Debug.Log("🧩 SpawnResources() вызван!");
+
+        if (biome.resourceSpawnerPrefab == null)
+        {
+            Debug.LogWarning($"⚠️ У биома '{biome.biomeName}' не назначен prefab ResourceSpawner!");
+            return;
+        }
+
+        int width = biome.width;
+        int height = biome.height;
+        float density = Mathf.Clamp01(biome.resourceSpawnerDensity);
+
+        int totalCount = Mathf.RoundToInt(width * height * density);
+        int spawned = 0;
+
+        for (int i = 0; i < totalCount; i++)
+        {
+            Vector3 randomPos = new Vector3(
+                Random.Range(0f, width),
+                1000f,
+                Random.Range(0f, height)
+            );
+
+            if (Physics.Raycast(randomPos, Vector3.down, out RaycastHit hit, 2000f))
+            {
+                Vector3 spawnPos = hit.point + Vector3.up * biome.resourceSpawnYOffset;
+
+                GameObject spawnerObj = Instantiate(biome.resourceSpawnerPrefab, spawnPos, Quaternion.identity, biomeRoot.transform);
+                spawnerObj.name = $"ResourceSpawner_{spawned:D3}";
+
+                var spawner = spawnerObj.GetComponent<ResourceSpawner>();
+                if (spawner != null)
+                {
+                    if (biome.resourceSpawnTable != null)
+                        spawner.biomeSpawnTable = (BiomeSpawnTableSO)biome.resourceSpawnTable;
+
+                    spawner.seed = biome.biomeName.GetHashCode() + spawned * 37;
+                    spawner.GenerateResources();
+                }
+
+                spawned++;
+            }
+        }
+
+        Debug.Log($"⛏️ {spawned} ResourceSpawner'ов заспавнено в биоме '{biome.biomeName}'.");
+    }
 }
+    
