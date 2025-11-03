@@ -15,6 +15,6 @@ MonoBehaviour:
   nodeName: Crystal Cluster
   resource: {fileID: 11400000, guid: 2f2ba5027cf09db439dbcf6136f1a83f, type: 2}
   prefab: {fileID: 9126582963452210468, guid: 18d709e91dad3174299ac65627e0a8f9, type: 3}
-  noiseThreshold: 0.65
+  noiseThreshold: 0.056
   minDistance: 12
   dropTable: {fileID: 11400000, guid: 3fdf67b729792384587a4943679c3c94, type: 2}

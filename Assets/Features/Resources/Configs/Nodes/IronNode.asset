@@ -15,6 +15,6 @@ MonoBehaviour:
   nodeName: Iron Vein
   resource: {fileID: 11400000, guid: 7783f77157b66354eb58973895af9b60, type: 2}
   prefab: {fileID: 8975459638629637451, guid: f86c2ad0101344948857bc3d5ef88c0a, type: 3}
-  noiseThreshold: 0.3
+  noiseThreshold: 0.079
   minDistance: 10
   dropTable: {fileID: 11400000, guid: fff268087b4487842bc7eb2553c6b510, type: 2}

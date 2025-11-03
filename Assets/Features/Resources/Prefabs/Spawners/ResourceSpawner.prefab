@@ -45,5 +45,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResourceSpawner
   seed: 12345
-  chunkSize: {x: 64, y: 64}
+  areaSize: {x: 64, y: 64}
   biomeSpawnTable: {fileID: 0}
