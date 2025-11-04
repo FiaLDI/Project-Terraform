@@ -101,6 +101,10 @@ public class EquipmentManager : MonoBehaviour
 
         // 4. Создаем новый предмет и сбрасываем его позицию
         currentWeaponObject = Instantiate(itemToEquip.worldPrefab, handTransform);
+        //Изменение переменной, отвечающей за возможность подбора предмета через E
+        var io = currentWeaponObject.GetComponent<ItemObject>();
+        if (io) io.isWorldObject = false;
+
         currentWeaponObject.transform.localPosition = Vector3.zero;
         currentWeaponObject.transform.localRotation = Quaternion.identity;
 

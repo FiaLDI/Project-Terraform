@@ -30,36 +30,19 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
-        // Луч от центра экрана
-        Ray ray = playerCamera.ScreenPointToRay(
-            new Vector3(Screen.width / 2f, Screen.height / 2f));
-        if (Physics.Raycast(ray, out lastHit, interactionDistance))
+        ItemObject item = NearbyInteractables.instance.GetBestItem(playerCamera);
+        targetItem = item;
+
+        if (item != null && item.isWorldObject == true)
         {
-            IInteractable interactable = lastHit.collider.GetComponent<IInteractable>();
-            targetItem = lastHit.collider.GetComponent<ItemObject>();
-
-            // Подсказка для IInteractable
-            if (interactable != null)
-            {
-                interactionPromptText.text = interactable.InteractionPrompt;
-                canInteract = true;
-                return;
-            }
-
-            // Подсказка для предмета
-            if (targetItem != null)
-            {
-                Debug.Log("Появление надписи при наведении ");
-                interactionPromptText.text = "Нажмите [E], чтобы подобрать";
-                canInteract = true;
-                return;
-            }
+            interactionPromptText.text = $"{item.itemData.itemName}\nНажмите [E] чтобы подобрать";
+            canInteract = true;
         }
-
-        // Если ничего не нашли — убираем подсказку
-        canInteract = false;
-        targetItem = null;
-        interactionPromptText.text = "";
+        else
+        {
+            interactionPromptText.text = "";
+            canInteract = false;
+        }
     }
 
     public void TryInteract()
@@ -68,15 +51,7 @@ public class PlayerInteraction : MonoBehaviour
         if (!canInteract) return;
 
         // Взаимодействие с объектом
-        if (lastHit.collider == null) return;
-
-        var interactable = lastHit.collider.GetComponent<IInteractable>();
-        if (interactable != null)
-        {
-            interactable.Interact();
-            interactionPromptText.text = "";
-            return;
-        }
+        // здесь больше НЕ должно быть проверки lastHit
 
         // Подбор предмета
         if (targetItem != null)
@@ -84,13 +59,11 @@ public class PlayerInteraction : MonoBehaviour
             InventoryManager.instance.AddItem(
                 targetItem.itemData,
                 targetItem.quantity);
-                //targetItem.ammoInMagazine);
-
+            NearbyInteractables.instance.Unregister(targetItem);
             Destroy(targetItem.gameObject);
             interactionPromptText.text = "";
         }
     }
-
     // Метод для выброса предмета 
     public void DropCurrentItem(bool dropFullStack)
     {

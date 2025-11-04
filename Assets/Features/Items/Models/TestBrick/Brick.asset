@@ -12,10 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac44c009ebc524347940e3da9d16939e, type: 3}
   m_Name: Brick
   m_EditorClassIdentifier: Assembly-CSharp::Tool
-  worldPrefab: {fileID: 8999560192092424716, guid: eabf503f04b477a4dba1463f3dc3b45c, type: 3}
+  worldPrefab: {fileID: 8999560192092424716, guid: 8d3dc83e3ae85cb4783dbc6bcbc90fec, type: 3}
   id: 0
   itemName: Brick
   description: "\u041A\u0438\u0440\u043F\u0438\u0447"
   icon: {fileID: 21300000, guid: 8df226b0953f4e94c90784694b8a64bb, type: 3}
   isStackable: 1
   maxStackAmount: 64
+  itemType: 1
+  isQuestItem: 0
+  questId: 
+  requiredAmount: 1
+  toolId: 
+  canHarvestIds: []
+  baseHarvestSpeed: 1
