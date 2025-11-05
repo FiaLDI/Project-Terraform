@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: CollectBricks
   m_EditorClassIdentifier: Assembly-CSharp::Quests.QuestAsset
   questID: 
-  questName: "\u0421\u0431\u043E\u0440 \u0440\u0435\u0441\u0443\u0440\u0441\u043E\u0432"
-  description: "\u0421\u043E\u0431\u0440\u0430\u0442\u044C \u0440\u0435\u0441\u0443\u0440\u0441\u044B"
-  currentProgress: 2
+  questName: "\u0421\u043E\u0431\u0438\u0440\u0430\u0442\u0435\u043B\u044C \u043A\u0438\u0440\u043F\u0438\u0447\u0435\u0439"
+  description: "\u0421\u043E\u0431\u0440\u0430\u0442\u044C \u043A\u0438\u0440\u043F\u0438\u0447\u0438"
+  currentProgress: 0
   targetProgress: 2
   behaviour:
     rid: 9148246935763943485
@@ -27,5 +27,5 @@ MonoBehaviour:
       data:
         requirements:
         - itemToCollect: {fileID: 11400000, guid: d0783d69fa856d7429b30aa6c1faa6ca, type: 2}
-          amountRequired: 2
-          currentAmountCollected: 2
+          amountRequired: 214
+          currentAmountCollected: 0

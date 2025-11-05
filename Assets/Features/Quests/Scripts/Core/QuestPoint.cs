@@ -9,7 +9,6 @@ namespace Quests
         public QuestAsset linkedQuest;
 
         private bool isCompleted;
-
         private QuestBehaviour localBehaviour;
 
         private void Awake()
@@ -30,25 +29,49 @@ namespace Quests
                     Debug.Log($"Квест '{linkedQuest.questName}' запущен через QuestManager.");
                 }
 
-                linkedQuest.RegisterTarget();
+                linkedQuest.OnQuestUpdated += HandleQuestUpdate;
 
                 if (linkedQuest.behaviour != null)
                 {
                     localBehaviour = linkedQuest.behaviour.Clone();
 
                     if (localBehaviour is ApproachPointQuestBehaviour approach)
+                    {
+                        linkedQuest.RegisterTarget();
                         approach.targetPoint = transform;
+                    }
                     else if (localBehaviour is StandOnPointQuestBehaviour stand)
+                    {
+                        linkedQuest.RegisterTarget();
                         stand.targetPoint = transform;
+                    }
                     else if (localBehaviour is InteractQuestBehaviour interact)
+                    {
+                        linkedQuest.RegisterTarget();
                         interact.targetPoint = transform;
+                    }
                 }
 
-                Debug.Log($"Новая цель зарегистрирована в квесте '{linkedQuest.questName}'. Всего целей: {linkedQuest.targetProgress}");
+                Debug.Log($"QuestPoint для квеста '{linkedQuest.questName}' инициализирован. Всего целей: {linkedQuest.targetProgress}");
             }
         }
 
+        private void HandleQuestUpdate(QuestAsset quest)
+        {
+            if (quest.IsCompleted)
+            {
+                Debug.Log($"Квест '{quest.questName}' завершен, уничтожаем QuestPoint.");
+                Destroy(gameObject);
+            }
+        }
 
+        private void OnDestroy()
+        {
+            if (linkedQuest != null)
+            {
+                linkedQuest.OnQuestUpdated -= HandleQuestUpdate;
+            }
+        }
 
         private void Update()
         {
@@ -89,10 +112,7 @@ namespace Quests
                 return interact.IsCompleted;
             }
 
-
             return localBehaviour == null;
-
-
         }
 
         private void Complete()
@@ -111,4 +131,3 @@ namespace Quests
         }
     }
 }
-
