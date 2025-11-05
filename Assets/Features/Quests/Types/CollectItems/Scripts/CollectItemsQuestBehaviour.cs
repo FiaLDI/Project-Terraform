@@ -1,63 +1,92 @@
-// Features/Quests/Types/CollectItems/Scripts/CollectItemsQuestBehaviour.cs
-using UnityEngine;
+п»їusing UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Quests
 {
     [System.Serializable]
+    public class ItemRequirement
+    {
+        public Item itemToCollect;
+        public int amountRequired;
+
+        [HideInInspector]
+        public int currentAmountCollected;
+    }
+
+    [System.Serializable]
     public class CollectItemsQuestBehaviour : QuestBehaviour
     {
-        [Header("Настройки сбора предметов")]
-        public string targetItemId; // ID предмета для сбора
-        public int requiredAmount = 1; // Требуемое количество
-        public bool specificItemOnly = false; // Только конкретный предмет или любой с этим ID
+        [Header("РЎРїРёСЃРѕРє С‚СЂРµР±СѓРµРјС‹С… РїСЂРµРґРјРµС‚РѕРІ")]
+        public List<ItemRequirement> requirements = new List<ItemRequirement>();
 
-        private int currentCollected = 0;
         private bool active;
         private bool completed;
+        private QuestAsset myQuest;
 
         public override void StartQuest(QuestAsset quest)
         {
-            currentCollected = 0;
+            myQuest = quest;
             active = true;
             completed = false;
 
-            // Устанавливаем целевой прогресс
-            quest.targetProgress = requiredAmount;
-            quest.currentProgress = currentCollected;
-
-            // Подписываемся на события инвентаря
-            InventoryManager.OnItemAdded += OnItemAdded;
-        }
-
-        public override void UpdateProgress(QuestAsset quest, int amount = 1)
-        {
-            if (!active || completed) return;
-
-            currentCollected += amount;
-            quest.currentProgress = currentCollected;
-
-            if (currentCollected >= requiredAmount)
+            foreach (var req in requirements)
             {
-                CompleteQuest(quest);
+                req.currentAmountCollected = 0;
             }
+
+            CalculateQuestProgress();
+            quest.NotifyQuestUpdated();
+
+            InventoryManager.OnItemAdded += OnItemAdded;
         }
 
         private void OnItemAdded(Item item, int quantity)
         {
-            if (!active || completed) return;
+            if (!active || completed || item == null) return;
 
-            // Проверяем, подходит ли предмет для квеста
-            if (item.id.ToString() == targetItemId ||
-                (!specificItemOnly && item.itemName.Contains(targetItemId)))
+            ItemRequirement req = requirements.FirstOrDefault(r => r.itemToCollect.id == item.id);
+
+            if (req != null)
             {
-                UpdateProgress(null, quantity);
+                int needed = req.amountRequired - req.currentAmountCollected;
+                if (needed <= 0) return;
+
+                int amountToCredit = Mathf.Min(quantity, needed);
+                req.currentAmountCollected += amountToCredit;
+
+                Debug.Log($"РљРІРµСЃС‚ '{myQuest.questName}': Р·Р°СЃС‡РёС‚Р°РЅРѕ {amountToCredit}С… {item.itemName}");
+
+                CalculateQuestProgress();
+                myQuest.NotifyQuestUpdated();
+
+                if (myQuest.IsCompleted)
+                {
+                    CompleteQuest(myQuest);
+                }
             }
+        }
+
+        private void CalculateQuestProgress()
+        {
+            if (myQuest == null) return;
+
+            int current = 0;
+            int target = 0;
+
+            foreach (var req in requirements)
+            {
+                current += req.currentAmountCollected;
+                target += req.amountRequired;
+            }
+
+            myQuest.currentProgress = current;
+            myQuest.targetProgress = target;
         }
 
         public override void CompleteQuest(QuestAsset quest)
         {
             if (completed) return;
-
             completed = true;
             active = false;
             InventoryManager.OnItemAdded -= OnItemAdded;
@@ -65,17 +94,39 @@ namespace Quests
 
         public override void ResetQuest(QuestAsset quest)
         {
-            currentCollected = 0;
             active = false;
             completed = false;
+            myQuest = null;
+
+            foreach (var req in requirements)
+            {
+                req.currentAmountCollected = 0;
+            }
+
             InventoryManager.OnItemAdded -= OnItemAdded;
+            CalculateQuestProgress();
         }
 
         public override bool IsActive => active;
         public override bool IsCompleted => completed;
-        public override int CurrentProgress => currentCollected;
-        public override int TargetProgress => requiredAmount;
+        public override int CurrentProgress => myQuest != null ? myQuest.currentProgress : 0;
+        public override int TargetProgress => myQuest != null ? myQuest.targetProgress : 0;
 
-        public override QuestBehaviour Clone() => (CollectItemsQuestBehaviour)MemberwiseClone();
+        public override QuestBehaviour Clone()
+        {
+            var clone = (CollectItemsQuestBehaviour)MemberwiseClone();
+
+            clone.requirements = new List<ItemRequirement>();
+            foreach (var req in requirements)
+            {
+                clone.requirements.Add(new ItemRequirement
+                {
+                    itemToCollect = req.itemToCollect,
+                    amountRequired = req.amountRequired,
+                    currentAmountCollected = 0
+                });
+            }
+            return clone;
+        }
     }
 }
