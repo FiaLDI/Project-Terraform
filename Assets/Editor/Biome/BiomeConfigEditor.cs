@@ -10,10 +10,12 @@ public class BiomeConfigEditor : Editor
     BiomeGenerator generator;
 
     private SerializedProperty questsProp;
+    private SerializedProperty resourcesProp;
 
     private void OnEnable()
     {
         questsProp = serializedObject.FindProperty("possibleQuests");
+        resourcesProp = serializedObject.FindProperty("possibleResources");
     }
 
     public override void OnInspectorGUI()
@@ -62,15 +64,12 @@ public class BiomeConfigEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("environmentDensity"));
 
         // Ресурсы
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourcePrefabs"), true);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceDensity"));
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("⛏️ Resource Spawning", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnerPrefab"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnerDensity"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnTable"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnYOffset"));
+        EditorGUILayout.LabelField("⛏️ Ресурсы", EditorStyles.boldLabel);
+        DrawResourceEntries(resourcesProp);
 
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceDensity"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("resourceSpawnYOffset"));
 
         // --- КВЕСТЫ ---
         EditorGUILayout.Space();
@@ -172,6 +171,50 @@ public class BiomeConfigEditor : Editor
         {
             SaveConfigAsNew(config);
         }
+    }
+
+    private void DrawResourceEntries(SerializedProperty list)
+    {
+        if (list == null) return;
+
+        EditorGUILayout.BeginVertical("box");
+
+        for (int i = 0; i < list.arraySize; i++)
+        {
+            SerializedProperty element = list.GetArrayElementAtIndex(i);
+
+            EditorGUILayout.BeginVertical("helpbox");
+
+            var resourcePrefabProp = element.FindPropertyRelative("resourcePrefab");
+            var resourcePrefab = resourcePrefabProp.objectReferenceValue as GameObject;
+            string resourceName = resourcePrefab != null ? resourcePrefab.name : "None";
+
+            EditorGUILayout.LabelField($"Resource Entry {i + 1}: {resourceName}", EditorStyles.boldLabel);
+
+            EditorGUILayout.PropertyField(resourcePrefabProp, new GUIContent("Resource Prefab"));
+            EditorGUILayout.Slider(element.FindPropertyRelative("spawnChance"), 0f, 1f, new GUIContent("Spawn Chance"));
+            EditorGUILayout.Slider(element.FindPropertyRelative("weight"), 0f, 10f, new GUIContent("Weight"));
+
+
+            EditorGUILayout.Space();
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("▲", GUILayout.Width(30)) && i > 0)
+                list.MoveArrayElement(i, i - 1);
+            if (GUILayout.Button("▼", GUILayout.Width(30)) && i < list.arraySize - 1)
+                list.MoveArrayElement(i, i + 1);
+            if (GUILayout.Button("✖", GUILayout.Width(30)))
+                list.DeleteArrayElementAtIndex(i);
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.EndVertical();
+        }
+
+        if (GUILayout.Button("+ Add Resource Entry"))
+        {
+            list.InsertArrayElementAtIndex(list.arraySize);
+        }
+
+        EditorGUILayout.EndVertical();
     }
 
     private void DrawQuestEntries(SerializedProperty list)

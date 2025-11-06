@@ -29,6 +29,19 @@ public class QuestEntry
 }
 
 [System.Serializable]
+public class ResourceEntry
+{
+    [Header("Префаб ресурса")]
+    public GameObject resourcePrefab;
+
+    [Header("Настройки спавна")]
+    [Range(0f, 1f)]
+    public float spawnChance = 1f;
+    [Range(0f, 10f)]
+    public float weight = 1f;
+}
+
+[System.Serializable]
 public class EnvironmentEntry
 {
     [Header("Префаб окружения")]
@@ -73,13 +86,10 @@ public class BiomeConfig : ScriptableObject
 
 
     [Header("Ресурсы")]
-    public GameObject[] resourcePrefabs;
-    [Range(0f, 1f)] public float resourceDensity = 0.02f;
-    [Header("Resource Spawning Advanced")]
-    public GameObject resourceSpawnerPrefab;   
-    [Range(0f, 1f)] public float resourceSpawnerDensity = 0.001f; 
-    public ScriptableObject resourceSpawnTable; 
-    public float resourceSpawnYOffset = 0.3f;  
+    public ResourceEntry[] possibleResources;
+    public float resourceSpawnYOffset = 0.3f;
+    [Range(0f, 0.01f)]
+    public float resourceDensity = 0.001f;
 
 
     [Header("Квесты")]
