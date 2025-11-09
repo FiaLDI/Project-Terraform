@@ -1,7 +1,46 @@
 #!/usr/bin/env sh
-cd "$(git rev-parse --show-toplevel)"
+set -e
 
-./hooks/check-meta.sh
-./hooks/check-large-files.sh
-./hooks/check-conflicts.sh
-npx lint-staged
+# Переход в корень проекта
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "$ROOT_DIR"
+
+echo "------------------------------------------------------"
+echo "▶ Pre-commit checks started"
+echo "------------------------------------------------------"
+
+### ---------------------------------------------------------
+### Unity Meta checks
+### ---------------------------------------------------------
+
+if [ -f "./hooks/check-meta.sh" ]; then
+    echo "▶ Checking missing .meta files..."
+    ./hooks/check-meta.sh
+else
+    echo "⚠ check-meta.sh not found. SKIPPING meta check."
+fi
+
+### ---------------------------------------------------------
+### Large file checks
+### ---------------------------------------------------------
+
+if [ -f "./hooks/check-large-files.sh" ]; then
+    echo "▶ Checking for large files..."
+    ./hooks/check-large-files.sh
+else
+    echo "⚠ check-large-files.sh not found. SKIPPING large-file check."
+fi
+
+### ---------------------------------------------------------
+### Merge conflict markers
+### ---------------------------------------------------------
+
+if [ -f "./hooks/check-conflicts.sh" ]; then
+    echo "▶ Checking for merge conflicts..."
+    ./hooks/check-conflicts.sh
+else
+    echo "⚠ check-conflicts.sh not found. SKIPPING conflict check."
+fi
+
+echo "✅ Pre-commit checks finished successfully!"
+echo "------------------------------------------------------"

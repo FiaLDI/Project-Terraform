@@ -19,12 +19,11 @@ public class BiomeConfigEditor : Editor
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
-        BiomeConfig config =  (BiomeConfig)target;
+        BiomeConfig config = (BiomeConfig)target;
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("⚙️ Biome Configuration", EditorStyles.boldLabel);
 
-        // Основное
         EditorGUILayout.PropertyField(serializedObject.FindProperty("biomeName"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("mapColor"));
 
