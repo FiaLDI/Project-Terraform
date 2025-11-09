@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-./hooks/check-meta.sh
-./hooks/check-large-files.sh
-./hooks/check-conflicts.sh
+../hooks/check-meta.sh
+../hooks/check-large-files.sh
+../hooks/check-conflicts.sh
 npx lint-staged
