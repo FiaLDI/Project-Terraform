@@ -100,3 +100,4 @@ InitTestScene*.unity*
 
 struct.py
 struct.txt
+node_modules/*

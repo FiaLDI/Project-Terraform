@@ -24,7 +24,6 @@ public class BiomeConfigEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("⚙️ Biome Configuration", EditorStyles.boldLabel);
 
-        // Основное
         EditorGUILayout.PropertyField(serializedObject.FindProperty("biomeName"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("mapColor"));
 
