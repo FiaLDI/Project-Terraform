@@ -1,2 +1,4 @@
-#!/usr/bin/env sh
-npx --no -- commitlint --edit "$HUSKY_GIT_PARAMS"
+#!/usr/bin/env sh"
+
+edit_file=$(echo "$1" | sed 's/\\/\//g')
+npx commitlint --edit "$edit_file"
