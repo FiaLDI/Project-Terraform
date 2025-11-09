@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
+cd "$(git rev-parse --show-toplevel)"
 
-../hooks/check-meta.sh
-../hooks/check-large-files.sh
-../hooks/check-conflicts.sh
+./hooks/check-meta.sh
+./hooks/check-large-files.sh
+./hooks/check-conflicts.sh
 npx lint-staged
