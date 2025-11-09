@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+echo "▶ Checking C# formatting..."
+git diff --cached --name-only -- '*.cs' | xargs -r dotnet format --verify-no-changes
+echo "▶ Checking missing .meta files..."
+./hooks/check-meta.sh
+echo "▶ Checking merge conflicts..."
+./hooks/check-conflicts.sh
+echo "▶ Checking large files..."
+./hooks/check-large-files.sh
+npx lint-staged
