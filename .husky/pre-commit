@@ -1,4 +1,4 @@
-#!/usr/bin/env sh"
+#!/usr/bin/env sh
 
 ./hooks/check-meta.sh
 ./hooks/check-large-files.sh
