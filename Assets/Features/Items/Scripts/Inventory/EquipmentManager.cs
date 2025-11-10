@@ -1,21 +1,23 @@
-﻿using TMPro;
+﻿using System;
+using TMPro;
 using UnityEngine;
 
 public class EquipmentManager : MonoBehaviour
 {
     public static EquipmentManager instance;
     [SerializeField] private Rigidbody playerRigidbody;
-    // Камера, использующаяся для стрельбы
-    [Header("Shooting")]
-    //[SerializeField] 
+
+    [Header("Core References")]
     private Camera playerCamera;
     [SerializeField] private Transform adsPoint; // точка прицеливания
-    //[SerializeField] 
-    private Transform handTransform; // Точка в руке, где будет появляться оружие
-    private GameObject currentWeaponObject;
+    [SerializeField] private Transform handTransform; // Точка в руке, где будет появляться оружие
+
+    private GameObject currentWeaponObject; // Ссылка на префаб в руке
+
     [Header("Weapon State")]
-    private Weapon currentWeaponData;
-    private int currentAmmoInMag;
+    private Weapon currentWeaponData;       // Данные SO, *если* это оружие
+    private Item currentEquippedItemData; // <-- НОВОЕ: Данные SO *любого* предмета
+    private IUsable currentUsable;      // <-- НОВОЕ: Ссылка на IUsable компонент предмета
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI ammoText;
@@ -43,45 +45,19 @@ public class EquipmentManager : MonoBehaviour
                 Debug.LogWarning("EquipmentManager: объект 'HandleEquipPoint' не найден на сцене!");
         }
     }
+
     private void Update()
     {
-        // Если в руках нет оружия (или экипированный предмет - не оружие), то выходим.
-        if (currentWeaponData == null)
-        {
-            return;
-        }
-
-        //// Обработка стрельбы по нажатию Левой Кнопки Мыши.
-        //if (Input.GetMouseButtonDown(0))
-        //{
-        //    // Вызываем метод Shoot, который теперь сам проверяет наличие патронов в магазине.
-        //    Shoot(currentWeaponData);
-        //}
-
-        //// Обработка перезарядки по нажатию клавиши R.
-        //if (Input.GetKeyDown(KeyCode.R))
-        //{
-        //    Reload();
-        //}
+        // <-- УДАЛЕНО: Вся логика нажатия Input.GetMouseButtonDown(0) и Input.GetKeyDown(KeyCode.R)
+        // Эта логика теперь обрабатывается в PlayerUsageController (для инпута)
+        // и в скриптах Usable_ (для стрельбы/перезарядки).
     }
 
-    // Вспомогательный метод для получения данных об оружии
-    private Weapon GetCurrentWeaponData()
-    {
-        if (currentWeaponObject == null) return null;
+    // <-- УДАЛЕНО: private Weapon GetCurrentWeaponData()
+    // Этот метод больше не нужен, так как мы сохраняем currentWeaponData напрямую.
 
-        // Предполагаем, что на префабе оружия висит ItemObject
-        ItemObject itemObj = currentWeaponObject.GetComponent<ItemObject>();
-        if (itemObj != null)
-        {
-            // Пробуем преобразовать Item в Weapon
-            return itemObj.itemData as Weapon;
-        }
-        return null;
-    }
     public void EquipItem(Item itemToEquip)
     {
-        Debug.Log("Предмет экипирован");
         // 1. Уничтожаем старый предмет в руке
         if (currentWeaponObject != null)
         {
@@ -89,8 +65,10 @@ public class EquipmentManager : MonoBehaviour
         }
 
         // 2. Сбрасываем состояние
+        currentWeaponObject = null;
         currentWeaponData = null;
-        //currentWeaponAnimator = null;
+        currentEquippedItemData = null; // <-- НОВОЕ: Сбрасываем данные
+        currentUsable = null;         // <-- НОВОЕ: Сбрасываем интерфейс
 
         // 3. Если слот пуст или у предмета нет 3D-модели, выходим
         if (itemToEquip == null || itemToEquip.worldPrefab == null)
@@ -112,6 +90,7 @@ public class EquipmentManager : MonoBehaviour
         Rigidbody rb = currentWeaponObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
+            Debug.Log("Отключение физики предмета");
             rb.isKinematic = true;
         }
 
@@ -123,88 +102,67 @@ public class EquipmentManager : MonoBehaviour
             itemController.Initialize(playerCamera, playerRigidbody, adsPoint);
         }
 
-        // 7. Проверяем, является ли предмет оружием, и настраиваем его
-        currentWeaponData = itemToEquip as Weapon;
-
+        // 7. Сохраняем данные SO и ищем интерфейс IUsable
+        currentEquippedItemData = itemToEquip;                 // <-- НОВОЕ
+        currentWeaponData = itemToEquip as Weapon;             // <-- (Осталось)
+        currentUsable = currentWeaponObject.GetComponent<IUsable>();
+        Debug.Log("[EquipmentManager] currentUsable = " + currentUsable);
+        if (currentUsable != null)
+        {
+            currentUsable.Initialize(playerCamera);
+        }
         // 8. Обновляем UI в самом конце, когда все готово
         UpdateAmmoUI();
     }
-    private void Shoot(Weapon weaponData)
-    {
-        // Получаем текущее количество патронов из слота
-        int ammoInMag = InventoryManager.instance.GetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex);
 
-        if (ammoInMag <= 0)
-        {
-            Debug.Log("Click! Magazine is empty.");
-            return;
-        }
+    // <-- УДАЛЕНО: private void Shoot(Weapon weaponData)
+    // Эта логика теперь находится в Usable_Weapon_Hitscan.cs
 
-        // Уменьшаем количество и сохраняем новое значение обратно в слот
-        ammoInMag--;
-        InventoryManager.instance.SetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex, ammoInMag);
+    // <-- УДАЛЕНО: void Reload()
+    // Эта логика также будет в Usable_Weapon_Hitscan.cs или в InventoryManager
 
-        UpdateAmmoUI();
-        Debug.Log("Произведен выстрел.");
-
-        // Создаем луч из камеры вперед
-        Ray ray = playerCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
-        RaycastHit hitInfo;
-        float weaponRange = 100f; // Максимальная дальность стрельбы
-
-        // Пускаем луч
-        if (Physics.Raycast(ray, out hitInfo, weaponRange))
-        {
-            // Если луч во что-то попал, пытаемся получить у этого объекта компонент IDamageable
-            IDamageable damageableTarget = hitInfo.collider.GetComponent<IDamageable>();
-
-            // Проверяем, удалось ли его найти
-            if (damageableTarget != null)
-            {
-                // Если да - наносим урон
-                damageableTarget.TakeDamage(weaponData.damage);
-            }
-            else
-            {
-                // Если у объекта нет IDamageable, можно, например, создать эффект попадания в стену
-                Debug.Log("Попадание в объект без IDamageable: " + hitInfo.collider.name);
-            }
-        }
-    }
-    void Reload()
-    {
-        int ammoInMag = InventoryManager.instance.GetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex);
-
-        if (ammoInMag == currentWeaponData.magazineSize) return;
-
-        int ammoNeeded = currentWeaponData.magazineSize - ammoInMag;
-        int ammoAvailable = InventoryManager.instance.GetAmmoCount(currentWeaponData.requiredAmmoType);
-        int ammoToReload = Mathf.Min(ammoNeeded, ammoAvailable);
-
-        if (ammoToReload > 0)
-        {
-            Debug.Log("Reloading...");
-            InventoryManager.instance.ConsumeAmmo(currentWeaponData.requiredAmmoType, ammoToReload);
-
-            // Устанавливаем новое, пополненное значение патронов в слоте
-            InventoryManager.instance.SetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex, ammoInMag + ammoToReload);
-
-            UpdateAmmoUI();
-        }
-    }
+    /// <summary>
+    /// Обновляет UI с количеством патронов.
+    /// </summary>
     void UpdateAmmoUI()
     {
         if (ammoText == null) return;
 
         if (currentWeaponData != null)
         {
-            int ammoInMag = InventoryManager.instance.GetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex);
-            int ammoInInventory = InventoryManager.instance.GetAmmoCount(currentWeaponData.requiredAmmoType);
-            ammoText.text = $"{ammoInMag} / {ammoInInventory}";
+            // Пытаемся получить данные о патронах из InventoryManager
+            if (InventoryManager.instance != null)
+            {
+                int ammoInMag = InventoryManager.instance.GetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex);
+                int ammoInInventory = InventoryManager.instance.GetAmmoCount(currentWeaponData.requiredAmmoType);
+                ammoText.text = $"{ammoInMag} / {ammoInInventory}";
+            }
+            else
+            {
+                ammoText.text = "- / -"; // Инвентарь еще не загружен
+            }
         }
         else
         {
             ammoText.text = "";
         }
+    }
+
+    // --- НОВЫЕ МЕТОДЫ ДЛЯ PlayerUsageController ---
+
+    /// <summary>
+    /// Возвращает ScriptableObject текущего экипированного предмета (Tool, Weapon, etc.).
+    /// </summary>
+    public Item GetCurrentEquippedItem()
+    {
+        return currentEquippedItemData;
+    }
+
+    /// <summary>
+    /// Возвращает компонент IUsable текущего экипированного предмета (или null).
+    /// </summary>
+    public IUsable GetCurrentUsable()
+    {
+        return currentUsable;
     }
 }

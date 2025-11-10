@@ -1,4 +1,5 @@
-// IDamageable.cs
+// IDamageable.cs (Обновленный)
+// Теперь TakeDamage принимает и ТИП урона.
 
 /// <summary>
 /// Определяет контракт для любого объекта, который может получать урон.
@@ -9,5 +10,6 @@ public interface IDamageable
     /// Метод для нанесения урона объекту.
     /// </summary>
     /// <param name="damageAmount">Количество наносимого урона.</param>
-    void TakeDamage(float damageAmount);
+    /// <param name="damageType">Тип наносимого урона.</param>
+    void TakeDamage(float damageAmount, DamageType damageType);
 }
