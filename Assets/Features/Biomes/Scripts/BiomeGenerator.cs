@@ -70,6 +70,8 @@ public class BiomeGenerator : MonoBehaviour
         }
 
         SpawnEnvironment();
+        SpawnResources();
+
     }
 
     private GameObject GenerateChunk(int startX, int startZ, int width, int height, BiomeConfig biome)
@@ -288,11 +290,10 @@ public class BiomeGenerator : MonoBehaviour
             Debug.Log($"✅ Сгенерирован квест '{entry.questAsset.questName}' с {targetsCount} целями");
         }
     }
-
     private IEnumerator SpawnEnvironmentDelayed()
     {
-        // ждём один кадр, чтобы коллайдеры чанков успели обновиться
-        yield return new WaitForEndOfFrame();
+        // ждём один кадр, чтобы коллайдеры чанков успели обновиться
+        yield return new WaitForEndOfFrame();
         SpawnEnvironment();
     }
 
@@ -313,14 +314,14 @@ public class BiomeGenerator : MonoBehaviour
             if (entry == null || entry.prefab == null)
                 continue;
 
-            // 🎯 проверяем индивидуальный шанс спавна
-            if (Random.value > entry.spawnChance)
+            // 🎯 проверяем индивидуальный шанс спавна
+            if (Random.value > entry.spawnChance)
                 continue;
 
             Vector3 pos = new Vector3(
-                Random.Range(0f, biome.width),
-                1000f,
-                Random.Range(0f, biome.height)
+              Random.Range(0f, biome.width),
+              1000f,
+              Random.Range(0f, biome.height)
             );
 
             if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 2000f))
@@ -368,5 +369,60 @@ public class BiomeGenerator : MonoBehaviour
         return entries.Length > 0 ? entries[0] : null;
     }
 
+    public void SpawnResources()
+    {
+        if (biome.possibleResources == null || biome.possibleResources.Length == 0)
+        {
+            Debug.Log($"⚠️ У биома '{biome.biomeName}' нет possibleResources.");
+            return;
+        }
 
+        int totalSpawnedCount = 0;
+        int totalResourceCount = Mathf.RoundToInt(biome.width * biome.height * biome.resourceDensity);
+
+        for (int i = 0; i < totalResourceCount; i++)
+        {
+            ResourceEntry entry = GetWeightedRandomResourceEntry(biome.possibleResources);
+
+            if (entry == null || entry.resourcePrefab == null) continue;
+            if (UnityEngine.Random.value > entry.spawnChance) continue;
+
+            Vector3 pos = new Vector3(
+        UnityEngine.Random.Range(0f, biome.width),
+        1000f,
+        UnityEngine.Random.Range(0f, biome.height)
+      );
+
+            if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 2000f))
+            {
+                pos = hit.point + Vector3.up * biome.resourceSpawnYOffset;
+                Quaternion rot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+
+                GameObject resourceObj = Instantiate(entry.resourcePrefab, pos, rot, biomeRoot.transform);
+                resourceObj.name = entry.resourcePrefab.name + $"_{totalSpawnedCount:D3}";
+
+                totalSpawnedCount++;
+            }
+        }
+
+        Debug.Log($"⛏️ Ресурсы '{biome.biomeName}': {totalSpawnedCount}/{totalResourceCount} объектов заспавнено.");
+    }
+
+
+    private ResourceEntry GetWeightedRandomResourceEntry(ResourceEntry[] entries)
+    {
+        float totalWeight = 0f;
+        foreach (var e in entries)
+            totalWeight += Mathf.Max(0.01f, e.weight);
+
+        float r = Random.Range(0f, totalWeight);
+        float sum = 0f;
+        foreach (var e in entries)
+        {
+            sum += Mathf.Max(0.01f, e.weight);
+            if (r <= sum)
+                return e;
+        }
+        return entries.Length > 0 ? entries[0] : null;
+    }
 }
