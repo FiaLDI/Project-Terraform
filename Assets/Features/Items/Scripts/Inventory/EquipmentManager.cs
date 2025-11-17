@@ -16,16 +16,29 @@ public class EquipmentManager : MonoBehaviour
 
     [Header("Weapon State")]
     private Weapon currentWeaponData;       // Данные SO, *если* это оружие
-    private Item currentEquippedItemData; // <-- НОВОЕ: Данные SO *любого* предмета
-    private IUsable currentUsable;      // <-- НОВОЕ: Ссылка на IUsable компонент предмета
+    private Item currentEquippedItemData; //Данные SO *любого* предмета
+    private IUsable currentUsable;      //  Ссылка на IUsable компонент предмета
+    private PlayerUsageController usageController;
+
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI ammoText;
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
+        if (instance == null)
+        {
+            instance = this;
+            Debug.Log($"[EquipmentManager] Awake: Я '{this.gameObject.name}', я стал 'instance'.");
+        }
+        else
+        {
+            Debug.LogWarning($"[EquipmentManager] Awake: 'instance' уже занят объектом '{instance.gameObject.name}'. " +
+                             $"Я - дубликат на '{this.gameObject.name}' и БУДУ УНИЧТОЖЕН.");
+            Destroy(gameObject);
+            return;
+        }
+
         // === Автоматический поиск камеры и точки удержания ===
         if (playerCamera == null)
         {
@@ -44,17 +57,11 @@ public class EquipmentManager : MonoBehaviour
             else
                 Debug.LogWarning("EquipmentManager: объект 'HandleEquipPoint' не найден на сцене!");
         }
+        usageController = GetComponent<PlayerUsageController>();
+        if (usageController == null)
+            Debug.LogWarning("EquipmentManager: PlayerUsageController не найден на игроке!");
     }
 
-    private void Update()
-    {
-        // <-- УДАЛЕНО: Вся логика нажатия Input.GetMouseButtonDown(0) и Input.GetKeyDown(KeyCode.R)
-        // Эта логика теперь обрабатывается в PlayerUsageController (для инпута)
-        // и в скриптах Usable_ (для стрельбы/перезарядки).
-    }
-
-    // <-- УДАЛЕНО: private Weapon GetCurrentWeaponData()
-    // Этот метод больше не нужен, так как мы сохраняем currentWeaponData напрямую.
 
     public void EquipItem(Item itemToEquip)
     {
@@ -86,6 +93,20 @@ public class EquipmentManager : MonoBehaviour
         currentWeaponObject.transform.localPosition = Vector3.zero;
         currentWeaponObject.transform.localRotation = Quaternion.identity;
 
+        Debug.Log("LOCAL: " + currentWeaponObject.transform.localScale);
+        Debug.Log("LOSSY: " + currentWeaponObject.transform.lossyScale);
+
+        //foreach (Transform child in currentWeaponObject.GetComponentsInChildren<Transform>())
+        //{
+        //    Debug.Log(child.name + " lossy: " + child.lossyScale);
+        //}
+        //Transform t = currentWeaponObject.transform;
+        //while (t != null)
+        //{
+        //    Debug.Log($"PARENT {t.name} lossy={t.lossyScale} local={t.localScale}");
+        //    t = t.parent;
+        //}
+        //currentWeaponObject.transform.localScale = Vector3.one;
         // 5. Отключаем физику для предмета в руках
         Rigidbody rb = currentWeaponObject.GetComponent<Rigidbody>();
         if (rb != null)
@@ -103,13 +124,17 @@ public class EquipmentManager : MonoBehaviour
         }
 
         // 7. Сохраняем данные SO и ищем интерфейс IUsable
-        currentEquippedItemData = itemToEquip;                 // <-- НОВОЕ
+        currentEquippedItemData = itemToEquip;
         currentWeaponData = itemToEquip as Weapon;             // <-- (Осталось)
         currentUsable = currentWeaponObject.GetComponent<IUsable>();
         Debug.Log("[EquipmentManager] currentUsable = " + currentUsable);
         if (currentUsable != null)
         {
             currentUsable.Initialize(playerCamera);
+        }
+        if (usageController != null)
+        {
+            usageController.OnItemEquipped(currentUsable);
         }
         // 8. Обновляем UI в самом конце, когда все готово
         UpdateAmmoUI();

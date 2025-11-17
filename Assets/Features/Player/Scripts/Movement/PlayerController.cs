@@ -8,11 +8,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerCameraController playerCameraController;
 
 
-    void OnDestroy()
-    {
-        Debug.LogError($"💀 {name} уничтожен (OnDestroy) {gameObject.scene.name}", this);
-        Debug.LogError(StackTraceUtility.ExtractStackTrace());
-    }
+    //void OnDestroy()
+    //{
+    //    Debug.LogError($"💀 {name} уничтожен (OnDestroy) {gameObject.scene.name}", this);
+    //    Debug.LogError(StackTraceUtility.ExtractStackTrace());
+    //}
 
     //[Header("Inventory References")]
     //[SerializeField] private InventoryManager inventoryManager;

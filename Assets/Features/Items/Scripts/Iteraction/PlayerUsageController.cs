@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Этот скрипт вешается на Игрока рядом с EquipmentManager.
 [RequireComponent(typeof(EquipmentManager))]
 public class PlayerUsageController : MonoBehaviour
 {
@@ -11,6 +10,10 @@ public class PlayerUsageController : MonoBehaviour
     private bool isUsingItem = false;
     private IUsable currentUsable;
 
+    [Header("Points")]
+    public Transform throwPoint;       // NEW: Добавляем ThrowPoint
+    public Camera playerCamera;        // NEW: Камера игрока
+
     private void Awake()
     {
         equipmentManager = GetComponent<EquipmentManager>();
@@ -18,7 +21,6 @@ public class PlayerUsageController : MonoBehaviour
         inputActions = new InputSystem_Actions();
         inputActions.Player.Enable();
 
-        // Логируем события создания
         Debug.Log("[PlayerUsageController] Awake, subscribing input...");
 
         inputActions.Player.Use.performed += ctx => {
@@ -32,16 +34,33 @@ public class PlayerUsageController : MonoBehaviour
         };
     }
 
-
     private void OnEnable() => inputActions?.Player.Enable();
     private void OnDisable() => inputActions?.Player.Disable();
+
+
+    // NEW: Самый важный момент!!!
+    // Вызывается EquipmentManager-ом при смене предмета
+    public void OnItemEquipped(IUsable usable)
+    {
+        currentUsable = usable;
+
+        // Если это бросаемый предмет — передаём ссылку на ThrowPoint
+        if (usable is UsableThrowable throwable)
+        {
+            throwable.SetSpawnPoint(throwPoint);
+            throwable.Initialize(playerCamera);
+        }
+    }
+
 
     private void OnUseStarted(InputAction.CallbackContext context)
     {
         Debug.Log("[PlayerUsageController] OnUseStarted");
         isUsingItem = true;
+
         currentUsable = equipmentManager.GetCurrentUsable();
         Debug.Log("[PlayerUsageController] currentUsable = " + currentUsable);
+
         currentUsable?.OnUsePrimary_Start();
     }
 
@@ -49,18 +68,15 @@ public class PlayerUsageController : MonoBehaviour
     private void OnUseCanceled(InputAction.CallbackContext context)
     {
         isUsingItem = false;
-        // Вызываем Stop у того же предмета, который был нажат
+
         currentUsable?.OnUsePrimary_Stop();
-        currentUsable = null; // Сбрасываем ссылку
+        currentUsable = null;
     }
 
     private void Update()
     {
-        // Если кнопка зажата, продолжаем вызывать Hold
         if (isUsingItem)
         {
-            // Используем сохраненную ссылку, чтобы Hold и Stop
-            // вызвались у одного и того же объекта
             currentUsable?.OnUsePrimary_Hold();
         }
     }

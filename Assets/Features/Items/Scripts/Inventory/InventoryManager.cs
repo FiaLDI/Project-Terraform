@@ -39,9 +39,19 @@ public class InventoryManager : MonoBehaviour
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else { Destroy(gameObject); return; }
-   
+        if (instance == null)
+        {
+            instance = this;
+            Debug.Log($"[InventoryManager] Awake: Я '{this.gameObject.name}', я стал 'instance'.");
+        }
+        else
+        {
+            Debug.LogWarning($"[InventoryManager] Awake: 'instance' уже занят объектом '{instance.gameObject.name}'. " +
+                             $"Я - дубликат на '{this.gameObject.name}' и БУДУ УНИЧТОЖЕН.");
+            Destroy(gameObject);
+            return;
+        }
+
         for (int i = 0; i < MAIN_INVENTORY_SIZE; i++) mainInventorySlots.Add(new InventorySlot());
         for (int i = 0; i < HOTBAR_SIZE; i++) hotbarSlots.Add(new InventorySlot());
 
@@ -392,6 +402,76 @@ public class InventoryManager : MonoBehaviour
         return totalAmount;
     }
 
+    /// <summary>
+    /// Пытается найти и удалить указанное количество предмета из инвентаря.
+    /// Начинает поиск с хотбара, затем в основном инвентаре.
+    /// </summary>
+    /// <param name="itemToConsume">Какой предмет ищем.</param>
+    /// <param name="quantity">Сколько штук нужно удалить.</param>
+    /// <returns>True, если удалось найти и удалить.</returns>
+    public bool ConsumeItem(Item itemToConsume, int quantity = 1)
+    {
+        if (itemToConsume == null) return false;
+
+        int amountLeft = quantity;
+
+        // --- 1. Поиск в Хотбаре ---
+        for (int i = 0; i < hotbarSlots.Count; i++)
+        {
+            InventorySlot slot = hotbarSlots[i];
+            if (slot.ItemData != null && slot.ItemData.id == itemToConsume.id)
+            {
+                int amountToTake = Mathf.Min(amountLeft, slot.Amount);
+                slot.RemoveFromStack(amountToTake);
+                if (slot.Amount <= 0)
+                {
+                    slot.ClearSlot();
+                }
+                amountLeft -= amountToTake;
+
+                if (amountLeft <= 0)
+                {
+                    UpdateAllUI();
+                    UpdateEquippedItem(); // Важно обновить, если мы бросили из рук
+                    return true;
+                }
+            }
+        }
+
+        // --- 2. Поиск в Основном инвентаре ---
+        for (int i = 0; i < mainInventorySlots.Count; i++)
+        {
+            InventorySlot slot = mainInventorySlots[i];
+            if (slot.ItemData != null && slot.ItemData.id == itemToConsume.id)
+            {
+                int amountToTake = Mathf.Min(amountLeft, slot.Amount);
+                slot.RemoveFromStack(amountToTake);
+                if (slot.Amount <= 0)
+                {
+                    slot.ClearSlot();
+                }
+                amountLeft -= amountToTake;
+
+                if (amountLeft <= 0)
+                {
+                    UpdateAllUI();
+                    UpdateEquippedItem(); // На всякий случай
+                    return true;
+                }
+            }
+        }
+
+        // Предметов не хватило
+        if (amountLeft < quantity)
+        {
+            Debug.LogWarning($"Не удалось потребить {quantity}х {itemToConsume.name}, не хватает {amountLeft}");
+            UpdateAllUI(); // Обновляем UI, даже если удалили часть
+            UpdateEquippedItem();
+            return true; // (Вернем true, если удалили хотя бы часть)
+        }
+
+        return false; // Не нашли ни одного
+    }
     public void ConsumeAmmo(Ammo ammoType, int amountToConsume)
     {
         int amountLeft = amountToConsume;

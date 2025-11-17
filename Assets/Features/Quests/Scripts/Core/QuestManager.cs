@@ -13,8 +13,18 @@ namespace Quests
 
         private void Awake()
         {
-            if (Instance == null) Instance = this;
-            else Destroy(gameObject);
+            if (Instance == null)
+            {
+                Instance = this;
+                Debug.Log($"[QuestManager] Awake: Я '{this.gameObject.name}', я стал 'Instance'.");
+            }
+            else
+            {
+                Debug.LogWarning($"[QuestManager] Awake: 'Instance' уже занят объектом '{Instance.gameObject.name}'. " +
+                                 $"Я - дубликат на '{this.gameObject.name}' и БУДУ УНИЧТОЖЕН.");
+                Destroy(gameObject);
+            return;
+            }
 
             StartSceneQuests();
         }

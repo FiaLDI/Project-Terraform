@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 167790622293556266}
   - component: {fileID: 5185619324487261721}
   - component: {fileID: 7643462005644299531}
+  - component: {fileID: 4781315513405979774}
   m_Layer: 0
   m_Name: Brick (1)
   m_TagString: Item
@@ -190,3 +191,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00ce2d5d4e1f30746a08570cfecbfd8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemAutoRegister
+--- !u!114 &4781315513405979774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8999560192092424716}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 938ba27a2744cb04d8fd42eccf776bee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UsableThrowable
+  throwableAsset: {fileID: 11400000, guid: 24642ce150a09cd4eb4c9ee68b4b6bf1, type: 2}
+  throwForce: 20

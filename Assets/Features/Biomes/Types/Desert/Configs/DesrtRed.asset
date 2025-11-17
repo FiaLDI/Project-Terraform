@@ -62,13 +62,15 @@ MonoBehaviour:
     spawnChance: 0.506
     weight: 2.45
   environmentDensity: 0.019
-  resourcePrefabs:
-  - {fileID: 4159422878025464539, guid: aa1d8e1b377d5ac498a50fd528795ae3, type: 3}
-  resourceDensity: 0.005
-  resourceSpawnerPrefab: {fileID: 4159422878025464539, guid: aa1d8e1b377d5ac498a50fd528795ae3, type: 3}
-  resourceSpawnerDensity: 0.005
-  resourceSpawnTable: {fileID: 11400000, guid: 0c62503dd9837c34cb3df89d13aff310, type: 2}
+  possibleResources:
+  - resourcePrefab: {fileID: 9126582963452210468, guid: 18d709e91dad3174299ac65627e0a8f9, type: 3}
+    spawnChance: 0.49
+    weight: 3
+  - resourcePrefab: {fileID: 8975459638629637451, guid: f86c2ad0101344948857bc3d5ef88c0a, type: 3}
+    spawnChance: 0.49
+    weight: 3
   resourceSpawnYOffset: 0.3
+  resourceDensity: 0.005
   possibleQuests:
   - questAsset: {fileID: 11400000, guid: 48aca5642d5e234489a0bdd19e0fd50f, type: 2}
     questPointPrefab: {fileID: 683551827570343295, guid: 6160fe5af0eccf045a00bfbab1a7b177, type: 3}
