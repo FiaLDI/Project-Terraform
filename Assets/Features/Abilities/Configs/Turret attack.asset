@@ -22,7 +22,7 @@ MonoBehaviour:
   castType: 0
   castTime: 0
   payloadPrefab: {fileID: 5885013346192204236, guid: d925395fb59a50e4d8c709222ace8e18, type: 3}
-  turretPrefab: {fileID: 8771091787928289351, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+  turretPrefab: {fileID: 5885013346192204236, guid: d925395fb59a50e4d8c709222ace8e18, type: 3}
   duration: 25
   damagePerSecond: 4
   range: 15
