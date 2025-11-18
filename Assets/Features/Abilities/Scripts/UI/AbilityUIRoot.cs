@@ -16,10 +16,4 @@ public class AbilityUIRoot : MonoBehaviour
             slots[i].Bind(classManager.ActiveAbilities[i], caster, i);
         }
     }
-
-    private void Update()
-    {
-        foreach (var s in slots)
-            s.UpdateCooldown();
-    }
 }

@@ -14,30 +14,18 @@ public class AbilityHUD : MonoBehaviour
         caster = FindObjectOfType<AbilityCaster>();
         classManager = FindObjectOfType<ClassManager>();
 
-        if (caster == null || classManager == null)
-        {
-            Debug.LogError("AbilityHUD: caster/classManager not found!");
-            return;
-        }
-
         for (int i = 0; i < slots.Length; i++)
         {
-            var ability = classManager.ActiveAbilities[i];
-            slots[i].Bind(ability, caster, i);
+            slots[i].Bind(classManager.ActiveAbilities[i], caster, i);
         }
+
+        // обновлять энергию по событию
+        energy.OnEnergyChanged += UpdateEnergyView;
     }
 
-    private void Update()
+    private void UpdateEnergyView(float current, float max)
     {
-        if (energy && energyFill)
-        {
-            energyFill.fillAmount = energy.CurrentEnergy / energy.MaxEnergy;
-        }
-
-        // Update cooldowns for all slots
-        foreach (var slot in slots)
-        {
-            slot.UpdateCooldown();
-        }
+        if (energyFill != null)
+            energyFill.fillAmount = current / max;
     }
 }

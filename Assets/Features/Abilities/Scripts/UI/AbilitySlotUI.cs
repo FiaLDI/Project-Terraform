@@ -4,14 +4,22 @@ using TMPro;
 
 public class AbilitySlotUI : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("UI")]
     public Image icon;
-    public Image cooldownMask;
+    public Slider cooldownSlider;
     public TextMeshProUGUI keyLabel;
 
     private AbilitySO ability;
     private AbilityCaster caster;
     private int index;
+    
+    private Sprite defaultIcon;
+
+    private void Awake()
+    {
+        if (icon != null)
+            defaultIcon = icon.sprite;
+    }
 
     public void Bind(AbilitySO ability, AbilityCaster caster, int index)
     {
@@ -19,31 +27,47 @@ public class AbilitySlotUI : MonoBehaviour
         this.caster = caster;
         this.index = index;
 
+        if (keyLabel)
+            keyLabel.text = (index + 1).ToString();
+
         if (ability == null)
         {
-            if (icon != null) icon.enabled = false;
-            if (cooldownMask != null) cooldownMask.fillAmount = 0;
+            if (icon != null)
+                icon.sprite = defaultIcon;
+
+            if (cooldownSlider != null)
+            {
+                cooldownSlider.minValue = 0;
+                cooldownSlider.maxValue = 1;  
+                cooldownSlider.value = 1;
+            }
             return;
         }
-
         if (icon != null)
-        {
-            icon.enabled = true;
             icon.sprite = ability.icon;
+
+        if (cooldownSlider != null)
+        {
+            cooldownSlider.minValue = 0;
+            cooldownSlider.maxValue = ability.cooldown;
+            cooldownSlider.value = ability.cooldown;
         }
 
-        if (keyLabel != null)
-        {
-            keyLabel.text = (index + 1).ToString();
-        }
+        caster.OnAbilityCast += HandleCastReset;
+        caster.OnCooldownChanged += HandleCooldownUpdate;
     }
 
-    public void UpdateCooldown()
+    private void HandleCastReset(AbilitySO usedAbility)
     {
-        if (ability == null || caster == null || cooldownMask == null)
-            return;
+        if (usedAbility != ability) return;
 
-        float cd = caster.GetCooldownRemaining(ability);
-        cooldownMask.fillAmount = cd > 0 ? (cd / ability.cooldown) : 0f;
+        cooldownSlider.value = 0;
+    }
+
+    private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
+    {
+        if (updated != ability) return;
+
+        cooldownSlider.value = max - remaining;
     }
 }

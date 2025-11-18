@@ -10,6 +10,10 @@ public class AbilityCaster : MonoBehaviour
     private PlayerEnergy energy;
 
     private Dictionary<AbilitySO, float> cooldowns = new();
+    public event System.Action<AbilitySO, float, float> OnCooldownChanged;
+    public event System.Action<AbilitySO> OnAbilityCast;
+
+
 
     private void Awake()
     {
@@ -23,15 +27,28 @@ public class AbilityCaster : MonoBehaviour
     }
 
     void UpdateCooldowns()
-    {
-        var keys = new List<AbilitySO>(cooldowns.Keys);
+{
+    var keys = new List<AbilitySO>(cooldowns.Keys);
 
-        foreach (var ability in keys)
+    foreach (var ability in keys)
+    {
+        if (cooldowns[ability] > 0)
         {
-            if (cooldowns[ability] > 0)
-                cooldowns[ability] -= Time.deltaTime;
+            cooldowns[ability] -= Time.deltaTime;
+
+            // Событие: ability, remaining, maxCooldown
+            OnCooldownChanged?.Invoke(
+                ability,
+                Mathf.Max(0, cooldowns[ability]),
+                ability.cooldown
+            );
+        }
+        else
+        {
+            cooldowns[ability] = 0;
         }
     }
+}
 
     public float GetCooldownRemaining(AbilitySO ability)
     {
@@ -65,12 +82,13 @@ public class AbilityCaster : MonoBehaviour
 
         Debug.Log($"CAST {ability.name} | cost={ability.energyCost} | energyBefore={energy.CurrentEnergy}");
 
-        // ВАЖНО
         if (!energy.TrySpend(ability.energyCost))
         {
             Debug.Log("[ENERGY] Not enough energy!");
             return;
         }
+
+        OnAbilityCast?.Invoke(ability);
 
         ability.Execute(ctx);
         cooldowns[ability] = ability.cooldown;
