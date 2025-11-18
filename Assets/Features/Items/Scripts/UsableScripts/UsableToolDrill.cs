@@ -15,7 +15,6 @@ public class UsableToolDrill : MonoBehaviour, IUsable
 
     public void OnUsePrimary_Start()
     {
-        // сразу же делаем тик урона при старте
         TryDrill();
     }
 
@@ -28,7 +27,7 @@ public class UsableToolDrill : MonoBehaviour, IUsable
 
     private void TryDrill()
     {
-        Debug.Log("Drill Try"); // уже есть
+        Debug.Log("Drill Try");
 
         Ray ray = new Ray(cam.transform.position, cam.transform.forward);
         if (Physics.Raycast(ray, out RaycastHit hit, range, hitMask))

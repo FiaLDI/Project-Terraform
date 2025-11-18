@@ -74,8 +74,8 @@ public class EquipmentManager : MonoBehaviour
         // 2. Сбрасываем состояние
         currentWeaponObject = null;
         currentWeaponData = null;
-        currentEquippedItemData = null; // <-- НОВОЕ: Сбрасываем данные
-        currentUsable = null;         // <-- НОВОЕ: Сбрасываем интерфейс
+        currentEquippedItemData = null; 
+        currentUsable = null;        
 
         // 3. Если слот пуст или у предмета нет 3D-модели, выходим
         if (itemToEquip == null || itemToEquip.worldPrefab == null)
@@ -140,11 +140,6 @@ public class EquipmentManager : MonoBehaviour
         UpdateAmmoUI();
     }
 
-    // <-- УДАЛЕНО: private void Shoot(Weapon weaponData)
-    // Эта логика теперь находится в Usable_Weapon_Hitscan.cs
-
-    // <-- УДАЛЕНО: void Reload()
-    // Эта логика также будет в Usable_Weapon_Hitscan.cs или в InventoryManager
 
     /// <summary>
     /// Обновляет UI с количеством патронов.
@@ -173,7 +168,6 @@ public class EquipmentManager : MonoBehaviour
         }
     }
 
-    // --- НОВЫЕ МЕТОДЫ ДЛЯ PlayerUsageController ---
 
     /// <summary>
     /// Возвращает ScriptableObject текущего экипированного предмета (Tool, Weapon, etc.).
