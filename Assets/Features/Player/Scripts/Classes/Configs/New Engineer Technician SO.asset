@@ -16,7 +16,7 @@ MonoBehaviour:
   regen: 8
   activeAbilities:
   - {fileID: 11400000, guid: 40f1a85d4168511468a5ad1685f31751, type: 2}
-  - {fileID: 11400000, guid: a42747fbd589d5a4b9b556266a2cf549, type: 2}
+  - {fileID: 11400000, guid: e85b92b7e7837924aa35e48a778e2a97, type: 2}
   - {fileID: 11400000, guid: 40f1a85d4168511468a5ad1685f31751, type: 2}
   - {fileID: 11400000, guid: 40f1a85d4168511468a5ad1685f31751, type: 2}
   - {fileID: 11400000, guid: a42747fbd589d5a4b9b556266a2cf549, type: 2}
