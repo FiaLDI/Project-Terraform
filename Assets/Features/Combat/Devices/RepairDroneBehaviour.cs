@@ -8,6 +8,15 @@ public class RepairDroneBehaviour : MonoBehaviour
     private float healPerSec;
     private float radius;
     private float moveSpeed;
+    private EnergyConsumer energyConsumer;
+
+    // Смещение дрона относительно игрока
+    private Vector3 offset = new Vector3(-1f, 3f, 0f);
+
+    private void Awake()
+    {
+        energyConsumer = GetComponent<EnergyConsumer>();
+    }
 
     public void Init(GameObject ownerObj, float life, float heal, float radius, float speed)
     {
@@ -30,15 +39,28 @@ public class RepairDroneBehaviour : MonoBehaviour
     {
         if (!owner) return;
 
-        transform.position = Vector3.Lerp(transform.position, owner.position, Time.deltaTime * moveSpeed);
+        // локальное смещение вокруг игрока (левее = -right, выше = up)
+        Vector3 targetPos =
+            owner.position
+            + owner.right * offset.x * -1f
+            + owner.up * offset.y
+            + owner.forward * offset.z;
 
+        transform.position = Vector3.Lerp(
+            transform.position,
+            targetPos,
+            Time.deltaTime * moveSpeed
+        );
+
+        // лечение
         Collider[] hits = Physics.OverlapSphere(owner.position, radius);
 
         foreach (var h in hits)
         {
-            var d = h.GetComponent<IDamageable>();
-            if (d != null)
-                d.Heal(healPerSec * Time.deltaTime);
+            if (h.TryGetComponent<IDamageable>(out var dmg))
+            {
+                dmg.Heal(healPerSec * Time.deltaTime);
+            }
         }
     }
 }

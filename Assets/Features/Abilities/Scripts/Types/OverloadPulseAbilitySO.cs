@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [CreateAssetMenu(menuName = "Game/Ability/OverloadPulse")]
 public class OverloadPulseAbilitySO : AbilitySO
@@ -10,37 +11,35 @@ public class OverloadPulseAbilitySO : AbilitySO
 
     public override void Execute(AbilityContext context)
     {
+        // визуальный эффект
         if (payloadPrefab != null)
         {
-            GameObject.Instantiate(
+            GameObject fx = Instantiate(
                 payloadPrefab,
                 context.Owner.transform.position,
                 Quaternion.identity
             );
+
+            var pulse = fx.GetComponent<OverloadPulseBehaviour>();
+            if (pulse != null)
+                pulse.Init(context.Owner.transform, radius, duration);
+
+            Destroy(fx, 1.2f);
         }
 
+        // баффы турелям
         Collider[] hits = Physics.OverlapSphere(context.Owner.transform.position, radius);
         foreach (var h in hits)
         {
             var turret = h.GetComponent<TurretBehaviour>();
             if (turret == null) continue;
 
-            turret.StartCoroutine(ApplyBuffCoroutine(turret));
-        }
-    }
-
-    private System.Collections.IEnumerator ApplyBuffCoroutine(TurretBehaviour turret)
-    {
-        float originalDps = turret.damagePerSecond;
-
-        turret.damagePerSecond = originalDps * (1f + damageBonusPercent / 100f);
-        // Если есть отдельный параметр fireRate — аналогично бустим его
-
-        yield return new WaitForSeconds(duration);
-
-        if (turret != null)
-        {
-            turret.damagePerSecond = originalDps;
+            var buffs = turret.GetComponent<BuffSystem>();
+            if (buffs != null)
+            {
+                buffs.AddBuff(BuffType.DamageBoost, damageBonusPercent, duration, buffIcon);
+                buffs.AddBuff(BuffType.FireRateBoost, fireRateBonusPercent, duration, buffIcon);
+            }
         }
     }
 }

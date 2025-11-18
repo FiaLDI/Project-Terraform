@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5885013346192204236
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5981669487698793137}
+  - component: {fileID: 9012733006345588933}
+  m_Layer: 0
+  m_Name: Turret
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5981669487698793137
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 362.6518, y: 7.8908, z: 309.0801}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5848600499913500725}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9012733006345588933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1cfbcfec43d69348bded7b10aa01270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurretBehaviour
+  damagePerSecond: 100
+  range: 100
+  lifetime: 100
+  maxHp: 100
+--- !u!1001 &1770822350948933745
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5981669487698793137}
+    m_Modifications:
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.4234619
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.15966988
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.9589844
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+      propertyPath: m_Name
+      value: turret
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: -4161369568681901532, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+--- !u!4 &5848600499913500725 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3910990755373119420, guid: 260ee1ded06d08d4b87f58350452589c, type: 3}
+  m_PrefabInstance: {fileID: 1770822350948933745}
+  m_PrefabAsset: {fileID: 0}

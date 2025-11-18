@@ -6,6 +6,7 @@ public abstract class AbilitySO : ScriptableObject
     public string id;
     public string displayName;
     public Sprite icon;
+    public Sprite buffIcon;
 
     [Header("Cast")]
     public float energyCost = 20f;
@@ -17,8 +18,5 @@ public abstract class AbilitySO : ScriptableObject
     [Header("Payload")]
     public GameObject payloadPrefab;
 
-    /// <summary>
-    /// Собственно логика способности. Вызывается в пик анимации (OnCastImpact).
-    /// </summary>
     public abstract void Execute(AbilityContext context);
 }

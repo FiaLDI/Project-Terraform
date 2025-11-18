@@ -11,12 +11,21 @@ public class TurretBehaviour : MonoBehaviour, IDamageable
     private int currentHp;
     private Transform owner;
     private Transform target;
+    private EnergyConsumer energyConsumer;
+    public static float GlobalHpBonusPercent = 0f;
+
+    private void Awake()
+    {
+        energyConsumer = GetComponent<EnergyConsumer>();
+    }
 
     public void Init(GameObject owner, int hp, float dps, float range, float lifetime)
     {
+        
+        float multiplier = 1f + GlobalHpBonusPercent / 100f;
         this.owner = owner.transform;
-        maxHp = hp;
-        currentHp = hp;
+        maxHp = Mathf.RoundToInt(hp * multiplier);
+        currentHp = maxHp;
 
         damagePerSecond = dps;
         this.range = range;

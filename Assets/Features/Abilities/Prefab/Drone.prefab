@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 359464676820970717}
-  - component: {fileID: 2171828108594783968}
+  - component: {fileID: 5996046911851083023}
   m_Layer: 0
   m_Name: Drone
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 7555691018379650059}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2171828108594783968
+--- !u!114 &5996046911851083023
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,13 +42,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 7817172014945752216}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1cfbcfec43d69348bded7b10aa01270, type: 3}
+  m_Script: {fileID: 11500000, guid: b695c272da5fe3e49aa8e437b3c4bc57, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TurretBehaviour
-  damagePerSecond: 5
-  range: 100
-  lifetime: 100
-  maxHp: 100
+  m_EditorClassIdentifier: Assembly-CSharp::RepairDroneBehaviour
 --- !u!1001 &1694410525645975029
 PrefabInstance:
   m_ObjectHideFlags: 0

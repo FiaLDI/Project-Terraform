@@ -3,45 +3,62 @@ using System;
 
 public class PlayerEnergy : MonoBehaviour
 {
-    [Header("Energy")]
-    [SerializeField] private float maxEnergy = 100f;
-    [SerializeField] private float regenPerSecond = 8f;
+    [Header("Base energy settings")]
+    [SerializeField] private float baseMaxEnergy = 100f;
+    [SerializeField] private float baseRegenPerSecond = 8f;
 
     public float CurrentEnergy { get; private set; }
-    public float MaxEnergy => maxEnergy;
+    public float MaxEnergy => baseMaxEnergy + (buffSystem?.GetTotal(BuffType.MaxEnergy) ?? 0f);
+    public float Regen => baseRegenPerSecond + (buffSystem?.GetTotal(BuffType.EnergyRegen) ?? 0f);
 
     public event Action<float, float> OnEnergyChanged;
 
+    private BuffSystem buffSystem;
+
+    private void Awake()
+    {
+        buffSystem = GetComponent<BuffSystem>();
+    }
+
     private void Start()
     {
-        CurrentEnergy = maxEnergy;
+        CurrentEnergy = MaxEnergy;
         Notify();
     }
 
     private void Update()
     {
-        if (CurrentEnergy < maxEnergy)
+        // реген энергии с учётом баффов
+        if (CurrentEnergy < MaxEnergy)
         {
-            CurrentEnergy += regenPerSecond * Time.deltaTime;
-            CurrentEnergy = Mathf.Clamp(CurrentEnergy, 0, maxEnergy);
+            CurrentEnergy += Regen * Time.deltaTime;
+            CurrentEnergy = Mathf.Clamp(CurrentEnergy, 0, MaxEnergy);
             Notify();
         }
     }
 
+    // ==========================================
+    // BASE SETTINGS
+    // ==========================================
+
     public void SetMaxEnergy(float value, bool fill)
     {
-        maxEnergy = value;
+        baseMaxEnergy = value;
 
         if (fill)
-            CurrentEnergy = maxEnergy;
+            CurrentEnergy = MaxEnergy;
 
         Notify();
     }
 
     public void SetRegen(float value)
     {
-        regenPerSecond = value;
+        baseRegenPerSecond = value;
     }
+
+    // ==========================================
+    // ENERGY SPENDING
+    // ==========================================
 
     public bool HasEnergy(float amount)
     {
@@ -58,8 +75,9 @@ public class PlayerEnergy : MonoBehaviour
         return true;
     }
 
+    // ==========================================
     private void Notify()
     {
-        OnEnergyChanged?.Invoke(CurrentEnergy, maxEnergy);
+        OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
     }
 }
