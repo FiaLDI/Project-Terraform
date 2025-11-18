@@ -6,6 +6,9 @@ public class PlayerController : MonoBehaviour
     [Header("Core References")]
     [SerializeField] private PlayerMovement playerMovement;
     [SerializeField] private PlayerCameraController playerCameraController;
+    [SerializeField] private AbilityCaster abilityCaster;
+    [SerializeField] private EnergyBarUI energyUI;
+    [SerializeField] private PlayerEnergy playerEnergy;
 
 
     //void OnDestroy()
@@ -56,6 +59,18 @@ public class PlayerController : MonoBehaviour
         //inputActions.Player.Use.performed += ctx => equipmentManager.TryUseCurrentItem();
         //inputActions.Player.AltUse.performed += ctx => equipmentManager.TryAltUseCurrentItem();
         //inputActions.Player.Drop.performed += ctx => inventoryManager.DropItemFromSelectedSlot();
+
+        inputActions.Player.Ability1.performed += ctx => abilityCaster.TryCast(0);
+        inputActions.Player.Ability2.performed += ctx => abilityCaster.TryCast(1);
+        inputActions.Player.Ability3.performed += ctx => abilityCaster.TryCast(2);
+        inputActions.Player.Ability4.performed += ctx => abilityCaster.TryCast(3);
+        inputActions.Player.Ability5.performed += ctx => abilityCaster.TryCast(4);
+
+        if (energyUI != null && playerEnergy != null)
+        {
+            energyUI.Bind(playerEnergy);
+            energyUI.UpdateImmediate(playerEnergy.CurrentEnergy, playerEnergy.MaxEnergy);
+        }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;

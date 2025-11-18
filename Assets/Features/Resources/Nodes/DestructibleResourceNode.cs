@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-// Этот компонент вешается на префаб руды, ящика, дерева и т.д.
 [RequireComponent(typeof(Collider))]
 public class DestructibleResourceNode : MonoBehaviour, IDamageable
 {
@@ -10,22 +9,22 @@ public class DestructibleResourceNode : MonoBehaviour, IDamageable
     private float currentHealth;
 
     [Header("Damage Modifiers")]
-    [Tooltip("Типы урона, к которым этот объект уязвим.")]
+    [Tooltip("пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.")]
     [SerializeField] private List<DamageType> weaknesses = new List<DamageType>();
-    [SerializeField] private float weaknessMultiplier = 2.0f; // Урон * 2
+    [SerializeField] private float weaknessMultiplier = 2.0f; // пїЅпїЅпїЅпїЅ * 2
 
-    [Tooltip("Типы урона, к которым этот объект устойчив.")]
+    [Tooltip("пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.")]
     [SerializeField] private List<DamageType> resistances = new List<DamageType>();
-    [SerializeField] private float resistanceMultiplier = 0.1f; // Урон * 0.1
+    [SerializeField] private float resistanceMultiplier = 0.1f; // пїЅпїЅпїЅпїЅ * 0.1
 
     [Header("Loot Drops")]
-    [SerializeField] private Item lootItem; // ScriptableObject предмета, который выпадет
+    [SerializeField] private Item lootItem;
     [SerializeField] private int minDropCount = 1;
     [SerializeField] private int maxDropCount = 3;
 
     [Header("Effects")]
-    [SerializeField] private GameObject hitEffect; // Эффект при ударе (искры)
-    [SerializeField] private GameObject destroyEffect; // Эффект при разрушении (взрыв, пыль)
+    [SerializeField] private GameObject hitEffect;
+    [SerializeField] private GameObject destroyEffect;
 
     [SerializeField] public ParticleSystem destroyFX;
     [SerializeField] public AudioClip destroySfx;
@@ -35,13 +34,12 @@ public class DestructibleResourceNode : MonoBehaviour, IDamageable
         currentHealth = maxHealth;
     }
 
-    // Реализация интерфейса IDamageable
     public void TakeDamage(float damageAmount, DamageType damageType)
     {
-        if (currentHealth <= 0) return; // Уже разрушен
+        if (currentHealth <= 0) return; // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-        // 1. Рассчитать модификатор урона
-        float modifier = 1.0f; // Обычный урон
+        // 1. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+        float modifier = 1.0f; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         if (weaknesses.Contains(damageType))
         {
             modifier = weaknessMultiplier;
@@ -51,33 +49,35 @@ public class DestructibleResourceNode : MonoBehaviour, IDamageable
             modifier = resistanceMultiplier;
         }
 
-        // 2. Применить урон
+        // 2. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         float calculatedDamage = damageAmount * modifier;
         currentHealth -= calculatedDamage;
 
-        // 3. Показать эффект попадания
+        // 3. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (hitEffect != null)
         {
-            // TODO: Спавнить эффект в точке попадания (RaycastHit)
+            // TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (RaycastHit)
             Instantiate(hitEffect, transform.position, Quaternion.identity);
         }
 
-        // 4. Проверить на разрушение
+        // 4. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (currentHealth <= 0)
         {
             DestroyNode();
         }
     }
 
+    public void Heal(float amount)
+{
+}
+
     private void DestroyNode()
     {
-        // 1. Показать эффект разрушения
         if (destroyEffect != null)
         {
             Instantiate(destroyEffect, transform.position, transform.rotation);
         }
 
-        // 2. Выбросить лут
         if (lootItem != null && lootItem.worldPrefab != null)
         {
             int dropCount = Random.Range(minDropCount, maxDropCount + 1);
@@ -90,12 +90,11 @@ public class DestructibleResourceNode : MonoBehaviour, IDamageable
                 if (itemObj != null)
                 {
                     itemObj.itemData = lootItem;
-                    itemObj.quantity = 1; // Выбрасываем по 1, но в кол-ве dropCount
+                    itemObj.quantity = 1;
                 }
             }
         }
 
-        // 3. Уничтожить объект руды
         Destroy(gameObject);
     }
 }
