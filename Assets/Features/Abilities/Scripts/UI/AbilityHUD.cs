@@ -14,18 +14,34 @@ public class AbilityHUD : MonoBehaviour
         caster = FindObjectOfType<AbilityCaster>();
         classManager = FindObjectOfType<ClassManager>();
 
-        for (int i = 0; i < slots.Length; i++)
+        if (classManager != null && classManager.ActiveAbilities != null)
         {
-            slots[i].Bind(classManager.ActiveAbilities[i], caster, i);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (i < classManager.ActiveAbilities.Length && classManager.ActiveAbilities[i] != null)
+                {
+                    slots[i].Bind(classManager.ActiveAbilities[i], caster, i);
+                }
+                else
+                {
+                    slots[i].Bind(null, caster, i);
+                }
+            }
         }
 
-        // обновлять энергию по событию
-        energy.OnEnergyChanged += UpdateEnergyView;
+        if (energy != null)
+            energy.OnEnergyChanged += UpdateEnergyView;
+    }
+
+    private void OnDestroy()
+    {
+        if (energy != null)
+            energy.OnEnergyChanged -= UpdateEnergyView;
     }
 
     private void UpdateEnergyView(float current, float max)
     {
-        if (energyFill != null)
+        if (energyFill != null && max > 0)
             energyFill.fillAmount = current / max;
     }
 }

@@ -4,10 +4,10 @@ using UnityEngine;
 public class RepairDroneAbilitySO : AbilitySO
 {
     [Header("Aura Buff")]
-    public AreaBuffSO healAura; // <-- АУРА ХИЛА здесь
+    public AreaBuffSO healAura;
 
     [Header("Buffs")]
-    public BuffSO droneActiveBuff; // <-- баф владельцу (если нужен)
+    public BuffSO droneActiveBuff;
 
     [Header("Drone Settings")]
     public float lifetime = 10f;
@@ -21,7 +21,6 @@ public class RepairDroneAbilitySO : AbilitySO
         var owner = context.Owner;
         if (!owner) return;
 
-        // Баф владельцу ("дрон активен") — по желанию
         var buffs = owner.GetComponent<BuffSystem>();
         if (buffs && droneActiveBuff)
             buffs.AddBuff(droneActiveBuff);
@@ -32,18 +31,15 @@ public class RepairDroneAbilitySO : AbilitySO
             return;
         }
 
-        // ---------- SPAWN DRONE ----------
         GameObject droneObj = Instantiate(dronePrefab, owner.transform.position, Quaternion.identity);
 
-        // ---------- ADD AURA EMITTER TO DRONE ----------
         if (healAura != null)
         {
             var emitter = droneObj.AddComponent<AreaBuffEmitter>();
-            emitter.area = healAura;        // <-- aura делает лечение
+            emitter.area = healAura;
             GameObject.Destroy(emitter, lifetime);
         }
 
-        // ---------- DRONE MOVEMENT ----------
         if (droneObj.TryGetComponent<RepairDroneBehaviour>(out var drone))
         {
             drone.Init(owner, lifetime, followSpeed);

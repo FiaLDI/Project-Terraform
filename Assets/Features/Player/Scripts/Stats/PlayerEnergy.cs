@@ -19,11 +19,12 @@ public class PlayerEnergy : MonoBehaviour
         buffSystem = GetComponent<BuffSystem>();
         if (buffSystem == null)
             Debug.LogError("PlayerEnergy: Missing BuffSystem!");
+        
+        CurrentEnergy = baseMaxEnergy;
     }
 
     private void Start()
     {
-        CurrentEnergy = MaxEnergy;
         Notify();
     }
 

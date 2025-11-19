@@ -1,4 +1,2 @@
 #!/usr/bin/env sh
-
-edit_file=$(echo "$1" | sed 's/\\/\//g')
-npx commitlint --edit "$edit_file"
+. "$(dirname "$0")/h"

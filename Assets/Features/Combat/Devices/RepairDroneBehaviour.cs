@@ -17,7 +17,7 @@ public class RepairDroneBehaviour : MonoBehaviour
     {
         if (!owner) return;
 
-        Vector3 target = owner.transform.position + new Vector3(0, 1.5f, 0);
+        Vector3 target = owner.transform.position + new Vector3(2f, 3f, 0);
         transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
     }
 }

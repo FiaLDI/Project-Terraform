@@ -8,6 +8,7 @@ public class ClassManager : MonoBehaviour
 
     public PlayerClass CurrentClass { get; private set; }
     public AbilitySO[] ActiveAbilities { get; private set; } = new AbilitySO[5];
+    public System.Action OnAbilitiesChanged;
 
     private PlayerEnergy _energy;
     private BuffSystem _buffSystem;
@@ -21,9 +22,15 @@ public class ClassManager : MonoBehaviour
 
     private void Start()
     {
-        // ❗ В Start() ВСЕ компоненты уже инициализированы
         if (startingClass != null)
             ApplyClass(startingClass);
+        
+        
+        Debug.Log($"ClassManager: ActiveAbilities count = {ActiveAbilities.Length}");
+        for (int i = 0; i < ActiveAbilities.Length; i++)
+        {
+            Debug.Log($"Slot {i}: {(ActiveAbilities[i] != null ? ActiveAbilities[i].name : "NULL")}");
+        }
     }
 
     public void ApplyClass(PlayerClass pc)
@@ -44,16 +51,15 @@ public class ClassManager : MonoBehaviour
 
     private void ApplyTechnician(EngineerTechnicianSO cls)
     {
-        // 1️⃣ Энергия
         _energy.SetMaxEnergy(cls.baseEnergy, true);
         _energy.SetRegen(cls.regen);
 
-        // 2️⃣ Активные способности
         for (int i = 0; i < 5; i++)
             ActiveAbilities[i] = (i < cls.activeAbilities.Count ? cls.activeAbilities[i] : null);
 
-        // 3️⃣ Пассивки
         ApplyPassives(cls.passiveBonuses);
+
+        OnAbilitiesChanged?.Invoke();
     }
 
     private void ApplyPassives(List<PassiveSO> passives)

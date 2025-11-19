@@ -66,14 +66,18 @@ public class PlayerController : MonoBehaviour
         inputActions.Player.Ability4.performed += ctx => abilityCaster.TryCast(3);
         inputActions.Player.Ability5.performed += ctx => abilityCaster.TryCast(4);
 
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void Start() {
+        
         if (energyUI != null && playerEnergy != null)
         {
             energyUI.Bind(playerEnergy);
             energyUI.UpdateImmediate(playerEnergy.CurrentEnergy, playerEnergy.MaxEnergy);
         }
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 
     private void OnEnable() => inputActions.Enable();

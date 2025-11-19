@@ -15,8 +15,8 @@ MonoBehaviour:
   buffId: 13
   displayName: Turrent health
   icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  duration: 5
+  duration: Infinity
   isDebuff: 0
   isStackable: 0
   key: turret_hp
-  value: 0
+  value: 250

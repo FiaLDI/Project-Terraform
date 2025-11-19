@@ -15,7 +15,7 @@ MonoBehaviour:
   classId: 0
   displayName: Tech
   icon: {fileID: 21300000, guid: 832cbe79e5eebb940a1008c94ea7463d, type: 3}
-  baseEnergy: 1000
+  baseEnergy: 100
   regen: 0.01
   activeAbilities:
   - {fileID: 11400000, guid: df38b74df7b66e14fb4a6e719a9f71be, type: 2}

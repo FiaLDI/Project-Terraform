@@ -13,8 +13,6 @@ public class AbilityCaster : MonoBehaviour
     public event System.Action<AbilitySO, float, float> OnCooldownChanged;
     public event System.Action<AbilitySO> OnAbilityCast;
 
-
-
     private void Awake()
     {
         classManager = GetComponent<ClassManager>();
@@ -27,28 +25,28 @@ public class AbilityCaster : MonoBehaviour
     }
 
     void UpdateCooldowns()
-{
-    var keys = new List<AbilitySO>(cooldowns.Keys);
-
-    foreach (var ability in keys)
     {
-        if (cooldowns[ability] > 0)
-        {
-            cooldowns[ability] -= Time.deltaTime;
+        var keys = new List<AbilitySO>(cooldowns.Keys);
 
-            // Событие: ability, remaining, maxCooldown
-            OnCooldownChanged?.Invoke(
-                ability,
-                Mathf.Max(0, cooldowns[ability]),
-                ability.cooldown
-            );
-        }
-        else
+        foreach (var ability in keys)
         {
-            cooldowns[ability] = 0;
+            if (cooldowns[ability] > 0)
+            {
+                cooldowns[ability] -= Time.deltaTime;
+
+                // Событие: ability, remaining, maxCooldown
+                OnCooldownChanged?.Invoke(
+                    ability,
+                    Mathf.Max(0, cooldowns[ability]),
+                    ability.cooldown
+                );
+            }
+            else
+            {
+                cooldowns[ability] = 0;
+            }
         }
     }
-}
 
     public float GetCooldownRemaining(AbilitySO ability)
     {
