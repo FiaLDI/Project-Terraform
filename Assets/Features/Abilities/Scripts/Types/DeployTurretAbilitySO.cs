@@ -1,9 +1,9 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Game/Ability/DeployTurret")]
+[CreateAssetMenu(menuName = "Game/Ability/Deploy Turret")]
 public class DeployTurretAbilitySO : AbilitySO
 {
-    [Header("Специфика турели")]
+    [Header("Turret Stats")]
     public GameObject turretPrefab;
     public float duration = 25f;
     public float damagePerSecond = 4f;
@@ -12,25 +12,20 @@ public class DeployTurretAbilitySO : AbilitySO
 
     public override void Execute(AbilityContext context)
     {
-        if (turretPrefab == null) return;
+        if (!turretPrefab) return;
 
-        var spawnPos = context.TargetPoint;
-        var turretObj = GameObject.Instantiate(
-            turretPrefab,
-            spawnPos,
-            Quaternion.identity
-        );
+        var obj = Instantiate(turretPrefab, context.TargetPoint, Quaternion.identity);
 
-        var turret = turretObj.GetComponent<TurretBehaviour>();
-        if (turret != null)
+        if (obj.TryGetComponent<TurretBehaviour>(out var turret))
         {
             turret.Init(
-                owner: context.Owner,
-                hp: hp,
-                dps: damagePerSecond,
-                range: range,
-                lifetime: duration
+                context.Owner,
+                hp,
+                damagePerSecond,
+                range,
+                duration
             );
         }
     }
+
 }

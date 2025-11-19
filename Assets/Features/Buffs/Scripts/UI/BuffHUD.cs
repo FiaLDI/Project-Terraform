@@ -3,24 +3,47 @@ using System.Collections.Generic;
 
 public class BuffHUD : MonoBehaviour
 {
-    public BuffSystem buffSystem;
     public Transform container;
     public BuffIconUI iconPrefab;
+
+    private BuffSystem playerBuffSystem;
 
     private readonly Dictionary<BuffInstance, BuffIconUI> icons = new();
 
     private void Start()
     {
-        if (buffSystem == null)
-            buffSystem = FindAnyObjectByType<BuffSystem>();
+        // пытаемся найти сразу
+        TryBindToPlayer();
+    }
 
-        buffSystem.OnBuffAdded += AddIcon;
-        buffSystem.OnBuffRemoved += RemoveIcon;
+    private void Update()
+    {
+        // если игрок появился позже (сетевой spawn), HUD привяжется
+        if (playerBuffSystem == null)
+            TryBindToPlayer();
+    }
+
+    private void TryBindToPlayer()
+    {
+        // Ищем игрока по компоненту PlayerEnergy
+        var playerEnergy = FindFirstObjectByType<PlayerEnergy>();
+        if (playerEnergy == null)
+            return;
+
+        playerBuffSystem = playerEnergy.GetComponent<BuffSystem>();
+        if (playerBuffSystem == null)
+            return;
+
+        // подписываемся один раз
+        playerBuffSystem.OnBuffAdded += AddIcon;
+        playerBuffSystem.OnBuffRemoved += RemoveIcon;
+
+        Debug.Log("[BuffHUD] Successfully bound to player BuffSystem");
     }
 
     private void AddIcon(BuffInstance buff)
     {
-        BuffIconUI ui = Instantiate(iconPrefab, container);
+        var ui = Instantiate(iconPrefab, container);
         ui.Bind(buff);
         icons[buff] = ui;
     }

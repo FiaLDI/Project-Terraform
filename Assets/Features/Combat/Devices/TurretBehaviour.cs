@@ -1,69 +1,112 @@
 using UnityEngine;
 using System.Collections;
 
-public class TurretBehaviour : MonoBehaviour, IDamageable
+public class TurretBehaviour : MonoBehaviour, IDamageable, IBuffTarget
 {
-    // ------------------ СТАТЫ ------------------
-    [Header("Статы")]
-    public float damagePerSecond = 4f;
-    public float range = 15f;
-    public float lifetime = 25f;
-    public int maxHp = 150;
+    // ============================================================
+    // IBuffTarget implementation
+    // ============================================================
+    public Transform Transform => transform;
+    public GameObject GameObject => gameObject;
 
-    // Бонус HP от пассивок (глобальный)
+    private BuffSystem buffSystem;
+    public BuffSystem BuffSystem => buffSystem;
+
+    // ============================================================
+    // Base stats BEFORE buffs
+    // ============================================================
+    [Header("Base Stats")]
+    public float baseDamagePerSecond = 4f;
+    public float baseRange = 15f;
+    public float lifetime = 25f;
+    public int baseHp = 150;
+
+    // Calculated stats (after buffs)
+    public float DamagePerSecond => baseDamagePerSecond * damageMultiplier;
+    public float Range => baseRange;
+    public float FireInterval => baseFireInterval / Mathf.Max(0.1f, fireRateMultiplier);
+
+    // Buff multipliers
+    [HideInInspector] public float damageMultiplier = 1f;
+    [HideInInspector] public float fireRateMultiplier = 1f;
+    [HideInInspector] public float rotationSpeedMultiplier = 1f;
+
+    // Passive global bonus
     public static float GlobalHpBonusPercent = 0f;
 
-
-    // ------------------ БОЕВЫЕ ПАРАМЕТРЫ ------------------
-    [Header("Боевые параметры")]
+    // ============================================================
+    // Combat settings
+    // ============================================================
+    [Header("Combat")]
+    public float baseFireInterval = 0.1f;
     public float retargetInterval = 0.2f;
-    public float fireInterval = 0.1f;
     public LayerMask targetMask;
 
+    // ============================================================
+    // Components
+    // ============================================================
+    [Header("Objects")]
+    public Transform turretHead;
+    public Transform muzzlePoint;
 
-    // ------------------ ВРАЩЕНИЕ ------------------
-    [Header("Ротация")]
-    public Transform turretHead; // объект Rotator
-    public Transform muzzlePoint; // точка выхода лазера
-
-
-    // ------------------ ЛАЗЕР ------------------
-    [Header("Лазер")]
+    [Header("Laser")]
     public LineRenderer laser;
     public Color laserColor = Color.red;
     public float laserWidth = 0.04f;
 
-
-    // ------------------ ВНУТРЕННИЕ ------------------
     private float currentHp;
-    private Transform target;
-
-    private float retargetTimer;
     private float fireTimer;
+    private float retargetTimer;
+    private Transform target;
 
     private float sphereHeight = 0.8f;
     private Vector3 lastSphereCenter;
 
+    // ============================================================
+    // INIT (called by ability)
+    // ============================================================
+    public void Init(GameObject owner, int hp, float dps, float range, float life)
+    {
+        float globalBonus = GlobalBuffSystem.I.GetValue("turret_hp");
+
+        baseHp = Mathf.RoundToInt(hp * (1f + globalBonus / 100f));
+        baseDamagePerSecond = dps;
+        baseRange = range;
+        lifetime = life;
+    }
 
 
     // ============================================================
-    //                         START
+    // UNITY LIFECYCLE
     // ============================================================
+    private void Awake()
+    {
+        buffSystem = GetComponent<BuffSystem>();
+
+        if (buffSystem == null)
+            Debug.LogError($"Turret {name} has no BuffSystem!");
+    }
+
     private void Start()
     {
-        currentHp = maxHp;
+        float globalBonus = GlobalBuffSystem.I.GetValue("turret_hp");
+        baseHp = Mathf.RoundToInt(baseHp * (1f + globalBonus / 100f));
 
-        // Инициализация LineRenderer
-        if (laser != null)
-        {
-            laser.enabled = false;
-            laser.startWidth = laserWidth;
-            laser.endWidth = laserWidth;
-            laser.startColor = laserColor;
-            laser.endColor = laserColor;
-        }
+        currentHp = baseHp;
 
+        SetupLaser();
         StartCoroutine(LifeTimer());
+    }
+
+    private void SetupLaser()
+    {
+        if (laser == null) return;
+
+        laser.enabled = false;
+        laser.startWidth = laserWidth;
+        laser.endWidth = laserWidth;
+        laser.startColor = laserColor;
+        laser.endColor = laserColor;
     }
 
     private IEnumerator LifeTimer()
@@ -72,23 +115,39 @@ public class TurretBehaviour : MonoBehaviour, IDamageable
         Destroy(gameObject);
     }
 
-
-    // ============================================================
-    //                         INIT
-    // ============================================================
-    public void Init(GameObject owner, int hp, float dps, float range, float lifetime)
+    private void Update()
     {
-        this.maxHp = Mathf.RoundToInt(hp * (1f + GlobalHpBonusPercent / 100f));
-        this.damagePerSecond = dps;
-        this.range = range;
-        this.lifetime = lifetime;
+        UpdateBuffedStats();
+        TickCombat();
     }
 
+    // ============================================================
+    // APPLY BUFFS TO TURRET
+    // ============================================================
+    private void UpdateBuffedStats()
+    {
+        // Reset multipliers before reapplying
+        damageMultiplier = 1f;
+        fireRateMultiplier = 1f;
+        rotationSpeedMultiplier = 1f;
+
+        foreach (var buff in buffSystem.Active)
+        {
+            if (buff.Config is DamageBoostBuffSO dmg)
+                damageMultiplier *= dmg.multiplier;
+
+            if (buff.Config is FireRateBuffSO fr)
+                fireRateMultiplier *= fr.multiplier;
+
+            if (buff.Config is MoveSpeedBuffSO rot)
+                rotationSpeedMultiplier *= rot.speedMultiplier;
+        }
+    }
 
     // ============================================================
-    //                          UPDATE
+    // COMBAT LOGIC
     // ============================================================
-    private void Update()
+    private void TickCombat()
     {
         retargetTimer -= Time.deltaTime;
         fireTimer -= Time.deltaTime;
@@ -102,7 +161,7 @@ public class TurretBehaviour : MonoBehaviour, IDamageable
         if (target != null)
         {
             RotateToTarget();
-            TryFire();
+            FireIfPossible();
             UpdateLaser();
         }
         else
@@ -111,98 +170,79 @@ public class TurretBehaviour : MonoBehaviour, IDamageable
         }
     }
 
-
-    // ============================================================
-    //                    ПОИСК ЦЕЛИ
-    // ============================================================
     private void AcquireTarget()
     {
         Vector3 center = transform.position + Vector3.up * sphereHeight;
         lastSphereCenter = center;
 
-        Collider[] hits = Physics.OverlapSphere(center, range, targetMask);
+        Collider[] hits = Physics.OverlapSphere(center, Range, targetMask);
 
-        float closest = Mathf.Infinity;
+        float bestDist = float.MaxValue;
         target = null;
 
         foreach (var h in hits)
         {
-            float dist = Vector3.Distance(center, h.transform.position);
-            if (dist < closest)
+            float dist = (h.transform.position - center).sqrMagnitude;
+            if (dist < bestDist)
             {
-                closest = dist;
+                bestDist = dist;
                 target = h.transform;
             }
         }
     }
 
-
-    // ============================================================
-    //                    ВРАЩЕНИЕ ТУРЕЛИ
-    // ============================================================
     private void RotateToTarget()
     {
-        if (turretHead == null || target == null)
-            return;
+        if (!turretHead || !target) return;
 
         Vector3 dir = target.position - turretHead.position;
-        dir.y = 0;
+        dir.y = 0f;
 
-        if (dir.sqrMagnitude > 0.01f)
-        {
-            Quaternion rot = Quaternion.LookRotation(dir);
-            turretHead.rotation = Quaternion.Slerp(
-                turretHead.rotation,
-                rot,
-                10f * Time.deltaTime
-            );
-        }
+        if (dir.sqrMagnitude < 0.01f) return;
+
+        Quaternion desired = Quaternion.LookRotation(dir);
+        float speed = 10f * rotationSpeedMultiplier;
+
+        turretHead.rotation = Quaternion.Slerp(
+            turretHead.rotation,
+            desired,
+            speed * Time.deltaTime
+        );
     }
 
-
-    // ============================================================
-    //                      АТАКА / УРОН
-    // ============================================================
-    private void TryFire()
+    private void FireIfPossible()
     {
-        if (target == null) return;
         if (fireTimer > 0f) return;
+        if (target == null) return;
 
-        float dmg = damagePerSecond * fireInterval;
+        float damage = DamagePerSecond * FireInterval;
 
-        IDamageable dmgTarget =
+        IDamageable dmg = 
             target.GetComponentInParent<IDamageable>() ??
             target.GetComponentInChildren<IDamageable>();
 
-        if (dmgTarget != null)
-            dmgTarget.TakeDamage(dmg, DamageType.Generic);
+        dmg?.TakeDamage(damage, DamageType.Generic);
 
-        fireTimer = fireInterval;
+        fireTimer = FireInterval;
     }
 
-
     // ============================================================
-    //                       ЛАЗЕР
+    // LASER
     // ============================================================
     private void UpdateLaser()
     {
-        if (laser == null || muzzlePoint == null || target == null)
-            return;
+        if (!laser || !muzzlePoint || !target) return;
 
         laser.enabled = true;
+        laser.SetPosition(0, muzzlePoint.position);
 
-        Vector3 start = muzzlePoint.position;
+        Vector3 targetPos = target.position;
 
-        // Центр коллайдера врага
-        Vector3 end = target.position;
-        var col = target.GetComponent<Collider>();
-        if (col != null)
-            end = col.bounds.center;
+        if (target.TryGetComponent<Collider>(out var col))
+            targetPos = col.bounds.center;
 
-        laser.SetPosition(0, start);
-        laser.SetPosition(1, end);
+        laser.SetPosition(1, targetPos);
     }
-
 
     private void DisableLaser()
     {
@@ -210,25 +250,23 @@ public class TurretBehaviour : MonoBehaviour, IDamageable
             laser.enabled = false;
     }
 
-
     // ============================================================
-    //                 ПОЛУЧЕНИЕ УРОНА ТУРЕЛЬЮ
+    // HP
     // ============================================================
     public void TakeDamage(float amount, DamageType type)
     {
         currentHp -= amount;
-        if (currentHp <= 0)
+        if (currentHp <= 0f)
             Destroy(gameObject);
     }
 
     public void Heal(float amount)
     {
-        currentHp = Mathf.Min(maxHp, currentHp + amount);
+        currentHp = Mathf.Min(currentHp + amount, baseHp);
     }
 
-
     // ============================================================
-    //                         GIZMOS
+    // GIZMOS
     // ============================================================
     private void OnDrawGizmosSelected()
     {
@@ -238,6 +276,6 @@ public class TurretBehaviour : MonoBehaviour, IDamageable
             ? lastSphereCenter
             : transform.position + Vector3.up * sphereHeight;
 
-        Gizmos.DrawWireSphere(center, range);
+        Gizmos.DrawWireSphere(center, baseRange);
     }
 }

@@ -6,25 +6,25 @@ public class BuffIconUI : MonoBehaviour
 {
     [Header("UI")]
     public Image icon;
-    public Image radialFill;      // круговой таймер
+    public Image radialFill;      
     public TextMeshProUGUI timerLabel;
 
     private BuffInstance buff;
 
-    /// <summary>
-    /// Привязать UI к баффу
-    /// </summary>
     public void Bind(BuffInstance buff)
     {
         this.buff = buff;
-        icon.sprite = buff.Icon;
+
+        if (buff.Config.icon != null)
+            icon.sprite = buff.Config.icon;
 
         UpdateUI();
     }
 
     private void Update()
     {
-        if (buff == null) return;
+        if (buff == null)
+            return;
 
         UpdateUI();
     }
@@ -33,10 +33,8 @@ public class BuffIconUI : MonoBehaviour
     {
         float remain = buff.Remaining;
 
-        // Круговой таймер (0–1)
         radialFill.fillAmount = buff.Progress01;
 
-        // Текст таймера
         timerLabel.text = remain < 1f
             ? $"{remain:0.0}"
             : $"{remain:0}";

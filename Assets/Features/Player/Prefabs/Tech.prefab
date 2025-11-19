@@ -10068,7 +10068,9 @@ GameObject:
   - component: {fileID: 8617315626693463952}
   - component: {fileID: 2902122526011650924}
   - component: {fileID: 7640833787225455698}
-  m_Layer: 0
+  - component: {fileID: 7584912983401593739}
+  - component: {fileID: 4627902548484370361}
+  m_Layer: 8
   m_Name: Tech
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -10303,24 +10305,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 317126c874099384fb7a4e4c25518056, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  stats: {fileID: 7584912983401593739}
   movementReference: {fileID: 5939444589012984952}
   cameraReference: {fileID: 3541873274067029084}
   animator: {fileID: 2652293870516987450}
   headTransform: {fileID: 3326543338057723111}
+  cameraPivot: {fileID: 3275839684821055722}
   alignSpeed: 120
   alignThreshold: 1
   alignStartAngle: 5
-  cameraPivot: {fileID: 3275839684821055722}
-  baseSpeed: 5
-  walkSpeed: 2
-  sprintSpeed: 8
-  crouchSpeed: 1.5
-  gravity: -9.81
-  jumpForce: 5
-  standHeight: 2
-  crouchHeight: 1
-  crouchTransitionSpeed: 10
-  airControl: 0.3
   moveInput: {x: 0, y: 0}
 --- !u!114 &7760796397319313384
 MonoBehaviour:
@@ -10447,6 +10440,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a6484aca8c69b1448349652e89c0ea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffSystem
+--- !u!114 &7584912983401593739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e602598f49a53b5428bb9bb1fa498ff4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementStats
+  baseSpeed: 5
+  walkSpeed: 2
+  sprintSpeed: 8
+  crouchSpeed: 1.5
+  gravity: -9.81
+  jumpForce: 5
+  airControl: 0.3
+  standHeight: 2
+  crouchHeight: 1
+  crouchTransitionSpeed: 10
+--- !u!114 &4627902548484370361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c345c9434a7ef29478cdaed98695e4b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuffTarget
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0

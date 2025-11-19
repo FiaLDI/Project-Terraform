@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fed305f13c5753347b8807c88c0c61da, type: 3}
+  m_Name: RepairDrone
+  m_EditorClassIdentifier: Assembly-CSharp::RepairDroneAbilitySO
+  id: 2
+  displayName: Repair
+  icon: {fileID: 21300000, guid: 4831291e7e2a4ad4882ac7da61d6a38a, type: 3}
+  buffIcon: {fileID: 21300000, guid: 4831291e7e2a4ad4882ac7da61d6a38a, type: 3}
+  energyCost: 20
+  cooldown: 12
+  targetType: 0
+  castType: 0
+  castTime: 0
+  healAura: {fileID: 11400000, guid: 7ec32c1c0aba21846a730ca9d06c8109, type: 2}
+  droneActiveBuff: {fileID: 11400000, guid: 92d621c4554bb664a91205de719aa542, type: 2}
+  lifetime: 10
+  followSpeed: 6
+  dronePrefab: {fileID: 7817172014945752216, guid: 95054df61e4e5f94dadbb76e2c0d4227, type: 3}

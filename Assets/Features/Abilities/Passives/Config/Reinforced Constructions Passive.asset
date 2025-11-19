@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dd0367268dbe34bac123861f22349e, type: 3}
   m_Name: Reinforced Constructions Passive
   m_EditorClassIdentifier: Assembly-CSharp::ReinforcedConstructionsPassive
+  id: 3
+  displayName: HP turret
   icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  hpBonusPercent: 15
+  globalBuff: {fileID: 11400000, guid: a045072209b3ebc4db5d0415b36a0be3, type: 2}

@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61595f8b932485d4fb562c3daed5f4fb, type: 3}
   m_Name: Extra Capacity Passive
   m_EditorClassIdentifier: Assembly-CSharp::ExtraCapacityPassive
+  id: 1
+  displayName: MaxEnergy
   icon: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  bonusMaxEnergy: 100
+  buff: {fileID: 11400000, guid: e84cb19e6c48bc64090e58a8287a504a, type: 2}

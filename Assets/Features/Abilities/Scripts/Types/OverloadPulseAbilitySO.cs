@@ -1,78 +1,65 @@
 using UnityEngine;
-using System.Collections;
 
-[CreateAssetMenu(menuName = "Game/Ability/OverloadPulse")]
+[CreateAssetMenu(menuName = "Game/Ability/Overload Pulse")]
 public class OverloadPulseAbilitySO : AbilitySO
 {
-    [Header("Buff for devices")]
-    public float radius = 12f;
-    public float damageBonusPercent = 30f;
-    public float fireRateBonusPercent = 30f;
-    public float duration = 15f;
+    [Header("Buffs applied to turrets")]
+    public DamageBoostBuffSO damageBuff;
+    public FireRateBuffSO fireRateBuff;
+    public MoveSpeedBuffSO turretMoveBuff;
 
-    [Header("Impact on enemies")]
+    [Header("Pulse Params")]
+    public float radius = 12f;
     public float pulseDamage = 35f;
     public float knockbackForce = 10f;
+
+    [Header("FX")]
+    public GameObject pulseFxPrefab;
 
     public override void Execute(AbilityContext context)
     {
         var owner = context.Owner;
         if (!owner) return;
 
-        // Визуальный оверлоад-пульс
-        if (payloadPrefab != null)
+        float buffDuration = damageBuff != null ? damageBuff.duration : 0.5f;
+
+        if (pulseFxPrefab)
         {
-            GameObject fx = Instantiate(
-                payloadPrefab,
-                owner.transform.position,
-                Quaternion.identity
-            );
+            GameObject fx = Instantiate(pulseFxPrefab, owner.transform.position, Quaternion.identity);
 
-            var pulse = fx.GetComponent<OverloadPulseBehaviour>();
-            if (pulse != null)
-                pulse.Init(owner.transform, radius, duration);
+            if (fx.TryGetComponent<OverloadPulseBehaviour>(out var pulse))
+                pulse.Init(owner.transform, radius, buffDuration);
 
-            Destroy(fx, duration);
+            Destroy(fx, buffDuration);
         }
 
         Collider[] hits = Physics.OverlapSphere(owner.transform.position, radius);
 
         foreach (var h in hits)
         {
-            // 1) Бафф турелям
             if (h.TryGetComponent<TurretBehaviour>(out var turret))
             {
                 var buffs = turret.GetComponent<BuffSystem>();
-                if (buffs != null)
+                if (buffs)
                 {
-                    if (damageBonusPercent != 0)
-                        buffs.AddBuff(BuffType.DamageBoost, damageBonusPercent, duration, buffIcon);
-
-                    if (fireRateBonusPercent != 0)
-                        buffs.AddBuff(BuffType.FireRateBoost, fireRateBonusPercent, duration, buffIcon);
+                    if (damageBuff) buffs.AddBuff(damageBuff);
+                    if (fireRateBuff) buffs.AddBuff(fireRateBuff);
+                    if (turretMoveBuff) buffs.AddBuff(turretMoveBuff);
                 }
-
-                continue; // чтобы не обрабатывать турель как врага
+                continue;
             }
 
-            // 2) Враги — урон + откидывание
             if (h.CompareTag("Enemy"))
             {
-                // Урон
                 if (h.TryGetComponent<IDamageable>(out var dmg))
-                {
                     dmg.TakeDamage(pulseDamage, DamageType.Generic);
-                }
 
-                // Откидывание (нужен Rigidbody у врага)
                 var rb = h.attachedRigidbody;
                 if (rb != null && !rb.isKinematic)
                 {
                     Vector3 dir = (h.transform.position - owner.transform.position);
-                    dir.y = 0f; // без сильного подкидывания
-                    dir = dir.normalized;
-
-                    rb.AddForce(dir * knockbackForce, ForceMode.Impulse);
+                    dir.y = 0f;
+                    rb.AddForce(dir.normalized * knockbackForce, ForceMode.Impulse);
                 }
             }
         }

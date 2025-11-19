@@ -1,182 +1,6 @@
 [
   {
     "type": "folder",
-    "name": "Editor",
-    "path": "Assets\\Editor",
-    "children": [
-      {
-        "type": "folder",
-        "name": "Abilities",
-        "path": "Assets\\Editor\\Abilities",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Editor\\Abilities\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Editor\\Abilities\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Abilities.meta",
-        "path": "Assets\\Editor\\Abilities.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Biome",
-        "path": "Assets\\Editor\\Biome",
-        "children": [
-          {
-            "type": "file",
-            "name": "BiomeConfigEditor.cs",
-            "path": "Assets\\Editor\\Biome\\BiomeConfigEditor.cs"
-          },
-          {
-            "type": "file",
-            "name": "BiomeConfigEditor.cs.meta",
-            "path": "Assets\\Editor\\Biome\\BiomeConfigEditor.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Biome.meta",
-        "path": "Assets\\Editor\\Biome.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Buffs",
-        "path": "Assets\\Editor\\Buffs",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Editor\\Buffs\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Editor\\Buffs\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Buffs.meta",
-        "path": "Assets\\Editor\\Buffs.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Enemy",
-        "path": "Assets\\Editor\\Enemy",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Editor\\Enemy\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Editor\\Enemy\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Enemy.meta",
-        "path": "Assets\\Editor\\Enemy.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Items",
-        "path": "Assets\\Editor\\Items",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Editor\\Items\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Editor\\Items\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Items.meta",
-        "path": "Assets\\Editor\\Items.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Quests",
-        "path": "Assets\\Editor\\Quests",
-        "children": [
-          {
-            "type": "file",
-            "name": "QuestAssetCreator.cs",
-            "path": "Assets\\Editor\\Quests\\QuestAssetCreator.cs"
-          },
-          {
-            "type": "file",
-            "name": "QuestAssetCreator.cs.meta",
-            "path": "Assets\\Editor\\Quests\\QuestAssetCreator.cs.meta"
-          },
-          {
-            "type": "file",
-            "name": "QuestAssetEditor.cs",
-            "path": "Assets\\Editor\\Quests\\QuestAssetEditor.cs"
-          },
-          {
-            "type": "file",
-            "name": "QuestAssetEditor.cs.meta",
-            "path": "Assets\\Editor\\Quests\\QuestAssetEditor.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Quests.meta",
-        "path": "Assets\\Editor\\Quests.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Resource",
-        "path": "Assets\\Editor\\Resource",
-        "children": [
-          {
-            "type": "file",
-            "name": "ResourceNodeEditor.cs",
-            "path": "Assets\\Editor\\Resource\\ResourceNodeEditor.cs"
-          },
-          {
-            "type": "file",
-            "name": "ResourceNodeEditor.cs.meta",
-            "path": "Assets\\Editor\\Resource\\ResourceNodeEditor.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Resource.meta",
-        "path": "Assets\\Editor\\Resource.meta"
-      }
-    ]
-  },
-  {
-    "type": "file",
-    "name": "Editor.meta",
-    "path": "Assets\\Editor.meta"
-  },
-  {
-    "type": "folder",
     "name": "Features",
     "path": "Assets\\Features",
     "children": [
@@ -192,53 +16,53 @@
             "children": [
               {
                 "type": "file",
-                "name": "Charge Device Ability SO.asset",
-                "path": "Assets\\Features\\Abilities\\Configs\\Charge Device Ability SO.asset"
+                "name": "Charge.asset",
+                "path": "Assets\\Features\\Abilities\\Configs\\Charge.asset"
               },
               {
                 "type": "file",
-                "name": "Charge Device Ability SO.asset.meta",
-                "path": "Assets\\Features\\Abilities\\Configs\\Charge Device Ability SO.asset.meta"
+                "name": "Charge.asset.meta",
+                "path": "Assets\\Features\\Abilities\\Configs\\Charge.asset.meta"
               },
               {
                 "type": "file",
-                "name": "Overload Pulse Ability SO.asset",
-                "path": "Assets\\Features\\Abilities\\Configs\\Overload Pulse Ability SO.asset"
+                "name": "Overload.asset",
+                "path": "Assets\\Features\\Abilities\\Configs\\Overload.asset"
               },
               {
                 "type": "file",
-                "name": "Overload Pulse Ability SO.asset.meta",
-                "path": "Assets\\Features\\Abilities\\Configs\\Overload Pulse Ability SO.asset.meta"
+                "name": "Overload.asset.meta",
+                "path": "Assets\\Features\\Abilities\\Configs\\Overload.asset.meta"
               },
               {
                 "type": "file",
-                "name": "Repair Drone.asset",
-                "path": "Assets\\Features\\Abilities\\Configs\\Repair Drone.asset"
+                "name": "RepairDrone.asset",
+                "path": "Assets\\Features\\Abilities\\Configs\\RepairDrone.asset"
               },
               {
                 "type": "file",
-                "name": "Repair Drone.asset.meta",
-                "path": "Assets\\Features\\Abilities\\Configs\\Repair Drone.asset.meta"
+                "name": "RepairDrone.asset.meta",
+                "path": "Assets\\Features\\Abilities\\Configs\\RepairDrone.asset.meta"
               },
               {
                 "type": "file",
-                "name": "Shield.asset",
-                "path": "Assets\\Features\\Abilities\\Configs\\Shield.asset"
+                "name": "ShieldGrid.asset",
+                "path": "Assets\\Features\\Abilities\\Configs\\ShieldGrid.asset"
               },
               {
                 "type": "file",
-                "name": "Shield.asset.meta",
-                "path": "Assets\\Features\\Abilities\\Configs\\Shield.asset.meta"
+                "name": "ShieldGrid.asset.meta",
+                "path": "Assets\\Features\\Abilities\\Configs\\ShieldGrid.asset.meta"
               },
               {
                 "type": "file",
-                "name": "Turret attack.asset",
-                "path": "Assets\\Features\\Abilities\\Configs\\Turret attack.asset"
+                "name": "Turret.asset",
+                "path": "Assets\\Features\\Abilities\\Configs\\Turret.asset"
               },
               {
                 "type": "file",
-                "name": "Turret attack.asset.meta",
-                "path": "Assets\\Features\\Abilities\\Configs\\Turret attack.asset.meta"
+                "name": "Turret.asset.meta",
+                "path": "Assets\\Features\\Abilities\\Configs\\Turret.asset.meta"
               }
             ]
           },
@@ -471,6 +295,26 @@
                 "children": [
                   {
                     "type": "file",
+                    "name": "AuraPassiveBuffSO.cs",
+                    "path": "Assets\\Features\\Abilities\\Passives\\Core\\AuraPassiveBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AuraPassiveBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Abilities\\Passives\\Core\\AuraPassiveBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "GlobalPassiveBuffSO.cs",
+                    "path": "Assets\\Features\\Abilities\\Passives\\Core\\GlobalPassiveBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "GlobalPassiveBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Abilities\\Passives\\Core\\GlobalPassiveBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "PassiveAuraEmitter.cs",
                     "path": "Assets\\Features\\Abilities\\Passives\\Core\\PassiveAuraEmitter.cs"
                   },
@@ -488,6 +332,16 @@
                     "type": "file",
                     "name": "PassiveSO.cs.meta",
                     "path": "Assets\\Features\\Abilities\\Passives\\Core\\PassiveSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TargetPassiveBuffSO.cs",
+                    "path": "Assets\\Features\\Abilities\\Passives\\Core\\TargetPassiveBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TargetPassiveBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Abilities\\Passives\\Core\\TargetPassiveBuffSO.cs.meta"
                   }
                 ]
               },
@@ -830,6 +684,28 @@
         "name": "Biomes",
         "path": "Assets\\Features\\Biomes",
         "children": [
+          {
+            "type": "folder",
+            "name": "Editor",
+            "path": "Assets\\Features\\Biomes\\Editor",
+            "children": [
+              {
+                "type": "file",
+                "name": "BiomeConfigEditor.cs",
+                "path": "Assets\\Features\\Biomes\\Editor\\BiomeConfigEditor.cs"
+              },
+              {
+                "type": "file",
+                "name": "BiomeConfigEditor.cs.meta",
+                "path": "Assets\\Features\\Biomes\\Editor\\BiomeConfigEditor.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Editor.meta",
+            "path": "Assets\\Features\\Biomes\\Editor.meta"
+          },
           {
             "type": "folder",
             "name": "Scripts",
@@ -2131,14 +2007,148 @@
             "path": "Assets\\Features\\Buffs\\Configs",
             "children": [
               {
-                "type": "file",
-                "name": "Empty.cs",
-                "path": "Assets\\Features\\Buffs\\Configs\\Empty.cs"
+                "type": "folder",
+                "name": "Area",
+                "path": "Assets\\Features\\Buffs\\Configs\\Area",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "AreaRegenEnergy.asset",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Area\\AreaRegenEnergy.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AreaRegenEnergy.asset.meta",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Area\\AreaRegenEnergy.asset.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AuraHealPerSecond.asset",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Area\\AuraHealPerSecond.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AuraHealPerSecond.asset.meta",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Area\\AuraHealPerSecond.asset.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnergyEfficiency.asset",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Area\\EnergyEfficiency.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnergyEfficiency.asset.meta",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Area\\EnergyEfficiency.asset.meta"
+                  }
+                ]
               },
               {
                 "type": "file",
-                "name": "Empty.cs.meta",
-                "path": "Assets\\Features\\Buffs\\Configs\\Empty.cs.meta"
+                "name": "Area.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\Area.meta"
+              },
+              {
+                "type": "file",
+                "name": "Damage Boost Buff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\Damage Boost Buff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "Damage Boost Buff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\Damage Boost Buff SO.asset.meta"
+              },
+              {
+                "type": "file",
+                "name": "Drone Active Buff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\Drone Active Buff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "Drone Active Buff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\Drone Active Buff SO.asset.meta"
+              },
+              {
+                "type": "file",
+                "name": "Energy Regen Buff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\Energy Regen Buff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "Energy Regen Buff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\Energy Regen Buff SO.asset.meta"
+              },
+              {
+                "type": "file",
+                "name": "EnergyCostReduction Buff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\EnergyCostReduction Buff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "EnergyCostReduction Buff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\EnergyCostReduction Buff SO.asset.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Global",
+                "path": "Assets\\Features\\Buffs\\Configs\\Global",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "Reinforced.asset",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Global\\Reinforced.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Reinforced.asset.meta",
+                    "path": "Assets\\Features\\Buffs\\Configs\\Global\\Reinforced.asset.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Global.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\Global.meta"
+              },
+              {
+                "type": "file",
+                "name": "HealPerSecond Buff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\HealPerSecond Buff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "HealPerSecond Buff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\HealPerSecond Buff SO.asset.meta"
+              },
+              {
+                "type": "file",
+                "name": "MaxEnergyBuff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\MaxEnergyBuff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "MaxEnergyBuff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\MaxEnergyBuff SO.asset.meta"
+              },
+              {
+                "type": "file",
+                "name": "Move Speed Buff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\Move Speed Buff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "Move Speed Buff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\Move Speed Buff SO.asset.meta"
+              },
+              {
+                "type": "file",
+                "name": "Rate Buff SO.asset",
+                "path": "Assets\\Features\\Buffs\\Configs\\Rate Buff SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "Rate Buff SO.asset.meta",
+                "path": "Assets\\Features\\Buffs\\Configs\\Rate Buff SO.asset.meta"
               }
             ]
           },
@@ -2154,13 +2164,13 @@
             "children": [
               {
                 "type": "file",
-                "name": "BuffIconUI .prefab",
-                "path": "Assets\\Features\\Buffs\\Prefabs\\BuffIconUI .prefab"
+                "name": "BuffIconUI.prefab",
+                "path": "Assets\\Features\\Buffs\\Prefabs\\BuffIconUI.prefab"
               },
               {
                 "type": "file",
-                "name": "BuffIconUI .prefab.meta",
-                "path": "Assets\\Features\\Buffs\\Prefabs\\BuffIconUI .prefab.meta"
+                "name": "BuffIconUI.prefab.meta",
+                "path": "Assets\\Features\\Buffs\\Prefabs\\BuffIconUI.prefab.meta"
               }
             ]
           },
@@ -2181,6 +2191,26 @@
                 "children": [
                   {
                     "type": "file",
+                    "name": "AreaBuffEmitter.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\AreaBuffEmitter.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AreaBuffEmitter.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\AreaBuffEmitter.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AreaBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\AreaBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AreaBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\AreaBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "BuffInstance.cs",
                     "path": "Assets\\Features\\Buffs\\Scripts\\Core\\BuffInstance.cs"
                   },
@@ -2188,6 +2218,16 @@
                     "type": "file",
                     "name": "BuffInstance.cs.meta",
                     "path": "Assets\\Features\\Buffs\\Scripts\\Core\\BuffInstance.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\BuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\BuffSO.cs.meta"
                   },
                   {
                     "type": "file",
@@ -2201,13 +2241,55 @@
                   },
                   {
                     "type": "file",
-                    "name": "BuffType.cs",
-                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\BuffType.cs"
+                    "name": "GlobalBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\GlobalBuffSO.cs"
                   },
                   {
                     "type": "file",
-                    "name": "BuffType.cs.meta",
-                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\BuffType.cs.meta"
+                    "name": "GlobalBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\GlobalBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "GlobalBuffSystem.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\GlobalBuffSystem.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "GlobalBuffSystem.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\GlobalBuffSystem.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "IBuffTarget.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\IBuffTarget.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "IBuffTarget.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\IBuffTarget.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Target",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\Target",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "BuffTarget.cs",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\Core\\Target\\BuffTarget.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BuffTarget.cs.meta",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\Core\\Target\\BuffTarget.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Target.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Core\\Target.meta"
                   }
                 ]
               },
@@ -2222,14 +2304,167 @@
                 "path": "Assets\\Features\\Buffs\\Scripts\\Types",
                 "children": [
                   {
-                    "type": "file",
-                    "name": "SpeedBoost.cs",
-                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\SpeedBoost.cs"
+                    "type": "folder",
+                    "name": "Area",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Area",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "EnergyCostReductionBuffSO.cs",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Area\\EnergyCostReductionBuffSO.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "EnergyCostReductionBuffSO.cs.meta",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Area\\EnergyCostReductionBuffSO.cs.meta"
+                      }
+                    ]
                   },
                   {
                     "type": "file",
-                    "name": "SpeedBoost.cs.meta",
-                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\SpeedBoost.cs.meta"
+                    "name": "Area.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Area.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "DamageBoostBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\DamageBoostBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "DamageBoostBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\DamageBoostBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "DroneActiveBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\DroneActiveBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "DroneActiveBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\DroneActiveBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnergyRegenBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\EnergyRegenBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnergyRegenBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\EnergyRegenBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "FireRateBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\FireRateBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "FireRateBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\FireRateBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Global",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Global",
+                    "children": []
+                  },
+                  {
+                    "type": "file",
+                    "name": "Global.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Global.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "HealPerSecondBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\HealPerSecondBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "HealPerSecondBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\HealPerSecondBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "MaxEnergyBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\MaxEnergyBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "MaxEnergyBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\MaxEnergyBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "MoveSpeedBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\MoveSpeedBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "MoveSpeedBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\MoveSpeedBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "OverloadPulseBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\OverloadPulseBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "OverloadPulseBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\OverloadPulseBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RotationSpeedBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\RotationSpeedBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RotationSpeedBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\RotationSpeedBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ShieldBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\ShieldBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ShieldBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\ShieldBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TurretDamageBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\TurretDamageBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TurretDamageBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\TurretDamageBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TurretFireRateBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\TurretFireRateBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TurretFireRateBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\TurretFireRateBuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TurretShieldBuffSO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\TurretShieldBuffSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TurretShieldBuffSO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\TurretShieldBuffSO.cs.meta"
                   }
                 ]
               },
@@ -3512,6 +3747,104 @@
           },
           {
             "type": "folder",
+            "name": "Classes",
+            "path": "Assets\\Features\\Player\\Classes",
+            "children": [
+              {
+                "type": "folder",
+                "name": "Configs",
+                "path": "Assets\\Features\\Player\\Classes\\Configs",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "EngineerTechnicianSO.cs",
+                    "path": "Assets\\Features\\Player\\Classes\\Configs\\EngineerTechnicianSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EngineerTechnicianSO.cs.meta",
+                    "path": "Assets\\Features\\Player\\Classes\\Configs\\EngineerTechnicianSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Tech.asset",
+                    "path": "Assets\\Features\\Player\\Classes\\Configs\\Tech.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Tech.asset.meta",
+                    "path": "Assets\\Features\\Player\\Classes\\Configs\\Tech.asset.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Configs.meta",
+                "path": "Assets\\Features\\Player\\Classes\\Configs.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Core",
+                "path": "Assets\\Features\\Player\\Classes\\Core",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "ClassManager.cs",
+                    "path": "Assets\\Features\\Player\\Classes\\Core\\ClassManager.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ClassManager.cs.meta",
+                    "path": "Assets\\Features\\Player\\Classes\\Core\\ClassManager.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerClass.cs",
+                    "path": "Assets\\Features\\Player\\Classes\\Core\\PlayerClass.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerClass.cs.meta",
+                    "path": "Assets\\Features\\Player\\Classes\\Core\\PlayerClass.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Core.meta",
+                "path": "Assets\\Features\\Player\\Classes\\Core.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Classes.meta",
+            "path": "Assets\\Features\\Player\\Classes.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Input",
+            "path": "Assets\\Features\\Player\\Input",
+            "children": [
+              {
+                "type": "file",
+                "name": "InputSystem_Actions.cs",
+                "path": "Assets\\Features\\Player\\Input\\InputSystem_Actions.cs"
+              },
+              {
+                "type": "file",
+                "name": "InputSystem_Actions.cs.meta",
+                "path": "Assets\\Features\\Player\\Input\\InputSystem_Actions.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Input.meta",
+            "path": "Assets\\Features\\Player\\Input.meta"
+          },
+          {
+            "type": "folder",
             "name": "Models",
             "path": "Assets\\Features\\Player\\Models",
             "children": [
@@ -3581,115 +3914,6 @@
             "children": [
               {
                 "type": "folder",
-                "name": "Buffs",
-                "path": "Assets\\Features\\Player\\Scripts\\Buffs",
-                "children": [
-                  {
-                    "type": "file",
-                    "name": "Empty.cs",
-                    "path": "Assets\\Features\\Player\\Scripts\\Buffs\\Empty.cs"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Empty.cs.meta",
-                    "path": "Assets\\Features\\Player\\Scripts\\Buffs\\Empty.cs.meta"
-                  }
-                ]
-              },
-              {
-                "type": "file",
-                "name": "Buffs.meta",
-                "path": "Assets\\Features\\Player\\Scripts\\Buffs.meta"
-              },
-              {
-                "type": "folder",
-                "name": "Classes",
-                "path": "Assets\\Features\\Player\\Scripts\\Classes",
-                "children": [
-                  {
-                    "type": "folder",
-                    "name": "Configs",
-                    "path": "Assets\\Features\\Player\\Scripts\\Classes\\Configs",
-                    "children": [
-                      {
-                        "type": "file",
-                        "name": "EngineerTechnicianSO.cs",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Configs\\EngineerTechnicianSO.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EngineerTechnicianSO.cs.meta",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Configs\\EngineerTechnicianSO.cs.meta"
-                      },
-                      {
-                        "type": "file",
-                        "name": "Tech.asset",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Configs\\Tech.asset"
-                      },
-                      {
-                        "type": "file",
-                        "name": "Tech.asset.meta",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Configs\\Tech.asset.meta"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "file",
-                    "name": "Configs.meta",
-                    "path": "Assets\\Features\\Player\\Scripts\\Classes\\Configs.meta"
-                  },
-                  {
-                    "type": "folder",
-                    "name": "Core",
-                    "path": "Assets\\Features\\Player\\Scripts\\Classes\\Core",
-                    "children": [
-                      {
-                        "type": "file",
-                        "name": "ClassManager.cs",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Core\\ClassManager.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "ClassManager.cs.meta",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Core\\ClassManager.cs.meta"
-                      },
-                      {
-                        "type": "file",
-                        "name": "PlayerClass.cs",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Core\\PlayerClass.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "PlayerClass.cs.meta",
-                        "path": "Assets\\Features\\Player\\Scripts\\Classes\\Core\\PlayerClass.cs.meta"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "file",
-                    "name": "Core.meta",
-                    "path": "Assets\\Features\\Player\\Scripts\\Classes\\Core.meta"
-                  }
-                ]
-              },
-              {
-                "type": "file",
-                "name": "Classes.meta",
-                "path": "Assets\\Features\\Player\\Scripts\\Classes.meta"
-              },
-              {
-                "type": "folder",
-                "name": "Controller",
-                "path": "Assets\\Features\\Player\\Scripts\\Controller",
-                "children": []
-              },
-              {
-                "type": "file",
-                "name": "Controller.meta",
-                "path": "Assets\\Features\\Player\\Scripts\\Controller.meta"
-              },
-              {
-                "type": "folder",
                 "name": "Movement",
                 "path": "Assets\\Features\\Player\\Scripts\\Movement",
                 "children": [
@@ -3747,6 +3971,26 @@
                 "children": [
                   {
                     "type": "file",
+                    "name": "AbilityCostSystem.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\Stats\\AbilityCostSystem.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AbilityCostSystem.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\Stats\\AbilityCostSystem.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerCombat.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\Stats\\PlayerCombat.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerCombat.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\Stats\\PlayerCombat.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "PlayerEnergy.cs",
                     "path": "Assets\\Features\\Player\\Scripts\\Stats\\PlayerEnergy.cs"
                   },
@@ -3764,6 +4008,16 @@
                     "type": "file",
                     "name": "PlayerHealth.cs.meta",
                     "path": "Assets\\Features\\Player\\Scripts\\Stats\\PlayerHealth.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerMovementStats.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\Stats\\PlayerMovementStats.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerMovementStats.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\Stats\\PlayerMovementStats.cs.meta"
                   }
                 ]
               },
@@ -3793,6 +4047,38 @@
         "children": [
           {
             "type": "folder",
+            "name": "Editor",
+            "path": "Assets\\Features\\Quests\\Editor",
+            "children": [
+              {
+                "type": "file",
+                "name": "QuestAssetCreator.cs",
+                "path": "Assets\\Features\\Quests\\Editor\\QuestAssetCreator.cs"
+              },
+              {
+                "type": "file",
+                "name": "QuestAssetCreator.cs.meta",
+                "path": "Assets\\Features\\Quests\\Editor\\QuestAssetCreator.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "QuestAssetEditor.cs",
+                "path": "Assets\\Features\\Quests\\Editor\\QuestAssetEditor.cs"
+              },
+              {
+                "type": "file",
+                "name": "QuestAssetEditor.cs.meta",
+                "path": "Assets\\Features\\Quests\\Editor\\QuestAssetEditor.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Editor.meta",
+            "path": "Assets\\Features\\Quests\\Editor.meta"
+          },
+          {
+            "type": "folder",
             "name": "Prefabs",
             "path": "Assets\\Features\\Quests\\Prefabs",
             "children": [
@@ -3812,6 +4098,50 @@
             "type": "file",
             "name": "Prefabs.meta",
             "path": "Assets\\Features\\Quests\\Prefabs.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Resources",
+            "path": "Assets\\Features\\Quests\\Resources",
+            "children": [
+              {
+                "type": "folder",
+                "name": "UI",
+                "path": "Assets\\Features\\Quests\\Resources\\UI",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "Backgorund.png",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Backgorund.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Backgorund.png.meta",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Backgorund.png.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Head.png",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Head.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Head.png.meta",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Head.png.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UI.meta",
+                "path": "Assets\\Features\\Quests\\Resources\\UI.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Resources.meta",
+            "path": "Assets\\Features\\Quests\\Resources.meta"
           },
           {
             "type": "folder",
@@ -4446,6 +4776,28 @@
           },
           {
             "type": "folder",
+            "name": "Editor",
+            "path": "Assets\\Features\\Resources\\Editor",
+            "children": [
+              {
+                "type": "file",
+                "name": "ResourceNodeEditor.cs",
+                "path": "Assets\\Features\\Resources\\Editor\\ResourceNodeEditor.cs"
+              },
+              {
+                "type": "file",
+                "name": "ResourceNodeEditor.cs.meta",
+                "path": "Assets\\Features\\Resources\\Editor\\ResourceNodeEditor.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Editor.meta",
+            "path": "Assets\\Features\\Resources\\Editor.meta"
+          },
+          {
+            "type": "folder",
             "name": "Models",
             "path": "Assets\\Features\\Resources\\Models",
             "children": [
@@ -4616,28 +4968,6 @@
                 "type": "file",
                 "name": "Core.meta",
                 "path": "Assets\\Features\\Resources\\Scripts\\Core.meta"
-              },
-              {
-                "type": "folder",
-                "name": "Data",
-                "path": "Assets\\Features\\Resources\\Scripts\\Data",
-                "children": []
-              },
-              {
-                "type": "file",
-                "name": "Data.meta",
-                "path": "Assets\\Features\\Resources\\Scripts\\Data.meta"
-              },
-              {
-                "type": "folder",
-                "name": "Shared",
-                "path": "Assets\\Features\\Resources\\Scripts\\Shared",
-                "children": []
-              },
-              {
-                "type": "file",
-                "name": "Shared.meta",
-                "path": "Assets\\Features\\Resources\\Scripts\\Shared.meta"
               }
             ]
           },
@@ -5106,71 +5436,6 @@
   },
   {
     "type": "folder",
-    "name": "Models",
-    "path": "Assets\\Models",
-    "children": []
-  },
-  {
-    "type": "file",
-    "name": "Models.meta",
-    "path": "Assets\\Models.meta"
-  },
-  {
-    "type": "file",
-    "name": "Readme.asset",
-    "path": "Assets\\Readme.asset"
-  },
-  {
-    "type": "file",
-    "name": "Readme.asset.meta",
-    "path": "Assets\\Readme.asset.meta"
-  },
-  {
-    "type": "folder",
-    "name": "Resources",
-    "path": "Assets\\Resources",
-    "children": [
-      {
-        "type": "folder",
-        "name": "Quest",
-        "path": "Assets\\Resources\\Quest",
-        "children": [
-          {
-            "type": "file",
-            "name": "Quest log.png",
-            "path": "Assets\\Resources\\Quest\\Quest log.png"
-          },
-          {
-            "type": "file",
-            "name": "Quest log.png.meta",
-            "path": "Assets\\Resources\\Quest\\Quest log.png.meta"
-          },
-          {
-            "type": "file",
-            "name": "Rectangle 29.png",
-            "path": "Assets\\Resources\\Quest\\Rectangle 29.png"
-          },
-          {
-            "type": "file",
-            "name": "Rectangle 29.png.meta",
-            "path": "Assets\\Resources\\Quest\\Rectangle 29.png.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Quest.meta",
-        "path": "Assets\\Resources\\Quest.meta"
-      }
-    ]
-  },
-  {
-    "type": "file",
-    "name": "Resources.meta",
-    "path": "Assets\\Resources.meta"
-  },
-  {
-    "type": "folder",
     "name": "Scenes",
     "path": "Assets\\Scenes",
     "children": [
@@ -5190,28 +5455,6 @@
     "type": "file",
     "name": "Scenes.meta",
     "path": "Assets\\Scenes.meta"
-  },
-  {
-    "type": "folder",
-    "name": "Scripts",
-    "path": "Assets\\Scripts",
-    "children": [
-      {
-        "type": "file",
-        "name": "InputSystem_Actions.cs",
-        "path": "Assets\\Scripts\\InputSystem_Actions.cs"
-      },
-      {
-        "type": "file",
-        "name": "InputSystem_Actions.cs.meta",
-        "path": "Assets\\Scripts\\InputSystem_Actions.cs.meta"
-      }
-    ]
-  },
-  {
-    "type": "file",
-    "name": "Scripts.meta",
-    "path": "Assets\\Scripts.meta"
   },
   {
     "type": "folder",
@@ -5294,128 +5537,6 @@
     "type": "file",
     "name": "Settings.meta",
     "path": "Assets\\Settings.meta"
-  },
-  {
-    "type": "folder",
-    "name": "Shared",
-    "path": "Assets\\Shared",
-    "children": [
-      {
-        "type": "folder",
-        "name": "Audio",
-        "path": "Assets\\Shared\\Audio",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Shared\\Audio\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Shared\\Audio\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Audio.meta",
-        "path": "Assets\\Shared\\Audio.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Materials",
-        "path": "Assets\\Shared\\Materials",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Shared\\Materials\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Shared\\Materials\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Materials.meta",
-        "path": "Assets\\Shared\\Materials.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Models",
-        "path": "Assets\\Shared\\Models",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Shared\\Models\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Shared\\Models\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Models.meta",
-        "path": "Assets\\Shared\\Models.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Prefabs",
-        "path": "Assets\\Shared\\Prefabs",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Shared\\Prefabs\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Shared\\Prefabs\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Prefabs.meta",
-        "path": "Assets\\Shared\\Prefabs.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Textures",
-        "path": "Assets\\Shared\\Textures",
-        "children": [
-          {
-            "type": "file",
-            "name": "Empty.cs",
-            "path": "Assets\\Shared\\Textures\\Empty.cs"
-          },
-          {
-            "type": "file",
-            "name": "Empty.cs.meta",
-            "path": "Assets\\Shared\\Textures\\Empty.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Textures.meta",
-        "path": "Assets\\Shared\\Textures.meta"
-      }
-    ]
-  },
-  {
-    "type": "file",
-    "name": "Shared.meta",
-    "path": "Assets\\Shared.meta"
   },
   {
     "type": "folder",
@@ -5902,93 +6023,5 @@
     "type": "file",
     "name": "TextMesh Pro.meta",
     "path": "Assets\\TextMesh Pro.meta"
-  },
-  {
-    "type": "folder",
-    "name": "TutorialInfo",
-    "path": "Assets\\TutorialInfo",
-    "children": [
-      {
-        "type": "folder",
-        "name": "Icons",
-        "path": "Assets\\TutorialInfo\\Icons",
-        "children": [
-          {
-            "type": "file",
-            "name": "URP.png",
-            "path": "Assets\\TutorialInfo\\Icons\\URP.png"
-          },
-          {
-            "type": "file",
-            "name": "URP.png.meta",
-            "path": "Assets\\TutorialInfo\\Icons\\URP.png.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Icons.meta",
-        "path": "Assets\\TutorialInfo\\Icons.meta"
-      },
-      {
-        "type": "file",
-        "name": "Layout.wlt",
-        "path": "Assets\\TutorialInfo\\Layout.wlt"
-      },
-      {
-        "type": "file",
-        "name": "Layout.wlt.meta",
-        "path": "Assets\\TutorialInfo\\Layout.wlt.meta"
-      },
-      {
-        "type": "folder",
-        "name": "Scripts",
-        "path": "Assets\\TutorialInfo\\Scripts",
-        "children": [
-          {
-            "type": "folder",
-            "name": "Editor",
-            "path": "Assets\\TutorialInfo\\Scripts\\Editor",
-            "children": [
-              {
-                "type": "file",
-                "name": "ReadmeEditor.cs",
-                "path": "Assets\\TutorialInfo\\Scripts\\Editor\\ReadmeEditor.cs"
-              },
-              {
-                "type": "file",
-                "name": "ReadmeEditor.cs.meta",
-                "path": "Assets\\TutorialInfo\\Scripts\\Editor\\ReadmeEditor.cs.meta"
-              }
-            ]
-          },
-          {
-            "type": "file",
-            "name": "Editor.meta",
-            "path": "Assets\\TutorialInfo\\Scripts\\Editor.meta"
-          },
-          {
-            "type": "file",
-            "name": "Readme.cs",
-            "path": "Assets\\TutorialInfo\\Scripts\\Readme.cs"
-          },
-          {
-            "type": "file",
-            "name": "Readme.cs.meta",
-            "path": "Assets\\TutorialInfo\\Scripts\\Readme.cs.meta"
-          }
-        ]
-      },
-      {
-        "type": "file",
-        "name": "Scripts.meta",
-        "path": "Assets\\TutorialInfo\\Scripts.meta"
-      }
-    ]
-  },
-  {
-    "type": "file",
-    "name": "TutorialInfo.meta",
-    "path": "Assets\\TutorialInfo.meta"
   }
 ]

@@ -1,50 +1,52 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Game/Ability/RepairDrone")]
+[CreateAssetMenu(menuName = "Game/Ability/Repair Drone")]
 public class RepairDroneAbilitySO : AbilitySO
 {
+    [Header("Aura Buff")]
+    public AreaBuffSO healAura; // <-- АУРА ХИЛА здесь
+
+    [Header("Buffs")]
+    public BuffSO droneActiveBuff; // <-- баф владельцу (если нужен)
+
+    [Header("Drone Settings")]
     public float lifetime = 10f;
-    public float healPerSecond = 12f;
-    public float healRadius = 6f;
     public float followSpeed = 6f;
+
+    [Header("FX / Drone Prefab")]
+    public GameObject dronePrefab;
 
     public override void Execute(AbilityContext context)
     {
-        // === БУСТ В HUD — Repair Drone Active ===
-        var buffs = context.Owner.GetComponent<BuffSystem>();
-        if (buffs != null && buffIcon != null)
-        {
-            buffs.AddBuff(
-                BuffType.RepairDroneActive,
-                value: 0f,            // нам не нужны бонусы
-                duration: lifetime,
-                icon: buffIcon
-            );
-        }
+        var owner = context.Owner;
+        if (!owner) return;
 
-        // === Создание дрона ===
-        if (payloadPrefab == null)
+        // Баф владельцу ("дрон активен") — по желанию
+        var buffs = owner.GetComponent<BuffSystem>();
+        if (buffs && droneActiveBuff)
+            buffs.AddBuff(droneActiveBuff);
+
+        if (!dronePrefab)
         {
-            Debug.LogError("RepairDroneAbilitySO: payloadPrefab not assigned!");
+            Debug.LogError("RepairDroneAbilitySO: dronePrefab not assigned!");
             return;
         }
 
-        GameObject droneObj = Instantiate(
-            payloadPrefab,
-            context.Owner.transform.position,
-            Quaternion.identity
-        );
+        // ---------- SPAWN DRONE ----------
+        GameObject droneObj = Instantiate(dronePrefab, owner.transform.position, Quaternion.identity);
 
-        var drone = droneObj.GetComponent<RepairDroneBehaviour>();
-        if (drone != null)
+        // ---------- ADD AURA EMITTER TO DRONE ----------
+        if (healAura != null)
         {
-            drone.Init(
-                context.Owner,
-                lifetime,
-                healPerSecond,
-                healRadius,
-                followSpeed
-            );
+            var emitter = droneObj.AddComponent<AreaBuffEmitter>();
+            emitter.area = healAura;        // <-- aura делает лечение
+            GameObject.Destroy(emitter, lifetime);
+        }
+
+        // ---------- DRONE MOVEMENT ----------
+        if (droneObj.TryGetComponent<RepairDroneBehaviour>(out var drone))
+        {
+            drone.Init(owner, lifetime, followSpeed);
         }
 
         Destroy(droneObj, lifetime + 0.3f);

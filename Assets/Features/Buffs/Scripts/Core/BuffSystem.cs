@@ -1,47 +1,78 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class BuffSystem : MonoBehaviour
 {
-    private readonly List<BuffInstance> activeBuffs = new();
-    public IReadOnlyList<BuffInstance> ActiveBuffs => activeBuffs;
-
+    private readonly List<BuffInstance> active = new();
+    public IReadOnlyList<BuffInstance> Active => active;
     public event System.Action<BuffInstance> OnBuffAdded;
     public event System.Action<BuffInstance> OnBuffRemoved;
 
+    private IBuffTarget target;
+
+    private void Awake()
+    {
+        target = GetComponent<IBuffTarget>() ??
+                 GetComponentInChildren<IBuffTarget>() ??
+                 GetComponentInParent<IBuffTarget>();
+
+        if (target == null)
+            Debug.LogError($"BuffSystem ERROR: нет IBuffTarget на объекте '{name}'");
+    }
+
     private void Update()
     {
-        for (int i = activeBuffs.Count - 1; i >= 0; i--)
+        float dt = Time.deltaTime;
+
+        for (int i = active.Count - 1; i >= 0; i--)
         {
-            if (activeBuffs[i].IsExpired)
-                RemoveBuffInstance(activeBuffs[i]);
+            var inst = active[i];
+
+            inst.Config.OnTick(inst, dt);
+
+            if (inst.IsExpired)
+                RemoveBuff(inst);
         }
     }
 
-    public BuffInstance AddBuff(BuffType type, float value, float duration, Sprite icon)
+    public BuffInstance AddBuff(BuffSO config)
     {
-        var buff = new BuffInstance(type, value, duration, icon);
-        activeBuffs.Add(buff);
-        OnBuffAdded?.Invoke(buff);
-        return buff;
-    }
+        if (config == null) return null;
+        if (target == null) return null;
 
-    public void RemoveBuffInstance(BuffInstance buff)
-    {
-        if (activeBuffs.Remove(buff))
-            OnBuffRemoved?.Invoke(buff);
-    }
+        var existing = active.Find(x => x.Config == config);
 
-    public float GetTotal(BuffType type)
-    {
-        float total = 0;
-
-        foreach (var b in activeBuffs)
+        if (existing != null)
         {
-            if (b.Type == type && !b.IsExpired)
-                total += b.Value;
+            if (config.isStackable)
+                existing.StackCount++;
+
+            existing.Refresh(config.duration);
+
+            OnBuffAdded?.Invoke(existing);
+
+            return existing;
         }
 
-        return total;
+        var inst = new BuffInstance(config, target);
+        active.Add(inst);
+
+        config.OnApply(inst);
+
+        OnBuffAdded?.Invoke(inst);
+
+        return inst;
     }
+
+
+    public void RemoveBuff(BuffInstance inst)
+    {
+        if (active.Remove(inst))
+        {
+            inst.Config.OnExpire(inst);
+
+            OnBuffRemoved?.Invoke(inst);
+        }
+    }
+
 }

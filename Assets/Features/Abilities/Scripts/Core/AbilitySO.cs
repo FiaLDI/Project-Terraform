@@ -8,15 +8,12 @@ public abstract class AbilitySO : ScriptableObject
     public Sprite icon;
     public Sprite buffIcon;
 
-    [Header("Cast")]
+    [Header("Cast Settings")]
     public float energyCost = 20f;
     public float cooldown = 12f;
     public AbilityTarget targetType = AbilityTarget.Self;
     public AbilityCastType castType = AbilityCastType.Instant;
     public float castTime = 0f;
-
-    [Header("Payload")]
-    public GameObject payloadPrefab;
 
     public abstract void Execute(AbilityContext context);
 }

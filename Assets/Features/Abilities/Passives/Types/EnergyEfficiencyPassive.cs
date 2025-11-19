@@ -3,20 +3,18 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Game/Passive/EnergyEfficiency")]
 public class EnergyEfficiencyPassive : PassiveSO
 {
-    public float radius = 15f;
-    public float reductionPercent = 20f;
+    public AreaBuffSO areaBuff;
+    private AreaBuffEmitter emitter;
 
     public override void Apply(GameObject owner)
     {
-        var aura = owner.AddComponent<PassiveAuraEmitter>();
-        aura.radius = radius;
-        aura.energyReductionPercent = reductionPercent;
+        emitter = owner.AddComponent<AreaBuffEmitter>();
+        emitter.area = areaBuff;
     }
 
     public override void Remove(GameObject owner)
     {
-        var aura = owner.GetComponent<PassiveAuraEmitter>();
-        if (aura != null)
-            GameObject.Destroy(aura);
+        if (emitter != null)
+            GameObject.Destroy(emitter);
     }
 }

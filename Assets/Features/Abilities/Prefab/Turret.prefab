@@ -819,6 +819,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5981669487698793137}
   - component: {fileID: 9012733006345588933}
+  - component: {fileID: 2094240665213674160}
+  - component: {fileID: 7269853318878893690}
+  - component: {fileID: 604641374837469579}
   m_Layer: 7
   m_Name: Turret
   m_TagString: Untagged
@@ -855,12 +858,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1cfbcfec43d69348bded7b10aa01270, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurretBehaviour
-  damagePerSecond: 100
-  range: 100
+  baseDamagePerSecond: 4
+  baseRange: 15
   lifetime: 100
-  maxHp: 100
+  baseHp: 150
+  damageMultiplier: 1
+  fireRateMultiplier: 1
+  rotationSpeedMultiplier: 1
+  baseFireInterval: 0.1
   retargetInterval: 0.2
-  fireInterval: 0.1
   targetMask:
     serializedVersion: 2
     m_Bits: 128
@@ -869,6 +875,44 @@ MonoBehaviour:
   laser: {fileID: 4386018491568941130}
   laserColor: {r: 1, g: 0.9160461, b: 0, a: 1}
   laserWidth: 0.1
+--- !u!114 &2094240665213674160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a6484aca8c69b1448349652e89c0ea4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuffSystem
+--- !u!114 &7269853318878893690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d1c3254996b4a24ebcfc6e969293b9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthComponent
+  maxHp: 100
+  currentHp: 100
+--- !u!114 &604641374837469579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c345c9434a7ef29478cdaed98695e4b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuffTarget
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0

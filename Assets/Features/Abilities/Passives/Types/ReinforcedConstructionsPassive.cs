@@ -3,15 +3,15 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Game/Passive/ReinforcedConstructions")]
 public class ReinforcedConstructionsPassive : PassiveSO
 {
-    public float hpBonusPercent = 15f;
+    public GlobalBuffSO globalBuff;
 
     public override void Apply(GameObject owner)
     {
-        TurretBehaviour.GlobalHpBonusPercent = hpBonusPercent;
+        GlobalBuffSystem.I.Add(globalBuff);
     }
 
     public override void Remove(GameObject owner)
     {
-        TurretBehaviour.GlobalHpBonusPercent = 0f;
+        GlobalBuffSystem.I.Remove(globalBuff);
     }
 }
