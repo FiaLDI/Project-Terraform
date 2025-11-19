@@ -13,7 +13,7 @@ echo "------------------------------------------------------"
 ### Unity Meta checks
 ### ---------------------------------------------------------
 
-if [ -f "./hooks/check-meta.sh" ]; then
+if [ -f "./hooks/pre-commit/check-meta.sh" ]; then
     echo "▶ Checking missing .meta files..."
     ./hooks/check-meta.sh
 else
@@ -24,7 +24,7 @@ fi
 ### Large file checks
 ### ---------------------------------------------------------
 
-if [ -f "./hooks/check-large-files.sh" ]; then
+if [ -f "./hooks/pre-commit/check-large-files.sh" ]; then
     echo "▶ Checking for large files..."
     ./hooks/check-large-files.sh
 else
@@ -35,7 +35,7 @@ fi
 ### Merge conflict markers
 ### ---------------------------------------------------------
 
-if [ -f "./hooks/check-conflicts.sh" ]; then
+if [ -f "./hooks/pre-commit/check-conflicts.sh" ]; then
     echo "▶ Checking for merge conflicts..."
     ./hooks/check-conflicts.sh
 else
