@@ -9,7 +9,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AbilityCaster abilityCaster;
     [SerializeField] private EnergyBarUI energyUI;
     [SerializeField] private PlayerEnergy playerEnergy;
-
+    [SerializeField] private HPBarUI hpUI;
+    [SerializeField] private PlayerHealth playerHealth;
 
     //void OnDestroy()
     //{
@@ -77,6 +78,12 @@ public class PlayerController : MonoBehaviour
         {
             energyUI.Bind(playerEnergy);
             energyUI.UpdateImmediate(playerEnergy.CurrentEnergy, playerEnergy.MaxEnergy);
+        }
+
+        if (hpUI != null && playerHealth != null)
+        {
+            hpUI.Bind(playerHealth);
+            hpUI.UpdateImmediate(playerHealth.CurrentHp, playerHealth.MaxHp);
         }
     }
 

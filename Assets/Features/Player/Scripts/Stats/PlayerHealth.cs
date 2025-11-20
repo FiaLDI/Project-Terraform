@@ -3,6 +3,7 @@ using UnityEngine;
 public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [SerializeField] private float maxHp = 120f;
+    public float MaxHp => maxHp;
     public float CurrentHp { get; private set; }
 
     public System.Action<float, float> OnHealthChanged;
