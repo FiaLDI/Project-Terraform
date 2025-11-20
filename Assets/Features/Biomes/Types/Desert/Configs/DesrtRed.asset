@@ -34,7 +34,7 @@ MonoBehaviour:
   - prefab: {fileID: 6878953529727457157, guid: 8b0053eb7e2301f4289691ef3f8fcd0c, type: 3}
     spawnChance: 0.058
     weight: 2.64
-  - prefab: {fileID: 1367159471447171536, guid: 9dbaf46afa1a17a47be809599c78af79, type: 3}
+  - prefab: {fileID: 7091312927552255304, guid: 86cbc5d20d294f740ad61fc87ffec33c, type: 3}
     spawnChance: 0.732
     weight: 3.04
   - prefab: {fileID: 7673769172564692307, guid: e89d3e43f602dc448b66a14d6eda6c38, type: 3}
@@ -55,12 +55,6 @@ MonoBehaviour:
   - prefab: {fileID: 8761926070466752017, guid: 4b7a930f9d0174941848cac503293382, type: 3}
     spawnChance: 0.191
     weight: 0.24
-  - prefab: {fileID: 2097749192493358636, guid: 57a3809dd179eb849ab0b2aece876e23, type: 3}
-    spawnChance: 0.448
-    weight: 2.99
-  - prefab: {fileID: 2659721705622926809, guid: 7237aa9f6d58eb34bb9ce65dd0399bd7, type: 3}
-    spawnChance: 0.506
-    weight: 2.45
   environmentDensity: 0.019
   possibleResources:
   - resourcePrefab: {fileID: 9126582963452210468, guid: 18d709e91dad3174299ac65627e0a8f9, type: 3}
