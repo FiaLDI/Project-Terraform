@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnergyCostReductionBuffSO
   buffId: 9
   displayName: EnergyReducer
-  icon: {fileID: 21300000, guid: 510ca624456d7dc42b511f6a67cf0f14, type: 3}
+  icon: {fileID: 21300000, guid: 7804db30584e4b14291ee4e5088c4787, type: 3}
   duration: Infinity
   isDebuff: 0
   isStackable: 0

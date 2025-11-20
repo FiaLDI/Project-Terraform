@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnergyRegenBuffSO
   buffId: 4
   displayName: Regen energy
-  icon: {fileID: 21300000, guid: 510ca624456d7dc42b511f6a67cf0f14, type: 3}
+  icon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}
   duration: 5
   isDebuff: 0
   isStackable: 0

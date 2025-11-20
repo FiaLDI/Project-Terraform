@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GlobalBuffSO
   buffId: 13
   displayName: Turrent health
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: 3f5347515ebfe6c4ebf89ed7452e6711, type: 3}
   duration: Infinity
   isDebuff: 0
   isStackable: 0

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShieldGridAbilitySO
   id: 1
   displayName: Shield
-  icon: {fileID: 21300000, guid: 510ca624456d7dc42b511f6a67cf0f14, type: 3}
-  buffIcon: {fileID: 21300000, guid: 510ca624456d7dc42b511f6a67cf0f14, type: 3}
+  icon: {fileID: 21300000, guid: ec62653d2d8cd4a4db7cefc4eead527f, type: 3}
+  buffIcon: {fileID: 21300000, guid: ec62653d2d8cd4a4db7cefc4eead527f, type: 3}
   energyCost: 20
   cooldown: 12
   targetType: 0

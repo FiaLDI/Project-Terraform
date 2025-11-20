@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChargeDeviceAbilitySO
   id: 4
   displayName: Charge
-  icon: {fileID: 21300000, guid: 832cbe79e5eebb940a1008c94ea7463d, type: 3}
-  buffIcon: {fileID: 21300000, guid: 832cbe79e5eebb940a1008c94ea7463d, type: 3}
+  icon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}
+  buffIcon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}
   energyCost: 0
   cooldown: 20
   targetType: 0

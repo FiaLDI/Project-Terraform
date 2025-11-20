@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OverloadPulseAbilitySO
   id: 3
   displayName: Overload
-  icon: {fileID: 21300000, guid: 8df226b0953f4e94c90784694b8a64bb, type: 3}
-  buffIcon: {fileID: 21300000, guid: 8df226b0953f4e94c90784694b8a64bb, type: 3}
+  icon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
+  buffIcon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
   energyCost: 20
   cooldown: 12
   targetType: 0

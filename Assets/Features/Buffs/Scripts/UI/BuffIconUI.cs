@@ -35,8 +35,16 @@ public class BuffIconUI : MonoBehaviour
 
         radialFill.fillAmount = buff.Progress01;
 
+        if (float.IsInfinity(remain))
+        {
+            timerLabel.text = "";
+            radialFill.fillAmount = 1f;
+            return;
+        }
+
         timerLabel.text = remain < 1f
             ? $"{remain:0.0}"
             : $"{remain:0}";
     }
+
 }

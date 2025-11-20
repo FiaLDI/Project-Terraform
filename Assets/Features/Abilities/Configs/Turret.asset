@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeployTurretAbilitySO
   id: 0
   displayName: Turret
-  icon: {fileID: 21300000, guid: 0c3d25cd4f43bf04eb559ca7677f1ef5, type: 3}
-  buffIcon: {fileID: 21300000, guid: 0c3d25cd4f43bf04eb559ca7677f1ef5, type: 3}
+  icon: {fileID: 21300000, guid: 3f5347515ebfe6c4ebf89ed7452e6711, type: 3}
+  buffIcon: {fileID: 21300000, guid: 3f5347515ebfe6c4ebf89ed7452e6711, type: 3}
   energyCost: 20
   cooldown: 12
   targetType: 0

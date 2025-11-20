@@ -12,20 +12,17 @@ public class BuffHUD : MonoBehaviour
 
     private void Start()
     {
-        // пытаемся найти сразу
         TryBindToPlayer();
     }
 
     private void Update()
     {
-        // если игрок появился позже (сетевой spawn), HUD привяжется
         if (playerBuffSystem == null)
             TryBindToPlayer();
     }
 
     private void TryBindToPlayer()
     {
-        // Ищем игрока по компоненту PlayerEnergy
         var playerEnergy = FindFirstObjectByType<PlayerEnergy>();
         if (playerEnergy == null)
             return;
@@ -34,7 +31,6 @@ public class BuffHUD : MonoBehaviour
         if (playerBuffSystem == null)
             return;
 
-        // подписываемся один раз
         playerBuffSystem.OnBuffAdded += AddIcon;
         playerBuffSystem.OnBuffRemoved += RemoveIcon;
 
