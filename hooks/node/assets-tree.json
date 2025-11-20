@@ -5457,6 +5457,11 @@
     "path": "Assets\\Scenes.meta"
   },
   {
+    "type": "file",
+    "name": "Scripts.meta",
+    "path": "Assets\\Scripts.meta"
+  },
+  {
     "type": "folder",
     "name": "Settings",
     "path": "Assets\\Settings",
