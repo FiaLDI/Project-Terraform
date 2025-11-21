@@ -5,42 +5,35 @@ using UnityEngine;
 
 public static class TerrainMeshGenerator
 {
-    // Кэш мешей (по ключу: worldConfig + coord + resolution)
     private static readonly Dictionary<string, Mesh> meshCache =
         new Dictionary<string, Mesh>();
 
-    // Очередь действий, которые нужно выполнить в Unity-потоке
     private static readonly Queue<Action> unityThreadQueue =
         new Queue<Action>();
 
-    /// <summary>
-    /// Вызывать каждый кадр в Editor/Runtime, чтобы выполнить отложенные действия
-    /// (создание/присвоение мешей и т.п.) в Unity-потоке.
-    /// </summary>
     public static void ExecutePendingUnityThreadTasks()
     {
         while (unityThreadQueue.Count > 0)
-        {
-            var action = unityThreadQueue.Dequeue();
-            action?.Invoke();
-        }
+            unityThreadQueue.Dequeue()?.Invoke();
     }
 
-    public static Mesh GenerateMeshSync(Vector2Int coord, int chunkSize, int resolution, WorldConfig worldConfig)
+    public static Mesh GenerateMeshSync(
+        Vector2Int coord,
+        int chunkSize,
+        int resolution,
+        WorldConfig worldConfig)
     {
         var data = GenerateMeshData(coord, chunkSize, resolution, worldConfig);
+
         Mesh mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = data.vertices;
         mesh.triangles = data.triangles;
         mesh.RecalculateNormals();
+
         return mesh;
     }
 
-
-    /// <summary>
-    /// Асинхронная генерация меша чанка с учётом blending биомов.
-    /// </summary>
     public static async Task<Mesh> GenerateMeshAsync(
         Vector2Int coord,
         int chunkSize,
@@ -49,16 +42,13 @@ public static class TerrainMeshGenerator
     {
         string key = GetCacheKey(coord, resolution, worldConfig);
 
-        // Если уже есть в кэше — просто вернуть
         if (meshCache.TryGetValue(key, out Mesh cached))
             return cached;
 
-        // Тяжёлые вычисления высот и треугольников — в Task
         var data = await Task.Run(() =>
             GenerateMeshData(coord, chunkSize, resolution, worldConfig)
         );
 
-        // Затем в Unity-потоке собираем сам Mesh
         var tcs = new TaskCompletionSource<Mesh>();
 
         unityThreadQueue.Enqueue(() =>
@@ -76,9 +66,10 @@ public static class TerrainMeshGenerator
         return await tcs.Task;
     }
 
-    /// <summary>
-    /// Генерирует только массивы вершин и треугольников (можно выполнять в любом потоке).
-    /// </summary>
+    // ============================================================
+    //                FINAL FULL GENERATION FUNCTION
+    // ============================================================
+
     private static (Vector3[] vertices, int[] triangles) GenerateMeshData(
         Vector2Int coord,
         int chunkSize,
@@ -91,36 +82,111 @@ public static class TerrainMeshGenerator
 
         float step = (float)chunkSize / resolution;
 
-        // ВЕРШИНЫ
         for (int z = 0, i = 0; z <= resolution; z++)
         {
             for (int x = 0; x <= resolution; x++, i++)
             {
-                float worldX = coord.x * chunkSize + x * step;
-                float worldZ = coord.y * chunkSize + z * step;
-                Vector3 worldPos = new Vector3(worldX, 0f, worldZ);
+                float wx = coord.x * chunkSize + x * step;
+                float wz = coord.y * chunkSize + z * step;
 
-                BiomeBlendResult[] blend = worldConfig.GetBiomeBlend(worldPos);
+                Vector3 worldPos = new Vector3(wx, 0, wz);
+
+                var blend = worldConfig.GetBiomeBlend(worldPos);
 
                 float height = 0f;
+                float nearestSea = float.MaxValue;
 
-                if (blend != null)
+                // ============================================================
+                //                1) BIOME HEIGHT BLENDING
+                // ============================================================
+                foreach (var bi in blend)
                 {
-                    for (int b = 0; b < blend.Length; b++)
-                    {
-                        var bi = blend[b];
-                        if (bi.biome == null || bi.weight <= 0f) continue;
+                    if (bi.biome == null || bi.weight <= 0f) continue;
 
-                        float h = BiomeHeightUtility.GetHeight(bi.biome, worldX, worldZ);
-                        height += h * bi.weight;
+                    float h = BiomeHeightUtility.GetHeight(bi.biome, wx, wz);
+                    height += h * bi.weight;
+
+                    // nearest water among biomes
+                    if (bi.biome.useWater)
+                        nearestSea = Mathf.Min(nearestSea, bi.biome.seaLevel);
+                }
+
+                // ============================================================
+                //                2) RIVERS
+                // ============================================================
+                foreach (var bi in blend)
+                {
+                    var b = bi.biome;
+                    float w = bi.weight;
+
+                    if (b == null || !b.generateRivers || w <= 0f) continue;
+
+                    float rn = Mathf.PerlinNoise(
+                        wx * b.riverNoiseScale,
+                        wz * b.riverNoiseScale
+                    );
+
+                    float center = Mathf.Abs(rn - 0.5f);
+                    float mask = Mathf.Clamp01((0.5f - center) * (1f / b.riverWidth));
+
+                    height -= mask * b.riverDepth * w;
+                }
+
+                // ============================================================
+                //                3) LAKES
+                // ============================================================
+                foreach (var bi in blend)
+                {
+                    var b = bi.biome;
+                    float w = bi.weight;
+
+                    if (b == null || !b.generateLakes || w <= 0f) continue;
+
+                    float ln = Mathf.PerlinNoise(
+                        wx * b.lakeNoiseScale,
+                        wz * b.lakeNoiseScale
+                    );
+
+                    if (ln > b.lakeLevel)
+                    {
+                        float t = (ln - b.lakeLevel) / (1f - b.lakeLevel);
+                        float target = b.seaLevel - 1f;
+
+                        height = Mathf.Lerp(height, target, t * w);
                     }
                 }
 
-                vertices[i] = new Vector3(worldX, height, worldZ);
+                // ============================================================
+                //                4) SHORE-LINE SMOOTH FUSION
+                // ============================================================
+                if (nearestSea < float.MaxValue)
+                {
+                    float dh = height - nearestSea;
+
+                    if (dh < 3f)
+                    {
+                        float t = Mathf.Clamp01(dh / 3f);
+                        height = Mathf.Lerp(nearestSea - 1f, height, t);
+                    }
+                }
+
+                // ============================================================
+                //                5) UNDERWATER SMOOTHING
+                // ============================================================
+                if (nearestSea < float.MaxValue && height < nearestSea)
+                {
+                    float depth = nearestSea - height;
+                    float smooth = Mathf.SmoothStep(0, 1, depth * 0.15f);
+                    height = Mathf.Lerp(height, height - depth * 0.4f, smooth);
+                }
+
+                vertices[i] = new Vector3(wx, height, wz);
             }
         }
 
-        // ТРЕУГОЛЬНИКИ
+        // ============================================================
+        //                TRIANGLES
+        // ============================================================
         for (int z = 0, v = 0, t = 0; z < resolution; z++, v++)
         {
             for (int x = 0; x < resolution; x++, v++, t += 6)
@@ -140,7 +206,6 @@ public static class TerrainMeshGenerator
 
     private static string GetCacheKey(Vector2Int coord, int resolution, WorldConfig worldConfig)
     {
-        return worldConfig.GetInstanceID().ToString() + "_" +
-               coord.x + "_" + coord.y + "_" + resolution;
+        return worldConfig.GetInstanceID() + "_" + coord.x + "_" + coord.y + "_" + resolution;
     }
 }

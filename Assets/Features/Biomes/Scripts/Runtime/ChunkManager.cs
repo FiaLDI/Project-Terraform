@@ -50,9 +50,6 @@ public class ChunkManager
         }
     }
 
-    /// <summary>
-    /// Static editor-generation of biome area.
-    /// </summary>
     public GameObject GenerateStaticArea(Vector2Int centerChunk, int radius)
     {
         GameObject root = new GameObject("Biome_StaticArea");

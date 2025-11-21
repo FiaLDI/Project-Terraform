@@ -31,108 +31,44 @@ public class RuntimeWorldGenerator : MonoBehaviour
 
     void Start()
     {
-        if (!Validate())
-        {
-            enabled = false;
-            return;
-        }
-
         manager = new ChunkManager(worldConfig);
-
         World = worldConfig;
+
         manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
 
-        // ждём полную генерацию → спавним игрока
         StartCoroutine(SpawnSequence());
     }
 
     void Update()
     {
         if (worldReady && playerInstance != null)
-        {
             manager.UpdateChunks(playerInstance.transform.position, loadDistance, unloadDistance);
-        }
     }
 
-    private bool Validate()
-    {
-        if (worldConfig == null)
-        {
-            Debug.LogError("❌ WorldConfig not assigned!");
-            return false;
-        }
-
-        if (playerPrefab == null)
-        {
-            Debug.LogError("❌ Player Prefab not assigned!");
-            return false;
-        }
-
-        return true;
-    }
-
-    // ============================
-    //   MAIN SPAWN SEQUENCE
-    // ============================
     private IEnumerator SpawnSequence()
     {
-        // ⏳ ждём пока появятся коллайдеры чанков
         yield return new WaitForSeconds(0.5f);
 
-        Vector3 spawnPos = Vector3.zero;
+        Vector3 spawnPos = new Vector3(0, 2000, 0);
+        if (Physics.Raycast(spawnPos, Vector3.down, out var hit, 5000f))
+            spawnPos = hit.point + Vector3.up * 2f;
 
-        // точка для проверки поверхности
-        Vector3 rayStart = new Vector3(0, spawnHeightCheck, 0);
-
-        bool foundGround = false;
-
-        // несколько попыток — на случай async генерации
-        for (int i = 0; i < 20; i++)
-        {
-            if (Physics.Raycast(rayStart, Vector3.down, out var hit, spawnHeightCheck * 2f))
-            {
-                spawnPos = hit.point + Vector3.up * 2f;
-                foundGround = true;
-                break;
-            }
-
-            yield return new WaitForSeconds(0.25f);
-        }
-
-        if (!foundGround)
-        {
-            Debug.LogWarning("⚠ Could not find terrain. Using fallback Y=10.");
-            spawnPos = new Vector3(0, 10, 0);
-        }
-
-        // ========== SPAWN PLAYER ==========
         playerInstance = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-        Debug.Log($"✅ Player spawned at {spawnPos}");
-
         PlayerInstance = playerInstance;
 
-        // ========== SPAWN SYSTEMS ==========
         if (systemsPrefab != null)
-        {
             SpawnSystemsInFront();
-        }
 
         worldReady = true;
     }
 
-    // ============================
-    //    SYSTEMS PREFAB SPAWN
-    // ============================
     private void SpawnSystemsInFront()
     {
-        if (playerInstance == null || systemsPrefab == null)
-            return;
-
         Vector3 forwardPos = playerInstance.transform.position +
                              playerInstance.transform.forward * spawnDistanceForward +
-                             Vector3.up * spawnHeightCheck;
+                             Vector3.up * 2000f;
 
-        if (Physics.Raycast(forwardPos, Vector3.down, out var hit, spawnHeightCheck * 2f))
+        if (Physics.Raycast(forwardPos, Vector3.down, out var hit, 5000f))
         {
             systemsInstance = Instantiate(systemsPrefab, hit.point + Vector3.up * 1f, Quaternion.identity);
             systemsInstance.name = "GameSystems";

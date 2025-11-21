@@ -24,14 +24,31 @@ MonoBehaviour:
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2
-  environmentPrefabs:
-  - prefab: {fileID: 778727334413204419, guid: de2bd9ba3719fac48b8cfe90b3fb8aa1, type: 3}
-    spawnChance: 0.00025
-    weight: 0.03
-  environmentDensity: 0.0000343
-  possibleResources: []
-  resourceSpawnYOffset: 0.3
-  resourceDensity: 0.00069
+  environmentPrefabs: []
+  environmentDensity: 0.029
+  possibleResources:
+  - resourcePrefab: {fileID: 9126582963452210468, guid: 18d709e91dad3174299ac65627e0a8f9, type: 3}
+    spawnChance: 0.548
+    weight: 3.18
+    clusterType: 1
+    clusterCountRange: {x: 5, y: 10}
+    clusterRadius: 10
+    verticalStep: 1
+    noiseScale: 4
+    noiseAmplitude: 1
+    followTerrain: 1
+  - resourcePrefab: {fileID: 8975459638629637451, guid: f86c2ad0101344948857bc3d5ef88c0a, type: 3}
+    spawnChance: 0.602
+    weight: 1.64
+    clusterType: 2
+    clusterCountRange: {x: 5, y: 10}
+    clusterRadius: 10
+    verticalStep: 1
+    noiseScale: 4
+    noiseAmplitude: 1
+    followTerrain: 1
+  resourceDensity: 0.00363
+  resourceSpawnYOffset: -3
   possibleQuests: []
   questTargetsMin: 2
   questTargetsMax: 5
@@ -45,12 +62,12 @@ MonoBehaviour:
   fogLinearStart: 54
   fogLinearEnd: 200
   useWater: 1
-  seaLevel: 0.45
+  seaLevel: 0.9
   waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
   generateLakes: 1
-  lakeLevel: 0.45
+  lakeLevel: 0.9
   lakeNoiseScale: 0.005
   generateRivers: 1
   riverNoiseScale: 0.01
-  riverWidth: 0.068
+  riverWidth: 0.153
   riverDepth: 2
