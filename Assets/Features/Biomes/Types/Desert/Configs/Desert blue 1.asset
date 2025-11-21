@@ -19,19 +19,19 @@ MonoBehaviour:
   height: 100
   terrainType: 2
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
-  terrainScale: 10
-  heightMultiplier: 60
+  terrainScale: 4
+  heightMultiplier: 20
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2
   environmentPrefabs:
   - prefab: {fileID: 778727334413204419, guid: de2bd9ba3719fac48b8cfe90b3fb8aa1, type: 3}
-    spawnChance: 0.551
-    weight: 4.88
-  environmentDensity: 0.25
+    spawnChance: 0.00025
+    weight: 0.03
+  environmentDensity: 0.0000343
   possibleResources: []
   resourceSpawnYOffset: 0.3
-  resourceDensity: 0.001
+  resourceDensity: 0.00069
   possibleQuests: []
   questTargetsMin: 2
   questTargetsMax: 5
@@ -41,16 +41,16 @@ MonoBehaviour:
   enableFog: 1
   fogMode: 2
   fogColor: {r: 0.25962973, g: 0.46791542, b: 0.9622642, a: 1}
-  fogDensity: 0.02
-  fogLinearStart: 0
+  fogDensity: 0.1
+  fogLinearStart: 54
   fogLinearEnd: 200
   useWater: 1
-  seaLevel: 1
+  seaLevel: 0.45
   waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
   generateLakes: 1
-  lakeLevel: 0.6
-  lakeNoiseScale: 0.05
+  lakeLevel: 0.45
+  lakeNoiseScale: 0.005
   generateRivers: 1
-  riverNoiseScale: 0.02
-  riverWidth: 0.1
+  riverNoiseScale: 0.01
+  riverWidth: 0.068
   riverDepth: 2

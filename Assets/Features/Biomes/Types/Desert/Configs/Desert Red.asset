@@ -19,12 +19,15 @@ MonoBehaviour:
   height: 100
   terrainType: 7
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
-  terrainScale: 10
-  heightMultiplier: 5
+  terrainScale: 5
+  heightMultiplier: 10
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2
-  environmentPrefabs: []
+  environmentPrefabs:
+  - prefab: {fileID: 3883693725492710021, guid: 4c222919f12d37f4cb31ef6257529cfd, type: 3}
+    spawnChance: 0.406
+    weight: 1.53
   environmentDensity: 0.05
   possibleResources: []
   resourceSpawnYOffset: 0.3
@@ -37,7 +40,7 @@ MonoBehaviour:
   skyboxMaterial: {fileID: 0}
   enableFog: 1
   fogMode: 2
-  fogColor: {r: 0.9, g: 0.45, b: 0.2, a: 1}
+  fogColor: {r: 0.2634639, g: 0.9019608, b: 0.19999999, a: 1}
   fogDensity: 0.02
   fogLinearStart: 0
   fogLinearEnd: 200
