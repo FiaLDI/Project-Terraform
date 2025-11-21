@@ -49,7 +49,6 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
     private void Die()
     {
-        // Тут можно повесить анимацию смерти / лут / пулаут
         Destroy(gameObject);
     }
 
@@ -57,4 +56,5 @@ public class EnemyHealth : MonoBehaviour, IDamageable
     {
         OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
     }
+
 }
