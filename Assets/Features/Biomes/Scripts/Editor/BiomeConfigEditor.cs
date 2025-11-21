@@ -54,6 +54,23 @@ public class BiomeConfigEditor : Editor
         DrawHeader("Fog");
         DrawProps("enableFog", "fogMode", "fogColor", "fogDensity", "fogLinearStart", "fogLinearEnd");
 
+  
+
+         DrawHeader("Water");
+        DrawProps(
+            "useWater",
+            "seaLevel",
+            "waterMaterial",
+            "generateLakes",
+            "lakeLevel",
+            "lakeNoiseScale",
+            "generateRivers",
+            "riverNoiseScale",
+            "riverWidth",
+            "riverDepth"
+        );
+
+        
         serializedObject.ApplyModifiedProperties();
 
         // ─────────── ТЕСТОВЫЙ СПАВН КВЕСТОВ ───────────

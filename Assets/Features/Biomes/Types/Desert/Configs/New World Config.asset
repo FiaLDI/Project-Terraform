@@ -17,7 +17,7 @@ MonoBehaviour:
   chunkSize: 32
   biomeNoiseScale: 0.02
   biomes:
-  - config: {fileID: 11400000, guid: de696bb91021cbc4c9df871a16e78537, type: 2}
-    debugColor: {r: 0.90943396, g: 0.12182984, b: 0.12182984, a: 0}
+  - config: {fileID: 11400000, guid: 02540108d6bc6a64d8ac1f2e32514b62, type: 2}
+    debugColor: {r: 0.12156862, g: 0.49662304, b: 0.9098039, a: 0}
     weight: 5
     noiseOffset: {x: 0, y: 0}

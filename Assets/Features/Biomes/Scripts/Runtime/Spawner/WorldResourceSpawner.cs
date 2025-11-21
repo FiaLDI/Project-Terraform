@@ -20,15 +20,14 @@ public class WorldResourceSpawner
         if (biome.possibleResources == null || biome.possibleResources.Length == 0)
             return;
 
-        int totalCount = Mathf.RoundToInt(chunkSize * chunkSize * biome.resourceDensity);
-        if (totalCount <= 0) return;
+        System.Random prng = new System.Random(coord.x * 928371 + coord.y * 527);
 
-        System.Random prng = new System.Random(coord.x * 19349663 ^ coord.y * 83492791);
+        int count = Mathf.RoundToInt(chunkSize * chunkSize * biome.resourceDensity);
 
-        for (int i = 0; i < totalCount; i++)
+        for (int i = 0; i < count; i++)
         {
-            ResourceEntry entry = GetWeightedRandom(biome.possibleResources, prng);
-            if (entry == null || entry.resourcePrefab == null) continue;
+            ResourceEntry entry = SelectWeightedResource(prng);
+            if (entry == null) continue;
 
             if (prng.NextDouble() > entry.spawnChance)
                 continue;
@@ -38,29 +37,26 @@ public class WorldResourceSpawner
 
             float h = BiomeHeightUtility.GetHeight(biome, px, pz);
             Vector3 pos = new Vector3(px, h + biome.resourceSpawnYOffset, pz);
-            Quaternion rot = Quaternion.Euler(0f, (float)prng.NextDouble() * 360f, 0f);
 
-            GameObject obj = Object.Instantiate(entry.resourcePrefab, pos, rot, parent);
-            obj.name = entry.resourcePrefab.name;
+            Object.Instantiate(entry.resourcePrefab, pos, Quaternion.identity, parent);
         }
     }
 
-    private ResourceEntry GetWeightedRandom(ResourceEntry[] arr, System.Random prng)
+    private ResourceEntry SelectWeightedResource(System.Random rng)
     {
-        float total = 0f;
-        foreach (var r in arr)
-            total += Mathf.Max(0.01f, r.weight);
+        float total = 0;
+        foreach (var e in biome.possibleResources)
+            total += e.weight;
 
-        float v = (float)prng.NextDouble() * total;
-        float sum = 0f;
+        float r = (float)rng.NextDouble() * total;
 
-        foreach (var r in arr)
+        foreach (var e in biome.possibleResources)
         {
-            sum += Mathf.Max(0.01f, r.weight);
-            if (sum >= v)
-                return r;
+            if (r < e.weight)
+                return e;
+            r -= e.weight;
         }
 
-        return arr.Length > 0 ? arr[0] : null;
+        return null;
     }
 }

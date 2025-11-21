@@ -26,6 +26,9 @@ public class RuntimeWorldGenerator : MonoBehaviour
 
     private bool worldReady = false;
 
+    public static GameObject PlayerInstance { get; private set; }
+    public static WorldConfig World { get; private set; }
+
     void Start()
     {
         if (!Validate())
@@ -36,7 +39,7 @@ public class RuntimeWorldGenerator : MonoBehaviour
 
         manager = new ChunkManager(worldConfig);
 
-        // первичная генерация чанков
+        World = worldConfig;
         manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
 
         // ждём полную генерацию → спавним игрока
@@ -105,6 +108,8 @@ public class RuntimeWorldGenerator : MonoBehaviour
         // ========== SPAWN PLAYER ==========
         playerInstance = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
         Debug.Log($"✅ Player spawned at {spawnPos}");
+
+        PlayerInstance = playerInstance;
 
         // ========== SPAWN SYSTEMS ==========
         if (systemsPrefab != null)

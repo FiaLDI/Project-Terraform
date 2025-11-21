@@ -23,29 +23,60 @@ public class Chunk
         this.parent = parent;
     }
 
+    // ============================
+    //   RUNTIME LOAD
+    // ============================
     public void Load()
     {
         if (IsLoaded) return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
-        if (parent != null) rootObject.transform.SetParent(parent);
+        if (parent != null)
+            rootObject.transform.SetParent(parent);
 
         GenerateLOD();
+        SpawnEnvironment();
+        SpawnResources();
+        SpawnQuests();
+        SpawnWater();
     }
 
+    // ============================
+    //   EDITOR / SYNC LOAD
+    // ============================
     public void LoadImmediate()
     {
         if (IsLoaded) return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
-        if (parent != null) rootObject.transform.SetParent(parent);
+        if (parent != null)
+            rootObject.transform.SetParent(parent);
 
         GenerateImmediateMesh();
+        SpawnEnvironment();
+        SpawnResources();
+        SpawnQuests();
+        SpawnWater();
     }
 
+    // ============================
+    //   TERRAIN GENERATION
+    // ============================
+
+    /// <summary>
+    /// Runtime LOD terrain (TerrainLOD + LODGroup).
+    /// </summary>
     private void GenerateLOD()
     {
-        var biome = world.GetDominantBiome(coord).biome;
+        // доминирующий биом для этого чанка
+        var blend = world.GetDominantBiome(coord);
+        BiomeConfig biome = blend.biome;
+
+        if (biome == null)
+        {
+            Debug.LogWarning($"Chunk {coord}: no biome found for LOD generation.");
+            return;
+        }
 
         var lod = new TerrainLOD(
             coord,
@@ -58,9 +89,17 @@ public class Chunk
         lod.Generate();
     }
 
+    /// <summary>
+    /// Синхронная генерация одного меша (для редактора / префаба).
+    /// </summary>
     private void GenerateImmediateMesh()
     {
-        Mesh m = TerrainMeshGenerator.GenerateMeshSync(coord, chunkSize, chunkSize, world);
+        Mesh m = TerrainMeshGenerator.GenerateMeshSync(
+            coord,
+            chunkSize,
+            chunkSize,
+            world
+        );
 
         var go = new GameObject("Mesh");
         go.transform.SetParent(rootObject.transform);
@@ -74,6 +113,73 @@ public class Chunk
         mf.sharedMesh = m;
     }
 
+    // ============================
+    //  SPAWN SYSTEMS
+    // ============================
+
+    private void SpawnEnvironment()
+    {
+        var biome = world.GetBiomeAtChunk(coord);
+        if (biome == null) return;
+
+        var spawner = new EnvironmentChunkSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform
+        );
+
+        spawner.Spawn();
+    }
+
+    private void SpawnResources()
+    {
+        var biome = world.GetBiomeAtChunk(coord);
+        if (biome == null) return;
+
+        var spawner = new WorldResourceSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform
+        );
+
+        spawner.Spawn();
+    }
+
+    private void SpawnQuests()
+    {
+        var biome = world.GetBiomeAtChunk(coord);
+        if (biome == null) return;
+
+        var spawner = new QuestChunkSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform
+        );
+
+        spawner.Spawn();
+    }
+
+    private void SpawnWater()
+    {
+        var biome = world.GetBiomeAtChunk(coord);
+        if (biome == null) return;
+
+        var waterSpawner = new WaterChunkSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform
+        );
+
+        waterSpawner.Spawn();
+    }
+
+    // ============================
+    //   UNLOAD
+    // ============================
     public void Unload(int unloadDist, Vector2Int playerChunk)
     {
         if (!IsLoaded) return;

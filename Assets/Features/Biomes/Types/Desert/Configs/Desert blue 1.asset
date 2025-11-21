@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f18f94f4fd663254f82189a28e8b01bc, type: 3}
+  m_Name: Desert blue 1
+  m_EditorClassIdentifier: Assembly-CSharp::BiomeConfig
+  biomeName: Test
+  mapColor: {r: 0, g: 0, b: 0, a: 0}
+  isGenerate: 1
+  width: 100
+  height: 100
+  terrainType: 2
+  groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
+  terrainScale: 10
+  heightMultiplier: 60
+  fractalOctaves: 5
+  fractalPersistence: 0.5
+  fractalLacunarity: 2
+  environmentPrefabs:
+  - prefab: {fileID: 778727334413204419, guid: de2bd9ba3719fac48b8cfe90b3fb8aa1, type: 3}
+    spawnChance: 0.551
+    weight: 4.88
+  environmentDensity: 0.25
+  possibleResources: []
+  resourceSpawnYOffset: 0.3
+  resourceDensity: 0.001
+  possibleQuests: []
+  questTargetsMin: 2
+  questTargetsMax: 5
+  weatherPrefabs: []
+  ambientSounds: []
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.25962973, g: 0.46791542, b: 0.9622642, a: 1}
+  fogDensity: 0.02
+  fogLinearStart: 0
+  fogLinearEnd: 200
+  useWater: 1
+  seaLevel: 1
+  waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
+  generateLakes: 1
+  lakeLevel: 0.6
+  lakeNoiseScale: 0.05
+  generateRivers: 1
+  riverNoiseScale: 0.02
+  riverWidth: 0.1
+  riverDepth: 2
