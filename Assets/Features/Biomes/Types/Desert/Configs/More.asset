@@ -1,0 +1,101 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2547b368ae8e73f4388c7ef1dec7d14f, type: 3}
+  m_Name: More
+  m_EditorClassIdentifier: 
+  biomeName: More
+  mapColor: {r: 0.44072086, g: 0.4627451, b: 0, a: 0}
+  isGenerate: 1
+  width: 400
+  height: 400
+  terrainType: 1
+  groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
+  terrainScale: 6
+  heightMultiplier: 10
+  fractalOctaves: 8
+  fractalPersistence: 0.5
+  fractalLacunarity: 2
+  environmentPrefabs:
+  - prefab: {fileID: 7520983420995058829, guid: 928def6e7399e514cb59b9d5709d0fde, type: 3}
+    spawnChance: 0.027
+    weight: 0.13
+  - prefab: {fileID: 5326277133637406116, guid: 411970a4856016a4a92352ad0dfa3bbc, type: 3}
+    spawnChance: 0.092
+    weight: 2.69
+  - prefab: {fileID: 6878953529727457157, guid: 8b0053eb7e2301f4289691ef3f8fcd0c, type: 3}
+    spawnChance: 0.058
+    weight: 2.64
+  - prefab: {fileID: 7091312927552255304, guid: 86cbc5d20d294f740ad61fc87ffec33c, type: 3}
+    spawnChance: 0.732
+    weight: 3.04
+  - prefab: {fileID: 7673769172564692307, guid: e89d3e43f602dc448b66a14d6eda6c38, type: 3}
+    spawnChance: 0.383
+    weight: 3
+  - prefab: {fileID: 8690899481457946423, guid: 1421ab68a270a3e4ba817cf66644d542, type: 3}
+    spawnChance: 0.466
+    weight: 2.25
+  - prefab: {fileID: 5941025411037162252, guid: 6043aa188b274ec4b99e696243de7039, type: 3}
+    spawnChance: 0.521
+    weight: 1.95
+  - prefab: {fileID: 7634424498100518801, guid: 1160df34491c4c8448079710733d36d5, type: 3}
+    spawnChance: 0.432
+    weight: 1
+  - prefab: {fileID: 337696929378042279, guid: 2245301a85b17484fbf3ee84405c487c, type: 3}
+    spawnChance: 0.668
+    weight: 1
+  - prefab: {fileID: 8761926070466752017, guid: 4b7a930f9d0174941848cac503293382, type: 3}
+    spawnChance: 0.191
+    weight: 0.24
+  environmentDensity: 0.066
+  possibleResources:
+  - resourcePrefab: {fileID: 9126582963452210468, guid: 18d709e91dad3174299ac65627e0a8f9, type: 3}
+    spawnChance: 0.49
+    weight: 3
+  - resourcePrefab: {fileID: 8975459638629637451, guid: f86c2ad0101344948857bc3d5ef88c0a, type: 3}
+    spawnChance: 0.49
+    weight: 3
+  resourceSpawnYOffset: 0.3
+  resourceDensity: 0.00388
+  possibleQuests:
+  - questAsset: {fileID: 11400000, guid: 48aca5642d5e234489a0bdd19e0fd50f, type: 2}
+    questPointPrefab: {fileID: 683551827570343295, guid: 6160fe5af0eccf045a00bfbab1a7b177, type: 3}
+    previewTexture: {fileID: 0}
+    spawnChance: 1
+    minTargets: 1
+    maxTargets: 3
+  - questAsset: {fileID: 11400000, guid: b17c45ccb26efce43bbe50f072c74349, type: 2}
+    questPointPrefab: {fileID: 4058017315821378120, guid: 9db30774ed8400d448279ecd03329d72, type: 3}
+    previewTexture: {fileID: 0}
+    spawnChance: 1
+    minTargets: 1
+    maxTargets: 6
+  questTargetsMin: 2
+  questTargetsMax: 5
+  weatherPrefabs: []
+  ambientSounds: []
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.9, g: 0.45, b: 0.2, a: 1}
+  fogDensity: 0.03
+  fogLinearStart: 0
+  fogLinearEnd: 200
+  useWater: 1
+  seaLevel: 1
+  waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
+  generateLakes: 0
+  lakeLevel: 0.6
+  lakeNoiseScale: 0.05
+  generateRivers: 0
+  riverNoiseScale: 0.02
+  riverWidth: 0.1
+  riverDepth: 2

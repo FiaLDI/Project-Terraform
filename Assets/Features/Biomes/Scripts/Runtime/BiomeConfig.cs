@@ -13,12 +13,17 @@ public enum TerrainType
     FractalMountains
 }
 
+
 [System.Serializable]
 public class QuestEntry
 {
     [Header("Квест и префаб")]
     public QuestAsset questAsset;          
     public GameObject questPointPrefab;   
+    #if UNITY_EDITOR
+        [HideInInspector] public Texture2D previewTexture;
+    #endif
+
 
     [Header("Спавн")]
     [Range(0f, 1f)] 
@@ -109,5 +114,22 @@ public class BiomeConfig : ScriptableObject
     public float fogDensity = 0.02f;
     public float fogLinearStart = 0f;
     public float fogLinearEnd = 200f;
+
+    [Header("Water / Rivers")]
+    public bool useWater = false;
+    [Tooltip("Уровень моря/воды в мировых координатах Y")]
+    public float seaLevel = 1f;
+    public Material waterMaterial;
+
+    [Header("Lakes")]
+    public bool generateLakes = false;
+    public float lakeLevel = 0.6f;         // относительный от max высоты
+    public float lakeNoiseScale = 0.05f;
+
+    [Header("Rivers")]
+    public bool generateRivers = false;
+    public float riverNoiseScale = 0.02f;
+    [Range(0.0f, 0.5f)] public float riverWidth = 0.1f;
+    public float riverDepth = 2f;
 
 }

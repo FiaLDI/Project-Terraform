@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa86d43d2995c264e87d0c6f30d5425e, type: 3}
+  m_Name: New World Config
+  m_EditorClassIdentifier: Assembly-CSharp::WorldConfig
+  worldWidthChunks: 32
+  worldHeightChunks: 32
+  chunkSize: 32
+  biomeNoiseScale: 0.02
+  biomes:
+  - config: {fileID: 11400000, guid: de696bb91021cbc4c9df871a16e78537, type: 2}
+    debugColor: {r: 0.90943396, g: 0.12182984, b: 0.12182984, a: 0}
+    weight: 5
+    noiseOffset: {x: 0, y: 0}

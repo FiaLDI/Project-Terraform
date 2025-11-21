@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f18f94f4fd663254f82189a28e8b01bc, type: 3}
+  m_Name: Desert Red
+  m_EditorClassIdentifier: Assembly-CSharp::BiomeConfig
+  biomeName: Test
+  mapColor: {r: 0, g: 0, b: 0, a: 0}
+  isGenerate: 1
+  width: 100
+  height: 100
+  terrainType: 7
+  groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
+  terrainScale: 10
+  heightMultiplier: 5
+  fractalOctaves: 5
+  fractalPersistence: 0.5
+  fractalLacunarity: 2
+  environmentPrefabs: []
+  environmentDensity: 0.05
+  possibleResources: []
+  resourceSpawnYOffset: 0.3
+  resourceDensity: 0.001
+  possibleQuests: []
+  questTargetsMin: 2
+  questTargetsMax: 5
+  weatherPrefabs: []
+  ambientSounds: []
+  skyboxMaterial: {fileID: 0}
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.9, g: 0.45, b: 0.2, a: 1}
+  fogDensity: 0.02
+  fogLinearStart: 0
+  fogLinearEnd: 200
+  useWater: 0
+  seaLevel: 1
+  waterMaterial: {fileID: 0}
+  generateLakes: 0
+  lakeLevel: 0.6
+  lakeNoiseScale: 0.05
+  generateRivers: 0
+  riverNoiseScale: 0.02
+  riverWidth: 0.1
+  riverDepth: 2

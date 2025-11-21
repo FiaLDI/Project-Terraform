@@ -14,27 +14,39 @@ public class PlayerEnergy : MonoBehaviour
     // cost reduction from buffs (in %, additive)
     private float costReductionPercent = 0f;
 
+    private bool initialized = false;
+
     private void Awake()
     {
         buffSystem = GetComponent<BuffSystem>();
+
         if (buffSystem == null)
-            Debug.LogError("PlayerEnergy: Missing BuffSystem!");
-        
+        {
+            Debug.LogError("❌ PlayerEnergy: BuffSystem not found on PlayerPrefab!");
+            enabled = false; // отключает Update
+            return;
+        }
+
         CurrentEnergy = baseMaxEnergy;
+        initialized = true;
     }
 
     private void Start()
     {
+        if (!initialized) return;
         Notify();
     }
 
     private void Update()
     {
+        if (!initialized) return;
+
         // regen
-        if (CurrentEnergy < MaxEnergy)
+        float max = MaxEnergy;
+        if (CurrentEnergy < max)
         {
             CurrentEnergy += Regen * Time.deltaTime;
-            CurrentEnergy = Mathf.Clamp(CurrentEnergy, 0, MaxEnergy);
+            CurrentEnergy = Mathf.Clamp(CurrentEnergy, 0, max);
             Notify();
         }
     }
@@ -48,12 +60,17 @@ public class PlayerEnergy : MonoBehaviour
         {
             float bonus = 0f;
 
-            foreach (var b in buffSystem.Active)
-                if (b.Config is MaxEnergyBuffSO maxBuff)
-                    bonus += maxBuff.extraMaxEnergy;
+            // локальные бафы
+            if (buffSystem != null)
+            {
+                foreach (var b in buffSystem.Active)
+                    if (b.Config is MaxEnergyBuffSO maxBuff)
+                        bonus += maxBuff.extraMaxEnergy;
+            }
 
-            // глобальный %
-            bonus += GlobalBuffSystem.I.GetValue("player_max_energy");
+            // глобальные бафы
+            if (GlobalBuffSystem.I != null)
+                bonus += GlobalBuffSystem.I.GetValue("player_max_energy");
 
             return baseMaxEnergy + bonus;
         }
@@ -68,12 +85,17 @@ public class PlayerEnergy : MonoBehaviour
         {
             float bonus = 0f;
 
-            foreach (var b in buffSystem.Active)
-                if (b.Config is EnergyRegenBuffSO regenBuff)
-                    bonus += regenBuff.bonusRegen;
+            // локальные бафы
+            if (buffSystem != null)
+            {
+                foreach (var b in buffSystem.Active)
+                    if (b.Config is EnergyRegenBuffSO regenBuff)
+                        bonus += regenBuff.bonusRegen;
+            }
 
-            // глобальный %
-            bonus += GlobalBuffSystem.I.GetValue("player_regen");
+            // глобальные бафы
+            if (GlobalBuffSystem.I != null)
+                bonus += GlobalBuffSystem.I.GetValue("player_regen");
 
             return baseRegenPerSecond + bonus;
         }
