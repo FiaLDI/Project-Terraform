@@ -28,8 +28,8 @@ MonoBehaviour:
   environmentDensity: 0.029
   possibleResources:
   - resourcePrefab: {fileID: 9126582963452210468, guid: 18d709e91dad3174299ac65627e0a8f9, type: 3}
-    spawnChance: 0.548
-    weight: 3.18
+    spawnChance: 0.13
+    weight: 1.93
     clusterType: 1
     clusterCountRange: {x: 5, y: 10}
     clusterRadius: 10
@@ -38,7 +38,7 @@ MonoBehaviour:
     noiseAmplitude: 1
     followTerrain: 1
   - resourcePrefab: {fileID: 8975459638629637451, guid: f86c2ad0101344948857bc3d5ef88c0a, type: 3}
-    spawnChance: 0.602
+    spawnChance: 0.08
     weight: 1.64
     clusterType: 2
     clusterCountRange: {x: 5, y: 10}

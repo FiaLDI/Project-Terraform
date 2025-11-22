@@ -14,6 +14,36 @@ public enum TerrainType
 }
 
 [System.Serializable]
+public class EnvironmentEntry
+{
+    [Header("Base")]
+    public GameObject prefab;
+
+    [Range(0f, 1f)]
+    public float spawnChance = 1f;
+
+    [Range(0f, 10f)]
+    public float weight = 1f;
+
+    [Header("Slope Rules")]
+    [Range(0f, 90f)] public float minSlope = 0f;
+    [Range(0f, 90f)] public float maxSlope = 45f;
+
+    [Header("Rotation")]
+    public bool alignToNormal = true;
+    public bool randomYRotation = true;
+
+    [Header("Scale")]
+    public bool randomScale = false;
+    public float minScale = 0.9f;
+    public float maxScale = 1.1f;
+
+    [Header("Resource Blocking")]
+    [Tooltip("Если включено, этот объект учитывается как блокер ресурсов (деревья, крупные камни и т.п.)")]
+    public bool markAsResourceBlocker = true;
+}
+
+[System.Serializable]
 public class QuestEntry
 {
     public QuestAsset questAsset;
@@ -30,17 +60,7 @@ public class QuestEntry
     public int maxTargets = 3;
 }
 
-[System.Serializable]
-public class EnvironmentEntry
-{
-    public GameObject prefab;
 
-    [Range(0f, 1f)]
-    public float spawnChance = 1f;
-
-    [Range(0f, 10f)]
-    public float weight = 1f;
-}
 
 [CreateAssetMenu(menuName = "Game/Biome Config")]
 public class BiomeConfig : ScriptableObject
@@ -59,6 +79,14 @@ public class BiomeConfig : ScriptableObject
     [Header("Размер карты (для озёр/воды)")]
     public int width = 100;
     public int height = 100;
+
+    [Header("UI")]
+    public Color uiColor = Color.white;
+
+    [Header("UI Fog Gradient")]
+    public Color fogLightColor = Color.white;
+    public Color fogHeavyColor = Color.blue;
+    public float fogGradientScale = 10f;
 
     // ===========================
     // TERRAIN
@@ -87,8 +115,15 @@ public class BiomeConfig : ScriptableObject
     // ===========================
     [Header("Ресурсы")]
     public ResourceEntry[] possibleResources;
-    [Range(0f, 0.01f)] public float resourceDensity = 0.001f;
+
+    [Range(0f, 0.01f)] 
+    public float resourceDensity = 0.001f;
+
     public float resourceSpawnYOffset = 0.3f;
+
+    [Header("Падение плотности ресурсов к краям чанка")]
+    [Range(0f, 1f)]
+    public float resourceEdgeFalloff = 1f; 
 
     // ===========================
     // QUESTS

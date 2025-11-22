@@ -67,4 +67,16 @@ public class ChunkManager
 
         return root;
     }
+
+    public List<Vector3> GetAllEnvironmentBlockers()
+    {
+        List<Vector3> result = new List<Vector3>();
+        foreach (var kv in chunks)
+        {
+            if (kv.Value.IsLoaded)
+                result.AddRange(kv.Value.environmentBlockers);
+        }
+        return result;
+    }
+
 }

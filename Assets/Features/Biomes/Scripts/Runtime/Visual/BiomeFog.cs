@@ -40,11 +40,28 @@ public class BiomeFog : MonoBehaviour
         {
             SwitchBiomeFog(dom.biome);
         }
+
+        var ui = FindObjectOfType<BiomeUIController>();
+        if (ui != null && currentBiome != null)
+        {
+            ui.UpdateFogGradient(
+                currentBiome.fogLightColor,
+                currentBiome.fogHeavyColor,
+                currentBiome.fogGradientScale
+            );
+        }
     }
 
     private void SwitchBiomeFog(BiomeConfig newBiome)
     {
         currentBiome = newBiome;
+
+        var ui = FindObjectOfType<BiomeUIController>();
+        if (ui != null)
+        {
+            ui.SetBiome(newBiome.biomeName, newBiome.uiColor);
+            ui.ShowPopup(newBiome.biomeName, newBiome.uiColor);
+        }
 
         if (transitionRoutine != null)
             StopCoroutine(transitionRoutine);
@@ -137,4 +154,16 @@ public class BiomeFog : MonoBehaviour
         if (currentBiome != null)
             SwitchBiomeFog(currentBiome);
     }
+
+    [ContextMenu("DEBUG: Force Strong Fog")]
+    public void ForceStrongFog()
+    {
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Exponential;
+        RenderSettings.fogColor = Color.red;
+        RenderSettings.fogDensity = 0.5f;
+
+        Debug.Log("✅ Fog Debug: Strong fog applied");
+    }
+
 }
