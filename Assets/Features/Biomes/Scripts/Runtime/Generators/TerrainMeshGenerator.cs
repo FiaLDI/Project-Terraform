@@ -17,6 +17,9 @@ public static class TerrainMeshGenerator
             unityThreadQueue.Dequeue()?.Invoke();
     }
 
+    // ============================================================
+    // SYNC
+    // ============================================================
     public static Mesh GenerateMeshSync(
         Vector2Int coord,
         int chunkSize,
@@ -34,6 +37,9 @@ public static class TerrainMeshGenerator
         return mesh;
     }
 
+    // ============================================================
+    // ASYNC
+    // ============================================================
     public static async Task<Mesh> GenerateMeshAsync(
         Vector2Int coord,
         int chunkSize,
@@ -67,9 +73,8 @@ public static class TerrainMeshGenerator
     }
 
     // ============================================================
-    //                FINAL FULL GENERATION FUNCTION
+    // CORE TERRAIN GENERATION
     // ============================================================
-
     private static (Vector3[] vertices, int[] triangles) GenerateMeshData(
         Vector2Int coord,
         int chunkSize,
@@ -91,35 +96,56 @@ public static class TerrainMeshGenerator
 
                 Vector3 worldPos = new Vector3(wx, 0, wz);
 
+                // Получаем список биомов и весов
                 var blend = worldConfig.GetBiomeBlend(worldPos);
 
                 float height = 0f;
-                float nearestSea = float.MaxValue;
+
+                float nearestOcean = float.MaxValue;
+                float nearestLake = float.MaxValue;
+                float nearestSwamp = float.MaxValue;
 
                 // ============================================================
-                //                1) BIOME HEIGHT BLENDING
+                // 1) BIOME HEIGHT BLENDING
                 // ============================================================
                 foreach (var bi in blend)
                 {
                     if (bi.biome == null || bi.weight <= 0f) continue;
 
+                    // базовый рельеф
                     float h = BiomeHeightUtility.GetHeight(bi.biome, wx, wz);
                     height += h * bi.weight;
 
-                    // nearest water among biomes
+                    // классификация воды
                     if (bi.biome.useWater)
-                        nearestSea = Mathf.Min(nearestSea, bi.biome.seaLevel);
+                    {
+                        switch (bi.biome.waterType)
+                        {
+                            case WaterType.Ocean:
+                                nearestOcean = Mathf.Min(nearestOcean, bi.biome.seaLevel);
+                                break;
+
+                            case WaterType.Lake:
+                                nearestLake = Mathf.Min(nearestLake, bi.biome.seaLevel);
+                                break;
+
+                            case WaterType.Swamp:
+                                nearestSwamp = Mathf.Min(nearestSwamp, bi.biome.seaLevel);
+                                break;
+                        }
+                    }
                 }
 
                 // ============================================================
-                //                2) RIVERS
+                // 2) RIVERS
                 // ============================================================
                 foreach (var bi in blend)
                 {
                     var b = bi.biome;
                     float w = bi.weight;
 
-                    if (b == null || !b.generateRivers || w <= 0f) continue;
+                    if (b == null || !b.generateRivers || w <= 0f)
+                        continue;
 
                     float rn = Mathf.PerlinNoise(
                         wx * b.riverNoiseScale,
@@ -133,7 +159,7 @@ public static class TerrainMeshGenerator
                 }
 
                 // ============================================================
-                //                3) LAKES
+                // 3) LAKES (локальные, НЕ глобальная вода)
                 // ============================================================
                 foreach (var bi in blend)
                 {
@@ -150,34 +176,63 @@ public static class TerrainMeshGenerator
                     if (ln > b.lakeLevel)
                     {
                         float t = (ln - b.lakeLevel) / (1f - b.lakeLevel);
-                        float target = b.seaLevel - 1f;
 
-                        height = Mathf.Lerp(height, target, t * w);
+                        float lakeBottom = b.seaLevel - 0.8f;
+
+                        height = Mathf.Lerp(height, lakeBottom, t * w);
                     }
                 }
 
                 // ============================================================
-                //                4) SHORE-LINE SMOOTH FUSION
+                // 4) SHORELINES FOR EACH WATER TYPE
                 // ============================================================
-                if (nearestSea < float.MaxValue)
-                {
-                    float dh = height - nearestSea;
 
-                    if (dh < 3f)
+                // Ocean shores — smooth & soft
+                if (nearestOcean < float.MaxValue)
+                {
+                    float dh = height - nearestOcean;
+
+                    if (dh < 4f)
                     {
-                        float t = Mathf.Clamp01(dh / 3f);
-                        height = Mathf.Lerp(nearestSea - 1f, height, t);
+                        float t = Mathf.Clamp01(dh / 4f);
+                        height = Mathf.Lerp(nearestOcean - 2f, height, t);
+                    }
+                }
+
+                // Lake shores — sharper
+                if (nearestLake < float.MaxValue)
+                {
+                    float dh = height - nearestLake;
+
+                    if (dh < 2f)
+                    {
+                        float t = Mathf.Clamp01(dh / 2f);
+                        height = Mathf.Lerp(nearestLake - 1f, height, t);
+                    }
+                }
+
+                // Swamp — almost no slope, very soft
+                if (nearestSwamp < float.MaxValue)
+                {
+                    float dh = height - nearestSwamp;
+
+                    if (dh < 1.5f)
+                    {
+                        float t = Mathf.Clamp01(dh / 1.5f);
+                        height = Mathf.Lerp(nearestSwamp - 0.5f, height, t * 0.7f);
                     }
                 }
 
                 // ============================================================
-                //                5) UNDERWATER SMOOTHING
+                // 5) UNDERWATER SMOOTHING
                 // ============================================================
-                if (nearestSea < float.MaxValue && height < nearestSea)
+                float nearestWater = Mathf.Min(nearestOcean, Mathf.Min(nearestLake, nearestSwamp));
+
+                if (nearestWater < float.MaxValue && height < nearestWater)
                 {
-                    float depth = nearestSea - height;
+                    float depth = nearestWater - height;
                     float smooth = Mathf.SmoothStep(0, 1, depth * 0.15f);
-                    height = Mathf.Lerp(height, height - depth * 0.4f, smooth);
+                    height = Mathf.Lerp(height, height - depth * 0.35f, smooth);
                 }
 
                 vertices[i] = new Vector3(wx, height, wz);
@@ -185,7 +240,7 @@ public static class TerrainMeshGenerator
         }
 
         // ============================================================
-        //                TRIANGLES
+        // TRIANGLES
         // ============================================================
         for (int z = 0, v = 0, t = 0; z < resolution; z++, v++)
         {

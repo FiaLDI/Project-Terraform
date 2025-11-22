@@ -13,6 +13,14 @@ public enum TerrainType
     FractalMountains
 }
 
+public enum WaterType
+{
+    None,
+    Ocean,
+    Lake,
+    Swamp
+}
+
 [System.Serializable]
 public class EnvironmentEntry
 {
@@ -156,10 +164,15 @@ public class BiomeConfig : ScriptableObject
     // ===========================
     // WATER
     // ===========================
-    [Header("Global Water")]
+    [Header("Water System")]
     public bool useWater = false;
+    public WaterType waterType = WaterType.Ocean;
+
     public float seaLevel = 1f;
     public Material waterMaterial;
+    public Material swampWaterMaterial;
+    public Material lakeWaterMaterial;
+    public Material oceanWaterMaterial;
 
     // ===========================
     // LAKES
