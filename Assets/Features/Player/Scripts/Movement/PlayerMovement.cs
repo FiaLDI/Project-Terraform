@@ -26,6 +26,14 @@ public class PlayerMovement : MonoBehaviour
     private bool isWalking = false;
     private bool isAligning = false;
 
+    // ✅ locomotion speed for animations
+    private float locomotionSpeed = 0f;
+
+    // ✅ Public readable properties
+    public bool IsGrounded => controller.isGrounded;
+    public float PlanarSpeed => locomotionSpeed;
+    public bool IsSprinting => isSprinting;
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -98,6 +106,12 @@ public class PlayerMovement : MonoBehaviour
         velocity.y += stats.gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
 
+        locomotionSpeed = new Vector2(velocity.x, velocity.z).magnitude;
+
+        if (locomotionSpeed < 0.15f)
+            locomotionSpeed = 0f;
+
+
         HandleRotationAlignment();
     }
 
@@ -133,8 +147,6 @@ public class PlayerMovement : MonoBehaviour
         cameraPivot.Rotate(Vector3.up * -turnAmount, Space.World);
     }
 
-    // ============= CROUCH STAND-UP CHECK =============
-
     private bool CanStandUp()
     {
         float checkDistance = stats.standHeight - stats.crouchHeight;
@@ -143,7 +155,7 @@ public class PlayerMovement : MonoBehaviour
         return !Physics.SphereCast(start, controller.radius, Vector3.up, out RaycastHit hit, checkDistance);
     }
 
-    // ============= ANIMATION =============
+    // ================== ANIMATION ====================
 
     private void HandleAnimation()
     {

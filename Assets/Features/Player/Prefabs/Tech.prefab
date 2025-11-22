@@ -16240,6 +16240,13 @@ MonoBehaviour:
   headYawLimit: 35.8
   bodyTurnSpeed: 5
   bodyTurnAngleLimit: 90
+  enableHeadBob: 1
+  walkBobAmplitude: 0.02
+  walkBobFrequency: 7
+  runBobAmplitude: 0.03
+  runBobFrequency: 11
+  crouchBobMultiplier: 0.5
+  bobSmoothing: 14
 --- !u!1 &4561205734857667701
 GameObject:
   m_ObjectHideFlags: 0
