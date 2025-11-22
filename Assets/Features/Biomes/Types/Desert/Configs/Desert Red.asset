@@ -15,8 +15,13 @@ MonoBehaviour:
   biomeName: Test
   mapColor: {r: 0, g: 0, b: 0, a: 0}
   isGenerate: 1
+  useLowPoly: 1
   width: 100
   height: 100
+  uiColor: {r: 1, g: 1, b: 1, a: 1}
+  fogLightColor: {r: 1, g: 1, b: 1, a: 1}
+  fogHeavyColor: {r: 0, g: 0, b: 1, a: 1}
+  fogGradientScale: 10
   terrainType: 7
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
   terrainScale: 5
@@ -28,10 +33,19 @@ MonoBehaviour:
   - prefab: {fileID: 3883693725492710021, guid: 4c222919f12d37f4cb31ef6257529cfd, type: 3}
     spawnChance: 0.406
     weight: 1.53
+    minSlope: 0
+    maxSlope: 45
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 0
+    minScale: 0.9
+    maxScale: 1.1
+    markAsResourceBlocker: 1
   environmentDensity: 0.05
   possibleResources: []
-  resourceSpawnYOffset: 0.3
   resourceDensity: 0.001
+  resourceSpawnYOffset: 0.3
+  resourceEdgeFalloff: 1
   possibleQuests: []
   questTargetsMin: 2
   questTargetsMax: 5

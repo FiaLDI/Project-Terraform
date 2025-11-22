@@ -15,8 +15,13 @@ MonoBehaviour:
   biomeName: Test
   mapColor: {r: 0, g: 0, b: 0, a: 0}
   isGenerate: 1
+  useLowPoly: 1
   width: 100
   height: 100
+  uiColor: {r: 1, g: 1, b: 1, a: 1}
+  fogLightColor: {r: 1, g: 1, b: 1, a: 1}
+  fogHeavyColor: {r: 0, g: 0, b: 1, a: 1}
+  fogGradientScale: 10
   terrainType: 2
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
   terrainScale: 4
@@ -37,6 +42,26 @@ MonoBehaviour:
     noiseScale: 4
     noiseAmplitude: 1
     followTerrain: 1
+    minSlope: 0
+    maxSlope: 45
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 1
+    minScale: 0.9
+    maxScale: 1.4
+    useHeightLimit: 0
+    minHeight: 0
+    maxHeight: 999
+    useMinDistance: 0
+    minDistance: 2
+    resourceEdgeFalloff: 0.5
+    avoidEnvironment: 1
+    environmentRadius: 3
+    useDistributionMap: 1
+    distributionStrength: 1
+    distributionScale: 0.05
+    distributionOffset: {x: 0, y: 0}
+    allowedBiomes: 
   - resourcePrefab: {fileID: 8975459638629637451, guid: f86c2ad0101344948857bc3d5ef88c0a, type: 3}
     spawnChance: 0.08
     weight: 1.64
@@ -47,8 +72,29 @@ MonoBehaviour:
     noiseScale: 4
     noiseAmplitude: 1
     followTerrain: 1
+    minSlope: 0
+    maxSlope: 45
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 1
+    minScale: 0.9
+    maxScale: 1.4
+    useHeightLimit: 0
+    minHeight: 0
+    maxHeight: 999
+    useMinDistance: 0
+    minDistance: 2
+    resourceEdgeFalloff: 0.5
+    avoidEnvironment: 1
+    environmentRadius: 3
+    useDistributionMap: 1
+    distributionStrength: 1
+    distributionScale: 0.05
+    distributionOffset: {x: 0, y: 0}
+    allowedBiomes: 
   resourceDensity: 0.00363
   resourceSpawnYOffset: -3
+  resourceEdgeFalloff: 1
   possibleQuests: []
   questTargetsMin: 2
   questTargetsMax: 5

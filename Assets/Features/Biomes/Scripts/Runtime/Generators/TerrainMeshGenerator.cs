@@ -18,18 +18,28 @@ public static class TerrainMeshGenerator
     }
 
     public static Mesh GenerateMeshSync(
-        Vector2Int coord,
-        int chunkSize,
-        int resolution,
-        WorldConfig worldConfig)
+    Vector2Int coord,
+    int chunkSize,
+    int resolution,
+    WorldConfig worldConfig,
+    bool lowPoly)
     {
         var data = GenerateMeshData(coord, chunkSize, resolution, worldConfig);
 
-        Mesh mesh = new Mesh();
-        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        mesh.vertices = data.vertices;
-        mesh.triangles = data.triangles;
-        mesh.RecalculateNormals();
+        Mesh mesh; // ✅ ВОТ ЭТОГО НЕ ХВАТАЛО
+
+        if (lowPoly)
+        {
+            mesh = ConvertToLowPoly(data.vertices, data.triangles);
+        }
+        else
+        {
+            mesh = new Mesh();
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.vertices = data.vertices;
+            mesh.triangles = data.triangles;
+            mesh.RecalculateNormals();
+        }
 
         return mesh;
     }
@@ -203,6 +213,27 @@ public static class TerrainMeshGenerator
 
         return (vertices, triangles);
     }
+
+    private static Mesh ConvertToLowPoly(Vector3[] vertices, int[] triangles)
+    {
+        Vector3[] flatVerts = new Vector3[triangles.Length];
+        int[] flatTris = new int[triangles.Length];
+
+        for (int i = 0; i < triangles.Length; i++)
+        {
+            flatVerts[i] = vertices[triangles[i]];
+            flatTris[i] = i;
+        }
+
+        Mesh mesh = new Mesh();
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.vertices = flatVerts;
+        mesh.triangles = flatTris;
+        mesh.RecalculateNormals();
+
+        return mesh;
+    }
+
 
     private static string GetCacheKey(Vector2Int coord, int resolution, WorldConfig worldConfig)
     {
