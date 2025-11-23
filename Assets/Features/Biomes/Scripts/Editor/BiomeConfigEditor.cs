@@ -37,6 +37,9 @@ public class BiomeConfigEditor : Editor
             DrawProps("fractalOctaves", "fractalPersistence", "fractalLacunarity");
         }
 
+        DrawHeader("LowPoly");
+        DrawProps("useLowPoly");
+
         DrawHeader("Environment");
         DrawProps("environmentPrefabs", "environmentDensity");
 

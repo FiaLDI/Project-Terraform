@@ -83,6 +83,10 @@ public class BiomeConfig : ScriptableObject
     [Header("Генерация")]
     public bool isGenerate = true;
 
+    [Header("Rendering")]
+    [Tooltip("Если включено — рельеф этого биома будет сгенерирован в Low-Poly стиле.")]
+    public bool useLowPoly = false;
+
     // Размеры (используются BiomeHeightUtility)
     [Header("Размер карты (для озёр/воды)")]
     public int width = 100;

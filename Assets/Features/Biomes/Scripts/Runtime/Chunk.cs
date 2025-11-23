@@ -88,11 +88,14 @@ public class Chunk
 
     private void GenerateImmediateMesh()
     {
+        var biome = world.GetBiomeAtChunk(coord);
+
         Mesh m = TerrainMeshGenerator.GenerateMeshSync(
             coord,
             chunkSize,
             chunkSize,
-            world
+            world,
+            biome != null && biome.useLowPoly
         );
 
         var go = new GameObject("Mesh");
@@ -101,11 +104,10 @@ public class Chunk
         var mf = go.AddComponent<MeshFilter>();
         var mr = go.AddComponent<MeshRenderer>();
 
-        var biome = world.GetBiomeAtChunk(coord);
-
         mr.sharedMaterial = biome != null ? biome.groundMaterial : null;
         mf.sharedMesh = m;
     }
+
 
     // ============================
     // SPAWNER
