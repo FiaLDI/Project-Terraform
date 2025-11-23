@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa86d43d2995c264e87d0c6f30d5425e, type: 3}
-  m_Name: New World Config
+  m_Name: WorldConfig
   m_EditorClassIdentifier: Assembly-CSharp::WorldConfig
   worldWidthChunks: 32
   worldHeightChunks: 32
@@ -19,7 +19,7 @@ MonoBehaviour:
   biomes:
   - config: {fileID: 11400000, guid: 02540108d6bc6a64d8ac1f2e32514b62, type: 2}
     debugColor: {r: 0.12156862, g: 0.49662304, b: 0.9098039, a: 0}
-    weight: 10
+    weight: 5
     noiseOffset: {x: 0, y: 0}
   - config: {fileID: 11400000, guid: de696bb91021cbc4c9df871a16e78537, type: 2}
     debugColor: {r: 0.12156862, g: 0.49662304, b: 0.9098039, a: 0}
