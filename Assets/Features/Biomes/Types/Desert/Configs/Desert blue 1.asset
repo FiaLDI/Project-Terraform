@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f18f94f4fd663254f82189a28e8b01bc, type: 3}
   m_Name: Desert blue 1
   m_EditorClassIdentifier: Assembly-CSharp::BiomeConfig
-  biomeName: Test
+  biomeName: Blue Desert
   mapColor: {r: 0, g: 0, b: 0, a: 0}
   isGenerate: 1
   useLowPoly: 1
@@ -22,10 +22,10 @@ MonoBehaviour:
   fogLightColor: {r: 1, g: 1, b: 1, a: 1}
   fogHeavyColor: {r: 0, g: 0, b: 1, a: 1}
   fogGradientScale: 10
-  terrainType: 2
+  terrainType: 5
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
-  terrainScale: 4
-  heightMultiplier: 20
+  terrainScale: 10
+  heightMultiplier: 40
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2
@@ -107,13 +107,17 @@ MonoBehaviour:
   fogDensity: 0.1
   fogLinearStart: 54
   fogLinearEnd: 200
-  useWater: 1
-  seaLevel: 0.9
-  waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
-  generateLakes: 1
+  useWater: 0
+  waterType: 1
+  seaLevel: 0.3
+  waterMaterial: {fileID: 0}
+  swampWaterMaterial: {fileID: 0}
+  lakeWaterMaterial: {fileID: 0}
+  oceanWaterMaterial: {fileID: 0}
+  generateLakes: 0
   lakeLevel: 0.9
   lakeNoiseScale: 0.005
-  generateRivers: 1
+  generateRivers: 0
   riverNoiseScale: 0.01
   riverWidth: 0.153
   riverDepth: 2

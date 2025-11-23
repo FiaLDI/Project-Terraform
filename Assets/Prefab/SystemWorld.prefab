@@ -89,7 +89,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2893022791328767856}
-  - component: {fileID: 8003336331875854221}
+  - component: {fileID: 7061577891002652500}
   m_Layer: 0
   m_Name: Water
   m_TagString: Untagged
@@ -112,7 +112,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7284224207844058202}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8003336331875854221
+--- !u!114 &7061577891002652500
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -121,12 +121,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 4503292850425137977}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8cb77d3a0aef744ebdac073404dcd0b, type: 3}
+  m_Script: {fileID: 11500000, guid: 0519714563d0c6a4bad1c22da3a3aa5d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteWaterPlane
-  seaLevel: 1
-  planeSize: 600
-  waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::AdvancedWaterPlane
+  fadeSpeed: 1.5
 --- !u!1001 &1400842649233879837
 PrefabInstance:
   m_ObjectHideFlags: 0
