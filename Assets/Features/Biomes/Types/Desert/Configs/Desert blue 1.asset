@@ -98,6 +98,19 @@ MonoBehaviour:
   possibleQuests: []
   questTargetsMin: 2
   questTargetsMax: 5
+  enemyTable:
+  - prefab: {fileID: 4823896413690452315, guid: ba79223540d0017488c0e42578c10964, type: 3}
+    weight: 10
+    spawnChance: 1
+    minGroup: 3
+    maxGroup: 5
+    minSlope: 0
+    maxSlope: 25
+    minHeight: 0
+    maxHeight: 40
+    alignToNormal: 0
+  enemyDensity: 0.0008
+  enemyRespawnDelay: 20
   weatherPrefabs: []
   ambientSounds: []
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}

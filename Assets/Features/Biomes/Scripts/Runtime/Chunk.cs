@@ -42,8 +42,7 @@ public class Chunk
         SpawnEnvironment();
         SpawnResources();
         SpawnQuests();
-
-        // ❌ НЕТ SpawnWater — вода теперь глобальная
+        SpawnEnemies();
     }
 
     public void LoadImmediate()
@@ -58,6 +57,7 @@ public class Chunk
         SpawnEnvironment();
         SpawnResources();
         SpawnQuests();
+        SpawnEnemies();
     }
 
     // ============================
@@ -112,6 +112,16 @@ public class Chunk
     // ============================
     // SPAWNER
     // ============================
+
+    private void SpawnEnemies()
+    {
+        var biome = world.GetBiomeAtChunk(coord);
+        if (biome == null) return;
+
+        new EnemyChunkSpawner(
+            coord, chunkSize, biome, rootObject.transform
+        ).Spawn();
+    }
 
     private void SpawnEnvironment()
     {

@@ -68,6 +68,23 @@ public class QuestEntry
     public int maxTargets = 3;
 }
 
+[System.Serializable]
+public class EnemySpawnEntry
+{
+    public GameObject prefab;
+    public float weight = 1f;
+    public float spawnChance = 0.6f;
+    public int minGroup = 1;
+    public int maxGroup = 3;
+
+    [Header("Условия спавна")]
+    public float minSlope = 0f;
+    public float maxSlope = 25f;
+    public float minHeight = -100f;
+    public float maxHeight = 500f;
+
+    public bool alignToNormal = true;
+}
 
 
 [CreateAssetMenu(menuName = "Game/Biome Config")]
@@ -144,6 +161,15 @@ public class BiomeConfig : ScriptableObject
     public QuestEntry[] possibleQuests;
     public int questTargetsMin = 2;
     public int questTargetsMax = 5;
+
+    // ===========================
+    // Enemy
+    // ===========================
+    [Header("Enemy System")]
+    public EnemySpawnEntry[] enemyTable;
+    public float enemyDensity = 0.0008f;
+    public float enemyRespawnDelay = 20f;
+
 
     // ===========================
     // EFFECTS / SKYBOX

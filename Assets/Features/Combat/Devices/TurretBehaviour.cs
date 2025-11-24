@@ -217,9 +217,10 @@ public class TurretBehaviour : MonoBehaviour, IDamageable, IBuffTarget
 
         float damage = DamagePerSecond * FireInterval;
 
-        IDamageable dmg = 
-            target.GetComponentInParent<IDamageable>() ??
-            target.GetComponentInChildren<IDamageable>();
+        IDamageable dmg = target.GetComponentInParent<IDamageable>();
+
+        if (dmg == null)
+            return;
 
         dmg?.TakeDamage(damage, DamageType.Generic);
 

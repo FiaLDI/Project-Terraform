@@ -50,6 +50,9 @@ public class BiomeConfigEditor : Editor
         DrawHeader("🎯 Quests");
         DrawQuestEditor();
 
+        DrawHeader("⚔ Enemies");
+        DrawProps("enemyTable", "enemyDensity", "enemyRespawnDelay");
+
         // ─────────── Эффекты ───────────
         DrawHeader("Effects");
         DrawProps("weatherPrefabs", "ambientSounds", "skyboxMaterial");

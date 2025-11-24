@@ -13,6 +13,8 @@ public class AdvancedWaterPlane : MonoBehaviour
     private void Start()
     {
         rend = GetComponent<Renderer>();
+        if (rend == null)
+            rend = GetComponentInChildren<Renderer>();
 
         if (RuntimeWorldGenerator.PlayerInstance != null)
             player = RuntimeWorldGenerator.PlayerInstance.transform;
@@ -31,16 +33,13 @@ public class AdvancedWaterPlane : MonoBehaviour
                 return;
         }
 
-        // 1) выбираем материал под биом
         bool waterEnabled = UpdateWaterMaterial();
 
-        // 2) плавное появление/исчезновение
         if (waterEnabled)
             FadeIn();
         else
             FadeOut();
 
-        // 3) подгоняем высоту воды
         UpdateHeight();
     }
 
@@ -70,7 +69,6 @@ public class AdvancedWaterPlane : MonoBehaviour
         if (dominant == null || !dominant.useWater)
             return false;
 
-        // выбираем материал
         Material target = dominant.waterMaterial;
 
         if (dominant.waterType == WaterType.Ocean && dominant.oceanWaterMaterial != null)
@@ -82,11 +80,15 @@ public class AdvancedWaterPlane : MonoBehaviour
         if (dominant.waterType == WaterType.Swamp && dominant.swampWaterMaterial != null)
             target = dominant.swampWaterMaterial;
 
+        if (rend == null)
+            return false;
+
         if (currentMaterial != target)
         {
             rend.sharedMaterial = target;
             currentMaterial = target;
         }
+
 
         return true;
     }
