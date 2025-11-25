@@ -11729,6 +11729,7 @@ MonoBehaviour:
   hotbarPanel: {fileID: 9017727374626385765}
   mainInventorySlots: []
   hotbarSlots: []
+  playerTransform: {fileID: 5939444589012984952}
   draggableItem: {fileID: 5092359585003737365}
 --- !u!114 &52571593824518462
 MonoBehaviour:
@@ -11756,8 +11757,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 467ee51601801b644a6a2ce209aaa758, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryInputHandler
+  playerCameraController: {fileID: 1379914130964297167}
   inventoryManager: {fileID: 452246957434426603}
   equipmentManager: {fileID: 6043529481836000123}
+  playerInteraction: {fileID: 4555476112811267213}
 --- !u!1 &3473962396741295579
 GameObject:
   m_ObjectHideFlags: 0

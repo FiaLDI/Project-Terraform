@@ -4,14 +4,14 @@ using System.Collections;
 
 public class InventoryInputHandler : MonoBehaviour
 {
-    //[Header("Core References")]
-    //[SerializeField] 
+    [Header("Core References")]
+    [SerializeField] 
     private PlayerCameraController playerCameraController;
     [Header("Inventory References")]
     [SerializeField] private InventoryManager inventoryManager;
     [SerializeField] private EquipmentManager equipmentManager;
-    //[Header("Interaction References")]
-    //[SerializeField] 
+    [Header("Interaction References")]
+    [SerializeField] 
     private PlayerInteraction playerInteraction;
 
     private InputSystem_Actions inputActions;
@@ -38,10 +38,6 @@ public class InventoryInputHandler : MonoBehaviour
     private void OnEnable() => inputActions.Enable();
     private void OnDisable() => inputActions.Disable();
 
-    private void Start()
-    {
-        StartCoroutine(FindPlayerReferences());
-    }
     private void ToggleInventory()
     {
         if (inventoryManager == null) return;
@@ -61,19 +57,5 @@ public class InventoryInputHandler : MonoBehaviour
             Cursor.visible = false;
             playerCameraController.enabled = true;
         }
-    }
-    private IEnumerator FindPlayerReferences()
-    {
-        // Ждём, пока в сцене появится объект с тегом "Player"
-        GameObject player = null;
-        while (player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player");
-            yield return null; // ждём 1 кадр
-        }
-
-        // Пробуем получить нужные компоненты
-        playerInteraction = player.GetComponent<PlayerInteraction>();
-        playerCameraController = player.GetComponentInChildren<PlayerCameraController>();
     }
 }

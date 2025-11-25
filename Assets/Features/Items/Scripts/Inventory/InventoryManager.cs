@@ -26,8 +26,8 @@ public class InventoryManager : MonoBehaviour
     private InventorySlotUI[] mainInventoryUI;
     private InventorySlotUI[] hotbarUI;
 
-    //[Header("World Interaction")]
-    //[SerializeField] 
+    [Header("World Interaction")]
+    [SerializeField] 
     private Transform playerTransform;
 
     [Header("Drag & Drop")]
@@ -61,8 +61,6 @@ public class InventoryManager : MonoBehaviour
 
     private void Start()
     {
-        // Безопасно ищем Player при запуске
-        StartCoroutine(WaitForPlayerReference());
         UpdateAllUI();
         mainInventoryPanel.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
@@ -80,25 +78,6 @@ public class InventoryManager : MonoBehaviour
     /// <summary>
     /// Безопасно ждёт, пока на сцене появится объект с тегом Player, и сохраняет его Transform.
     /// </summary>
-    private IEnumerator WaitForPlayerReference()
-    {
-        // Если ссылка уже есть — выходим
-        if (playerTransform != null) yield break;
-
-        GameObject playerObj = null;
-        // Ожидаем появления объекта Player
-        while (playerObj == null)
-        {
-            playerObj = GameObject.FindGameObjectWithTag("Player");
-            if (playerObj != null)
-            {
-                playerTransform = playerObj.transform;
-                Debug.Log("[InventoryManager] Player найден и привязан успешно.");
-                yield break;
-            }
-            yield return new WaitForSeconds(0.1f); // проверяем каждые 100 мс
-        }
-    }
     private Vector3 GetSafeDropPosition()
     {
         if (playerTransform == null)
