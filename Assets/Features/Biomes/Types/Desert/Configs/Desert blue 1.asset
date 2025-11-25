@@ -96,19 +96,19 @@ MonoBehaviour:
   resourceSpawnYOffset: -3
   resourceEdgeFalloff: 1
   possibleQuests:
-  - questAsset: {fileID: 11400000, guid: 48aca5642d5e234489a0bdd19e0fd50f, type: 2}
-    questPointPrefab: {fileID: 683551827570343295, guid: 6160fe5af0eccf045a00bfbab1a7b177, type: 3}
-    spawnChance: 0.13
-    spawnPointsMin: 1
-    spawnPointsMax: 3
-    requiredTargets: 5
-    safetyRadius: 5
+  - questAsset: {fileID: 11400000, guid: b17c45ccb26efce43bbe50f072c74349, type: 2}
+    questPointPrefab: {fileID: 4058017315821378120, guid: 9db30774ed8400d448279ecd03329d72, type: 3}
+    spawnChance: 0.181
+    spawnPointsMin: 2
+    spawnPointsMax: 4
+    requiredTargets: 4
+    safetyRadius: 10
   questTargetsMin: 2
   questTargetsMax: 5
   enemyTable:
   - prefab: {fileID: 4823896413690452315, guid: ba79223540d0017488c0e42578c10964, type: 3}
-    weight: 2
-    spawnChance: 0.0031
+    weight: 10
+    spawnChance: 1
     minGroup: 3
     maxGroup: 5
     minSlope: 0

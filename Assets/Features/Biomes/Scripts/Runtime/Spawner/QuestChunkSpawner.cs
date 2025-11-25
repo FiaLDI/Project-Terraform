@@ -57,11 +57,6 @@ public class QuestChunkSpawner
                 if (qp != null)
                 {
                     qp.linkedQuest = entry.questAsset;
-
-                    if (qp.linkedQuest.behaviour is ApproachPointQuestBehaviour approach)
-                        approach.targetPoint = qp.transform;
-                    else if (qp.linkedQuest.behaviour is StandOnPointQuestBehaviour stand)
-                        stand.targetPoint = qp.transform;
                 }
 
                 blockers.Add(new Blocker(pos, entry.safetyRadius));

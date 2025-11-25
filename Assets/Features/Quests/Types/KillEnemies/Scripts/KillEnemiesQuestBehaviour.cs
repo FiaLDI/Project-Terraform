@@ -5,65 +5,73 @@ namespace Quests
     [System.Serializable]
     public class KillEnemiesQuestBehaviour : QuestBehaviour
     {
-        [Tooltip("Тег врага, убийства которого засчитываются в квест")]
+        [Tooltip("Тег врагов, убийства которых считаются валидными")]
         public string enemyTag = "Enemy";
 
-        [Tooltip("Сколько врагов нужно убить")]
+        [Tooltip("Нужно убить врагов")]
         public int requiredKills = 5;
 
         private int currentKills;
         private bool active;
         private bool completed;
+
         private QuestAsset myQuest;
 
         public override void StartQuest(QuestAsset quest)
         {
             myQuest = quest;
             currentKills = 0;
-            active = true;
             completed = false;
+            active = true;
 
-            if (myQuest != null)
+            quest.currentProgress = 0;
+            quest.targetProgress = requiredKills;
+            quest.NotifyQuestUpdated();
+
+            SubscribeToExistingEnemies();
+        }
+
+        private void SubscribeToExistingEnemies()
+        {
+            var enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+
+            foreach (var e in enemies)
             {
-                myQuest.currentProgress = 0;
-                myQuest.targetProgress = requiredKills;
-                myQuest.NotifyQuestUpdated();
+                var hp = e.GetComponent<EnemyHealth>();
+                if (hp != null)
+                    hp.OnEnemyKilled += OnEnemyKilled;
             }
         }
 
-        /// <summary>
-        /// Должен вызываться системой боя при смерти врага.
-        /// Можно вызывать только для нужных врагов, либо фильтровать по enemyTag снаружи.
-        /// </summary>
-        public void RegisterKill()
+        private void OnEnemyKilled(EnemyHealth enemy)
         {
-            if (!active || completed)
-                return;
+            if (!active || completed) return;
 
             currentKills++;
 
-            if (myQuest != null)
-                QuestManager.Instance?.UpdateQuestProgress(myQuest);
+            // Сохраняем прогресс
+            myQuest.currentProgress = currentKills;
+            myQuest.NotifyQuestUpdated();
+
+            if (currentKills >= requiredKills)
+            {
+                completed = true;
+                active = false;
+
+                QuestManager.Instance.UpdateQuestProgress(myQuest);
+            }
         }
 
         public override void UpdateProgress(QuestAsset quest, int amount = 1)
         {
-            if (!active || completed || myQuest == null)
-                return;
-
-            // Просто синхронизируем прогресс в QuestAsset
-            myQuest.currentProgress = currentKills;
-            // QuestManager после этого проверит myQuest.IsCompleted
+            // Синхронизация на всякий случай
+            quest.currentProgress = currentKills;
         }
 
         public override void CompleteQuest(QuestAsset quest)
         {
-            if (completed) return;
-
             completed = true;
             active = false;
-
-            myQuest?.NotifyQuestUpdated();
         }
 
         public override void ResetQuest(QuestAsset quest)
@@ -72,14 +80,12 @@ namespace Quests
             active = false;
             completed = false;
 
-            if (myQuest != null)
+            if (quest != null)
             {
-                myQuest.currentProgress = 0;
-                myQuest.targetProgress = requiredKills;
-                myQuest.NotifyQuestUpdated();
+                quest.currentProgress = 0;
+                quest.targetProgress = requiredKills;
+                quest.NotifyQuestUpdated();
             }
-
-            myQuest = null;
         }
 
         public override bool IsActive => active;

@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Quests.SceneQuestAutoGiver
   sceneStartQuests:
-  - {fileID: 11400000, guid: 48aca5642d5e234489a0bdd19e0fd50f, type: 2}
+  - {fileID: 11400000, guid: b17c45ccb26efce43bbe50f072c74349, type: 2}
 --- !u!1 &2830221871605978793
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,7 +11,7 @@ namespace Quests
 
         private void Awake()
         {
-            var col = GetComponent<SphereCollider>();
+            SphereCollider col = GetComponent<SphereCollider>();
             col.isTrigger = true;
             if (col.radius <= 0f)
                 col.radius = 2f;
