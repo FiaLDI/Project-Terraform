@@ -3,11 +3,8 @@ using UnityEngine;
 namespace Quests
 {
     [System.Serializable]
-    public class ApproachPointQuestBehaviour : QuestBehaviour
+    public class ProceduralPointsQuestBehaviour : QuestBehaviour
     {
-        public Transform targetPoint;
-        public float requiredDistance = 3f;
-
         private bool active;
         private bool completed;
 
@@ -15,16 +12,16 @@ namespace Quests
         {
             active = true;
             completed = false;
+            quest.currentProgress = 0;
         }
 
         public override void UpdateProgress(QuestAsset quest, int amount = 1)
         {
-            if (!active || completed || targetPoint == null) return;
+            if (!active || completed) return;
 
-            var player = GameObject.FindGameObjectWithTag("Player")?.transform;
-            if (player == null) return;
+            quest.currentProgress += amount;
 
-            if (Vector3.Distance(player.position, targetPoint.position) <= requiredDistance)
+            if (quest.currentProgress >= quest.targetProgress)
             {
                 CompleteQuest(quest);
             }
@@ -40,9 +37,15 @@ namespace Quests
         {
             active = false;
             completed = false;
+            quest.currentProgress = 0;
         }
 
+        public override bool IsActive => active;
+        public override bool IsCompleted => completed;
+        public override int CurrentProgress => 0;
+        public override int TargetProgress => 0;
+
         public override QuestBehaviour Clone()
-            => (ApproachPointQuestBehaviour)MemberwiseClone();
+            => (ProceduralPointsQuestBehaviour)MemberwiseClone();
     }
 }

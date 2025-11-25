@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+
 
 public class ChunkManager
 {
@@ -71,11 +73,15 @@ public class ChunkManager
     public List<Vector3> GetAllEnvironmentBlockers()
     {
         List<Vector3> result = new List<Vector3>();
+
         foreach (var kv in chunks)
         {
-            if (kv.Value.IsLoaded)
-                result.AddRange(kv.Value.environmentBlockers);
+            if (!kv.Value.IsLoaded) 
+                continue;
+
+            result.AddRange(kv.Value.environmentBlockers.Select(b => b.position));
         }
+
         return result;
     }
 

@@ -30,41 +30,46 @@ namespace Quests
             active = true;
             completed = false;
 
+            // Обнуляем прогресс по предметам
             foreach (var req in requirements)
-            {
                 req.currentAmountCollected = 0;
-            }
 
+            // Считаем стартовый прогресс
             CalculateQuestProgress();
-            quest.NotifyQuestUpdated();
+            myQuest?.NotifyQuestUpdated();
 
+            // Подписываемся на события инвентаря
+            InventoryManager.OnItemAdded -= OnItemAdded;
             InventoryManager.OnItemAdded += OnItemAdded;
         }
 
         private void OnItemAdded(Item item, int quantity)
         {
-            if (!active || completed || item == null) return;
+            if (!active || completed || item == null || myQuest == null)
+                return;
 
-            ItemRequirement req = requirements.FirstOrDefault(r => r.itemToCollect.id == item.id);
+            // Находим требуемый предмет по ссылке или по id
+            ItemRequirement req = requirements.FirstOrDefault(r =>
+                r.itemToCollect == item ||
+                (r.itemToCollect != null && r.itemToCollect.id == item.id));
 
-            if (req != null)
-            {
-                int needed = req.amountRequired - req.currentAmountCollected;
-                if (needed <= 0) return;
+            if (req == null)
+                return;
 
-                int amountToCredit = Mathf.Min(quantity, needed);
-                req.currentAmountCollected += amountToCredit;
+            int needed = req.amountRequired - req.currentAmountCollected;
+            if (needed <= 0) return;
 
-                Debug.Log($"Квест '{myQuest.questName}': засчитано {amountToCredit}х {item.itemName}");
+            int amountToCredit = Mathf.Min(quantity, needed);
+            req.currentAmountCollected += amountToCredit;
 
-                CalculateQuestProgress();
-                myQuest.NotifyQuestUpdated();
+            Debug.Log($"Квест '{myQuest.questName}': засчитано {amountToCredit}× {item.itemName}");
 
-                if (myQuest.IsCompleted)
-                {
-                    CompleteQuest(myQuest);
-                }
-            }
+            // Пересчёт прогресса квеста
+            CalculateQuestProgress();
+            myQuest.NotifyQuestUpdated();
+
+            // Сообщаем менеджеру, что прогресс изменился
+            QuestManager.Instance?.UpdateQuestProgress(myQuest);
         }
 
         private void CalculateQuestProgress()
@@ -84,12 +89,24 @@ namespace Quests
             myQuest.targetProgress = target;
         }
 
+        public override void UpdateProgress(QuestAsset quest, int amount = 1)
+        {
+            // Здесь логика минимальная: прогресс уже пересчитан в OnItemAdded.
+            // Но на всякий случай пересчитаем ещё раз (идемпотентно).
+            if (!active || completed || myQuest == null)
+                return;
+
+            CalculateQuestProgress();
+        }
+
         public override void CompleteQuest(QuestAsset quest)
         {
             if (completed) return;
             completed = true;
             active = false;
+
             InventoryManager.OnItemAdded -= OnItemAdded;
+            myQuest?.NotifyQuestUpdated();
         }
 
         public override void ResetQuest(QuestAsset quest)
@@ -99,12 +116,16 @@ namespace Quests
             myQuest = null;
 
             foreach (var req in requirements)
-            {
                 req.currentAmountCollected = 0;
-            }
 
             InventoryManager.OnItemAdded -= OnItemAdded;
-            CalculateQuestProgress();
+
+            if (quest != null)
+            {
+                quest.currentProgress = 0;
+                quest.targetProgress = 0;
+                quest.NotifyQuestUpdated();
+            }
         }
 
         public override bool IsActive => active;
@@ -116,6 +137,7 @@ namespace Quests
         {
             var clone = (CollectItemsQuestBehaviour)MemberwiseClone();
 
+            // Глубокая копия списка требований
             clone.requirements = new List<ItemRequirement>();
             foreach (var req in requirements)
             {
@@ -126,6 +148,8 @@ namespace Quests
                     currentAmountCollected = 0
                 });
             }
+
+            // У клона ещё нет myQuest, он будет установлен в StartQuest
             return clone;
         }
     }

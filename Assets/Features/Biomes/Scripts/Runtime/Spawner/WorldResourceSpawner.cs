@@ -9,16 +9,20 @@ public class WorldResourceSpawner
     private readonly Transform parent;
 
     private readonly List<Vector3> spawnedPositions = new List<Vector3>();
-    private readonly List<Vector3> environmentBlockers;
+    private readonly List<Blocker> blockers;
 
-
-    public WorldResourceSpawner(Vector2Int coord, int chunkSize, BiomeConfig biome, Transform parent, List<Vector3> environmentBlockers)
+    public WorldResourceSpawner(
+        Vector2Int coord,
+        int chunkSize,
+        BiomeConfig biome,
+        Transform parent,
+        List<Blocker> blockers)
     {
         this.coord = coord;
         this.chunkSize = chunkSize;
         this.biome = biome;
         this.parent = parent;
-        this.environmentBlockers = environmentBlockers;
+        this.blockers = blockers;
     }
 
     public void Spawn()
@@ -34,18 +38,14 @@ public class WorldResourceSpawner
             ResourceEntry entry = SelectWeightedResource(prng);
             if (entry == null) continue;
 
-            // базовый шанс на уровне ресурса
             if (prng.NextDouble() > entry.spawnChance) continue;
-
-            // правило по биому
-            if (!IsBiomeAllowed(entry))
-                continue;
+            if (!IsBiomeAllowed(entry)) continue;
 
             float cx = coord.x * chunkSize + (float)prng.NextDouble() * chunkSize;
             float cz = coord.y * chunkSize + (float)prng.NextDouble() * chunkSize;
 
             float h = BiomeHeightUtility.GetHeight(biome, cx, cz);
-            Vector3 center = new Vector3(cx, h + 50f, cz); // старт выше рельефа
+            Vector3 center = new Vector3(cx, h + 50f, cz);
 
             int count = prng.Next(entry.clusterCountRange.x, entry.clusterCountRange.y + 1);
 
@@ -70,27 +70,24 @@ public class WorldResourceSpawner
         }
     }
 
-    // ----------------- ОБЩИЙ СПАВН ОДНОГО ОБЪЕКТА -----------------
+    // ----------------- SPAWN ONE -----------------
 
     private void SpawnObject(ResourceEntry entry, Vector3 pos, System.Random prng)
     {
-        // Карта распределения по шуму (если включена)
         float distribution = GetDistributionValue(entry, pos);
         if (prng.NextDouble() > distribution)
             return;
 
-        // Притягивание к земле
-        if (!GroundSnapUtility.TrySnapWithNormal(pos,
+        if (!GroundSnapUtility.TrySnapWithNormal(
+                pos,
                 out Vector3 groundPos,
                 out Quaternion normalRot,
                 out float slope))
             return;
 
-        // Правило по наклону
         if (slope < entry.minSlope || slope > entry.maxSlope)
             return;
 
-        // Ограничение по высоте
         if (entry.useHeightLimit)
         {
             float height = groundPos.y;
@@ -98,19 +95,16 @@ public class WorldResourceSpawner
                 return;
         }
 
-        // Редкость к краям чанка
         if (!PassesEdgeFalloff(groundPos, prng))
             return;
 
-        // Минимальная дистанция между такими же ресурсами
         if (entry.useMinDistance && !IsFarEnough(groundPos, entry.minDistance))
             return;
 
-        // Зона отсутствия рядом с окружением
-        if (entry.avoidEnvironment && IsNearEnvironment(groundPos, entry.environmentRadius))
+        // избегаем окружения (деревья/камни/квесты) по радиусу entry.environmentRadius
+        if (entry.avoidEnvironment && IsNearBlockers(groundPos, entry.environmentRadius))
             return;
 
-        // Итоговый поворот
         Quaternion finalRot = Quaternion.identity;
 
         if (entry.alignToNormal)
@@ -119,11 +113,9 @@ public class WorldResourceSpawner
         if (entry.randomYRotation)
         {
             float yaw = (float)prng.NextDouble() * 360f;
-            Quaternion yRot = Quaternion.Euler(0f, yaw, 0f);
-            finalRot *= yRot;
+            finalRot *= Quaternion.Euler(0f, yaw, 0f);
         }
 
-        // Масштаб
         float scale = 1f;
         if (entry.randomScale)
         {
@@ -141,7 +133,23 @@ public class WorldResourceSpawner
         );
     }
 
-    // ----------------- ВСПОМОГАТЕЛЬНЫЕ ПРОВЕРКИ -----------------
+    // ----------------- CHECKS -----------------
+
+    private bool IsNearBlockers(Vector3 pos, float radius)
+    {
+        if (blockers == null || blockers.Count == 0)
+            return false;
+
+        float r2 = radius * radius;
+
+        foreach (var b in blockers)
+        {
+            if ((pos - b.position).sqrMagnitude < r2)
+                return true;
+        }
+
+        return false;
+    }
 
     private float GetDistributionValue(ResourceEntry entry, Vector3 worldPos)
     {
@@ -151,14 +159,12 @@ public class WorldResourceSpawner
         float nx = (worldPos.x + entry.distributionOffset.x) * entry.distributionScale;
         float nz = (worldPos.z + entry.distributionOffset.y) * entry.distributionScale;
 
-        float noise = Mathf.PerlinNoise(nx, nz); // 0..1
-        // усиливаем различия
+        float noise = Mathf.PerlinNoise(nx, nz);
         return Mathf.Pow(noise, entry.distributionStrength);
     }
 
     private bool PassesEdgeFalloff(Vector3 worldPos, System.Random prng)
     {
-        // если фоллофф == 1, падения плотности нет
         float falloff = biome.resourceEdgeFalloff;
         if (Mathf.Approximately(falloff, 1f))
             return true;
@@ -170,7 +176,7 @@ public class WorldResourceSpawner
         float dx = Mathf.Abs(localX - half);
         float dz = Mathf.Abs(localZ - half);
 
-        float edgeFactor = Mathf.Max(dx, dz) / half; // 0 в центре, 1 у края
+        float edgeFactor = Mathf.Max(dx, dz) / half;
         edgeFactor = Mathf.Clamp01(edgeFactor);
 
         float chance = Mathf.Lerp(1f, falloff, edgeFactor);
@@ -182,37 +188,21 @@ public class WorldResourceSpawner
         float minSqr = minDist * minDist;
         foreach (var p in spawnedPositions)
         {
-            if (Vector3.SqrMagnitude(pos - p) < minSqr)
+            if ((pos - p).sqrMagnitude < minSqr)
                 return false;
         }
         return true;
     }
 
-    private bool IsNearEnvironment(Vector3 pos, float radius)
-    {
-        if (environmentBlockers == null || environmentBlockers.Count == 0)
-            return false;
+    // ----------------- CLUSTER TYPES -----------------
 
-        float r2 = radius * radius;
-        foreach (var p in environmentBlockers)
-        {
-            if (Vector3.SqrMagnitude(pos - p) < r2)
-                return true;
-        }
-
-        return false;
-    }
-
-    // ----------------- КЛАСТЕРНЫЕ СПАВНЕРЫ -----------------
-
-    private void SpawnSingle(ResourceEntry entry, Vector3 center, System.Random prng)
+     private void SpawnSingle(ResourceEntry entry, Vector3 center, System.Random prng)
     {
         SpawnObject(entry, center, prng);
     }
 
     private void SpawnCrystalVein(System.Random rng, ResourceEntry entry, Vector3 center, int count)
     {
-        // жила — плотный кластер, можем игнорировать minDistance
         bool prevUseMinDist = entry.useMinDistance;
         entry.useMinDistance = false;
 
@@ -247,7 +237,6 @@ public class WorldResourceSpawner
 
     private void SpawnVerticalNoise(ResourceEntry entry, Vector3 center, int count, System.Random rng)
     {
-        // вертикальные цепочки — дистанция неважна
         bool prevUseMinDist = entry.useMinDistance;
         entry.useMinDistance = false;
 
@@ -260,7 +249,7 @@ public class WorldResourceSpawner
         entry.useMinDistance = prevUseMinDist;
     }
 
-    // ----------------- ВСПОМОГАТЕЛЬНОЕ -----------------
+    // ----------------- HELPERS -----------------
 
     private bool IsBiomeAllowed(ResourceEntry entry)
     {
@@ -279,7 +268,8 @@ public class WorldResourceSpawner
     private ResourceEntry SelectWeightedResource(System.Random rng)
     {
         float t = 0f;
-        foreach (var e in biome.possibleResources) t += e.weight;
+        foreach (var e in biome.possibleResources)
+            t += e.weight;
 
         if (t <= 0f) return null;
 

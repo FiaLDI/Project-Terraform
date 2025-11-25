@@ -5,7 +5,10 @@ namespace Quests
     [System.Serializable]
     public class StandOnPointQuestBehaviour : QuestBehaviour
     {
+        [Tooltip("Точка, на которой нужно стоять (назначается QuestPoint'ом)")]
         public Transform targetPoint;
+
+        [Tooltip("Сколько секунд нужно простоять на точке")]
         public float requiredStayTime = 2f;
 
         private float stayTimer;
@@ -23,7 +26,9 @@ namespace Quests
         {
             if (!active || completed || targetPoint == null) return;
 
-            Transform player = GameObject.FindGameObjectWithTag("Player").transform;
+            Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
+            if (player == null) return;
+
             float dist = Vector3.Distance(player.position, targetPoint.position);
 
             if (dist < 2f)
@@ -35,7 +40,6 @@ namespace Quests
                     completed = true;
                     active = false;
                 }
-
             }
             else
             {
@@ -45,7 +49,7 @@ namespace Quests
 
         public override void CompleteQuest(QuestAsset quest)
         {
-            // здесь ничего не делаем — завершение фиксирует QuestPoint
+            // Фактическое завершение квеста делает QuestPoint (TargetCompleted + QuestManager)
         }
 
         public override void ResetQuest(QuestAsset quest)
@@ -61,6 +65,7 @@ namespace Quests
         public override int CurrentProgress => 0;
         public override int TargetProgress => 1;
 
-        public override QuestBehaviour Clone() => (StandOnPointQuestBehaviour)MemberwiseClone();
+        public override QuestBehaviour Clone()
+            => (StandOnPointQuestBehaviour)MemberwiseClone();
     }
 }

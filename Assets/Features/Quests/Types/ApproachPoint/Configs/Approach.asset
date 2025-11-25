@@ -12,13 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42563f92ff0a9fc49811a92242f3419a, type: 3}
   m_Name: Approach
   m_EditorClassIdentifier: 
-  questID: 16d205f8-e7bf-48e7-9731-c22608dce1aa
   questName: Approach
   description: 
-  currentProgress: 0
-  targetProgress: 12
   behaviour:
     rid: 6234004796635086909
+  currentProgress: 0
+  targetProgress: 0
+  rewards:
+  - item: {fileID: 11400000, guid: 5d8b6d013c118bd43b6a7deaddfa301b, type: 2}
+    amount: 1
+    spawnPrefabInWorld: 1
+    worldPrefab: {fileID: 3360301487101487544, guid: 5e252df5b72c86248974e61418379550, type: 3}
   references:
     version: 2
     RefIds:

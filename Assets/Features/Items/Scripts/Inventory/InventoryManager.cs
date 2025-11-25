@@ -9,6 +9,7 @@ public class InventoryManager : MonoBehaviour
     public static bool isInventoryOpen;
     public static InventoryManager instance;
     public static event System.Action<Item, int> OnItemAdded;
+    public static InventoryManager Instance => instance;
 
     [Header("Hotbar")]
     [SerializeField] private RectTransform selectionHighlight;

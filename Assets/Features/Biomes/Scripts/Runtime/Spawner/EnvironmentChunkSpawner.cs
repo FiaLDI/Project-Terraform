@@ -7,9 +7,14 @@ public class EnvironmentChunkSpawner
     private readonly int chunkSize;
     private readonly BiomeConfig biome;
     private readonly Transform parent;
-    private readonly List<Vector3> blockers;
+    private readonly List<Blocker> blockers;
 
-    public EnvironmentChunkSpawner(Vector2Int coord, int chunkSize, BiomeConfig biome, Transform parent, List<Vector3> blockers)
+    public EnvironmentChunkSpawner(
+        Vector2Int coord,
+        int chunkSize,
+        BiomeConfig biome,
+        Transform parent,
+        List<Blocker> blockers)
     {
         this.coord = coord;
         this.chunkSize = chunkSize;
@@ -40,7 +45,8 @@ public class EnvironmentChunkSpawner
             float h = BiomeHeightUtility.GetHeight(biome, px, pz);
             Vector3 startPos = new Vector3(px, h + 50f, pz);
 
-            if (!GroundSnapUtility.TrySnapWithNormal(startPos,
+            if (!GroundSnapUtility.TrySnapWithNormal(
+                    startPos,
                     out Vector3 groundPos,
                     out Quaternion normalRot,
                     out float slope))
@@ -71,9 +77,12 @@ public class EnvironmentChunkSpawner
             GameObject obj = Object.Instantiate(selected.prefab, groundPos, finalRot, parent);
             obj.transform.localScale *= scale;
 
+            // крупные объекты помечаем как блокеры для ресурсов/врагов
             if (selected.markAsResourceBlocker)
-                blockers.Add(groundPos);
-            
+            {
+                // радиус можно подправить, сейчас условные 1.5f
+                blockers.Add(new Blocker(groundPos, 1.5f));
+            }
         }
     }
 

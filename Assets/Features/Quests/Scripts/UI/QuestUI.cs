@@ -78,6 +78,8 @@ namespace Quests
         {
             if (quest == null) return;
 
+            Debug.Log($"🟪 UI: AddQuest → {quest.questName}");
+
             // --- HUD (только первые maxHudQuests) ---
             if (hudQuestEntries.Count < maxHudQuests && !hudQuestEntries.ContainsKey(quest))
             {
@@ -103,6 +105,8 @@ namespace Quests
         public void UpdateQuest(QuestAsset quest)
         {
             if (quest == null) return;
+            Debug.Log($"🟪 UI: UpdateQuest → {quest.questName}: {quest.currentProgress}/{quest.targetProgress}");
+
 
             // HUD
             if (hudQuestEntries.ContainsKey(quest))
@@ -131,6 +135,8 @@ namespace Quests
         public void RemoveQuest(QuestAsset quest)
         {
             if (quest == null) return;
+
+            Debug.Log($"🟪 UI: RemoveQuest → {quest.questName}");
 
             quest.OnQuestUpdated -= UpdateQuest;
 

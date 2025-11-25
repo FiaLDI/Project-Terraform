@@ -9,106 +9,62 @@ namespace Quests
 
         public List<QuestAsset> activeQuests = new();
         public List<QuestAsset> completedQuests = new();
+
         public QuestUI questUI;
 
         private void Awake()
         {
-            if (Instance == null)
+            if (Instance != null && Instance != this)
             {
-                Instance = this;
-                Debug.Log($"[QuestManager] Awake: Я '{this.gameObject.name}', я стал 'Instance'.");
-            }
-            else
-            {
-                Debug.LogWarning($"[QuestManager] Awake: 'Instance' уже занят объектом '{Instance.gameObject.name}'. " +
-                                 $"Я - дубликат на '{this.gameObject.name}' и БУДУ УНИЧТОЖЕН.");
                 Destroy(gameObject);
-            return;
+                return;
             }
 
-            StartSceneQuests();
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
-        private void Start()
-        {
-            // ⚡ При загрузке сцены ищем все квесты и активируем их
-            
-        }
-
-        /// <summary>
-        /// Запускаем конкретный квест
-        /// </summary>
         public void StartQuest(QuestAsset quest)
         {
-            if (quest == null || activeQuests.Contains(quest)) return;
+            if (quest == null) return;
+            if (activeQuests.Contains(quest) || completedQuests.Contains(quest))
+                return;
+
+            quest.ResetProgress();
+            quest.behaviour?.StartQuest(quest);
 
             activeQuests.Add(quest);
-
-            // UI сразу подписываем
             questUI?.AddQuest(quest);
-
-            // запуск поведения
-            quest.behaviour?.StartQuest(quest);
+            quest.NotifyQuestUpdated();
         }
 
-        /// <summary>
-        /// Обновляем прогресс (дергается из QuestPoint при выполнении цели)
-        /// </summary>
-        public void UpdateQuestProgress(QuestAsset quest)
+        public void UpdateQuestProgress(QuestAsset quest, int amount = 1)
         {
             if (quest == null) return;
 
-            quest.behaviour?.UpdateProgress(quest);
+            if (quest.IsCompleted)
+                return;
+
+            quest.AddProgress(amount);
             questUI?.UpdateQuest(quest);
 
             if (quest.IsCompleted)
-            {
-                quest.behaviour?.CompleteQuest(quest);
                 CompleteQuest(quest);
-            }
         }
 
-        /// <summary>
-        /// Завершение квеста
-        /// </summary>
+
         public void CompleteQuest(QuestAsset quest)
         {
-            if (quest == null || !activeQuests.Contains(quest)) return;
+            if (quest.alreadyCompleted)
+                return;
 
-            activeQuests.Remove(quest);
-            completedQuests.Add(quest);
+            if (activeQuests.Remove(quest))
+                completedQuests.Add(quest);
+
+            quest.NotifyQuestUpdated();
 
             questUI?.RemoveQuest(quest);
+            quest.GiveRewards();
         }
-
-        /// <summary>
-        /// Инициализация квестов, если они расставлены вручную на сцене
-        /// </summary>
-       public void StartSceneQuests()
-        {
-            QuestPoint[] points = FindObjectsOfType<QuestPoint>();
-
-            HashSet<QuestAsset> quests = new HashSet<QuestAsset>();
-            foreach (var point in points)
-            {
-                if (point.linkedQuest != null)
-                    quests.Add(point.linkedQuest);
-            }
-
-            foreach (var quest in quests)
-            {
-                // 1) сбрасываем прогресс ДО старта квеста
-                quest.ResetProgress();
-
-                // 2) активируем квест (подпишем UI)
-                StartQuest(quest);
-
-                // 3) UI обновим явно
-                questUI?.UpdateQuest(quest);
-            }
-
-            Debug.Log($"[QuestManager] Запущено квестов на сцене: {quests.Count}");
-        }
-
     }
 }
