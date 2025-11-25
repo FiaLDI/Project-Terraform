@@ -13,6 +13,14 @@ public enum TerrainType
     FractalMountains
 }
 
+public enum WaterType
+{
+    None,
+    Ocean,
+    Lake,
+    Swamp
+}
+
 [System.Serializable]
 public class EnvironmentEntry
 {
@@ -60,6 +68,23 @@ public class QuestEntry
     public int maxTargets = 3;
 }
 
+[System.Serializable]
+public class EnemySpawnEntry
+{
+    public GameObject prefab;
+    public float weight = 1f;
+    public float spawnChance = 0.6f;
+    public int minGroup = 1;
+    public int maxGroup = 3;
+
+    [Header("Условия спавна")]
+    public float minSlope = 0f;
+    public float maxSlope = 25f;
+    public float minHeight = -100f;
+    public float maxHeight = 500f;
+
+    public bool alignToNormal = true;
+}
 
 
 [CreateAssetMenu(menuName = "Game/Biome Config")]
@@ -74,6 +99,10 @@ public class BiomeConfig : ScriptableObject
 
     [Header("Генерация")]
     public bool isGenerate = true;
+
+    [Header("Rendering")]
+    [Tooltip("Если включено — рельеф этого биома будет сгенерирован в Low-Poly стиле.")]
+    public bool useLowPoly = false;
 
     // Размеры (используются BiomeHeightUtility)
     [Header("Размер карты (для озёр/воды)")]
@@ -134,6 +163,15 @@ public class BiomeConfig : ScriptableObject
     public int questTargetsMax = 5;
 
     // ===========================
+    // Enemy
+    // ===========================
+    [Header("Enemy System")]
+    public EnemySpawnEntry[] enemyTable;
+    public float enemyDensity = 0.0008f;
+    public float enemyRespawnDelay = 20f;
+
+
+    // ===========================
     // EFFECTS / SKYBOX
     // ===========================
     [Header("Эффекты окружения")]
@@ -156,10 +194,15 @@ public class BiomeConfig : ScriptableObject
     // ===========================
     // WATER
     // ===========================
-    [Header("Global Water")]
+    [Header("Water System")]
     public bool useWater = false;
+    public WaterType waterType = WaterType.Ocean;
+
     public float seaLevel = 1f;
     public Material waterMaterial;
+    public Material swampWaterMaterial;
+    public Material lakeWaterMaterial;
+    public Material oceanWaterMaterial;
 
     // ===========================
     // LAKES

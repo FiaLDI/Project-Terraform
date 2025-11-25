@@ -42,8 +42,7 @@ public class Chunk
         SpawnEnvironment();
         SpawnResources();
         SpawnQuests();
-
-        // ❌ НЕТ SpawnWater — вода теперь глобальная
+        SpawnEnemies();
     }
 
     public void LoadImmediate()
@@ -58,6 +57,7 @@ public class Chunk
         SpawnEnvironment();
         SpawnResources();
         SpawnQuests();
+        SpawnEnemies();
     }
 
     // ============================
@@ -88,11 +88,14 @@ public class Chunk
 
     private void GenerateImmediateMesh()
     {
+        var biome = world.GetBiomeAtChunk(coord);
+
         Mesh m = TerrainMeshGenerator.GenerateMeshSync(
             coord,
             chunkSize,
             chunkSize,
-            world
+            world,
+            biome != null && biome.useLowPoly
         );
 
         var go = new GameObject("Mesh");
@@ -101,15 +104,24 @@ public class Chunk
         var mf = go.AddComponent<MeshFilter>();
         var mr = go.AddComponent<MeshRenderer>();
 
-        var biome = world.GetBiomeAtChunk(coord);
-
         mr.sharedMaterial = biome != null ? biome.groundMaterial : null;
         mf.sharedMesh = m;
     }
 
+
     // ============================
     // SPAWNER
     // ============================
+
+    private void SpawnEnemies()
+    {
+        var biome = world.GetBiomeAtChunk(coord);
+        if (biome == null) return;
+
+        new EnemyChunkSpawner(
+            coord, chunkSize, biome, rootObject.transform
+        ).Spawn();
+    }
 
     private void SpawnEnvironment()
     {

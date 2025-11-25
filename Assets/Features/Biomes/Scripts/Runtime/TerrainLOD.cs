@@ -42,7 +42,14 @@ public class TerrainLOD
 
     private LOD CreateLOD(int resolution, float transition)
     {
-        Mesh mesh = TerrainMeshGenerator.GenerateMeshSync(coord, size, resolution, world);
+        Mesh mesh = TerrainMeshGenerator.GenerateMeshSync(
+            coord,
+            size,
+            resolution,
+            world,
+            biome.useLowPoly
+        );
+
 
         GameObject go = new GameObject($"LOD_{resolution}");
         go.transform.SetParent(lodRoot.transform, false);

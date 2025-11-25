@@ -25162,6 +25162,7 @@ GameObject:
   - component: {fileID: 2020144330060152482}
   - component: {fileID: 3421196684857910301}
   - component: {fileID: 7499795775875790603}
+  - component: {fileID: 6770291232200422427}
   m_Layer: 0
   m_Name: FirstPersonCamera
   m_TagString: MainCamera
@@ -25287,6 +25288,18 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &6770291232200422427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7586922407829781121}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55cf83be0594d4b4facf1b39c916ba12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraAnchor
 --- !u!1 &7609267806967212864
 GameObject:
   m_ObjectHideFlags: 0

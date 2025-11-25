@@ -37,6 +37,9 @@ public class BiomeConfigEditor : Editor
             DrawProps("fractalOctaves", "fractalPersistence", "fractalLacunarity");
         }
 
+        DrawHeader("LowPoly");
+        DrawProps("useLowPoly");
+
         DrawHeader("Environment");
         DrawProps("environmentPrefabs", "environmentDensity");
 
@@ -46,6 +49,9 @@ public class BiomeConfigEditor : Editor
         // ─────────── КВЕСТЫ ───────────
         DrawHeader("🎯 Quests");
         DrawQuestEditor();
+
+        DrawHeader("⚔ Enemies");
+        DrawProps("enemyTable", "enemyDensity", "enemyRespawnDelay");
 
         // ─────────── Эффекты ───────────
         DrawHeader("Effects");

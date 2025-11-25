@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa86d43d2995c264e87d0c6f30d5425e, type: 3}
-  m_Name: New World Config
+  m_Name: WorldConfig
   m_EditorClassIdentifier: Assembly-CSharp::WorldConfig
   worldWidthChunks: 32
   worldHeightChunks: 32
