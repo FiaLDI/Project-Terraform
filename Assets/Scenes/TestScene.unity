@@ -307,6 +307,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Generator
       objectReference: {fileID: 0}
+    - target: {fileID: 484403358512921624, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2359123666482985354, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
       propertyPath: player
       value: 
