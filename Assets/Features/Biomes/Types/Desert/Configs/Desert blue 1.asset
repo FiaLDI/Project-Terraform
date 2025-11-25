@@ -100,8 +100,8 @@ MonoBehaviour:
   questTargetsMax: 5
   enemyTable:
   - prefab: {fileID: 4823896413690452315, guid: ba79223540d0017488c0e42578c10964, type: 3}
-    weight: 10
-    spawnChance: 1
+    weight: 2
+    spawnChance: 0.0031
     minGroup: 3
     maxGroup: 5
     minSlope: 0
