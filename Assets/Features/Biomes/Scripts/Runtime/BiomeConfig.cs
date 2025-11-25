@@ -57,15 +57,17 @@ public class QuestEntry
     public QuestAsset questAsset;
     public GameObject questPointPrefab;
 
-#if UNITY_EDITOR
-    [HideInInspector] public Texture2D previewTexture;
-#endif
-
     [Range(0f, 1f)]
     public float spawnChance = 1f;
 
-    public int minTargets = 1;
-    public int maxTargets = 3;
+    public int spawnPointsMin = 1;
+    public int spawnPointsMax = 3;
+
+    [Tooltip("Сколько точек нужно выполнить, чтобы завершить квест.")]
+    [Min(1)]
+    public int requiredTargets = 1;
+
+    public float safetyRadius = 5f;
 }
 
 [System.Serializable]

@@ -12,9 +12,17 @@ public class QuestAssetEditor : Editor
     private Type[] behaviourClasses;
     private int selectedIndex;
 
+    SerializedProperty descriptionProp;
+    SerializedProperty behaviourProp;
+    SerializedProperty rewardsProp;
+
     private void OnEnable()
     {
         questAsset = (QuestAsset)target;
+
+        descriptionProp = serializedObject.FindProperty("description");
+        behaviourProp = serializedObject.FindProperty("behaviour");
+        rewardsProp = serializedObject.FindProperty("rewards");
 
         behaviourClasses = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(a => a.GetTypes())
@@ -42,11 +50,11 @@ public class QuestAssetEditor : Editor
         EditorGUILayout.LabelField("⚔️ Quest Asset", EditorStyles.boldLabel);
 
         questAsset.questName = EditorGUILayout.TextField("Name", questAsset.questName);
-        EditorGUILayout.LabelField("Description");
-        questAsset.description = EditorGUILayout.TextArea(questAsset.description, GUILayout.Height(40));
+        EditorGUILayout.PropertyField(descriptionProp);
 
         EditorGUILayout.Space();
 
+        // === BEHAVIOUR SELECTOR ===
         EditorGUILayout.LabelField("Quest Behaviour", EditorStyles.boldLabel);
         int newIndex = EditorGUILayout.Popup("Type", selectedIndex, behaviourTypes);
         if (newIndex != selectedIndex || questAsset.behaviour == null)
@@ -56,26 +64,17 @@ public class QuestAssetEditor : Editor
             EditorUtility.SetDirty(questAsset);
         }
 
-        if (questAsset.behaviour != null)
-        {
-            SerializedObject so = new SerializedObject(questAsset);
-            SerializedProperty behaviourProp = so.FindProperty("behaviour");
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Progress Settings", EditorStyles.boldLabel);
+        questAsset.targetProgress = EditorGUILayout.IntField("Required Targets", questAsset.targetProgress);
 
-            if (behaviourProp != null && behaviourProp.hasVisibleChildren)
-            {
-                EditorGUILayout.LabelField("Тип поведения квеста", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(behaviourProp, true);
 
-                var copy = behaviourProp.Copy();
-                var end = copy.GetEndProperty();
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Rewards", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(rewardsProp, true);
 
-                while (copy.NextVisible(true) && !SerializedProperty.EqualContents(copy, end))
-                {
-                    EditorGUILayout.PropertyField(copy, true);
-                }
-            }
-
-            so.ApplyModifiedProperties();
-        }
+        serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Progress", $"{questAsset.currentProgress}/{questAsset.targetProgress}");

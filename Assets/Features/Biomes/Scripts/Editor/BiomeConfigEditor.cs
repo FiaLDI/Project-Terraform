@@ -170,7 +170,7 @@ public class BiomeConfigEditor : Editor
             if (entry.questAsset == null || entry.questPointPrefab == null)
                 continue;
 
-            int count = Random.Range(entry.minTargets, entry.maxTargets + 1);
+            int count = Random.Range(entry.spawnPointsMin, entry.spawnPointsMax + 1);
 
             for (int i = 0; i < count; i++)
             {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class Chunk
 {
-    public List<Vector3> environmentBlockers = new List<Vector3>();
+    public List<Blocker> environmentBlockers = new List<Blocker>();
 
     public Vector2Int coord;
     public bool IsLoaded => rootObject != null;
@@ -13,7 +13,6 @@ public class Chunk
 
     private readonly int chunkSize;
     private readonly Transform parent;
-    
 
     public Chunk(Vector2Int coord, WorldConfig world)
         : this(coord, world, world.chunkSize, null)
@@ -113,22 +112,18 @@ public class Chunk
     // SPAWNER
     // ============================
 
-    private void SpawnEnemies()
-    {
-        var biome = world.GetBiomeAtChunk(coord);
-        if (biome == null) return;
-
-        new EnemyChunkSpawner(
-            coord, chunkSize, biome, rootObject.transform
-        ).Spawn();
-    }
-
     private void SpawnEnvironment()
     {
         var biome = world.GetBiomeAtChunk(coord);
         if (biome == null) return;
 
-        new EnvironmentChunkSpawner(coord, chunkSize, biome, rootObject.transform, environmentBlockers).Spawn();
+        new EnvironmentChunkSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform,
+            environmentBlockers
+        ).Spawn();
     }
 
     private void SpawnResources()
@@ -136,7 +131,13 @@ public class Chunk
         var biome = world.GetBiomeAtChunk(coord);
         if (biome == null) return;
 
-        new WorldResourceSpawner(coord, chunkSize, biome, rootObject.transform, environmentBlockers).Spawn();
+        new WorldResourceSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform,
+            environmentBlockers
+        ).Spawn();
     }
 
     private void SpawnQuests()
@@ -144,8 +145,29 @@ public class Chunk
         var biome = world.GetBiomeAtChunk(coord);
         if (biome == null) return;
 
-        new QuestChunkSpawner(coord, chunkSize, biome, rootObject.transform).Spawn();
+        new QuestChunkSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform,
+            environmentBlockers
+        ).Spawn();
     }
+
+    private void SpawnEnemies()
+    {
+        var biome = world.GetBiomeAtChunk(coord);
+        if (biome == null) return;
+
+        new EnemyChunkSpawner(
+            coord,
+            chunkSize,
+            biome,
+            rootObject.transform,
+            environmentBlockers
+        ).Spawn();
+    }
+
 
     // ============================
     // UNLOAD

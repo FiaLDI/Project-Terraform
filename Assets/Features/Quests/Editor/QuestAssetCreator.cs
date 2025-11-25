@@ -10,8 +10,13 @@ public static class QuestAssetCreator
     {
         QuestAsset asset = ScriptableObject.CreateInstance<QuestAsset>();
 
-        asset.questID = System.Guid.NewGuid().ToString();
         asset.questName = "New Quest";
+        asset.description = "Quest description...";
+
+        asset.rewards = new RewardItem[]
+        {
+            new RewardItem()
+        };
 
         string path = "Assets/Quests";
         if (!Directory.Exists(path))
@@ -25,6 +30,6 @@ public static class QuestAssetCreator
         EditorUtility.FocusProjectWindow();
         Selection.activeObject = asset;
 
-        Debug.Log($"✅ QuestAsset создан: {assetPath} (ID: {asset.questID})");
+        Debug.Log($"✅ QuestAsset создан: {assetPath}");
     }
 }

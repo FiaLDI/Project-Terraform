@@ -1,38 +1,75 @@
+using UnityEngine;
+
 namespace Quests
 {
     [System.Serializable]
     public class KillEnemiesQuestBehaviour : QuestBehaviour
     {
+        [Tooltip("Тег врагов, убийства которых считаются валидными")]
         public string enemyTag = "Enemy";
+
+        [Tooltip("Нужно убить врагов")]
         public int requiredKills = 5;
 
         private int currentKills;
         private bool active;
         private bool completed;
 
+        private QuestAsset myQuest;
+
         public override void StartQuest(QuestAsset quest)
         {
+            myQuest = quest;
             currentKills = 0;
-            active = true;
             completed = false;
+            active = true;
+
+            quest.currentProgress = 0;
+            quest.targetProgress = requiredKills;
+            quest.NotifyQuestUpdated();
+
+            SubscribeToExistingEnemies();
         }
 
-        public void RegisterKill()
+        private void SubscribeToExistingEnemies()
+        {
+            var enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+
+            foreach (var e in enemies)
+            {
+                var hp = e.GetComponent<EnemyHealth>();
+                if (hp != null)
+                    hp.OnEnemyKilled += OnEnemyKilled;
+            }
+        }
+
+        private void OnEnemyKilled(EnemyHealth enemy)
         {
             if (!active || completed) return;
+
             currentKills++;
+
+            // Сохраняем прогресс
+            myQuest.currentProgress = currentKills;
+            myQuest.NotifyQuestUpdated();
+
+            if (currentKills >= requiredKills)
+            {
+                completed = true;
+                active = false;
+
+                QuestManager.Instance.UpdateQuestProgress(myQuest);
+            }
         }
 
         public override void UpdateProgress(QuestAsset quest, int amount = 1)
         {
-            if (!active || completed) return;
-            if (currentKills >= requiredKills)
-                CompleteQuest(quest);
+            // Синхронизация на всякий случай
+            quest.currentProgress = currentKills;
         }
 
         public override void CompleteQuest(QuestAsset quest)
         {
-            if (completed) return;
             completed = true;
             active = false;
         }
@@ -42,6 +79,13 @@ namespace Quests
             currentKills = 0;
             active = false;
             completed = false;
+
+            if (quest != null)
+            {
+                quest.currentProgress = 0;
+                quest.targetProgress = requiredKills;
+                quest.NotifyQuestUpdated();
+            }
         }
 
         public override bool IsActive => active;
@@ -49,6 +93,7 @@ namespace Quests
         public override int CurrentProgress => currentKills;
         public override int TargetProgress => requiredKills;
 
-        public override QuestBehaviour Clone() => (KillEnemiesQuestBehaviour)MemberwiseClone();
+        public override QuestBehaviour Clone()
+            => (KillEnemiesQuestBehaviour)MemberwiseClone();
     }
 }

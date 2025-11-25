@@ -111,7 +111,7 @@ public class BiomeWorldWindow : EditorWindow
 
     private void ClearWorld()
     {
-        foreach (var m in GameObject.FindObjectsOfType<ChunkRootMarker>())
+        foreach (var m in Object.FindObjectsByType<ChunkRootMarker>(FindObjectsSortMode.None))
             Object.DestroyImmediate(m.gameObject);
 
         GameObject oldSystems = GameObject.Find("GameSystems");

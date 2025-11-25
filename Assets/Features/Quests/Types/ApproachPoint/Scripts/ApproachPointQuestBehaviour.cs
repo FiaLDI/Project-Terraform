@@ -21,10 +21,10 @@ namespace Quests
         {
             if (!active || completed || targetPoint == null) return;
 
-            Transform player = GameObject.FindGameObjectWithTag("Player").transform;
-            float dist = Vector3.Distance(player.position, targetPoint.position);
+            var player = GameObject.FindGameObjectWithTag("Player")?.transform;
+            if (player == null) return;
 
-            if (dist <= requiredDistance)
+            if (Vector3.Distance(player.position, targetPoint.position) <= requiredDistance)
             {
                 CompleteQuest(quest);
             }
@@ -32,7 +32,6 @@ namespace Quests
 
         public override void CompleteQuest(QuestAsset quest)
         {
-            if (completed) return;
             completed = true;
             active = false;
         }
@@ -43,11 +42,7 @@ namespace Quests
             completed = false;
         }
 
-        public override bool IsActive => active;
-        public override bool IsCompleted => completed;
-        public override int CurrentProgress => completed ? 1 : 0;
-        public override int TargetProgress => 1;
-
-        public override QuestBehaviour Clone() => (ApproachPointQuestBehaviour)MemberwiseClone();
+        public override QuestBehaviour Clone()
+            => (ApproachPointQuestBehaviour)MemberwiseClone();
     }
 }

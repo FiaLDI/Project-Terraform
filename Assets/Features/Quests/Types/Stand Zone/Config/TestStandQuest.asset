@@ -12,18 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42563f92ff0a9fc49811a92242f3419a, type: 3}
   m_Name: TestStandQuest
   m_EditorClassIdentifier: 
-  questID: 11550f36-bd8e-4faf-b635-39c16091ae6c
   questName: Stand on Point
   description: 
-  currentProgress: 3
-  targetProgress: 5
+  alreadyCompleted: 0
   behaviour:
     rid: 683826425092374606
+  currentProgress: 5
+  targetProgress: 5
+  rewards:
+  - item: {fileID: 11400000, guid: 3b83970df4c0fac40a8c976c2ed8e1c2, type: 2}
+    amount: 5
   references:
     version: 2
     RefIds:
     - rid: 683826425092374606
       type: {class: StandOnPointQuestBehaviour, ns: Quests, asm: Assembly-CSharp}
       data:
-        targetPoint: {fileID: 0}
-        requiredStayTime: 0.5
+        requiredStayTime: 2

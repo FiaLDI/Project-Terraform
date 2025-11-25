@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Quests
 {
@@ -12,10 +12,12 @@ namespace Quests
         public bool autoStartChainsOnStart = true;
         public int startChainIndex = 0;
 
-        private Dictionary<QuestAsset, QuestChain> questToChainMap = new Dictionary<QuestAsset, QuestChain>();
+        private Dictionary<QuestAsset, QuestChain> questToChainMap =
+            new Dictionary<QuestAsset, QuestChain>();
+
         private QuestChain activeChain;
 
-        void Start()
+        private void Start()
         {
             Debug.Log("▶ QuestChainManager: Start()");
 
@@ -35,7 +37,7 @@ namespace Quests
             }
         }
 
-        void InitializeChains()
+        private void InitializeChains()
         {
             questToChainMap.Clear();
             Debug.Log($"▶ QuestChainManager: инициализация {questChains.Count} цепочек");
@@ -49,7 +51,8 @@ namespace Quests
                     continue;
                 }
 
-                Debug.Log($"▶ QuestChainManager: цепочка '{chain.chainName}' содержит {chain.questsInOrder.Count} квестов");
+                Debug.Log(
+                    $"▶ QuestChainManager: цепочка '{chain.chainName}' содержит {chain.questsInOrder.Count} квестов");
 
                 for (int j = 0; j < chain.questsInOrder.Count; j++)
                 {
@@ -61,7 +64,8 @@ namespace Quests
                     }
                     else
                     {
-                        Debug.LogError($"❌ QuestChainManager: квест {j} в цепочке '{chain.chainName}' пустой!");
+                        Debug.LogError(
+                            $"❌ QuestChainManager: квест {j} в цепочке '{chain.chainName}' пустой!");
                     }
                 }
             }
@@ -86,7 +90,8 @@ namespace Quests
             }
             else
             {
-                Debug.LogError($"❌ QuestChainManager: индекс {chainIndex} вне диапазона (всего {questChains.Count})");
+                Debug.LogError(
+                    $"❌ QuestChainManager: индекс {chainIndex} вне диапазона (всего {questChains.Count})");
             }
         }
 
@@ -100,38 +105,41 @@ namespace Quests
 
             Debug.Log($"▶ QuestChainManager.OnQuestCompleted: завершён '{completedQuest.questName}'");
 
-            if (questToChainMap.ContainsKey(completedQuest))
+            if (questToChainMap.TryGetValue(completedQuest, out var chain))
             {
-                QuestChain chain = questToChainMap[completedQuest];
                 if (chain != null)
                 {
-                    Debug.Log($"▶ Квест '{completedQuest.questName}' завершил этап в цепочке '{chain.chainName}'");
+                    Debug.Log(
+                        $"▶ Квест '{completedQuest.questName}' завершил этап в цепочке '{chain.chainName}'");
                     chain.MoveToNextQuest();
                 }
                 else
                 {
-                    Debug.LogError($"❌ QuestChainManager: цепочка для '{completedQuest.questName}' пустая!");
+                    Debug.LogError(
+                        $"❌ QuestChainManager: цепочка для '{completedQuest.questName}' пустая!");
                 }
             }
             else
             {
-                Debug.LogWarning($"⚠ QuestChainManager: квест '{completedQuest.questName}' не принадлежит ни одной цепочке");
+                Debug.LogWarning(
+                    $"⚠ QuestChainManager: квест '{completedQuest.questName}' не принадлежит ни одной цепочке");
             }
         }
 
         [ContextMenu("Start First Chain")]
-        void StartFirstChain()
+        private void StartFirstChain()
         {
             StartChain(0);
         }
 
         [ContextMenu("Reset All Chains")]
-        void ResetAllChains()
+        private void ResetAllChains()
         {
             foreach (QuestChain chain in questChains)
             {
-                if (chain != null) chain.ResetChain();
+                chain?.ResetChain();
             }
+
             Debug.Log("▶ QuestChainManager: все цепочки сброшены");
         }
     }
