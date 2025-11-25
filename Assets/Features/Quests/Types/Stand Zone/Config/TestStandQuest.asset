@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42563f92ff0a9fc49811a92242f3419a, type: 3}
+  m_Name: TestStandQuest
+  m_EditorClassIdentifier: 
+  questID: 11550f36-bd8e-4faf-b635-39c16091ae6c
+  questName: Stand on Point
+  description: 
+  currentProgress: 3
+  targetProgress: 5
+  behaviour:
+    rid: 683826425092374606
+  references:
+    version: 2
+    RefIds:
+    - rid: 683826425092374606
+      type: {class: StandOnPointQuestBehaviour, ns: Quests, asm: Assembly-CSharp}
+      data:
+        targetPoint: {fileID: 0}
+        requiredStayTime: 0.5

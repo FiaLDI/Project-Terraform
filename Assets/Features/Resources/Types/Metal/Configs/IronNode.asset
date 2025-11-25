@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b791ad4444b42043bc5b26c1aa3bfd9, type: 3}
+  m_Name: IronNode
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceNodeSO
+  nodeName: Iron Vein
+  resource: {fileID: 11400000, guid: 7783f77157b66354eb58973895af9b60, type: 2}
+  prefab: {fileID: 8975459638629637451, guid: f86c2ad0101344948857bc3d5ef88c0a, type: 3}
+  noiseThreshold: 0.079
+  minDistance: 10
+  dropTable: {fileID: 11400000, guid: fff268087b4487842bc7eb2553c6b510, type: 2}

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9aba91a511e75874fb6730261ec2eb71, type: 3}
+  m_Name: Tech
+  m_EditorClassIdentifier: Assembly-CSharp::EngineerTechnicianSO
+  classId: 0
+  displayName: Tech
+  icon: {fileID: 21300000, guid: 832cbe79e5eebb940a1008c94ea7463d, type: 3}
+  baseEnergy: 100
+  regen: 0.01
+  activeAbilities:
+  - {fileID: 11400000, guid: df38b74df7b66e14fb4a6e719a9f71be, type: 2}
+  - {fileID: 11400000, guid: b5ce462c30ddcbf46aaef43f334ceed0, type: 2}
+  - {fileID: 11400000, guid: a02baae16fa61774394366898b590a86, type: 2}
+  - {fileID: 11400000, guid: 69e76714dbfbc6f47aaa24a3a14f9532, type: 2}
+  - {fileID: 11400000, guid: 1f12cb6382060c64b9fc8cfb9973b98d, type: 2}
+  passiveBonuses:
+  - {fileID: 11400000, guid: ce628233987df184f9c913ec3b442feb, type: 2}
+  - {fileID: 11400000, guid: 27ecd8f0d1589e540937a809aa8f0f69, type: 2}
+  - {fileID: 11400000, guid: 1dd65540dcf8f8649b6a873cadbae1ac, type: 2}

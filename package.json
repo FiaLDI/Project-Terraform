@@ -1,0 +1,37 @@
+{
+  "name": "new-game",
+  "version": "1.0.0",
+  "description": "Это Unity-проект. Этот репозиторий предназначен для командной разработки.  \r В нем указаны правила работы с Git и алгоритм развёртывания для новых разработчиков.",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky",
+    "commit": "cz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FiaLDI/New-Game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/FiaLDI/New-Game/issues"
+  },
+  "homepage": "https://github.com/FiaLDI/New-Game#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "ignore": "^7.0.5"
+  }
+}

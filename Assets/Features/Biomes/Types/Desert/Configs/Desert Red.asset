@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f18f94f4fd663254f82189a28e8b01bc, type: 3}
+  m_Name: Desert Red
+  m_EditorClassIdentifier: Assembly-CSharp::BiomeConfig
+  biomeName: Test
+  mapColor: {r: 0, g: 0, b: 0, a: 0}
+  isGenerate: 1
+  useLowPoly: 1
+  width: 100
+  height: 100
+  uiColor: {r: 1, g: 1, b: 1, a: 1}
+  fogLightColor: {r: 1, g: 1, b: 1, a: 1}
+  fogHeavyColor: {r: 0, g: 0, b: 1, a: 1}
+  fogGradientScale: 10
+  terrainType: 5
+  groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
+  terrainScale: 8
+  heightMultiplier: 49
+  fractalOctaves: 5
+  fractalPersistence: 0.5
+  fractalLacunarity: 2
+  environmentPrefabs:
+  - prefab: {fileID: 3883693725492710021, guid: 4c222919f12d37f4cb31ef6257529cfd, type: 3}
+    spawnChance: 0.406
+    weight: 1.53
+    minSlope: 0
+    maxSlope: 45
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 0
+    minScale: 0.9
+    maxScale: 1.1
+    markAsResourceBlocker: 1
+  environmentDensity: 0.05
+  possibleResources: []
+  resourceDensity: 0.001
+  resourceSpawnYOffset: 0.3
+  resourceEdgeFalloff: 1
+  possibleQuests:
+  - questAsset: {fileID: 11400000, guid: 48aca5642d5e234489a0bdd19e0fd50f, type: 2}
+    questPointPrefab: {fileID: 683551827570343295, guid: 6160fe5af0eccf045a00bfbab1a7b177, type: 3}
+    previewTexture: {fileID: 0}
+    spawnChance: 0.00016
+    minTargets: 6
+    maxTargets: 10
+  questTargetsMin: 2
+  questTargetsMax: 5
+  weatherPrefabs: []
+  ambientSounds: []
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.9339623, g: 0.33233586, b: 0.2687344, a: 1}
+  fogDensity: 0.1
+  fogLinearStart: 70
+  fogLinearEnd: 200
+  useWater: 1
+  waterType: 1
+  seaLevel: 1
+  waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
+  swampWaterMaterial: {fileID: 0}
+  lakeWaterMaterial: {fileID: 0}
+  oceanWaterMaterial: {fileID: 0}
+  generateLakes: 0
+  lakeLevel: 0.6
+  lakeNoiseScale: 0.05
+  generateRivers: 0
+  riverNoiseScale: 0.02
+  riverWidth: 0
+  riverDepth: 10

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a03b8a8d47585ec4ea79f5cb4d3a26e2, type: 3}
+  m_Name: Overload
+  m_EditorClassIdentifier: Assembly-CSharp::OverloadPulseAbilitySO
+  id: 3
+  displayName: Overload
+  icon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
+  buffIcon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
+  energyCost: 20
+  cooldown: 12
+  targetType: 0
+  castType: 0
+  castTime: 0
+  damageBuff: {fileID: 11400000, guid: 1c68c3aa549e75b4cabc190cd48c904a, type: 2}
+  fireRateBuff: {fileID: 11400000, guid: 26a1e496b69b53f4b971e2d0cd5742d3, type: 2}
+  turretMoveBuff: {fileID: 11400000, guid: 84a99b2f1a3bebe4692f3450d518a162, type: 2}
+  radius: 12
+  pulseDamage: 35
+  knockbackForce: 10
+  pulseFxPrefab: {fileID: 2992445105395417118, guid: 5012a0444aae56c4695c27e2cdc6e260, type: 3}

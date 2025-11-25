@@ -10,6 +10,7 @@ NewGame/
 ├── Assets/              # Игровые сцены, префабы, скрипты
 ├── Packages/            # Unity Package Manager
 ├── ProjectSettings/     # Настройки проекта
+├── Docs/                # Документация
 ├── .gitignore           # Файлы и папки, игнорируемые Git
 └── README.md
 ```
