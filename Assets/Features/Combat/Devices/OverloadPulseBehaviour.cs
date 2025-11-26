@@ -2,40 +2,29 @@ using UnityEngine;
 
 public class OverloadPulseBehaviour : MonoBehaviour
 {
-    [Header("Visual Objects")]
-    public Transform shockwave;
-    public Transform flash;
-
     [Header("Settings")]
     public float duration = 0.35f;
-    public float startScale = 0.2f;
-    public float shockwaveScaleMultiplier = 4f;
-    public float flashScaleMultiplier = 2f;
+
+    [Header("Follow Owner")]
+    public bool followOwner = true;
 
     private float _deathTime;
     private bool _initialized;
+    private Transform _owner;
 
     private void Awake()
     {
         Debug.Log("[PulseFX] Awake on " + name, this);
-        // Для отладки можно временно сделать чтобы эффект жил долго,
-        // даже без Init:
-        //_deathTime = Time.time + 999f;
-        //_initialized = true;
     }
 
     public void Init(Transform owner, float radius, float fxDuration)
     {
         _initialized = true;
 
+        _owner = owner;
         duration = fxDuration;
+
         _deathTime = Time.time + duration;
-
-        if (shockwave)
-            shockwave.localScale = Vector3.one * startScale;
-
-        if (flash)
-            flash.localScale = Vector3.one * startScale;
 
         Debug.Log($"[PulseFX] Init. duration={duration}, deathTime={_deathTime}", this);
     }
@@ -43,26 +32,17 @@ public class OverloadPulseBehaviour : MonoBehaviour
     private void Update()
     {
         if (!_initialized)
-            return; // НИЧЕГО не делаем до Init
+            return;
 
-        float t = 1f - ((_deathTime - Time.time) / duration);
-        t = Mathf.Clamp01(t);
-
-        if (shockwave)
+        if (followOwner && _owner)
         {
-            float s = Mathf.Lerp(startScale, shockwaveScaleMultiplier, t);
-            shockwave.localScale = Vector3.one * s;
-        }
-
-        if (flash)
-        {
-            float s2 = Mathf.Lerp(startScale, flashScaleMultiplier, t);
-            flash.localScale = Vector3.one * s2;
+            Vector3 pos = _owner.position;
+            pos.y = transform.position.y;
+            transform.position = pos;
         }
 
         if (Time.time >= _deathTime)
         {
-            Debug.Log("[PulseFX] Destroy by lifetime", this);
             Destroy(gameObject);
         }
     }
