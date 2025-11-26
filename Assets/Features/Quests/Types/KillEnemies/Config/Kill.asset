@@ -18,10 +18,10 @@ MonoBehaviour:
   behaviour:
     rid: 2516601277492494397
   currentProgress: 0
-  targetProgress: 5
+  targetProgress: 1
   rewards:
-  - item: {fileID: 11400000, guid: 3b83970df4c0fac40a8c976c2ed8e1c2, type: 2}
-    amount: 5
+  - item: {fileID: 11400000, guid: 5d8b6d013c118bd43b6a7deaddfa301b, type: 2}
+    amount: 1
   references:
     version: 2
     RefIds:

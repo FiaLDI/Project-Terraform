@@ -49,22 +49,17 @@ namespace Quests
 
             currentKills++;
 
-            // Сохраняем прогресс
-            myQuest.currentProgress = currentKills;
-            myQuest.NotifyQuestUpdated();
+            QuestManager.Instance.UpdateQuestProgress(myQuest, 1);
 
             if (currentKills >= requiredKills)
             {
                 completed = true;
                 active = false;
-
-                QuestManager.Instance.UpdateQuestProgress(myQuest);
             }
         }
 
         public override void UpdateProgress(QuestAsset quest, int amount = 1)
         {
-            // Синхронизация на всякий случай
             quest.currentProgress = currentKills;
         }
 

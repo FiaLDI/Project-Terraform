@@ -27,7 +27,6 @@ namespace Quests
         public void ResetProgress()
         {
             currentProgress = 0;
-            // targetProgress НЕ меняем — заранее задано вручную
         }
 
         public void AddProgress(int amount)
