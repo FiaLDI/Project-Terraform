@@ -34,10 +34,10 @@ MonoBehaviour:
   categories: []
   uiBounds:
     serializedVersion: 2
-    x: 1
-    y: -1433
-    width: 2775
-    height: 2229
+    x: 2
+    y: -1434
+    width: 2774
+    height: 2246
 --- !u!114 &114350483966674976
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -376,7 +376,7 @@ MonoBehaviour:
   particlePerStripCount: 32
   needsComputeBounds: 0
   boundsMode: 1
-  m_Space: 1
+  m_Space: 0
 --- !u!114 &8926484042661614628
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -995,7 +995,7 @@ MonoBehaviour:
   particlePerStripCount: 30
   needsComputeBounds: 0
   boundsMode: 1
-  m_Space: 1
+  m_Space: 0
 --- !u!114 &8926484042661617627
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -7026,6 +7026,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUsageController
   throwPoint: {fileID: 6088839093226496856}
   playerCamera: {fileID: 2020144330060152482}
+  interactRange: 3
+  interactMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &8288522546826159422
 MonoBehaviour:
   m_ObjectHideFlags: 0

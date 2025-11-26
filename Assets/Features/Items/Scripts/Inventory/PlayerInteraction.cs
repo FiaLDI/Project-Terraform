@@ -30,40 +30,76 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
+        // === 1) Предметы (как раньше) ===
         ItemObject item = NearbyInteractables.instance.GetBestItem(playerCamera);
         targetItem = item;
 
-        if (item != null && item.isWorldObject == true)
+        if (item != null && item.isWorldObject)
         {
-            interactionPromptText.text = $"{item.itemData.itemName}\nНажмите [E] чтобы подобрать";
+            interactionPromptText.text =
+                $"{item.itemData.itemName}\nНажмите [E] чтобы подобрать";
             canInteract = true;
+            return;
         }
-        else
+
+        // === 2) Станки / двери / любые IInteractable ===
+        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, interactionDistance))
         {
-            interactionPromptText.text = "";
-            canInteract = false;
+            var interactable = hit.collider.GetComponentInParent<IInteractable>();
+            if (interactable != null)
+            {
+                interactionPromptText.text =
+                    $"Нажмите [E] чтобы: {interactable.InteractionPrompt}";
+                canInteract = true;
+                targetItem = null; // чтобы TryInteract понял что это НЕ ItemObject
+                return;
+            }
         }
+
+        // === 3) Ничего нет ===
+        interactionPromptText.text = "";
+        canInteract = false;
+        targetItem = null;
     }
+
 
     public void TryInteract()
     {
         Debug.Log(">>> TryInteract() called");
+
         if (!canInteract) return;
 
-        // Взаимодействие с объектом
-        // здесь больше НЕ должно быть проверки lastHit
-
-        // Подбор предмета
+        // === 1) Если это предмет ===
         if (targetItem != null)
         {
             InventoryManager.instance.AddItem(
                 targetItem.itemData,
                 targetItem.quantity);
+
             NearbyInteractables.instance.Unregister(targetItem);
             Destroy(targetItem.gameObject);
+
             interactionPromptText.text = "";
+            return;
+        }
+
+        // === 2) Если это IInteractable объект ===
+        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, interactionDistance))
+        {
+            var interactable = hit.collider.GetComponentInParent<IInteractable>();
+            if (interactable != null)
+            {
+                interactable.Interact();
+                interactionPromptText.text = "";
+            }
         }
     }
+
+
     // Метод для выброса предмета 
     public void DropCurrentItem(bool dropFullStack)
     {
