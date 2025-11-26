@@ -4,7 +4,7 @@ using UnityEngine;
 public class ChargeDeviceAbilitySO : AbilitySO
 {
     [Header("Aura Buff")]
-    public AreaBuffSO areaBuff;     // <- вот это главное!
+    public AreaBuffSO areaBuff;
 
     [Header("FX")]
     public GameObject chargeFxPrefab;
@@ -18,17 +18,14 @@ public class ChargeDeviceAbilitySO : AbilitySO
             ? areaBuff.buff.duration
             : 0f;
 
-        // ---------- AURA APPLY ----------
         if (areaBuff != null)
         {
             var emitter = owner.AddComponent<AreaBuffEmitter>();
             emitter.area = areaBuff;
 
-            // уничтожаем эмиттер после окончания бафа
             GameObject.Destroy(emitter, duration);
         }
 
-        // ---------- FX ----------
         if (chargeFxPrefab)
         {
             GameObject fx = Instantiate(chargeFxPrefab, owner.transform.position, Quaternion.identity);

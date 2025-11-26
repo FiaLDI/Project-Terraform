@@ -21,18 +21,39 @@ public class OverloadPulseAbilitySO : AbilitySO
         var owner = context.Owner;
         if (!owner) return;
 
-        float buffDuration = damageBuff != null ? damageBuff.duration : 0.5f;
+        float fxDuration = damageBuff != null ? damageBuff.duration : 0.5f;
 
+        // ---------- SPAWN FX ----------
         if (pulseFxPrefab)
         {
-            GameObject fx = Instantiate(pulseFxPrefab, owner.transform.position, Quaternion.identity);
+            Vector3 spawnPos = owner.transform.position;
+            // Если владелец - голова/камера, можно принудительно опустить:
+            // spawnPos.y = 0.5f;
+
+            Debug.Log($"SPAWN FX at {spawnPos}");
+
+            GameObject fx = Object.Instantiate(
+                pulseFxPrefab,
+                spawnPos,
+                Quaternion.identity
+            );
+
+            Debug.Log("FX INSTANCE = " + fx, fx);
 
             if (fx.TryGetComponent<OverloadPulseBehaviour>(out var pulse))
-                pulse.Init(owner.transform, radius, buffDuration);
+            {
+                Debug.Log("[Ability] Found OverloadPulseBehaviour on root, calling Init", fx);
+                pulse.Init(owner.transform, radius, fxDuration);
+            }
+            else
+            {
+                Debug.LogWarning("[Ability] OverloadPulseBehaviour not found on FX root!", fx);
+            }
 
-            Destroy(fx, buffDuration);
+            Object.Destroy(fx, fxDuration + 1f);
         }
 
+        // ---------- Дальше твоя логика баффов и урона ----------
         Collider[] hits = Physics.OverlapSphere(owner.transform.position, radius);
 
         foreach (var h in hits)
@@ -57,7 +78,7 @@ public class OverloadPulseAbilitySO : AbilitySO
                 var rb = h.attachedRigidbody;
                 if (rb != null && !rb.isKinematic)
                 {
-                    Vector3 dir = (h.transform.position - owner.transform.position);
+                    Vector3 dir = h.transform.position - owner.transform.position;
                     dir.y = 0f;
                     rb.AddForce(dir.normalized * knockbackForce, ForceMode.Impulse);
                 }

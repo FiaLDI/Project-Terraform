@@ -22,10 +22,10 @@ MonoBehaviour:
   fogLightColor: {r: 1, g: 1, b: 1, a: 1}
   fogHeavyColor: {r: 0, g: 0, b: 1, a: 1}
   fogGradientScale: 10
-  terrainType: 3
+  terrainType: 2
   groundMaterial: {fileID: 2100000, guid: e6218f289b1638c468cb1ec0c2d9752a, type: 2}
-  terrainScale: 10
-  heightMultiplier: 40
+  terrainScale: 5
+  heightMultiplier: 5
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2
