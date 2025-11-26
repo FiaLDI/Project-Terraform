@@ -196,7 +196,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OverloadPulseBehaviour
   shockwave: {fileID: 0}
   flash: {fileID: 0}
-  duration: 0.35
+  duration: 15
   startScale: 0.2
   shockwaveScaleMultiplier: 4
   flashScaleMultiplier: 2
