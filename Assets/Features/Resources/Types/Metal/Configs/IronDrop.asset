@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ResourceDropSO
   drops:
   - resource: {fileID: 11400000, guid: 7783f77157b66354eb58973895af9b60, type: 2}
-    minAmount: 1
-    maxAmount: 3
+    minAmount: 30
+    maxAmount: 40
     chance: 1

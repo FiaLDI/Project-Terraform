@@ -7,43 +7,54 @@ public class UsableToolDrill : MonoBehaviour, IUsable
     public LayerMask hitMask;
 
     private Camera cam;
+    private bool drilling = false;
 
     public void Initialize(Camera playerCamera)
     {
         cam = playerCamera;
     }
 
-    public void OnUsePrimary_Start()
-    {
-        TryDrill();
-    }
+    // PRIMARY (ЛКМ)
+    public void OnUsePrimary_Start()  => drilling = true;
+    public void OnUsePrimary_Hold()   => drilling = true;
+    public void OnUsePrimary_Stop()   => drilling = false;
 
-    public void OnUsePrimary_Hold()
-    {
-        TryDrill();
-    }
+    // SECONDARY (ПКМ)
+    public void OnUseSecondary_Start() => drilling = true;
+    public void OnUseSecondary_Hold()  => drilling = true;
+    public void OnUseSecondary_Stop()  => drilling = false;
 
-    public void OnUsePrimary_Stop() { }
+    private void Update()
+    {
+        if (drilling)
+            TryDrill();
+    }
 
     private void TryDrill()
     {
-        Debug.Log("Drill Try");
+        Ray ray = AimRay.Create(cam);
 
-        Ray ray = new Ray(cam.transform.position, cam.transform.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, range, hitMask))
+        if (!Physics.Raycast(ray, out RaycastHit hit, range, hitMask))
+            return;
+
+        // 1) Майнинг
+        var mine = hit.collider.GetComponentInParent<IMineable>();
+        if (mine != null)
         {
-            Debug.Log("Ray hit " + hit.collider.name);
+            Tool tool = EquipmentManager.instance.GetCurrentEquippedItem() as Tool;
+            float miningDps = damagePerSecond * Time.deltaTime * GlobalMiningSpeed.Multiplier;
 
-            var dmg = hit.collider.GetComponent<IDamageable>();
-            if (dmg != null)
-            {
-                Debug.Log("Found IDamageable → applying damage");
-                dmg.TakeDamage(damagePerSecond * Time.deltaTime, DamageType.Mining);
-            }
-            else Debug.Log("This collider is NOT IDamageable");
+            mine.Mine(miningDps, tool);
+            return;
         }
-        else Debug.Log("NO HIT");
+
+        // 2) Урон
+        var dmg = hit.collider.GetComponent<IDamageable>();
+        if (dmg != null)
+        {
+            float dmgAmount = damagePerSecond * Time.deltaTime * GlobalMiningSpeed.Multiplier;
+            dmg.TakeDamage(dmgAmount, DamageType.Mining);
+            return;
+        }
     }
-
-
 }

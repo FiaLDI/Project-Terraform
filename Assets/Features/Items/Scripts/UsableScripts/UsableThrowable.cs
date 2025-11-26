@@ -34,7 +34,6 @@ public class UsableThrowable : MonoBehaviour, IUsable
             return;
         }
 
-        // 1) Создаём снаряд
         GameObject instance = Instantiate(
             throwableAsset.projectilePrefab,
             spawnPoint.position,
@@ -52,4 +51,8 @@ public class UsableThrowable : MonoBehaviour, IUsable
 
     public void OnUsePrimary_Hold() { }
     public void OnUsePrimary_Stop() { }
+
+    public void OnUseSecondary_Start() { }
+    public void OnUseSecondary_Hold() { }
+    public void OnUseSecondary_Stop() { }
 }

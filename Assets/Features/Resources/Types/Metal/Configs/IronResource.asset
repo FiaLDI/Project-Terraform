@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: IronResource
   m_EditorClassIdentifier: Assembly-CSharp::ResourceSO
   resourceName: Iron
-  icon: {fileID: 0}
+  item: {fileID: 11400000, guid: ee2d59865e344f94493a84df0102f743, type: 2}
+  icon: {fileID: 21300000, guid: 4831291e7e2a4ad4882ac7da61d6a38a, type: 3}
   color: {r: 0.627451, g: 0.627451, b: 0.627451, a: 0}

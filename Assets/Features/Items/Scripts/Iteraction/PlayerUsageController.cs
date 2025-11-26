@@ -4,6 +4,8 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(EquipmentManager))]
 public class PlayerUsageController : MonoBehaviour
 {
+    public static bool InteractionLocked = false;
+
     private EquipmentManager equipmentManager;
     private InputSystem_Actions inputActions;
 
@@ -11,8 +13,9 @@ public class PlayerUsageController : MonoBehaviour
     private IUsable currentUsable;
 
     [Header("Points")]
-    public Transform throwPoint;       // NEW: Добавляем ThrowPoint
-    public Camera playerCamera;        // NEW: Камера игрока
+    public Transform throwPoint;
+    public Camera playerCamera;
+
 
     private void Awake()
     {
@@ -21,30 +24,26 @@ public class PlayerUsageController : MonoBehaviour
         inputActions = new InputSystem_Actions();
         inputActions.Player.Enable();
 
-        Debug.Log("[PlayerUsageController] Awake, subscribing input...");
+        inputActions.Player.Use.performed += ctx => OnUseStarted();
+        inputActions.Player.Use.canceled += ctx => OnUseCanceled();
 
-        inputActions.Player.Use.performed += ctx => {
-            Debug.Log("[PlayerUsageController] ACTION PERFORMED");
-            OnUseStarted(ctx);
+        inputActions.Player.SecondaryUse.performed += ctx => {
+            currentUsable?.OnUseSecondary_Start();
         };
 
-        inputActions.Player.Use.canceled += ctx => {
-            Debug.Log("[PlayerUsageController] ACTION CANCELED");
-            OnUseCanceled(ctx);
+        inputActions.Player.SecondaryUse.canceled += ctx => {
+            currentUsable?.OnUseSecondary_Stop();
         };
     }
 
-    private void OnEnable() => inputActions?.Player.Enable();
+    private void OnEnable()  => inputActions?.Player.Enable();
     private void OnDisable() => inputActions?.Player.Disable();
 
 
-    // NEW: Самый важный момент!!!
-    // Вызывается EquipmentManager-ом при смене предмета
     public void OnItemEquipped(IUsable usable)
     {
         currentUsable = usable;
 
-        // Если это бросаемый предмет — передаём ссылку на ThrowPoint
         if (usable is UsableThrowable throwable)
         {
             throwable.SetSpawnPoint(throwPoint);
@@ -52,21 +51,20 @@ public class PlayerUsageController : MonoBehaviour
         }
     }
 
-
-    private void OnUseStarted(InputAction.CallbackContext context)
+    private void OnUseStarted()
     {
-        Debug.Log("[PlayerUsageController] OnUseStarted");
+        if (InteractionLocked) return; 
+
         isUsingItem = true;
 
         currentUsable = equipmentManager.GetCurrentUsable();
-        Debug.Log("[PlayerUsageController] currentUsable = " + currentUsable);
-
         currentUsable?.OnUsePrimary_Start();
     }
 
-
-    private void OnUseCanceled(InputAction.CallbackContext context)
+    private void OnUseCanceled()
     {
+        if (InteractionLocked) return;
+
         isUsingItem = false;
 
         currentUsable?.OnUsePrimary_Stop();
@@ -75,9 +73,14 @@ public class PlayerUsageController : MonoBehaviour
 
     private void Update()
     {
-        if (isUsingItem)
+        if (!InteractionLocked && isUsingItem)
         {
             currentUsable?.OnUsePrimary_Hold();
+        }
+
+        if (inputActions.Player.SecondaryUse.IsPressed())
+        {
+            currentUsable?.OnUseSecondary_Hold();
         }
     }
 }

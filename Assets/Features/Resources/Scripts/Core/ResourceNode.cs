@@ -1,59 +1,95 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
-public class ResourceNode : MonoBehaviour
+public class ResourceNode : MonoBehaviour, IMineable, IDamageable
 {
-    [Tooltip("������ �� ScriptableObject, ������� ��������� ���� ����.")]
+    [Header("Node Data")]
+    [Tooltip("Конфиг узла ресурса (тип, дроп-таблица, префаб и т.п.).")]
     public ResourceNodeSO nodeData;
 
-    [Tooltip("������ VFX, ������� ����� ������������� ��� ������ (�����������).")]
-    public GameObject harvestVFX;
+    [Header("Health / Mining")]
+    [Tooltip("Общее здоровье узла. Используется и для добычи, и для урона.")]
+    public float maxHealth = 50f;
 
-    [Tooltip("���� true � ���� ��� �����/�� ��������.")]
+    [Tooltip("Текущее здоровье узла.")]
+    [SerializeField] private float currentHealth;
+
+    [Header("Effects")]
+    [Tooltip("VFX при попадании/добыче.")]
+    public GameObject hitEffect;
+
+    [Tooltip("VFX при уничтожении узла.")]
+    public GameObject destroyEffect;
+
+    [Tooltip("Отмечает, что узел уже истощён/уничтожен.")]
     public bool isDepleted = false;
 
-    [Header("Harvesting")]
-    public int hitPoints = 1;
-
-    private void Reset()
+    private void Awake()
     {
-        var col = GetComponent<Collider>();
-        col.isTrigger = false;
+        if (maxHealth <= 0f)
+            maxHealth = 1f;
+
+        currentHealth = maxHealth;
     }
 
-    public void ApplyHarvest()
+    // ======================================================
+    //  IMineable — добыча (бур, кирка, дрель и т.п.)
+    // ======================================================
+    /// <summary>
+    /// amount — сколько "работы" или урона добычи приложено за тик.
+    /// tool — используемый инструмент (можно использовать его скорость/тип и т.д.).
+    /// </summary>
+    public bool Mine(float amount, Tool tool)
+    {
+        if (isDepleted) return true;
+
+        // Модификатор от инструмента (если нужен)
+        if (tool != null)
+            amount *= tool.baseHarvestSpeed;
+
+        ApplyDamageInternal(amount, DamageType.Mining);
+        return isDepleted;
+    }
+
+    /// <summary>
+    /// Прогресс добычи 0..1.
+    /// </summary>
+    public float GetProgress()
+    {
+        return Mathf.Clamp01(1f - (currentHealth / maxHealth));
+    }
+
+    // ======================================================
+    //  IDamageable — урон от оружия/взрывов и т.п.
+    // ======================================================
+    public void TakeDamage(float damageAmount, DamageType damageType)
     {
         if (isDepleted) return;
 
-        hitPoints--;
-        if (hitPoints <= 0)
-        {
-            OnHarvested();
-        }
-        else
-        {
-
-        }
+        ApplyDamageInternal(damageAmount, damageType);
     }
 
-    private void OnHarvested()
+    public void Heal(float amount)
     {
-        isDepleted = true;
+        if (isDepleted) return;
 
+        currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
+    }
 
-        if (nodeData != null && nodeData.dropTable != null)
-        {
-            ResourceDropSystem.Drop(nodeData.dropTable, transform);
-        }
-        else
-        {
-            Debug.LogWarning($"ResourceNode ({name}) has no drop table assigned in nodeData.");
-        }
+    // ======================================================
+    //  Общий метод нанесения урона
+    // ======================================================
+    private void ApplyDamageInternal(float amount, DamageType damageType)
+    {
+        if (amount <= 0f) return;
 
-        if (harvestVFX != null)
+        currentHealth -= amount;
+
+        // Хит-эффект
+        if (hitEffect != null)
         {
-            var vfx = Instantiate(harvestVFX, transform.position, Quaternion.identity);
-            var ps = vfx.GetComponentInChildren<ParticleSystem>();
+            var vfx = Instantiate(hitEffect, transform.position, Quaternion.identity);
+            var ps = vfx.GetComponent<ParticleSystem>();
             if (ps != null)
             {
                 ps.Play();
@@ -63,6 +99,45 @@ public class ResourceNode : MonoBehaviour
             {
                 Destroy(vfx, 3f);
             }
+        }
+
+        if (currentHealth <= 0f)
+        {
+            currentHealth = 0f;
+            OnDepleted();
+        }
+    }
+
+    // ======================================================
+    //  Уничтожение узла + дроп ресурсов
+    // ======================================================
+    private void OnDepleted()
+    {
+        if (isDepleted) return;
+        isDepleted = true;
+
+        // VFX разрушения
+        if (destroyEffect != null)
+        {
+            var vfx = Instantiate(destroyEffect, transform.position, transform.rotation);
+            var ps = vfx.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                ps.Play();
+                Destroy(vfx, ps.main.duration + ps.main.startLifetime.constantMax);
+            }
+            else
+            {
+                Destroy(vfx, 3f);
+            }
+        }
+
+        // Дроп ресурсов через твою систему
+        if (nodeData != null && nodeData.dropTable != null)
+        {
+            // Сейчас ResourceDropSystem.Drop() только логирует —
+            // позже можно расширить до реального спавна ItemObject.
+            ResourceDropSystem.Drop(nodeData.dropTable, transform);
         }
 
         Destroy(gameObject);
