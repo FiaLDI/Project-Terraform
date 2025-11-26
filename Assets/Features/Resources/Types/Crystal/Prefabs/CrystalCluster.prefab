@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 3812190787206139432}
   - component: {fileID: 80741551724478968}
   - component: {fileID: 9021797476126416257}
-  - component: {fileID: 7724281802677820711}
   m_Layer: 0
   m_Name: CrystalCluster
   m_TagString: Untagged
@@ -127,33 +126,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResourceNode
   nodeData: {fileID: 11400000, guid: fa8f709455a646949b398860c4fe2fba, type: 2}
-  harvestVFX: {fileID: 793058697754794005, guid: 086f6446ed8a3f846980221a0e805a30, type: 3}
-  isDepleted: 0
-  hitPoints: 1
---- !u!114 &7724281802677820711
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9126582963452210468}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb1bde1656e0e6040976fd62e8236db2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DestructibleResourceNode
-  maxHealth: 18.2
-  weaknesses: 04000000
-  weaknessMultiplier: 2
-  resistances: 
-  resistanceMultiplier: 0.1
-  lootItem: {fileID: 11400000, guid: 3b83970df4c0fac40a8c976c2ed8e1c2, type: 2}
-  minDropCount: 38
-  maxDropCount: 132
+  maxHealth: 50
+  currentHealth: 0
   hitEffect: {fileID: 0}
   destroyEffect: {fileID: 0}
-  destroyFX: {fileID: 0}
-  destroySfx: {fileID: 0}
+  isDepleted: 0
 --- !u!1001 &7256266008560122639
 PrefabInstance:
   m_ObjectHideFlags: 0

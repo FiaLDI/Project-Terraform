@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(EquipmentManager))]
 public class PlayerUsageController : MonoBehaviour
 {
-    public static bool InteractionLocked = false; // UI блокировка Use
+    public static bool InteractionLocked = false;
 
     private EquipmentManager equipmentManager;
     private InputSystem_Actions inputActions;
@@ -24,16 +24,22 @@ public class PlayerUsageController : MonoBehaviour
         inputActions = new InputSystem_Actions();
         inputActions.Player.Enable();
 
-        // Подписка на действия Use (ЛКМ или другая кнопка)
         inputActions.Player.Use.performed += ctx => OnUseStarted();
         inputActions.Player.Use.canceled += ctx => OnUseCanceled();
+
+        inputActions.Player.SecondaryUse.performed += ctx => {
+            currentUsable?.OnUseSecondary_Start();
+        };
+
+        inputActions.Player.SecondaryUse.canceled += ctx => {
+            currentUsable?.OnUseSecondary_Stop();
+        };
     }
 
     private void OnEnable()  => inputActions?.Player.Enable();
     private void OnDisable() => inputActions?.Player.Disable();
 
 
-    // Получение ссылки на IUsable предмет при экипировке
     public void OnItemEquipped(IUsable usable)
     {
         currentUsable = usable;
@@ -45,12 +51,9 @@ public class PlayerUsageController : MonoBehaviour
         }
     }
 
-    // ======================
-    //      USE START
-    // ======================
     private void OnUseStarted()
     {
-        if (InteractionLocked) return; // UI открыт
+        if (InteractionLocked) return; 
 
         isUsingItem = true;
 
@@ -58,9 +61,6 @@ public class PlayerUsageController : MonoBehaviour
         currentUsable?.OnUsePrimary_Start();
     }
 
-    // ======================
-    //       USE STOP
-    // ======================
     private void OnUseCanceled()
     {
         if (InteractionLocked) return;
@@ -71,14 +71,16 @@ public class PlayerUsageController : MonoBehaviour
         currentUsable = null;
     }
 
-    // ======================
-    //        UPDATE
-    // ======================
     private void Update()
     {
         if (!InteractionLocked && isUsingItem)
         {
             currentUsable?.OnUsePrimary_Hold();
+        }
+
+        if (inputActions.Player.SecondaryUse.IsPressed())
+        {
+            currentUsable?.OnUseSecondary_Hold();
         }
     }
 }

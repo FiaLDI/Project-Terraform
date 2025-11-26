@@ -244,6 +244,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SecondaryUse"",
+                    ""type"": ""Button"",
+                    ""id"": ""56e715b8-c30d-489d-8ddd-cdf78167b9dc"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -728,6 +737,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Ability5"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""346def8e-6e36-4654-9223-62bd9f45bb7d"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Gamepad;Keyboard&Mouse"",
+                    ""action"": ""SecondaryUse"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1412,6 +1432,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_Ability3 = m_Player.FindAction("Ability3", throwIfNotFound: true);
         m_Player_Ability4 = m_Player.FindAction("Ability4", throwIfNotFound: true);
         m_Player_Ability5 = m_Player.FindAction("Ability5", throwIfNotFound: true);
+        m_Player_SecondaryUse = m_Player.FindAction("SecondaryUse", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1526,6 +1547,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Ability3;
     private readonly InputAction m_Player_Ability4;
     private readonly InputAction m_Player_Ability5;
+    private readonly InputAction m_Player_SecondaryUse;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1606,6 +1628,10 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Ability5 => m_Wrapper.m_Player_Ability5;
         /// <summary>
+        /// Provides access to the underlying input action "Player/SecondaryUse".
+        /// </summary>
+        public InputAction @SecondaryUse => m_Wrapper.m_Player_SecondaryUse;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -1682,6 +1708,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Ability5.started += instance.OnAbility5;
             @Ability5.performed += instance.OnAbility5;
             @Ability5.canceled += instance.OnAbility5;
+            @SecondaryUse.started += instance.OnSecondaryUse;
+            @SecondaryUse.performed += instance.OnSecondaryUse;
+            @SecondaryUse.canceled += instance.OnSecondaryUse;
         }
 
         /// <summary>
@@ -1744,6 +1773,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Ability5.started -= instance.OnAbility5;
             @Ability5.performed -= instance.OnAbility5;
             @Ability5.canceled -= instance.OnAbility5;
+            @SecondaryUse.started -= instance.OnSecondaryUse;
+            @SecondaryUse.performed -= instance.OnSecondaryUse;
+            @SecondaryUse.canceled -= instance.OnSecondaryUse;
         }
 
         /// <summary>
@@ -2207,6 +2239,13 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAbility5(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SecondaryUse" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSecondaryUse(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

@@ -61,8 +61,7 @@ public class PlayerInteractionController : MonoBehaviour
             return;
         }
 
-        // 2) Проверяем IInteractable (верстаки, двери и т.п.)
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        Ray ray = AimRay.Create(playerCamera);
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange, interactMask))
         {

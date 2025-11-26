@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: CrystalResource
   m_EditorClassIdentifier: Assembly-CSharp::ResourceSO
   resourceName: Crystal
-  icon: {fileID: 0}
+  item: {fileID: 11400000, guid: 3b83970df4c0fac40a8c976c2ed8e1c2, type: 2}
+  icon: {fileID: 21300000, guid: 8df226b0953f4e94c90784694b8a64bb, type: 3}
   color: {r: 0.4, g: 0.8, b: 1, a: 0}

@@ -101,15 +101,15 @@ MonoBehaviour:
   enemyTable:
   - prefab: {fileID: 4823896413690452315, guid: ba79223540d0017488c0e42578c10964, type: 3}
     weight: 15
-    spawnChance: 1
+    spawnChance: 0.001
     minGroup: 3
-    maxGroup: 30
+    maxGroup: 5
     minSlope: 0
     maxSlope: 25
     minHeight: 0
     maxHeight: 40
     alignToNormal: 0
-  enemyDensity: 0.01
+  enemyDensity: 0.0001
   enemyRespawnDelay: 20
   weatherPrefabs: []
   ambientSounds: []
