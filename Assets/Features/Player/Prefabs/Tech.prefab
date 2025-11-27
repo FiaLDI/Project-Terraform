@@ -11647,7 +11647,7 @@ MonoBehaviour:
   cameraCollisionRadius: 0.3
   minCameraDistance: 0.5
   headYawLimit: 35.8
-  bodyTurnSpeed: 5
+  bodyTurnSpeed: 2
   bodyTurnAngleLimit: 90
 --- !u!1 &4561205734857667701
 GameObject:

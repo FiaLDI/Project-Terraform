@@ -1,43 +1,10 @@
-using UnityEngine;
-using UnityEngine.UI;
-
-public class WorkbenchUIController : MonoBehaviour
+public class WorkbenchUIController : BaseStationUI
 {
-    [Header("UI Elements")]
-    public Canvas canvas;
-    public Button closeButton;
+    private Workbench station;
 
-    private Workbench owner;
-
-
-    public void Init(Workbench workbench)
+    public void Init(Workbench station, CraftingProcessor processor)
     {
-        owner = workbench;
-
-        if (closeButton != null)
-            closeButton.onClick.AddListener(CloseUI);
-
-        if (canvas != null)
-            canvas.enabled = false;
-    }
-
-
-    public void SetVisible(bool value)
-    {
-        if (canvas != null)
-            canvas.enabled = value;
-    }
-
-
-    public void CloseUI()
-    {
-        SetVisible(false);
-
-        PlayerUsageController.InteractionLocked = false;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        Debug.Log("[Workbench UI] Closed");
+        this.station = station;
+        base.Init(processor, station.GetRecipes());
     }
 }

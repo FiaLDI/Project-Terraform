@@ -47,6 +47,7 @@ MonoBehaviour:
   worldConfig: {fileID: 11400000, guid: 09b858e5e5223cd43aec0a71ff9bd6ed, type: 2}
   playerPrefab: {fileID: 3004063548674256600, guid: 6cdd3b07ef32a4842a401c8a6bb97c27, type: 3}
   systemsPrefab: {fileID: 2830221871605978793, guid: 63613e7461b902147a0c030a9608a25f, type: 3}
+  customPrefab: {fileID: 5502989716011450611, guid: 12b39b97c144da94682c029abc2ff1a4, type: 3}
   loadDistance: 5
   unloadDistance: 8
   spawnDistanceForward: 5

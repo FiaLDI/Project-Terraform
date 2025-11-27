@@ -12,6 +12,9 @@ public class RuntimeWorldGenerator : MonoBehaviour
     [Header("Systems Prefab")]
     public GameObject systemsPrefab;
 
+    [Header("Custom Prefab")]
+    public GameObject customPrefab;
+
     [Header("Chunk Streaming")]
     public int loadDistance = 5;
     public int unloadDistance = 8;
@@ -58,6 +61,9 @@ public class RuntimeWorldGenerator : MonoBehaviour
 
         if (systemsPrefab != null)
             SpawnSystemsInFront();
+        
+        if (customPrefab != null)
+            SpawnCustomPrefabNearPlayer();
 
         worldReady = true;
     }
@@ -74,4 +80,39 @@ public class RuntimeWorldGenerator : MonoBehaviour
             systemsInstance.name = "GameSystems";
         }
     }
+
+    private void SpawnCustomPrefabNearPlayer()
+    {
+        if (customPrefab == null || playerInstance == null)
+            return;
+
+        Vector3 startPos = playerInstance.transform.position +
+                        playerInstance.transform.forward * 3f +
+                        Vector3.up * 50f;
+
+        if (GroundSnapUtility.TrySnapWithNormal(startPos,
+            out Vector3 snapped,
+            out Quaternion rot,
+            out float slope))
+        {
+            GameObject inst = Instantiate(customPrefab, snapped, rot);
+
+            inst.name = "CustomPrefab";
+
+            foreach (Transform child in inst.transform)
+            {
+                Vector3 childStart = child.position + Vector3.up * 20f;
+
+                if (GroundSnapUtility.TrySnapWithNormal(childStart,
+                    out Vector3 cPos,
+                    out Quaternion cRot,
+                    out float cSlope))
+                {
+                    child.position = cPos;
+                    child.rotation = cRot * Quaternion.Euler(0, child.rotation.eulerAngles.y, 0);
+                }
+            }
+        }
+    }
+
 }

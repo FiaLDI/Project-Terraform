@@ -1,19 +1,19 @@
 using UnityEngine;
 
-public class MaterialProcessor : MonoBehaviour, IInteractable
+public class UpgradeStation : MonoBehaviour, IInteractable
 {
     [SerializeField] private CraftingProcessor processor;
     [SerializeField] private RecipeDatabase recipeDB;
-    [SerializeField] private MaterialProcessorUIController ui;
+    [SerializeField] private UpgradeStationUIController ui;
 
-    public string InteractionPrompt => "Переработать материалы";
+    public string InteractionPrompt => "Улучшить предмет";
 
     private void Start()
     {
         ui.Init(this, processor);
     }
 
-    public RecipeSO[] GetRecipes() => recipeDB.GetForProcessor();
+    public RecipeSO[] GetRecipes() => recipeDB.GetForUpgrade();
 
     public bool Interact()
     {

@@ -100,7 +100,6 @@ public class PlayerInteraction : MonoBehaviour
     }
 
 
-    // Метод для выброса предмета 
     public void DropCurrentItem(bool dropFullStack)
     {
         if (dropFullStack)
