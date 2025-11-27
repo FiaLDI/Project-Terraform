@@ -48,6 +48,7 @@ public class CraftingProcessor : MonoBehaviour
 
     public void Begin(RecipeSO recipe)
     {
+        Debug.Log($"[PROCESSOR] Begin called for recipe {recipe.recipeId}");
         StartRecipe(recipe);
     }
 

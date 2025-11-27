@@ -8,74 +8,59 @@ public class RecipePanelUI : MonoBehaviour
     [SerializeField] private Image icon;
     [SerializeField] private TextMeshProUGUI title;
     [SerializeField] private TextMeshProUGUI ingredientsText;
-    [SerializeField] private Button craftButton;
+    [SerializeField] private Button actionButton;
 
-    [Header("Progress UI (HP/Energy style)")]
+    [Header("Progress UI")]
     [SerializeField] private CraftingProgressUI progressUI;
 
-    private RecipeSO recipe;
-    private CraftingProcessor processor;
-
-    public void Show(RecipeSO recipe, CraftingProcessor processor)
+    public void ShowRecipe(RecipeSO recipe)
     {
-        this.recipe = recipe;
-        this.processor = processor;
-
-        if (icon != null)
-            icon.sprite = recipe.outputItem.icon;
-
-        if (title != null)
-            title.text = recipe.outputItem.itemName;
-
-        if (ingredientsText != null)
-        {
-            ingredientsText.text = "";
-            foreach (var ing in recipe.inputs)
-                ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
-        }
-
-        if (craftButton != null)
-        {
-            craftButton.onClick.RemoveAllListeners();
-            craftButton.onClick.AddListener(() =>
-            {
-                processor.Begin(recipe);
-            });
-        }
-
-        if (progressUI != null)
-        {
-            progressUI.SetVisible(false);   // пока не крафтим — скрыт или 0%
-            progressUI.UpdateProgress(0f);
-        }
-
         gameObject.SetActive(true);
+
+        icon.sprite = recipe.outputItem.icon;
+        title.text = recipe.outputItem.itemName;
+
+        ingredientsText.text = "";
+        foreach (var ing in recipe.inputs)
+            ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
+
+        progressUI.SetVisible(false);
+        progressUI.UpdateProgress(0f);
+
+        actionButton.onClick.RemoveAllListeners();
     }
 
-    // Вызывается из BaseStationUI.OnStart
+    public void SetAction(System.Action callback)
+    {
+        actionButton.onClick.RemoveAllListeners();
+        actionButton.onClick.AddListener(() => callback?.Invoke());
+    }
+
     public void StartProgress()
     {
-        if (progressUI != null)
-        {
-            progressUI.SetVisible(true);
-            progressUI.UpdateProgress(0f);
-        }
+        progressUI.SetVisible(true);
+        progressUI.UpdateProgress(0f);
     }
 
-    // Вызывается из BaseStationUI.OnProgress
     public void UpdateProgress(float t)
     {
-        if (progressUI != null)
-            progressUI.UpdateProgress(t);
+        progressUI.UpdateProgress(t);
     }
 
-    // Вызывается из BaseStationUI.OnComplete
-    public void OnProcessComplete()
+    public void ProcessComplete()
     {
-        if (progressUI != null)
-        {
-            progressUI.UpdateProgress(1f);
-            progressUI.PlayCompleteAnimation();
-        }
+        progressUI.UpdateProgress(1f);
+        progressUI.PlayCompleteAnimation();
+    }
+
+    public void ShowMissingIngredients()
+    {
+        ingredientsText.text += "\n<color=#ff4444>Недостаточно ресурсов!</color>";
+    }
+
+
+    public void ShowError(string msg)
+    {
+        Debug.LogWarning("[RecipePanelUI] " + msg);
     }
 }

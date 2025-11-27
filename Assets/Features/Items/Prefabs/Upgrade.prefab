@@ -773,10 +773,10 @@ GameObject:
   - component: {fileID: 5160248848301791107}
   - component: {fileID: 2651774052584372737}
   - component: {fileID: 8001490605385884086}
-  - component: {fileID: 4365656213965658299}
-  - component: {fileID: 4454981905119917281}
+  - component: {fileID: 8440398767427225177}
+  - component: {fileID: 6604559620402985195}
   m_Layer: 0
-  m_Name: MaterialPreprocessor
+  m_Name: Upgrade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -875,7 +875,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4365656213965658299
+--- !u!114 &8440398767427225177
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -884,13 +884,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 4113103112746475519}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d89166c1dfc3d24c88acd654e868593, type: 3}
+  m_Script: {fileID: 11500000, guid: 4ab54de4c92ebea4096ca6771b0ec358, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialProcessor
-  processor: {fileID: 4454981905119917281}
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeStation
+  processor: {fileID: 6604559620402985195}
   recipeDB: {fileID: 11400000, guid: 88f99dd704bbb934f949380d27629404, type: 2}
-  ui: {fileID: 1005725235293117072}
---- !u!114 &4454981905119917281
+  ui: {fileID: 5763846552045652506}
+--- !u!114 &6604559620402985195
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -899,9 +899,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4113103112746475519}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af370f44d457c5c4dbc2435ca04e534e, type: 3}
+  m_Script: {fileID: 11500000, guid: 016bb2b739a5f8d4d8c686765f4b4fab, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CraftingProcessor
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeProcessor
 --- !u!1 &4155279102913712404
 GameObject:
   m_ObjectHideFlags: 0
@@ -1159,7 +1159,7 @@ GameObject:
   - component: {fileID: 869358208700988320}
   - component: {fileID: 2516207978380003637}
   - component: {fileID: 1668135958934230714}
-  - component: {fileID: 1005725235293117072}
+  - component: {fileID: 5763846552045652506}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -1250,7 +1250,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &1005725235293117072
+--- !u!114 &5763846552045652506
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1259,9 +1259,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5384042790528151649}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 215266c8070b3e14d974309fa4633a7b, type: 3}
+  m_Script: {fileID: 11500000, guid: 731b278aaa33c9e458ea627cac61fe73, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialProcessorUIController
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeStationUIController
   canvas: {fileID: 869358208700988320}
   closeButton: {fileID: 8086789515001286463}
   recipeListContainer: {fileID: 2926181631116506849}

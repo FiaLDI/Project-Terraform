@@ -24,7 +24,11 @@ public class RecipeSO : ScriptableObject
 
     [Header("Recipe Type")]
     public RecipeType recipeType = RecipeType.Crafting;
+
+    [Header("Upgrade Settings")]
+    public Item upgradeBaseItem;
 }
+
 
 [System.Serializable]
 public class RecipeIngredient

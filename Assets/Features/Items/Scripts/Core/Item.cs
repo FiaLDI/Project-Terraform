@@ -3,6 +3,10 @@ using UnityEngine;
 public enum ItemType { Resource, Tool, Weapon, Ammo, Quest, Recource }
 public abstract class Item : ScriptableObject
 {
+    
+    [Header("Upgrades")]
+    public ItemUpgradeData[] upgrades;
+    public int currentLevel = 0; 
 
     [Header("In-Game Model")]
     public GameObject worldPrefab;
@@ -16,17 +20,15 @@ public abstract class Item : ScriptableObject
 
     [Header("Stacking")]
     public bool isStackable;
-    public int maxStackAmount = 1; // только если isStackable = true
+    public int maxStackAmount = 1;
     [Header("General")]
     public ItemType itemType;
 
     [Header("Quest Integration")]
     public bool isQuestItem = false;
-    public string questId = ""; // можно оставить пустым, если не св€зано
-    public int requiredAmount = 1; // если предмет участвует в сборе
+    public string questId = "";
+    public int requiredAmount = 1;
 
-    // ѕри создании нового предмета в редакторе, убедимс€, что
-    // если он не стакаетс€, то максимальный размер стака равен 1.
     private void OnValidate()
     {
         if (!isStackable)
@@ -34,4 +36,9 @@ public abstract class Item : ScriptableObject
             maxStackAmount = 1;
         }
     }
+
+    public ItemUpgradeData CurrentUpgrade =>
+        (upgrades != null && currentLevel < upgrades.Length)
+            ? upgrades[currentLevel]
+            : null;
 }

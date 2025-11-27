@@ -42,16 +42,13 @@ public class InventoryManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            Debug.Log($"[InventoryManager] Awake: Я '{gameObject.name}', я стал 'instance'.");
         }
         else
         {
-            Debug.LogWarning($"[InventoryManager] Дубликат! Уничтожаю {gameObject.name}");
             Destroy(gameObject);
             return;
         }
 
-        // Init slots
         for (int i = 0; i < MAIN_INVENTORY_SIZE; i++) mainInventorySlots.Add(new InventorySlot());
         for (int i = 0; i < HOTBAR_SIZE; i++) hotbarSlots.Add(new InventorySlot());
 
@@ -124,7 +121,6 @@ public class InventoryManager : MonoBehaviour
 
                 if (empty == null)
                 {
-                    Debug.LogWarning("Inventory full!");
                     break;
                 }
 
@@ -144,7 +140,6 @@ public class InventoryManager : MonoBehaviour
 
                 if (empty == null)
                 {
-                    Debug.LogWarning($"Inventory full, item {item.itemName} lost");
                     break;
                 }
 
@@ -374,7 +369,6 @@ public class InventoryManager : MonoBehaviour
         InventorySlot slotToDrop = hotbarSlots[hotbarIndex];
         if (slotToDrop.ItemData == null)
         {
-            Debug.Log("Слот пуст, нечего выбрасывать.");
             return;
         }
 
@@ -483,4 +477,10 @@ public class InventoryManager : MonoBehaviour
 
         return false;
     }
+
+    public InventorySlot GetSelectedSlot()
+    {
+        return hotbarSlots[selectedHotbarIndex];
+    }
+
 }
