@@ -20,6 +20,7 @@ namespace Quests
         public override void StartQuest(QuestAsset quest)
         {
             myQuest = quest;
+
             currentKills = 0;
             completed = false;
             active = true;
@@ -28,24 +29,17 @@ namespace Quests
             quest.targetProgress = requiredKills;
             quest.NotifyQuestUpdated();
 
-            SubscribeToExistingEnemies();
+            // глобальная подписка на смерти всех врагов
+            EnemyHealth.GlobalEnemyKilled += OnGlobalEnemyKilled;
         }
 
-        private void SubscribeToExistingEnemies()
+        private void OnGlobalEnemyKilled(EnemyHealth enemy)
         {
-            var enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+            if (!active || completed)
+                return;
 
-            foreach (var e in enemies)
-            {
-                var hp = e.GetComponent<EnemyHealth>();
-                if (hp != null)
-                    hp.OnEnemyKilled += OnEnemyKilled;
-            }
-        }
-
-        private void OnEnemyKilled(EnemyHealth enemy)
-        {
-            if (!active || completed) return;
+            if (!enemy.CompareTag(enemyTag))
+                return;
 
             currentKills++;
 
@@ -67,6 +61,9 @@ namespace Quests
         {
             completed = true;
             active = false;
+
+            // обязательно отписаться
+            EnemyHealth.GlobalEnemyKilled -= OnGlobalEnemyKilled;
         }
 
         public override void ResetQuest(QuestAsset quest)
@@ -81,6 +78,8 @@ namespace Quests
                 quest.targetProgress = requiredKills;
                 quest.NotifyQuestUpdated();
             }
+
+            EnemyHealth.GlobalEnemyKilled -= OnGlobalEnemyKilled;
         }
 
         public override bool IsActive => active;

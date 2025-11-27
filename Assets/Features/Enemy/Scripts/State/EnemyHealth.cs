@@ -13,6 +13,8 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
     public event Action<float, float> OnHealthChanged;
     public event Action<EnemyHealth> OnEnemyKilled;
+    public static event Action<EnemyHealth> GlobalEnemyKilled;
+
 
     private bool isDead;
 
@@ -51,6 +53,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
     private void Die()
     {
         OnEnemyKilled?.Invoke(this);
+         GlobalEnemyKilled?.Invoke(this);
         Destroy(gameObject);
     }
 
