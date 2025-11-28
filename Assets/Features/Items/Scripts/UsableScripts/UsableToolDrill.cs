@@ -56,26 +56,48 @@ public class UsableToolDrill : MonoBehaviour, IUsable, IStatItem
 
     private void TryDrill()
     {
-        if (cam == null) return;
+        Debug.Log("[DRILL] TryDrill()");
+
+        if (cam == null)
+        {
+            Debug.Log("[DRILL] NO CAMERA");
+            return;
+        }
 
         Ray ray = new Ray(cam.transform.position, cam.transform.forward);
+        Debug.DrawRay(ray.origin, ray.direction * range, Color.red);
+
+        Debug.Log("[DRILL] Raycasting...");
 
         if (!Physics.Raycast(ray, out RaycastHit hit, range))
-            return;
-
-        // MINING
-        if (hit.collider.TryGetComponent<IMineable>(out var mine))
         {
+            Debug.Log("[DRILL] NO HIT");
+            return;
+        }
+
+        Debug.Log("[DRILL] HIT " + hit.collider.name);
+
+        var mine = hit.collider.GetComponentInParent<IMineable>();
+        if (mine != null)
+        {
+            Debug.Log("[DRILL] Mineable found! DPS=" + miningSpeed);
             float dps = miningSpeed * Time.deltaTime;
             mine.Mine(dps, null);
             return;
         }
 
-        // DAMAGE
-        if (hit.collider.TryGetComponent<IDamageable>(out var dmg))
+        Debug.Log("[DRILL] Not mineable collider, checking damageable");
+
+        var dmg = hit.collider.GetComponentInParent<IDamageable>();
+        if (dmg != null)
         {
+            Debug.Log("[DRILL] Damageable found! DMG=" + damage);
             float dmgAmount = damage * Time.deltaTime;
             dmg.TakeDamage(dmgAmount, DamageType.Mining);
+            return;
         }
+
+        Debug.Log("[DRILL] Nothing applicable hit.");
     }
+
 }
