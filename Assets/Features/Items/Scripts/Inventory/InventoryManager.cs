@@ -172,7 +172,7 @@ public class InventoryManager : MonoBehaviour
     //  UI UPDATE
     // ===================================================================
 
-    private void UpdateAllUI()
+    public void UpdateAllUI()
     {
         for (int i = 0; i < mainInventoryUI.Length; i++)
             mainInventoryUI[i].UpdateSlot(mainInventorySlots[i]);
@@ -481,6 +481,27 @@ public class InventoryManager : MonoBehaviour
     public InventorySlot GetSelectedSlot()
     {
         return hotbarSlots[selectedHotbarIndex];
+    }
+
+    public bool HasItemCount(Item item, int count)
+    {
+        if (item == null) return false;
+
+        int total = 0;
+
+        foreach (var slot in hotbarSlots)
+        {
+            if (slot.ItemData != null && slot.ItemData.id == item.id)
+                total += slot.Amount;
+        }
+
+        foreach (var slot in mainInventorySlots)
+        {
+            if (slot.ItemData != null && slot.ItemData.id == item.id)
+                total += slot.Amount;
+        }
+
+        return total >= count;
     }
 
 }

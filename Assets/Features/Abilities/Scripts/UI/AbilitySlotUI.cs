@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
-public class AbilitySlotUI : MonoBehaviour
+public class AbilitySlotUI : MonoBehaviour,
+    IPointerEnterHandler, IPointerExitHandler
 {
     [Header("UI")]
     public Image icon;
@@ -12,21 +14,17 @@ public class AbilitySlotUI : MonoBehaviour
     private AbilitySO ability;
     private AbilityCaster caster;
     private int index;
-    
+
     private Sprite defaultIcon;
 
     private void Awake()
     {
         if (icon != null)
             defaultIcon = icon.sprite;
-        
-        Debug.Log($"AbilitySlotUI Awake: icon={icon}, cooldownSlider={cooldownSlider}, keyLabel={keyLabel}");
     }
 
     public void Bind(AbilitySO ability, AbilityCaster caster, int index)
     {
-        Debug.Log($"AbilitySlotUI.Bind: slot {index}, ability={ability?.name ?? "NULL"}, icon={(ability != null ? ability.icon : "NULL")}");
-
         Unsubscribe();
 
         this.ability = ability;
@@ -34,50 +32,29 @@ public class AbilitySlotUI : MonoBehaviour
         this.index = index;
 
         if (keyLabel != null)
-        {
             keyLabel.text = (index + 1).ToString();
-            Debug.Log($"Set keyLabel to: {keyLabel.text}");
-        }
 
         if (ability == null)
         {
-            Debug.Log($"Ability is null, setting default icon");
             if (icon != null)
             {
                 icon.sprite = defaultIcon;
-                icon.color = Color.gray; // Делаем серым для пустого слота
+                icon.color = Color.gray;
             }
 
             if (cooldownSlider != null)
             {
                 cooldownSlider.minValue = 0;
-                cooldownSlider.maxValue = 1;  
+                cooldownSlider.maxValue = 1;
                 cooldownSlider.value = 1;
             }
             return;
         }
 
-        // Ability не null
-        Debug.Log($"Setting ability: {ability.name}, icon={ability.icon}");
-
         if (icon != null)
         {
-            if (ability.icon != null)
-            {
-                icon.sprite = ability.icon;
-                icon.color = Color.white; // Нормальный цвет
-                Debug.Log($"Icon sprite set to: {ability.icon.name}");
-            }
-            else
-            {
-                Debug.LogWarning($"Ability {ability.name} has no icon assigned!");
-                icon.sprite = defaultIcon;
-                icon.color = Color.yellow; // Желтый для отсутствующей иконки
-            }
-        }
-        else
-        {
-            Debug.LogError("Icon Image component is null!");
+            icon.sprite = ability.icon != null ? ability.icon : defaultIcon;
+            icon.color = ability.icon != null ? Color.white : Color.yellow;
         }
 
         if (cooldownSlider != null)
@@ -87,16 +64,10 @@ public class AbilitySlotUI : MonoBehaviour
             cooldownSlider.value = ability.cooldown;
         }
 
-        // Подписываемся на события только если caster существует
         if (caster != null)
         {
             caster.OnAbilityCast += HandleCastReset;
             caster.OnCooldownChanged += HandleCooldownUpdate;
-            Debug.Log($"Subscribed to caster events");
-        }
-        else
-        {
-            Debug.LogError("Caster is null!");
         }
     }
 
@@ -117,16 +88,23 @@ public class AbilitySlotUI : MonoBehaviour
     private void HandleCastReset(AbilitySO usedAbility)
     {
         if (usedAbility != ability) return;
-
-        if (cooldownSlider != null)
-            cooldownSlider.value = 0;
+        cooldownSlider.value = 0;
     }
 
     private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
     {
         if (updated != ability) return;
+        cooldownSlider.value = max - remaining;
+    }
 
-        if (cooldownSlider != null)
-            cooldownSlider.value = max - remaining;
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (ability != null)
+            TooltipController.Instance.ShowAbility(ability, caster);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        TooltipController.Instance.Hide();
     }
 }

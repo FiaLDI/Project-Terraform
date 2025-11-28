@@ -3,10 +3,12 @@ using UnityEngine;
 public enum ItemType { Resource, Tool, Weapon, Ammo, Quest, Recource }
 public abstract class Item : ScriptableObject
 {
-    
+    [Header("Base Stats")]
+    public ItemStat[] baseStats;
+
     [Header("Upgrades")]
     public ItemUpgradeData[] upgrades;
-    public int currentLevel = 0; 
+    public int currentLevel = 0;
 
     [Header("In-Game Model")]
     public GameObject worldPrefab;

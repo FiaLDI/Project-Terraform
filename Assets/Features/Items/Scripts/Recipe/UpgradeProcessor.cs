@@ -3,90 +3,120 @@ using UnityEngine;
 
 public class UpgradeProcessor : MonoBehaviour
 {
-    public event Action<RecipeSO> OnStart;
+    public event Action<Item> OnStart;
     public event Action<float> OnProgress;
-    public event Action<RecipeSO> OnComplete;
+    public event Action<Item> OnComplete;
 
-    private RecipeSO activeRecipe;
+    private bool isProcessing = false;
     private float startTime;
-    private bool isProcessing;
-
+    private RecipeSO activeRecipe;
     private InventorySlot targetSlot;
 
-    // --------------------------------------------------------
-    // PUBLIC ENTRY POINT
-    // --------------------------------------------------------
+    // --------------------------------------------------------------------
+    //  PUBLIC API
+    // --------------------------------------------------------------------
     public void BeginUpgrade(RecipeSO recipe, InventorySlot slot)
     {
-        if (recipe == null) return;
-        if (slot == null) return;
-        if (slot.ItemData == null) return;
-
-        if (recipe.recipeType != RecipeType.Upgrade)
+        if (recipe == null || slot == null || slot.ItemData == null)
         {
-            Debug.LogWarning("[UpgradeProcessor] Wrong recipe type!");
+            Debug.LogError("[UpgradeProcessor] Неверный рецепт или слот.");
             return;
         }
+
+        Item item = slot.ItemData;
+
+        // 1) Проверяем, что предмет поддерживает улучшение
+        if (item.upgrades == null || item.upgrades.Length == 0)
+        {
+            Debug.LogWarning($"[UpgradeProcessor] Предмет {item.itemName} не имеет апгрейдов.");
+            return;
+        }
+
+        // 2) Проверяем, что есть следующий уровень
+        if (item.currentLevel >= item.upgrades.Length - 1)
+        {
+            Debug.LogWarning($"[UpgradeProcessor] {item.itemName} уже на максимальном уровне!");
+            return;
+        }
+
+        // 3) Проверяем, что хватает ресурсов
+        if (!InventoryManager.instance.HasIngredients(recipe.inputs))
+        {
+            Debug.LogWarning("[UpgradeProcessor] Недостаточно ресурсов для улучшения.");
+            return;
+        }
+
+        // 4) Всё ОК — стартуем
+        Debug.Log($"[UpgradeProcessor] Запуск улучшения предмета {item.itemName}, уровень {item.currentLevel + 1}");
 
         activeRecipe = recipe;
         targetSlot = slot;
-
         startTime = Time.time;
         isProcessing = true;
 
-        OnStart?.Invoke(recipe);
+        OnStart?.Invoke(item);
     }
 
-    // --------------------------------------------------------
+    // --------------------------------------------------------------------
     private void Update()
     {
-        if (!isProcessing) return;
+        if (!isProcessing || activeRecipe == null)
+            return;
 
         float progress = (Time.time - startTime) / activeRecipe.duration;
+
         OnProgress?.Invoke(progress);
 
         if (progress >= 1f)
-            FinishUpgrade();
+        {
+            CompleteUpgrade();
+        }
     }
 
-    // --------------------------------------------------------
-    private void FinishUpgrade()
+    // --------------------------------------------------------------------
+    private void CompleteUpgrade()
     {
         isProcessing = false;
 
-        // 1. тратим ингредиенты
-        InventoryManager.instance.ConsumeIngredients(activeRecipe.ingredients);
+        Item item = targetSlot.ItemData;
 
-        // 2. апгрейд предмета
-        UpgradeItem(targetSlot);
+        Debug.Log($"[UpgradeProcessor] Улучшение завершено: {item.itemName}");
 
-        // 3. уведомляем UI
-        OnComplete?.Invoke(activeRecipe);
-    }
+        // 1) Списываем ресурсы
+        InventoryManager.instance.ConsumeIngredients(activeRecipe.inputs);
 
-    // --------------------------------------------------------
-    // MAIN LOGIC: level++
-    // --------------------------------------------------------
-    private void UpgradeItem(InventorySlot slot)
-    {
-        Item item = slot.ItemData;
-
-        if (item.upgrades == null || item.upgrades.Length == 0)
-        {
-            Debug.LogWarning($"[UpgradeProcessor] {item.itemName} has no upgrade data!");
-            return;
-        }
-
-        if (item.currentLevel >= item.upgrades.Length - 1)
-        {
-            Debug.LogWarning($"[UpgradeProcessor] {item.itemName} is already max level!");
-            return;
-        }
-
+        // 2) Повышаем уровень предмета
         item.currentLevel++;
 
-        Debug.Log($"[UpgradeProcessor] {item.itemName} upgraded to level {item.currentLevel}");
+        var stats = ItemStatCalculator.Calculate(item);
+        EquipmentManager.instance.ApplyRuntimeStats(item, stats);
 
-        slot.NotifyChanged();
+        // 3) Если нужно — можно применить статы
+        ApplyUpgradeStats(item);
+
+        // 4) Сообщаем UI
+        OnComplete?.Invoke(item);
+
+        // 5) Обновление UI инвентаря
+        InventoryManager.instance.UpdateAllUI();
+    }
+
+    // --------------------------------------------------------------------
+    //  OPTIONAL: применение статов предмета (если нужно)
+    // --------------------------------------------------------------------
+    private void ApplyUpgradeStats(Item item)
+    {
+        var upgradeData = item.CurrentUpgrade;
+        if (upgradeData == null)
+            return;
+
+        // Пример:
+        // if (item is Weapon w)
+        // {
+        //     w.damage = upgradeData.damage;
+        //     w.fireRate = upgradeData.fireRate;
+        // }
+
+        Debug.Log($"[UpgradeProcessor] Применены статусы апгрейда: {item.itemName} lvl {item.currentLevel}");
     }
 }

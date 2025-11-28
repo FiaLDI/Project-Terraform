@@ -1,80 +1,95 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; 
-using UnityEngine.EventSystems; 
+using TMPro;
+using UnityEngine.EventSystems;
 
-public class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
+public class InventorySlotUI : MonoBehaviour, 
+    IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler,
+    IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image itemIcon;
     [SerializeField] private TextMeshProUGUI amountText;
+    public static bool IsDragging = false;
+
+
     private InventorySlot assignedInventorySlot;
-    // Метод для полного обновления вида слота
+
+    // -----------------------------
+    //   UPDATE SLOT
+    // -----------------------------
     public void UpdateSlot(InventorySlot slot)
     {
-        Debug.Log("InventorySlotUI");
-        assignedInventorySlot = slot; // Сохраняем ссылку
+        assignedInventorySlot = slot;
+
         if (slot.ItemData != null && slot.Amount > 0)
         {
-            // Слот не пуст
             itemIcon.sprite = slot.ItemData.icon;
-            itemIcon.enabled = true; // Показываем иконку
+            itemIcon.enabled = true;
 
-            // Показываем количество, только если предмет стакается и его больше 1
             if (slot.ItemData.isStackable && slot.Amount > 1)
-            {
                 amountText.text = slot.Amount.ToString();
-            }
             else
-            {
                 amountText.text = "";
-            }
         }
         else
         {
-            // Слот пуст
             ClearSlotUI();
         }
     }
 
-    // Метод для очистки отображения слота
     public void ClearSlotUI()
     {
         itemIcon.sprite = null;
         itemIcon.enabled = false;
         amountText.text = "";
     }
-    #region Drag & Drop Handlers
 
+    // -----------------------------
+    //   TOOLTIP
+    // -----------------------------
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (IsDragging) return;
+
+        if (assignedInventorySlot?.ItemData != null)
+            TooltipController.Instance.ShowForItem(assignedInventorySlot.ItemData);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (IsDragging) return;
+
+        TooltipController.Instance.Hide();
+    }
+
+    // -----------------------------
+    //   DRAG & DROP
+    // -----------------------------
     public void OnBeginDrag(PointerEventData eventData)
     {
+        IsDragging = true;
         if (assignedInventorySlot.ItemData != null)
         {
-            // Сообщаем менеджеру, что мы начали тащить этот слот
+            TooltipController.Instance.Hide(); // СЃРєСЂС‹РІР°РµРј tooltip
             InventoryManager.instance.OnDragBegin(assignedInventorySlot);
-            // Делаем иконку в слоте полупрозрачной для визуальной обратной связи
             itemIcon.color = new Color(1, 1, 1, 0.5f);
         }
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        // Не трогаем чужой Image напрямую, а просто просим менеджера обновить позицию.
         InventoryManager.instance.UpdateDraggableItemPosition(eventData.position);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        // Сообщаем менеджеру, что перетаскивание закончилось
+        IsDragging = false;
         InventoryManager.instance.OnDragEnd();
-        // Возвращаем иконке нормальную непрозрачность
         itemIcon.color = Color.white;
     }
 
     public void OnDrop(PointerEventData eventData)
     {
-        // Сообщаем менеджеру, что на слот что-то "бросили"
         InventoryManager.instance.OnDrop(assignedInventorySlot);
     }
-
-    #endregion
 }

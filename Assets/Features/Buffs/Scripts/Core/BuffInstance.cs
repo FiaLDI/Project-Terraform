@@ -29,4 +29,23 @@ public class BuffInstance
         Duration = newDuration;
         EndTime = Time.time + newDuration;
     }
+
+    // === Global stat modifier support ===
+
+    private readonly System.Collections.Generic.List<GlobalStatModifier> _globalModifiers =
+        new System.Collections.Generic.List<GlobalStatModifier>();
+
+    public void AddGlobalModifier(GlobalStatModifier mod)
+    {
+        _globalModifiers.Add(mod);
+        GlobalStatManager.instance.AddModifier(mod);
+    }
+
+    public void RemoveAllGlobalModifiers()
+    {
+        foreach (var mod in _globalModifiers)
+            GlobalStatManager.instance.RemoveModifier(mod);
+
+        _globalModifiers.Clear();
+    }
 }

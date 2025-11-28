@@ -8,6 +8,12 @@ public class RecipePanelUI : MonoBehaviour
     [SerializeField] private Image icon;
     [SerializeField] private TextMeshProUGUI title;
     [SerializeField] private TextMeshProUGUI ingredientsText;
+
+    [Header("Upgrade Info")]
+    [SerializeField] private TextMeshProUGUI upgradeInfoText;
+    [SerializeField] private Image upgradePreviewIcon;
+
+    [Header("Action Button")]
     [SerializeField] private Button actionButton;
 
     [Header("Progress UI")]
@@ -17,16 +23,69 @@ public class RecipePanelUI : MonoBehaviour
     {
         gameObject.SetActive(true);
 
-        icon.sprite = recipe.outputItem.icon;
-        title.text = recipe.outputItem.itemName;
+        if (recipe.recipeType == RecipeType.Upgrade)
+        {
+            ShowUpgradeRecipe(recipe);
+            return;
+        }
 
+        // ===== обычный крафт =====
+        if (icon) icon.sprite = recipe.outputItem.icon;
+        if (title) title.text = recipe.outputItem.itemName;
+
+        if (ingredientsText)
+        {
+            ingredientsText.text = "";
+            foreach (var ing in recipe.inputs)
+                ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
+        }
+
+        progressUI.SetVisible(false);
+        progressUI.UpdateProgress(0f);
+        actionButton.onClick.RemoveAllListeners();
+    }
+
+    private void ShowUpgradeRecipe(RecipeSO recipe)
+    {
+        InventorySlot slot = InventoryManager.instance.GetSelectedSlot();
+        Item item = slot?.ItemData;
+
+        title.text = $"{item.itemName} — Upgrade";
+
+        // ===== показать апгрейд =====
+        if (item.upgrades != null && item.currentLevel < item.upgrades.Length - 1)
+        {
+            ItemUpgradeData next = item.upgrades[item.currentLevel];
+
+            // Сбор текста статов
+            string statsText = "";
+            foreach (var stat in next.bonusStats)
+            {
+                statsText += $"{stat.stat}: +{stat.value}\n";
+            }
+
+            upgradeInfoText.text =
+                $"Current Level: {item.currentLevel}\n" +
+                $"Next Level: {next.Level}\n\n" +
+                statsText;
+
+            if (next.Level > 0 && upgradePreviewIcon != null && next.Level < item.upgrades.Length)
+            {
+                if (next.Level < item.upgrades.Length)
+                    upgradePreviewIcon.sprite = next.UpgradedIcon;
+            }
+        }
+        else
+        {
+            upgradeInfoText.text = "MAX LEVEL";
+        }
+
+        // ===== показать ингредиенты =====
         ingredientsText.text = "";
         foreach (var ing in recipe.inputs)
             ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
 
         progressUI.SetVisible(false);
-        progressUI.UpdateProgress(0f);
-
         actionButton.onClick.RemoveAllListeners();
     }
 
@@ -42,10 +101,7 @@ public class RecipePanelUI : MonoBehaviour
         progressUI.UpdateProgress(0f);
     }
 
-    public void UpdateProgress(float t)
-    {
-        progressUI.UpdateProgress(t);
-    }
+    public void UpdateProgress(float t) => progressUI.UpdateProgress(t);
 
     public void ProcessComplete()
     {
@@ -53,14 +109,17 @@ public class RecipePanelUI : MonoBehaviour
         progressUI.PlayCompleteAnimation();
     }
 
-    public void ShowMissingIngredients()
+    public void ShowMissingIngredients(RecipeSO recipe)
     {
-        ingredientsText.text += "\n<color=#ff4444>Недостаточно ресурсов!</color>";
-    }
+        ingredientsText.text = "";
 
+        foreach (var ing in recipe.inputs)
+        {
+            bool hasEnough = InventoryManager.instance.HasItemCount(ing.item, ing.amount);
+            string color = hasEnough ? "#FFFFFF" : "#FF4444";
 
-    public void ShowError(string msg)
-    {
-        Debug.LogWarning("[RecipePanelUI] " + msg);
+            ingredientsText.text +=
+                $"<color={color}>{ing.item.itemName} x {ing.amount}</color>\n";
+        }
     }
 }

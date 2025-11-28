@@ -25,7 +25,7 @@ public class WorkbenchUIController : BaseStationUI
         {
             if (!InventoryManager.instance.HasIngredients(recipe.inputs))
             {
-                recipePanel.ShowMissingIngredients();
+                recipePanel.ShowMissingIngredients(recipe);
                 return;
             }
 

@@ -184,4 +184,18 @@ public class EquipmentManager : MonoBehaviour
     {
         return currentUsable;
     }
+
+    public void ApplyRuntimeStats(Item item, ItemRuntimeStats stats)
+    {
+        if (currentWeaponObject == null)
+            return;
+
+        var statReceiver = currentWeaponObject.GetComponent<IStatItem>();
+        if (statReceiver == null)
+            return;
+
+        statReceiver.ApplyRuntimeStats(stats);
+    }
+
+
 }

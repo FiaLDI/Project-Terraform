@@ -371,6 +371,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4170357829922619588}
   - component: {fileID: 5337021029254810375}
+  - component: {fileID: 8357530876163721678}
   m_Layer: 0
   m_Name: BuffIconUI
   m_TagString: Untagged
@@ -416,3 +417,15 @@ MonoBehaviour:
   icon: {fileID: 8282596167172932044}
   radialFill: {fileID: 7626734248579438340}
   timerLabel: {fileID: 5700209357900386700}
+--- !u!114 &8357530876163721678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7931255046322053665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9109f0147fcd7b8439479125b53d83e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BuffTooltipTrigger

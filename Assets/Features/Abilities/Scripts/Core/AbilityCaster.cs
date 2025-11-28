@@ -13,6 +13,8 @@ public class AbilityCaster : MonoBehaviour
     public event System.Action<AbilitySO, float, float> OnCooldownChanged;
     public event System.Action<AbilitySO> OnAbilityCast;
 
+    public PlayerEnergy Energy => energy;
+
     private void Awake()
     {
         classManager = GetComponent<ClassManager>();

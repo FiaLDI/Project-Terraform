@@ -12,9 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac44c009ebc524347940e3da9d16939e, type: 3}
   m_Name: TestDrill
   m_EditorClassIdentifier: Assembly-CSharp::Tool
+  baseStats:
+  - stat: 1
+    value: 1
+  - stat: 0
+    value: 1
   upgrades:
   - {fileID: 11400000, guid: b5e494c070d6ac144ad4cc7f51b404ea, type: 2}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 350a02d82c5fe43428c5b294a1e01ed9, type: 2}
   currentLevel: 0
   worldPrefab: {fileID: 3360301487101487544, guid: 5e252df5b72c86248974e61418379550, type: 3}
   id: 3

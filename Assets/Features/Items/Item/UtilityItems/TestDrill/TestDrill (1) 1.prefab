@@ -291,11 +291,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d9ccaa036a9b240b9028e4ef88a243, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UsableToolDrill
-  damagePerSecond: 10
-  range: 3
-  hitMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!1 &3579673380293029900
 GameObject:
   m_ObjectHideFlags: 0

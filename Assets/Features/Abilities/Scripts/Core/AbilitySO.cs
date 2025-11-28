@@ -8,6 +8,10 @@ public abstract class AbilitySO : ScriptableObject
     public Sprite icon;
     public Sprite buffIcon;
 
+    [Header("Description")]
+    [TextArea(3, 5)]
+    public string description;
+
     [Header("Cast Settings")]
     public float energyCost = 20f;
     public float cooldown = 12f;

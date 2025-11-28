@@ -5,6 +5,11 @@ public class TurretShieldBuffSO : BuffSO
 {
     public float shieldAmount = 40f;
 
+    public override string GetDescription()
+    {
+        return $"+{shieldAmount} Temporary Turret Shield";
+    }
+
     public override void OnApply(BuffInstance instance)
     {
         if (instance.Target.GameObject.TryGetComponent<TurretBehaviour>(out var turret))
