@@ -1,6 +1,7 @@
 using UnityEngine;
 
 public enum ItemType { Resource, Tool, Weapon, Ammo, Quest, Recource }
+
 public abstract class Item : ScriptableObject
 {
     [Header("Base Stats")]
@@ -23,6 +24,7 @@ public abstract class Item : ScriptableObject
     [Header("Stacking")]
     public bool isStackable;
     public int maxStackAmount = 1;
+
     [Header("General")]
     public ItemType itemType;
 
@@ -34,13 +36,25 @@ public abstract class Item : ScriptableObject
     private void OnValidate()
     {
         if (!isStackable)
-        {
             maxStackAmount = 1;
+
+        if (upgrades != null)
+        {
+            for (int i = 0; i < upgrades.Length; i++)
+            {
+                if (upgrades[i] != null)
+                    upgrades[i].Level = i + 1;
+            }
         }
     }
 
     public ItemUpgradeData CurrentUpgrade =>
         (upgrades != null && currentLevel < upgrades.Length)
             ? upgrades[currentLevel]
+            : null;
+
+    public ItemUpgradeData NextUpgrade =>
+        (upgrades != null && currentLevel + 1 < upgrades.Length)
+            ? upgrades[currentLevel + 1]
             : null;
 }

@@ -18,6 +18,7 @@ public class UpgradeStation : MonoBehaviour, IInteractable
     public bool Interact()
     {
         ui.Toggle();
+        ui.OnOpenUI();
         return true;
     }
 }

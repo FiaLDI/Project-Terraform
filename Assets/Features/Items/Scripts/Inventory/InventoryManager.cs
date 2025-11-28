@@ -504,4 +504,23 @@ public class InventoryManager : MonoBehaviour
         return total >= count;
     }
 
+    public IEnumerable<InventorySlot> GetAllSlots()
+    {
+        foreach (var s in hotbarSlots) yield return s;
+        foreach (var s in mainInventorySlots) yield return s;
+    }
+
+    public InventorySlot FindFirstSlotWithItem(Item item)
+    {
+        foreach (var s in hotbarSlots)
+            if (s.ItemData == item)
+                return s;
+        foreach (var s in mainInventorySlots)
+            if (s.ItemData == item)
+                return s;
+        return null;
+    }
+
+
+
 }

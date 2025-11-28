@@ -19,17 +19,35 @@ public class RecipePanelUI : MonoBehaviour
     [Header("Progress UI")]
     [SerializeField] private CraftingProgressUI progressUI;
 
+    // === ДОБАВЛЯЕМ ЭТИ ПОЛЯ ===
+    private RecipeSO currentRecipe;
+    private Item currentItem;
+
+    // =====================================================================
+    // ===== обычные рецепты (craft) — твой старый ShowRecipe() остаётся ===
+    // =====================================================================
     public void ShowRecipe(RecipeSO recipe)
     {
-        gameObject.SetActive(true);
-
+        // Если рецепт — апгрейд, UI должен вызывать ShowUpgradeRecipe
         if (recipe.recipeType == RecipeType.Upgrade)
         {
-            ShowUpgradeRecipe(recipe);
+            // Попытка найти текущий предмет в слоте
+            var slot = InventoryManager.Instance.GetSelectedSlot();
+            if (slot != null && slot.ItemData != null)
+            {
+                ShowUpgradeRecipe(slot.ItemData, recipe);
+                return;
+            }
+
+            title.text = "Select item to upgrade";
+            ingredientsText.text = "";
             return;
         }
 
         // ===== обычный крафт =====
+
+        gameObject.SetActive(true);
+
         if (icon) icon.sprite = recipe.outputItem.icon;
         if (title) title.text = recipe.outputItem.itemName;
 
@@ -45,50 +63,72 @@ public class RecipePanelUI : MonoBehaviour
         actionButton.onClick.RemoveAllListeners();
     }
 
-    private void ShowUpgradeRecipe(RecipeSO recipe)
+    // ===================================================================================
+    // ===== ФИНАЛЬНЫЙ ShowUpgradeRecipe (item + recipe) — ПРАВИЛЬНЫЙ МЕТОД =============
+    // ===================================================================================
+    public void ShowUpgradeRecipe(Item item, RecipeSO recipe)
     {
-        InventorySlot slot = InventoryManager.instance.GetSelectedSlot();
-        Item item = slot?.ItemData;
+        currentRecipe = recipe;
+        currentItem = item;
 
-        title.text = $"{item.itemName} — Upgrade";
+        gameObject.SetActive(true);
 
-        // ===== показать апгрейд =====
-        if (item.upgrades != null && item.currentLevel < item.upgrades.Length - 1)
+        // Иконка текущего предмета
+        if (icon != null)
+            icon.sprite = item.icon;
+
+        if (title != null)
+            title.text = $"{item.itemName} — Upgrade";
+
+        // ===== УРОВНИ =====
+        if (item.upgrades != null && item.currentLevel < item.upgrades.Length)
         {
-            ItemUpgradeData next = item.upgrades[item.currentLevel];
+            int currentLevel = item.currentLevel;
+            int maxLevel = item.upgrades.Length;
+            var next = item.NextUpgrade;
 
-            // Сбор текста статов
-            string statsText = "";
-            foreach (var stat in next.bonusStats)
+            if (next != null)
             {
-                statsText += $"{stat.stat}: +{stat.value}\n";
+                string statsText = "";
+                foreach (var stat in next.bonusStats)
+                    statsText += $"{stat.stat}: +{stat.value}\n";
+
+                upgradeInfoText.text =
+                    $"Current Level: {currentLevel}\n" +
+                    $"Next Level: {next.Level}\n\n" +
+                    statsText;
+
+                if (upgradePreviewIcon != null)
+                {
+                    Sprite preview = next.UpgradedIcon != null ? next.UpgradedIcon : item.icon;
+                    upgradePreviewIcon.sprite = preview;
+                }
             }
-
-            upgradeInfoText.text =
-                $"Current Level: {item.currentLevel}\n" +
-                $"Next Level: {next.Level}\n\n" +
-                statsText;
-
-            if (next.Level > 0 && upgradePreviewIcon != null && next.Level < item.upgrades.Length)
+            else
             {
-                if (next.Level < item.upgrades.Length)
-                    upgradePreviewIcon.sprite = next.UpgradedIcon;
+                upgradeInfoText.text = $"MAX LEVEL ({currentLevel}/{maxLevel})";
+                if (upgradePreviewIcon != null)
+                    upgradePreviewIcon.sprite = item.icon;
             }
         }
         else
         {
-            upgradeInfoText.text = "MAX LEVEL";
+            upgradeInfoText.text = "NO UPGRADE DATA";
         }
 
-        // ===== показать ингредиенты =====
+        // ===== ИНГРЕДИЕНТЫ (из RecipeSO) =====
         ingredientsText.text = "";
         foreach (var ing in recipe.inputs)
             ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
 
         progressUI.SetVisible(false);
+        progressUI.UpdateProgress(0f);
         actionButton.onClick.RemoveAllListeners();
     }
 
+    // ===================================================================================
+    // ===== ОБЩИЕ МЕТОДЫ ДЛЯ ПРОЦЕССОРА ================================================
+    // ===================================================================================
     public void SetAction(System.Action callback)
     {
         actionButton.onClick.RemoveAllListeners();
@@ -101,7 +141,10 @@ public class RecipePanelUI : MonoBehaviour
         progressUI.UpdateProgress(0f);
     }
 
-    public void UpdateProgress(float t) => progressUI.UpdateProgress(t);
+    public void UpdateProgress(float t)
+    {
+        progressUI.UpdateProgress(t);
+    }
 
     public void ProcessComplete()
     {
@@ -115,11 +158,9 @@ public class RecipePanelUI : MonoBehaviour
 
         foreach (var ing in recipe.inputs)
         {
-            bool hasEnough = InventoryManager.instance.HasItemCount(ing.item, ing.amount);
+            bool hasEnough = InventoryManager.Instance.HasItemCount(ing.item, ing.amount);
             string color = hasEnough ? "#FFFFFF" : "#FF4444";
-
-            ingredientsText.text +=
-                $"<color={color}>{ing.item.itemName} x {ing.amount}</color>\n";
+            ingredientsText.text += $"<color={color}>{ing.item.itemName} x {ing.amount}</color>\n";
         }
     }
 }

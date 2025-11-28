@@ -1679,6 +1679,7 @@ MonoBehaviour:
   recipeListContainer: {fileID: 2926181631116506849}
   recipeButtonPrefab: {fileID: 2273770070204483420, guid: 790864dea1518ec48ae761e95f316109, type: 3}
   recipePanel: {fileID: 8439760729739654710}
+  upgradeItemButtonPrefab: {fileID: 6999999668370813612, guid: 318ae505fe7652f4595eca28377932af, type: 3}
 --- !u!1 &5440793814812104009
 GameObject:
   m_ObjectHideFlags: 0

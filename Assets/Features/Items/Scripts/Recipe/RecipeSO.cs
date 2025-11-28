@@ -14,7 +14,7 @@ public class RecipeSO : ScriptableObject
     public Item outputItem;
     public int outputAmount = 1;
 
-    [Header("Crafting Time")]
+    [Header("Crafting Time / Upgrade Duration")]
     public float duration = 2f;
 
     [Header("Station Requirements")]
@@ -26,9 +26,12 @@ public class RecipeSO : ScriptableObject
     public RecipeType recipeType = RecipeType.Crafting;
 
     [Header("Upgrade Settings")]
+    [Tooltip("Какой предмет улучшает этот рецепт")]
     public Item upgradeBaseItem;
-}
 
+    [Tooltip("На какой уровень переводит этот рецепт (например 1, 2, 3...)")]
+    public int upgradeTargetLevel = 1;
+}
 
 [System.Serializable]
 public class RecipeIngredient
