@@ -291,6 +291,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55d9ccaa036a9b240b9028e4ef88a243, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UsableToolDrill
+  baseMiningSpeed: 10
+  baseDamage: 5
+  baseRange: 3
 --- !u!1 &3579673380293029900
 GameObject:
   m_ObjectHideFlags: 0

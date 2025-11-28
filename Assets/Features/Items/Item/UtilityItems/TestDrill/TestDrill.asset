@@ -17,6 +17,8 @@ MonoBehaviour:
     value: 1
   - stat: 0
     value: 1
+  - stat: 0
+    value: 1
   upgrades:
   - {fileID: 11400000, guid: b5e494c070d6ac144ad4cc7f51b404ea, type: 2}
   - {fileID: 11400000, guid: 350a02d82c5fe43428c5b294a1e01ed9, type: 2}
