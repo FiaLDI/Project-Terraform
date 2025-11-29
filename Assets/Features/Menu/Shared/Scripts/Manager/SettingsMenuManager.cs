@@ -19,6 +19,8 @@ public class SettingsMenuManager : MonoBehaviour
 
     private SettingsCaller lastCaller = SettingsCaller.None;
 
+    public bool SettingsMenuOpen => settingsMenu.IsOpen;
+
     private void Awake()
     {
         I = this;
