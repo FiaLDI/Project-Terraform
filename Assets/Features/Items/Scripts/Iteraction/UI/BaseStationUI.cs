@@ -45,11 +45,16 @@ public abstract class BaseStationUI : MonoBehaviour
     {
         isOpen = !isOpen;
 
-            canvas.enabled = isOpen;
+        canvas.enabled = isOpen;
         PlayerUsageController.InteractionLocked = isOpen;
 
         Cursor.visible = isOpen;
         Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
+
+        if (isOpen)
+            UIStationManager.I.OpenStation(this);
+        else
+            UIStationManager.I.CloseStation(this);
     }
 
     public virtual void ShowRecipe(RecipeSO recipe)

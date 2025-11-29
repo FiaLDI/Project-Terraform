@@ -82,9 +82,20 @@ public class RecipePanelUI : MonoBehaviour
         if (ingredientsText)
         {
             ingredientsText.text = "";
+
             foreach (var ing in recipe.inputs)
-                ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
+            {
+                int required = ing.amount;
+                int have = InventoryManager.instance.GetTotalItemCount(ing.item);
+
+                bool enough = have >= required;
+                string color = enough ? "#FFFFFF" : "#FF4444";
+
+                ingredientsText.text += 
+                    $"<color={color}>{ing.item.itemName}: {have}/{required}</color>\n";
+            }
         }
+
 
         progressUI.SetVisible(false);
         progressUI.UpdateProgress(0f);
@@ -144,12 +155,23 @@ public class RecipePanelUI : MonoBehaviour
                 upgradePreviewIcon.sprite = item.icon;
         }
 
-        if (ingredientsText != null)
+        if (ingredientsText)
         {
             ingredientsText.text = "";
+
             foreach (var ing in recipe.inputs)
-                ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
+            {
+                int required = ing.amount;
+                int have = InventoryManager.instance.GetTotalItemCount(ing.item);
+
+                bool enough = have >= required;
+                string color = enough ? "#FFFFFF" : "#FF4444";
+
+                ingredientsText.text += 
+                    $"<color={color}>{ing.item.itemName}: {have}/{required}</color>\n";
+            }
         }
+
 
         progressUI.SetVisible(false);
         progressUI.UpdateProgress(0f);

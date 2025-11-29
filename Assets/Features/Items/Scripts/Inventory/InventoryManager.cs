@@ -522,4 +522,18 @@ public class InventoryManager : MonoBehaviour
 
         return null;
     }
+
+    public int GetTotalItemCount(Item item)
+    {
+        int count = 0;
+
+        foreach (var slot in GetAllSlots())
+        {
+            if (slot.ItemData == item)
+                count += slot.Amount;
+        }
+
+        return count;
+    }
+
 }
