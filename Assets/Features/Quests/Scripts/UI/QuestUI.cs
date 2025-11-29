@@ -24,6 +24,16 @@ namespace Quests
         public TMP_Text notificationText;
         public float notificationDuration = 3f;
 
+        [Header("Sliding HUD Quest Panel")]
+        public RectTransform slidingHudPanel;
+        public CanvasGroup slidingHudCanvasGroup;
+        public float slideHudDuration = 0.25f;
+
+        private bool isHudSliding = false;
+        private Vector2 hudHiddenPos;
+        private Vector2 hudShownPos;
+        public bool hudIsOpen = true;
+
         // HUD квесты
         private Dictionary<QuestAsset, GameObject> hudQuestEntries = new();
 
@@ -32,6 +42,15 @@ namespace Quests
 
         private bool isAllQuestsPanelOpen = false;
         private Coroutine notificationCoroutine;
+
+        private void Awake()
+        {
+            if (slidingHudPanel != null)
+            {
+                hudShownPos = slidingHudPanel.anchoredPosition;
+                hudHiddenPos = new Vector2(hudShownPos.x - slidingHudPanel.rect.width, hudShownPos.y);
+            }
+        }
 
         private void Start()
         {
@@ -214,6 +233,39 @@ namespace Quests
                 allQuestsPanel.SetActive(false);
                 isAllQuestsPanelOpen = false;
             }
+        }
+
+        public void ToggleHudQuestPanel()
+        {
+            if (slidingHudPanel == null || isHudSliding) return;
+
+            StartCoroutine(SlideHudPanel(!hudIsOpen));
+            hudIsOpen = !hudIsOpen;
+        }
+
+        private IEnumerator SlideHudPanel(bool opening)
+        {
+            isHudSliding = true;
+
+            Vector2 startPos = slidingHudPanel.anchoredPosition;
+            Vector2 targetPos = opening ? hudShownPos : hudHiddenPos;
+
+            float startAlpha = slidingHudCanvasGroup.alpha;
+            float targetAlpha = opening ? 1f : 0f;
+
+            float t = 0f;
+
+            while (t < 1f)
+            {
+                t += Time.deltaTime / slideHudDuration;
+
+                slidingHudPanel.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
+                slidingHudCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+
+                yield return null;
+            }
+
+            isHudSliding = false;
         }
     }
 }
