@@ -70,12 +70,6 @@ public class CraftingProgressUI : MonoBehaviour
     }
 
 
-    public void PlayCompleteAnimation()
-    {
-        animator?.SetTrigger("Complete");
-    }
-
-
     // =============================
     // VISUAL STYLE (цвета как HP/Energy)
     // =============================

@@ -4,12 +4,17 @@ using TMPro;
 
 public class BuffIconUI : MonoBehaviour
 {
-    [Header("UI")]
     public Image icon;
     public Image radialFill;      
     public TextMeshProUGUI timerLabel;
 
     private BuffInstance buff;
+    private BuffTooltipTrigger tooltipTrigger;
+
+    private void Awake()
+    {
+        tooltipTrigger = GetComponent<BuffTooltipTrigger>();
+    }
 
     public void Bind(BuffInstance buff)
     {
@@ -17,6 +22,9 @@ public class BuffIconUI : MonoBehaviour
 
         if (buff.Config.icon != null)
             icon.sprite = buff.Config.icon;
+
+        if (tooltipTrigger != null)
+            tooltipTrigger.Bind(buff);
 
         UpdateUI();
     }
@@ -46,5 +54,4 @@ public class BuffIconUI : MonoBehaviour
             ? $"{remain:0.0}"
             : $"{remain:0}";
     }
-
 }

@@ -11,7 +11,6 @@ public class PlayerEnergy : MonoBehaviour
 
     private BuffSystem buffSystem;
 
-    // cost reduction from buffs (in %, additive)
     private float costReductionPercent = 0f;
 
     private bool initialized = false;
@@ -22,8 +21,7 @@ public class PlayerEnergy : MonoBehaviour
 
         if (buffSystem == null)
         {
-            Debug.LogError("❌ PlayerEnergy: BuffSystem not found on PlayerPrefab!");
-            enabled = false; // отключает Update
+            enabled = false;
             return;
         }
 
@@ -41,7 +39,6 @@ public class PlayerEnergy : MonoBehaviour
     {
         if (!initialized) return;
 
-        // regen
         float max = MaxEnergy;
         if (CurrentEnergy < max)
         {
@@ -60,7 +57,6 @@ public class PlayerEnergy : MonoBehaviour
         {
             float bonus = 0f;
 
-            // локальные бафы
             if (buffSystem != null)
             {
                 foreach (var b in buffSystem.Active)
@@ -85,7 +81,6 @@ public class PlayerEnergy : MonoBehaviour
         {
             float bonus = 0f;
 
-            // локальные бафы
             if (buffSystem != null)
             {
                 foreach (var b in buffSystem.Active)
@@ -93,7 +88,6 @@ public class PlayerEnergy : MonoBehaviour
                         bonus += regenBuff.bonusRegen;
             }
 
-            // глобальные бафы
             if (GlobalBuffSystem.I != null)
                 bonus += GlobalBuffSystem.I.GetValue("player_regen");
 
@@ -119,7 +113,7 @@ public class PlayerEnergy : MonoBehaviour
     public float GetActualCost(float cost)
     {
         float mult = (1f - costReductionPercent / 100f);
-        if (mult < 0.05f) mult = 0.05f; // минимальные затраты = 5%
+        if (mult < 0.05f) mult = 0.05f;
         return cost * mult;
     }
 

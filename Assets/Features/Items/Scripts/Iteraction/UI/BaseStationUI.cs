@@ -12,10 +12,9 @@ public abstract class BaseStationUI : MonoBehaviour
     [SerializeField] protected RecipeButtonUI recipeButtonPrefab;
     [SerializeField] protected RecipePanelUI recipePanel;
 
-    protected CraftingProcessor processor;
     protected bool isOpen = false;
+    public bool IsOpen => isOpen;
 
-    // --------------------------------------------------------------------
 
     protected virtual void Awake()
     {
@@ -25,24 +24,10 @@ public abstract class BaseStationUI : MonoBehaviour
         canvas.enabled = false;
     }
 
-    // --------------------------------------------------------------------
-    // MAIN INITIALIZER (этого метода у тебя нет — из-за этого ошибка!)
-    // --------------------------------------------------------------------
-
-    public void Init(CraftingProcessor processor, RecipeSO[] recipes)
+    public void Init(RecipeSO[] recipes)
     {
-        this.processor = processor;
-
         Populate(recipes);
-
-        processor.OnStart += _ => recipePanel.StartProgress();
-        processor.OnProgress += t => recipePanel.UpdateProgress(t);
-        processor.OnComplete += r => recipePanel.OnProcessComplete();
     }
-
-    // --------------------------------------------------------------------
-    // POPULATE RECIPE BUTTONS
-    // --------------------------------------------------------------------
 
     protected void Populate(RecipeSO[] recipes)
     {
@@ -51,15 +36,10 @@ public abstract class BaseStationUI : MonoBehaviour
 
         foreach (var recipe in recipes)
         {
-            Debug.Log($"Adding recipe: {recipe.recipeId}, output={recipe.outputItem}");
             var btn = Instantiate(recipeButtonPrefab, recipeListContainer);
             btn.Init(recipe, this);
         }
     }
-
-    // --------------------------------------------------------------------
-    // UI TOGGLE
-    // --------------------------------------------------------------------
 
     public void Toggle()
     {
@@ -70,14 +50,16 @@ public abstract class BaseStationUI : MonoBehaviour
 
         Cursor.visible = isOpen;
         Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
+
+        if (isOpen)
+            UIStationManager.I.OpenStation(this);
+        else
+            UIStationManager.I.CloseStation(this);
     }
 
-    // --------------------------------------------------------------------
-    // SHOW RECIPE DETAILS
-    // --------------------------------------------------------------------
-
-    public void ShowRecipe(RecipeSO recipe)
+    public virtual void ShowRecipe(RecipeSO recipe)
     {
-        recipePanel.Show(recipe, processor);
+        recipePanel.ShowRecipe(recipe);
     }
+
 }

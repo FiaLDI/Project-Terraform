@@ -42,16 +42,13 @@ public class InventoryManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            Debug.Log($"[InventoryManager] Awake: Я '{gameObject.name}', я стал 'instance'.");
         }
         else
         {
-            Debug.LogWarning($"[InventoryManager] Дубликат! Уничтожаю {gameObject.name}");
             Destroy(gameObject);
             return;
         }
 
-        // Init slots
         for (int i = 0; i < MAIN_INVENTORY_SIZE; i++) mainInventorySlots.Add(new InventorySlot());
         for (int i = 0; i < HOTBAR_SIZE; i++) hotbarSlots.Add(new InventorySlot());
 
@@ -91,7 +88,7 @@ public class InventoryManager : MonoBehaviour
         {
             int left = amount;
 
-            // 1. Fill hotbar stacks
+            // 1. Заполняем стеки в хотбаре
             foreach (var slot in hotbarSlots)
             {
                 if (slot.ItemData != null && slot.ItemData.id == item.id && slot.Amount < item.maxStackAmount)
@@ -103,7 +100,7 @@ public class InventoryManager : MonoBehaviour
                 }
             }
 
-            // 2. Fill main inventory stacks
+            // 2. Заполняем стеки в основном инвентаре
             foreach (var slot in mainInventorySlots)
             {
                 if (slot.ItemData != null && slot.ItemData.id == item.id && slot.Amount < item.maxStackAmount)
@@ -115,7 +112,7 @@ public class InventoryManager : MonoBehaviour
                 }
             }
 
-            // 3. Fill empty slots
+            // 3. Свободные ячейки
             while (left > 0)
             {
                 InventorySlot empty =
@@ -123,10 +120,7 @@ public class InventoryManager : MonoBehaviour
                     mainInventorySlots.Find(s => s.ItemData == null);
 
                 if (empty == null)
-                {
-                    Debug.LogWarning("Inventory full!");
                     break;
-                }
 
                 int addNow = Mathf.Min(left, item.maxStackAmount);
                 empty.UpdateSlotData(item, addNow);
@@ -143,21 +137,20 @@ public class InventoryManager : MonoBehaviour
                     mainInventorySlots.Find(s => s.ItemData == null);
 
                 if (empty == null)
-                {
-                    Debug.LogWarning($"Inventory full, item {item.itemName} lost");
                     break;
-                }
 
+                // Сюда мы уже передаём runtime-клон (см. Crafting/Drop)
                 empty.UpdateSlotData(item, 1);
             }
         }
 
-        FINISH:
+    FINISH:
 
         OnItemAdded?.Invoke(item, amount);
         UpdateAllUI();
         UpdateEquippedItem();
     }
+
 
     // ----------------------------------------------------------
     // PUBLIC API
@@ -177,7 +170,7 @@ public class InventoryManager : MonoBehaviour
     //  UI UPDATE
     // ===================================================================
 
-    private void UpdateAllUI()
+    public void UpdateAllUI()
     {
         for (int i = 0; i < mainInventoryUI.Length; i++)
             mainInventoryUI[i].UpdateSlot(mainInventorySlots[i]);
@@ -374,7 +367,6 @@ public class InventoryManager : MonoBehaviour
         InventorySlot slotToDrop = hotbarSlots[hotbarIndex];
         if (slotToDrop.ItemData == null)
         {
-            Debug.Log("Слот пуст, нечего выбрасывать.");
             return;
         }
 
@@ -483,4 +475,65 @@ public class InventoryManager : MonoBehaviour
 
         return false;
     }
+
+    public InventorySlot GetSelectedSlot()
+    {
+        return hotbarSlots[selectedHotbarIndex];
+    }
+
+    public bool HasItemCount(Item item, int count)
+    {
+        if (item == null) return false;
+
+        int total = 0;
+
+        foreach (var slot in hotbarSlots)
+        {
+            if (slot.ItemData != null && slot.ItemData.id == item.id)
+                total += slot.Amount;
+        }
+
+        foreach (var slot in mainInventorySlots)
+        {
+            if (slot.ItemData != null && slot.ItemData.id == item.id)
+                total += slot.Amount;
+        }
+
+        return total >= count;
+    }
+
+    public IEnumerable<InventorySlot> GetAllSlots()
+    {
+        foreach (var s in hotbarSlots) yield return s;
+        foreach (var s in mainInventorySlots) yield return s;
+    }
+
+    public InventorySlot FindFirstSlotWithItem(Item item)
+    {
+        if (item == null) return null;
+
+        foreach (var s in hotbarSlots)
+            if (s.ItemData != null && s.ItemData.id == item.id)
+                return s;
+
+        foreach (var s in mainInventorySlots)
+            if (s.ItemData != null && s.ItemData.id == item.id)
+                return s;
+
+        return null;
+    }
+
+    public int GetTotalItemCount(Item item)
+    {
+        int count = 0;
+
+        foreach (var slot in GetAllSlots())
+        {
+            if (slot.ItemData == item)
+                count += slot.Amount;
+        }
+
+        return count;
+    }
+
 }

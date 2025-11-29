@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class UpgradeStation : MonoBehaviour, IInteractable
 {
-    [SerializeField] private CraftingProcessor processor;
+    [SerializeField] private UpgradeProcessor processor;
     [SerializeField] private RecipeDatabase recipeDB;
     [SerializeField] private UpgradeStationUIController ui;
 
@@ -18,6 +18,7 @@ public class UpgradeStation : MonoBehaviour, IInteractable
     public bool Interact()
     {
         ui.Toggle();
+        ui.OnOpenUI();
         return true;
     }
 }

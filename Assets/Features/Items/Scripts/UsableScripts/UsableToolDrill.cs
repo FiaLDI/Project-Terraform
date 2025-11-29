@@ -1,25 +1,42 @@
 ﻿using UnityEngine;
 
-public class UsableToolDrill : MonoBehaviour, IUsable
+public class UsableToolDrill : MonoBehaviour, IUsable, IStatItem
 {
-    public float damagePerSecond = 10f;
-    public float range = 3f;
-    public LayerMask hitMask;
-
     private Camera cam;
-    private bool drilling = false;
+    private bool drilling;
+
+    [Header("Base Stats")]
+    [SerializeField] private float baseMiningSpeed = 10f;
+    [SerializeField] private float baseDamage = 5f;
+    [SerializeField] private float baseRange = 3f;
+
+    private float miningSpeed;
+    private float damage;
+    private float range;
 
     public void Initialize(Camera playerCamera)
     {
         cam = playerCamera;
+
+        if (range <= 0)
+            range = baseRange;
+        if (miningSpeed <= 0)
+            miningSpeed = baseMiningSpeed;
+        if (damage <= 0)
+            damage = baseDamage;
     }
 
-    // PRIMARY (ЛКМ)
-    public void OnUsePrimary_Start()  => drilling = true;
-    public void OnUsePrimary_Hold()   => drilling = true;
-    public void OnUsePrimary_Stop()   => drilling = false;
+    public void ApplyRuntimeStats(ItemRuntimeStats stats)
+    {
+        miningSpeed = baseMiningSpeed + stats[ItemStatType.MiningSpeed];
+        damage      = baseDamage      + stats[ItemStatType.Damage];
+        range       = baseRange       + stats[ItemStatType.Range];
+    }
 
-    // SECONDARY (ПКМ)
+    public void OnUsePrimary_Start() => drilling = true;
+    public void OnUsePrimary_Hold()  => drilling = true;
+    public void OnUsePrimary_Stop()  => drilling = false;
+
     public void OnUseSecondary_Start() => drilling = true;
     public void OnUseSecondary_Hold()  => drilling = true;
     public void OnUseSecondary_Stop()  => drilling = false;
@@ -32,29 +49,32 @@ public class UsableToolDrill : MonoBehaviour, IUsable
 
     private void TryDrill()
     {
-        Ray ray = AimRay.Create(cam);
-
-        if (!Physics.Raycast(ray, out RaycastHit hit, range, hitMask))
-            return;
-
-        // 1) Майнинг
-        var mine = hit.collider.GetComponentInParent<IMineable>();
-        if (mine != null)
+        if (cam == null)
         {
-            Tool tool = EquipmentManager.instance.GetCurrentEquippedItem() as Tool;
-            float miningDps = damagePerSecond * Time.deltaTime * GlobalMiningSpeed.Multiplier;
-
-            mine.Mine(miningDps, tool);
             return;
         }
 
-        // 2) Урон
-        var dmg = hit.collider.GetComponent<IDamageable>();
+        Ray ray = new Ray(cam.transform.position, cam.transform.forward);
+
+        if (!Physics.Raycast(ray, out RaycastHit hit, range))
+        {
+            return;
+        }
+        var mine = hit.collider.GetComponentInParent<IMineable>();
+        if (mine != null)
+        {
+            float dps = miningSpeed * Time.deltaTime;
+            mine.Mine(dps, null);
+            return;
+        }
+
+        var dmg = hit.collider.GetComponentInParent<IDamageable>();
         if (dmg != null)
         {
-            float dmgAmount = damagePerSecond * Time.deltaTime * GlobalMiningSpeed.Multiplier;
+            float dmgAmount = damage * Time.deltaTime;
             dmg.TakeDamage(dmgAmount, DamageType.Mining);
             return;
         }
     }
+
 }

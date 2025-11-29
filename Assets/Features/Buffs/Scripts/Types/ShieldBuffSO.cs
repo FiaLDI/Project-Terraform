@@ -5,6 +5,11 @@ public class ShieldBuffSO : BuffSO
 {
     public float shieldAmount = 50f;
 
+    public override string GetDescription()
+    {
+        return $"+{shieldAmount} Shield";
+    }
+
     public override void OnApply(BuffInstance instance)
     {
         var hp = instance.Target.Transform.GetComponent<PlayerHealth>();
