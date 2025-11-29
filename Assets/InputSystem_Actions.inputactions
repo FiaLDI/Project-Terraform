@@ -796,6 +796,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Cancel1",
+                    "type": "Button",
+                    "id": "c6f8cd2c-294e-4678-9469-5c974fcec8da",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1258,6 +1267,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "EquipSecond",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5dd01499-dfb0-43b3-ac84-955268fe3f76",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Cancel1",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

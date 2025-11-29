@@ -13,6 +13,8 @@ public abstract class BaseStationUI : MonoBehaviour
     [SerializeField] protected RecipePanelUI recipePanel;
 
     protected bool isOpen = false;
+    public bool IsOpen => isOpen;
+
 
     protected virtual void Awake()
     {
@@ -43,7 +45,7 @@ public abstract class BaseStationUI : MonoBehaviour
     {
         isOpen = !isOpen;
 
-        canvas.enabled = isOpen;
+            canvas.enabled = isOpen;
         PlayerUsageController.InteractionLocked = isOpen;
 
         Cursor.visible = isOpen;

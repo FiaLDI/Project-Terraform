@@ -1,6 +1,8 @@
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class RecipePanelUI : MonoBehaviour
 {
@@ -19,19 +21,42 @@ public class RecipePanelUI : MonoBehaviour
     [Header("Progress UI")]
     [SerializeField] private CraftingProgressUI progressUI;
 
-    // === ДОБАВЛЯЕМ ЭТИ ПОЛЯ ===
+    [SerializeField] private InputActionReference cancelAction;
+
+    [SerializeField] private BaseStationUI parentStation;
+
     private RecipeSO currentRecipe;
     private Item currentItem;
 
-    // =====================================================================
-    // ===== обычные рецепты (craft) — твой старый ShowRecipe() остаётся ===
-    // =====================================================================
+    private void Awake()
+    {
+        parentStation = GetComponentInParent<BaseStationUI>();
+    }
+
+    private void OnEnable()
+    {
+        if (cancelAction != null)
+        {
+            cancelAction.action.performed += OnCancel;
+            cancelAction.action.Enable();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (cancelAction != null)
+        {
+            cancelAction.action.performed -= OnCancel;
+            cancelAction.action.Disable();
+        }
+    }
+
+
     public void ShowRecipe(RecipeSO recipe)
     {
-        // Если рецепт — апгрейд, UI должен вызывать ShowUpgradeRecipe
+
         if (recipe.recipeType == RecipeType.Upgrade)
         {
-            // Попытка найти текущий предмет в слоте
             var slot = InventoryManager.Instance.GetSelectedSlot();
             if (slot != null && slot.ItemData != null)
             {
@@ -44,8 +69,7 @@ public class RecipePanelUI : MonoBehaviour
             return;
         }
 
-        // ===== обычный крафт =====
-
+        this.enabled = true;
         gameObject.SetActive(true);
 
         if (icon) icon.sprite = recipe.outputItem.icon;
@@ -63,9 +87,6 @@ public class RecipePanelUI : MonoBehaviour
         actionButton.onClick.RemoveAllListeners();
     }
 
-    // ===================================================================================
-    // ===== ФИНАЛЬНЫЙ ShowUpgradeRecipe (item + recipe) — ПРАВИЛЬНЫЙ МЕТОД =============
-    // ===================================================================================
     public void ShowUpgradeRecipe(Item item, RecipeSO recipe)
     {
         currentRecipe = recipe;
@@ -73,14 +94,12 @@ public class RecipePanelUI : MonoBehaviour
 
         gameObject.SetActive(true);
 
-        // Иконка текущего предмета
         if (icon != null)
             icon.sprite = item.icon;
 
         if (title != null)
             title.text = $"{item.itemName} — Upgrade";
 
-        // ===== УРОВНИ =====
         if (item.upgrades != null && item.currentLevel < item.upgrades.Length)
         {
             int currentLevel = item.currentLevel;
@@ -116,7 +135,6 @@ public class RecipePanelUI : MonoBehaviour
             upgradeInfoText.text = "NO UPGRADE DATA";
         }
 
-        // ===== ИНГРЕДИЕНТЫ (из RecipeSO) =====
         ingredientsText.text = "";
         foreach (var ing in recipe.inputs)
             ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
@@ -126,9 +144,6 @@ public class RecipePanelUI : MonoBehaviour
         actionButton.onClick.RemoveAllListeners();
     }
 
-    // ===================================================================================
-    // ===== ОБЩИЕ МЕТОДЫ ДЛЯ ПРОЦЕССОРА ================================================
-    // ===================================================================================
     public void SetAction(System.Action callback)
     {
         actionButton.onClick.RemoveAllListeners();
@@ -149,7 +164,6 @@ public class RecipePanelUI : MonoBehaviour
     public void ProcessComplete()
     {
         progressUI.UpdateProgress(1f);
-        progressUI.PlayCompleteAnimation();
     }
 
     public void ShowMissingIngredients(RecipeSO recipe)
@@ -163,4 +177,28 @@ public class RecipePanelUI : MonoBehaviour
             ingredientsText.text += $"<color={color}>{ing.item.itemName} x {ing.amount}</color>\n";
         }
     }
+    private void OnCancel(InputAction.CallbackContext ctx)
+    {
+        if (gameObject.activeSelf)
+        {
+            ClosePanel();
+        }
+        else
+        {
+            parentStation.Toggle();
+        }
+    }
+
+
+    public void ClosePanel()
+    {
+        currentRecipe = null;
+        currentItem = null;
+
+        progressUI.SetVisible(false);
+        actionButton.onClick.RemoveAllListeners();
+
+        gameObject.SetActive(false);
+    }
+
 }
