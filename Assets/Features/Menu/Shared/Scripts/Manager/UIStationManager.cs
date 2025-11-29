@@ -35,6 +35,12 @@ public class UIStationManager : MonoBehaviour
 
     private void OnEsc(InputAction.CallbackContext ctx)
     {
+        if (SettingsMenuManager.I != null && SettingsMenuManager.I.SettingsMenuOpen)
+        {
+            SettingsMenuManager.I.CloseSettings();
+            return;
+        }
+
         if (ActiveStation != null)
         {
             ActiveStation.Toggle();
