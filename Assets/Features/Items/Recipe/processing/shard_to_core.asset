@@ -19,7 +19,6 @@ MonoBehaviour:
   outputItem: {fileID: 11400000, guid: f4fc98f7595e99240a220251b4e7cbff, type: 2}
   outputAmount: 1
   duration: 2
-  requiresWorkbench: 0
-  requiresProcessor: 1
-  requiresUpgradeStation: 0
+  stationType: 2
   recipeType: 0
+  upgradeBaseItem: {fileID: 0}

@@ -88,7 +88,7 @@ public class InventoryManager : MonoBehaviour
         {
             int left = amount;
 
-            // 1. Fill hotbar stacks
+            // 1. Заполняем стеки в хотбаре
             foreach (var slot in hotbarSlots)
             {
                 if (slot.ItemData != null && slot.ItemData.id == item.id && slot.Amount < item.maxStackAmount)
@@ -100,7 +100,7 @@ public class InventoryManager : MonoBehaviour
                 }
             }
 
-            // 2. Fill main inventory stacks
+            // 2. Заполняем стеки в основном инвентаре
             foreach (var slot in mainInventorySlots)
             {
                 if (slot.ItemData != null && slot.ItemData.id == item.id && slot.Amount < item.maxStackAmount)
@@ -112,7 +112,7 @@ public class InventoryManager : MonoBehaviour
                 }
             }
 
-            // 3. Fill empty slots
+            // 3. Свободные ячейки
             while (left > 0)
             {
                 InventorySlot empty =
@@ -120,9 +120,7 @@ public class InventoryManager : MonoBehaviour
                     mainInventorySlots.Find(s => s.ItemData == null);
 
                 if (empty == null)
-                {
                     break;
-                }
 
                 int addNow = Mathf.Min(left, item.maxStackAmount);
                 empty.UpdateSlotData(item, addNow);
@@ -139,20 +137,20 @@ public class InventoryManager : MonoBehaviour
                     mainInventorySlots.Find(s => s.ItemData == null);
 
                 if (empty == null)
-                {
                     break;
-                }
 
+                // Сюда мы уже передаём runtime-клон (см. Crafting/Drop)
                 empty.UpdateSlotData(item, 1);
             }
         }
 
-        FINISH:
+    FINISH:
 
         OnItemAdded?.Invoke(item, amount);
         UpdateAllUI();
         UpdateEquippedItem();
     }
+
 
     // ----------------------------------------------------------
     // PUBLIC API
@@ -512,15 +510,16 @@ public class InventoryManager : MonoBehaviour
 
     public InventorySlot FindFirstSlotWithItem(Item item)
     {
+        if (item == null) return null;
+
         foreach (var s in hotbarSlots)
-            if (s.ItemData == item)
+            if (s.ItemData != null && s.ItemData.id == item.id)
                 return s;
+
         foreach (var s in mainInventorySlots)
-            if (s.ItemData == item)
+            if (s.ItemData != null && s.ItemData.id == item.id)
                 return s;
+
         return null;
     }
-
-
-
 }

@@ -56,24 +56,21 @@ public class TooltipController : MonoBehaviour
         title.text = item.itemName;
         description.text = item.description;
 
-        stats.text = "";
-        if (item.baseStats != null)
-        {
-            foreach (var st in item.baseStats)
-                stats.text += $"{st.stat}: {st.value}\n";
-        }
+        var cur = item.currentLevel;
 
-        var next = item.currentLevel + 1;
-        if (item.upgrades != null && next < item.upgrades.Length)
+        stats.text = "";
+
+        if (cur > 0)
         {
-            var up = item.upgrades[next];
-            stats.text += $"\n<color=#7CFF7C>Next Level ({up.Level})</color>\n";
+            var up = item.upgrades[cur - 1];
+            stats.text += $"\n<color=#FFD700>Current Upgrade ({cur})</color>\n";
             foreach (var b in up.bonusStats)
-                stats.text += $"<color=#7CFF7C>{b.stat}: +{b.value}</color>\n";
+                stats.text += $"{b.stat}: +{b.value}\n";
         }
 
         group.alpha = 1;
     }
+
 
     public void ShowAbility(AbilitySO ability, AbilityCaster caster)
     {

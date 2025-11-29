@@ -411,8 +411,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e35c29d206f47346bc43ee2eda9ed66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeItemButtonUI
-  iconImage: {fileID: 5908062323172657503}
-  nameText: {fileID: 9119293244943146620}
+  icon: {fileID: 5908062323172657503}
+  title: {fileID: 9119293244943146620}
   levelText: {fileID: 4473869111473027248}
   button: {fileID: 2816807268267597875}
 --- !u!114 &8060093502304176025

@@ -5,37 +5,47 @@ using TMPro;
 public class UpgradeItemButtonUI : MonoBehaviour
 {
     [Header("UI")]
-    [SerializeField] private Image iconImage;
-    [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] private Image icon;
+    [SerializeField] private TextMeshProUGUI title;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private Button button;
 
     private Item item;
-    private RecipeSO recipe;
+    private UpgradeRecipeSO recipe;
     private UpgradeStationUIController controller;
 
-    public void Init(Item item, RecipeSO recipe, UpgradeStationUIController controller)
+    public void Init(Item item, UpgradeRecipeSO recipe, UpgradeStationUIController controller)
     {
         this.item = item;
         this.recipe = recipe;
         this.controller = controller;
 
-        if (iconImage != null)
-            iconImage.sprite = item.icon;
+        // -------- ICON --------
+        if (icon != null)
+        {
+            icon.sprite = item.icon != null ? item.icon : null;
+        }
 
-        if (nameText != null)
-            nameText.text = item.itemName;
+        // -------- TITLE --------
+        if (title != null)
+        {
+            title.text = item.itemName;
+        }
 
-        int max = item.upgrades != null ? item.upgrades.Length : 0;
+        // -------- LEVEL --------
         if (levelText != null)
-            levelText.text = $"{item.currentLevel}/{max}";
+        {
+            int current = item.currentLevel;
+            int max = item.upgrades != null ? item.upgrades.Length : 0;
 
+            levelText.text = $"Lv {current}/{max}";
+        }
+
+        // -------- CLICK ACTION --------
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(OnClick);
-    }
-
-    private void OnClick()
-    {
-        controller.OnUpgradeItemSelected(item, recipe);
+        button.onClick.AddListener(() =>
+        {
+            controller.OnUpgradeItemSelected(item, recipe);
+        });
     }
 }

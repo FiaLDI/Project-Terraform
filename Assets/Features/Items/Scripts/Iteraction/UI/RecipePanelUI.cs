@@ -1,5 +1,4 @@
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -51,12 +50,17 @@ public class RecipePanelUI : MonoBehaviour
         }
     }
 
-
+    // -----------------------------
+    //  Обычный крафт
+    // -----------------------------
     public void ShowRecipe(RecipeSO recipe)
     {
+        currentRecipe = recipe;
+        currentItem = null;
 
         if (recipe.recipeType == RecipeType.Upgrade)
         {
+            // Для Upgrade станция сама вызывает ShowUpgradeRecipe
             var slot = InventoryManager.Instance.GetSelectedSlot();
             if (slot != null && slot.ItemData != null)
             {
@@ -64,16 +68,16 @@ public class RecipePanelUI : MonoBehaviour
                 return;
             }
 
-            title.text = "Select item to upgrade";
-            ingredientsText.text = "";
+            if (title) title.text = "Select item to upgrade";
+            if (ingredientsText) ingredientsText.text = "";
             return;
         }
 
-        this.enabled = true;
+        enabled = true;
         gameObject.SetActive(true);
 
-        if (icon) icon.sprite = recipe.outputItem.icon;
-        if (title) title.text = recipe.outputItem.itemName;
+        if (icon && recipe.outputItem != null) icon.sprite = recipe.outputItem.icon;
+        if (title && recipe.outputItem != null) title.text = recipe.outputItem.itemName;
 
         if (ingredientsText)
         {
@@ -87,6 +91,9 @@ public class RecipePanelUI : MonoBehaviour
         actionButton.onClick.RemoveAllListeners();
     }
 
+    // -----------------------------
+    //  Upgrade режим
+    // -----------------------------
     public void ShowUpgradeRecipe(Item item, RecipeSO recipe)
     {
         currentRecipe = recipe;
@@ -100,44 +107,49 @@ public class RecipePanelUI : MonoBehaviour
         if (title != null)
             title.text = $"{item.itemName} — Upgrade";
 
-        if (item.upgrades != null && item.currentLevel < item.upgrades.Length)
-        {
-            int currentLevel = item.currentLevel;
-            int maxLevel = item.upgrades.Length;
-            var next = item.NextUpgrade;
+        int currentLevel = item.currentLevel;
+        int maxLevel = (item.upgrades != null) ? item.upgrades.Length : 0;
 
-            if (next != null)
+        var next = item.NextUpgrade;
+
+        if (next != null)
+        {
+            string statsText = "";
+            if (next.bonusStats != null)
             {
-                string statsText = "";
                 foreach (var stat in next.bonusStats)
                     statsText += $"{stat.stat}: +{stat.value}\n";
+            }
 
+            if (upgradeInfoText != null)
+            {
                 upgradeInfoText.text =
                     $"Current Level: {currentLevel}\n" +
-                    $"Next Level: {next.Level}\n\n" +
+                    $"Next Level: {currentLevel + 1}\n\n" +
                     statsText;
-
-                if (upgradePreviewIcon != null)
-                {
-                    Sprite preview = next.UpgradedIcon != null ? next.UpgradedIcon : item.icon;
-                    upgradePreviewIcon.sprite = preview;
-                }
             }
-            else
+
+            if (upgradePreviewIcon != null)
             {
-                upgradeInfoText.text = $"MAX LEVEL ({currentLevel}/{maxLevel})";
-                if (upgradePreviewIcon != null)
-                    upgradePreviewIcon.sprite = item.icon;
+                Sprite preview = next.UpgradedIcon != null ? next.UpgradedIcon : item.icon;
+                upgradePreviewIcon.sprite = preview;
             }
         }
         else
         {
-            upgradeInfoText.text = "NO UPGRADE DATA";
+            if (upgradeInfoText != null)
+                upgradeInfoText.text = $"MAX LEVEL ({currentLevel}/{maxLevel})";
+
+            if (upgradePreviewIcon != null)
+                upgradePreviewIcon.sprite = item.icon;
         }
 
-        ingredientsText.text = "";
-        foreach (var ing in recipe.inputs)
-            ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
+        if (ingredientsText != null)
+        {
+            ingredientsText.text = "";
+            foreach (var ing in recipe.inputs)
+                ingredientsText.text += $"{ing.item.itemName} x {ing.amount}\n";
+        }
 
         progressUI.SetVisible(false);
         progressUI.UpdateProgress(0f);
@@ -168,6 +180,8 @@ public class RecipePanelUI : MonoBehaviour
 
     public void ShowMissingIngredients(RecipeSO recipe)
     {
+        if (ingredientsText == null) return;
+
         ingredientsText.text = "";
 
         foreach (var ing in recipe.inputs)
@@ -177,6 +191,7 @@ public class RecipePanelUI : MonoBehaviour
             ingredientsText.text += $"<color={color}>{ing.item.itemName} x {ing.amount}</color>\n";
         }
     }
+
     private void OnCancel(InputAction.CallbackContext ctx)
     {
         if (gameObject.activeSelf)
@@ -189,7 +204,6 @@ public class RecipePanelUI : MonoBehaviour
         }
     }
 
-
     public void ClosePanel()
     {
         currentRecipe = null;
@@ -200,5 +214,4 @@ public class RecipePanelUI : MonoBehaviour
 
         gameObject.SetActive(false);
     }
-
 }

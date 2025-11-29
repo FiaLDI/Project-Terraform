@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 [CreateAssetMenu(menuName = "Crafting/Recipe Database")]
 public class RecipeDatabase : ScriptableObject
@@ -7,17 +8,11 @@ public class RecipeDatabase : ScriptableObject
     [Header("All recipes in game")]
     public RecipeSO[] recipes;
 
-    // --- INTERNAL CACHED LISTS ---
+    private Dictionary<string, RecipeSO> recipeById;
     private RecipeSO[] cachedWorkbench;
     private RecipeSO[] cachedProcessor;
     private RecipeSO[] cachedUpgrade;
 
-    private Dictionary<string, RecipeSO> recipeById;
-
-
-    // ============================
-    // INITIALIZATION
-    // ============================
     private void OnEnable()
     {
         BuildCache();
@@ -25,71 +20,30 @@ public class RecipeDatabase : ScriptableObject
 
     private void BuildCache()
     {
-        // Build dictionary by ID
-        recipeById = new Dictionary<string, RecipeSO>();
+        recipeById = recipes
+            .Where(r => r != null && !string.IsNullOrEmpty(r.recipeId))
+            .ToDictionary(r => r.recipeId, r => r);
 
-        foreach (var r in recipes)
-        {
-            if (r == null || string.IsNullOrEmpty(r.recipeId))
-                continue;
+        cachedWorkbench = recipes
+            .Where(r => r.stationType == StationType.Workbench)
+            .ToArray();
 
-            if (!recipeById.ContainsKey(r.recipeId))
-                recipeById.Add(r.recipeId, r);
-            else
-                Debug.LogWarning($"[RecipeDatabase] Duplicate recipeId: {r.recipeId}");
-        }
+        cachedProcessor = recipes
+            .Where(r => r.stationType == StationType.Processor)
+            .ToArray();
 
-        // Cached categories
-        cachedWorkbench = Filter(r => r.requiresWorkbench);
-        cachedProcessor = Filter(r => r.requiresProcessor);
-        cachedUpgrade  = Filter(r => r.requiresUpgradeStation);
+        cachedUpgrade = recipes
+            .Where(r => r.stationType == StationType.UpgradeStation)
+            .ToArray();
     }
 
-
-    // ============================
-    // FILTER HELPERS
-    // ============================
-    private RecipeSO[] Filter(System.Predicate<RecipeSO> predicate)
-    {
-        List<RecipeSO> result = new List<RecipeSO>();
-        foreach (var r in recipes)
-        {
-            if (r != null && predicate(r))
-                result.Add(r);
-        }
-        return result.ToArray();
-    }
-
-
-    // ============================
-    // PUBLIC API
-    // ============================
-
-    /// <summary>
-    /// Найти рецепт по ID
-    /// </summary>
     public RecipeSO GetRecipeById(string id)
     {
-        if (string.IsNullOrEmpty(id)) return null;
-        recipeById.TryGetValue(id, out var r);
-        return r;
+        if (recipeById.TryGetValue(id, out var r)) return r;
+        return null;
     }
 
-    /// <summary>
-    /// Верстак — сборка предметов
-    /// </summary>
-    public RecipeSO[] GetForWorkbench()
-        => cachedWorkbench;
-
-    /// <summary>
-    /// Переработчик материалов
-    /// </summary>
-    public RecipeSO[] GetForProcessor()
-        => cachedProcessor;
-
-    /// <summary>
-    /// Станция улучшения предметов
-    /// </summary>
-    public RecipeSO[] GetForUpgrade()
-        => cachedUpgrade;
+    public RecipeSO[] GetForWorkbench() => cachedWorkbench;
+    public RecipeSO[] GetForProcessor() => cachedProcessor;
+    public RecipeSO[] GetForUpgrade() => cachedUpgrade;
 }

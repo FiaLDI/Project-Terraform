@@ -8,9 +8,9 @@ public class UpgradeStationUIController : BaseStationUI
     private UpgradeProcessor processor;
 
     [Header("Upgrade UI")]
-    [SerializeField] private UpgradeItemButtonUI upgradeItemButtonPrefab;
+    [SerializeField] private UpgradeGlowButtonUI upgradeGlowButtonPrefab;
 
-    private readonly List<(Item item, RecipeSO recipe)> candidates = new();
+    private readonly List<(Item item, UpgradeRecipeSO recipe)> candidates = new();
 
     public void Init(UpgradeStation station, UpgradeProcessor processor)
     {
@@ -24,81 +24,89 @@ public class UpgradeStationUIController : BaseStationUI
         processor.OnComplete += HandleComplete;
     }
 
+
     private void BuildUpgradeList()
     {
+        Debug.Log("<color=cyan>[UPGRADE] BUILD LIST</color>");
+
         foreach (Transform t in recipeListContainer)
             Destroy(t.gameObject);
 
         candidates.Clear();
 
-        var upgradeRecipes = station.GetRecipes();
+        // ---- 1) Берём рецепты только для upgrade station ----
+        var upgradeRecipes = station.GetRecipes()
+            .Where(r => r.recipeType == RecipeType.Upgrade)
+            .OfType<UpgradeRecipeSO>()
+            .ToArray();
 
+        // ---- 2) Сканируем предметы игрока ----
         var allSlots = InventoryManager.Instance.GetAllSlots();
-
-        var seenItems = new HashSet<Item>(); 
+        var seenItems = new HashSet<Item>();
 
         foreach (var slot in allSlots)
         {
             Item item = slot.ItemData;
-
-            if (item == null)
-                continue;
+            if (item == null) continue;
 
             if (!seenItems.Add(item))
-            {
                 continue;
-            }
 
             if (item.upgrades == null || item.upgrades.Length == 0)
+                continue;
+
+            int nextLevel = item.currentLevel + 1;
+
+            if (nextLevel > item.upgrades.Length)
             {
+                Debug.Log($"[UPGRADE] {item.itemName} MAX LEVEL");
                 continue;
             }
 
-            int targetLevel = item.currentLevel + 1;
-
-            if (targetLevel >= item.upgrades.Length)
-            {
-                Debug.Log($"[UPGRADE] Item {item.name} is MAX LEVEL ({item.currentLevel}).");
-                continue;
-            }
-
-            RecipeSO recipe = upgradeRecipes.FirstOrDefault(r =>
-                r.recipeType == RecipeType.Upgrade &&
-                r.upgradeBaseItem == item &&
-                r.upgradeTargetLevel == targetLevel &&
-                r.requiresUpgradeStation
+            // ---- 3) Автоматический поиск рецепта ----
+            UpgradeRecipeSO recipe = upgradeRecipes.FirstOrDefault(r =>
+                r.upgradeBaseItem != null &&
+                r.upgradeBaseItem.id == item.id
             );
 
             if (recipe == null)
             {
+                Debug.Log($"[UPGRADE] No recipe found for {item.itemName}");
                 continue;
             }
 
             candidates.Add((item, recipe));
 
-            var btn = Instantiate(upgradeItemButtonPrefab, recipeListContainer);
+            // ---- UI button ----
+            var btn = Instantiate(upgradeGlowButtonPrefab, recipeListContainer);
             btn.Init(item, recipe, this);
         }
+
+        Debug.Log($"<color=yellow>[UPGRADE] Visible = {candidates.Count}</color>");
     }
 
-    public void OnUpgradeItemSelected(Item item, RecipeSO recipe)
+
+    public void OnUpgradeItemSelected(Item item, RecipeSO recipeBase)
+    {
+        var recipe = recipeBase as UpgradeRecipeSO;
+        if (recipe == null) return;
+
+        ShowUpgradePanel(item, recipe);
+    }
+
+    private void ShowUpgradePanel(Item item, UpgradeRecipeSO recipe)
     {
         recipePanel.ShowUpgradeRecipe(item, recipe);
+        recipePanel.ShowMissingIngredients(recipe);
 
         recipePanel.SetAction(() =>
         {
             var slot = InventoryManager.Instance.FindFirstSlotWithItem(item);
-            if (slot == null)
-            {
-                Debug.LogWarning($"[UpgradeStationUI] Не найден слот с {item.itemName}");
-                return;
-            }
-
-            processor.BeginUpgrade(recipe, slot);
+            if (slot != null)
+                processor.BeginUpgrade(recipe, slot);
         });
-
-        recipePanel.ShowMissingIngredients(recipe);
     }
+
 
     private void HandleStart(Item item)
     {
@@ -115,11 +123,24 @@ public class UpgradeStationUIController : BaseStationUI
         recipePanel.ProcessComplete();
 
         BuildUpgradeList();
+
+        var recipe = station.GetRecipes()
+            .Where(r => r.recipeType == RecipeType.Upgrade)
+            .OfType<UpgradeRecipeSO>()
+            .FirstOrDefault(r =>
+                r.upgradeBaseItem != null &&
+                r.upgradeBaseItem.id == item.id
+            );
+
+        if (recipe != null)
+            ShowUpgradePanel(item, recipe);
+        else
+            recipePanel.ClosePanel();
     }
+
 
     public void OnOpenUI()
     {
         BuildUpgradeList();
     }
-
 }

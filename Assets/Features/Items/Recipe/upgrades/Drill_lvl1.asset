@@ -9,14 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 845213ab7b10463408c8a527c8118fd3, type: 3}
-  m_Name: iron_to_ingot
-  m_EditorClassIdentifier: Assembly-CSharp::RecipeSO
-  recipeId: 1
+  m_Script: {fileID: 11500000, guid: 2798377611f8be040b1b9cefebc265c2, type: 3}
+  m_Name: Drill_lvl1
+  m_EditorClassIdentifier: Assembly-CSharp::UpgradeRecipeSO
+  recipeId: 7
   inputs: []
   outputItem: {fileID: 0}
   outputAmount: 1
   duration: 2
-  stationType: 2
-  recipeType: 1
-  upgradeBaseItem: {fileID: 0}
+  stationType: 3
+  recipeType: 2
+  upgradeBaseItem: {fileID: 11400000, guid: 5d8b6d013c118bd43b6a7deaddfa301b, type: 2}
+  targetLevel: 1

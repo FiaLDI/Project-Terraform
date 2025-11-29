@@ -10,27 +10,22 @@ public class RecipeSO : ScriptableObject
     public RecipeIngredient[] inputs;
     public RecipeIngredient[] ingredients => inputs;
 
-    [Header("Output")]
+    [Header("Output (для крафта)")]
     public Item outputItem;
     public int outputAmount = 1;
 
-    [Header("Crafting Time / Upgrade Duration")]
+    [Header("Crafting / Upgrade Duration")]
     public float duration = 2f;
 
-    [Header("Station Requirements")]
-    public bool requiresWorkbench = false;
-    public bool requiresProcessor = false;
-    public bool requiresUpgradeStation = false;
+    [Header("Station Type")]
+    public StationType stationType = StationType.None;
 
     [Header("Recipe Type")]
     public RecipeType recipeType = RecipeType.Crafting;
 
     [Header("Upgrade Settings")]
-    [Tooltip("Какой предмет улучшает этот рецепт")]
+    [Tooltip("Предмет, который улучшается")]
     public Item upgradeBaseItem;
-
-    [Tooltip("На какой уровень переводит этот рецепт (например 1, 2, 3...)")]
-    public int upgradeTargetLevel = 1;
 }
 
 [System.Serializable]
@@ -45,4 +40,12 @@ public enum RecipeType
     Processing,
     Crafting,
     Upgrade
+}
+
+public enum StationType
+{
+    None,
+    Workbench,
+    Processor,
+    UpgradeStation
 }
