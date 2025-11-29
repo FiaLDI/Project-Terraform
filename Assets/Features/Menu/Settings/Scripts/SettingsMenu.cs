@@ -5,7 +5,8 @@ public class SettingsMenu : MonoBehaviour
 {
     public GameObject panel;
     public Button backButton;
-    public Button applyButton; // ← ДОБАВЛЯЕМ
+    public Button applyButton;
+    public Button resetButton;
 
     public bool IsOpen { get; private set; }
 
@@ -21,7 +22,10 @@ public class SettingsMenu : MonoBehaviour
             backButton.onClick.AddListener(Back);
 
         if (applyButton != null)
-            applyButton.onClick.AddListener(Apply);   // ← НАЗНАЧАЕМ APPLY
+            applyButton.onClick.AddListener(Apply);
+        
+        if (resetButton != null)
+            resetButton.onClick.AddListener(ResetSettings);
     }
 
     public void Show()
@@ -60,5 +64,16 @@ public class SettingsMenu : MonoBehaviour
 
         SettingsStorage.Save();
         Hide();
+    }
+
+    private void ResetSettings()
+    {
+        Debug.Log("[SettingsMenu] Resetting to defaults!");
+
+        SettingsStorage.ResetToDefaults();
+
+        if (controller != null)
+            controller.LoadSettingsUI();
+
     }
 }

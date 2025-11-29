@@ -52,4 +52,8 @@ public class SettingsMenuController : MonoBehaviour
 
         sensitivitySlider.value  = SettingsStorage.Sensitivity;
     }
+
+    public void LoadSettingsUI() {
+        LoadSettings();
+    }
 }
