@@ -1512,6 +1512,7 @@ MonoBehaviour:
   panel: {fileID: 5537155438718017260}
   backButton: {fileID: 8845965822118576129}
   applyButton: {fileID: 3426702467418136010}
+  resetButton: {fileID: 3495463210527245530}
 --- !u!114 &5878118726175080581
 MonoBehaviour:
   m_ObjectHideFlags: 0

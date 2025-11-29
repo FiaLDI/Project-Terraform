@@ -31,16 +31,19 @@ public class UIStationManager : MonoBehaviour
         }
     }
 
-    public bool IsAnyStationOpen => ActiveStation != null && ActiveStation.IsOpen;
-
+    // -----------------------------------------------------------
+    //   ЕДИНСТВЕННО ПРАВИЛЬНЫЙ ПОРЯДОК ОБРАБОТКИ ESC
+    // -----------------------------------------------------------
     private void OnEsc(InputAction.CallbackContext ctx)
     {
+        // 1️⃣ Закрыть настройки
         if (SettingsMenuManager.I != null && SettingsMenuManager.I.SettingsMenuOpen)
         {
             SettingsMenuManager.I.CloseSettings();
             return;
         }
 
+        // 2️⃣ Закрыть станцию
         if (ActiveStation != null)
         {
             ActiveStation.Toggle();
@@ -48,9 +51,11 @@ public class UIStationManager : MonoBehaviour
             return;
         }
 
+        // 3️⃣ Pause Menu (открыть / закрыть)
         PauseMenu.I.Toggle();
     }
 
+    // -----------------------------------------------------------
     public void OpenStation(BaseStationUI station)
     {
         ActiveStation = station;
