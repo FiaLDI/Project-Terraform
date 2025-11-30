@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Features.Abilities.Domain;
+using Features.Passives.Domain;
 
 [CreateAssetMenu(menuName = "Game/Class/EngineerTechnician")]
 public class EngineerTechnicianSO : PlayerClass

@@ -1,57 +1,58 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine.UI;
+using Features.Buffs.Application;
 
-public class BuffIconUI : MonoBehaviour
+namespace Features.Buffs.UI
 {
-    public Image icon;
-    public Image radialFill;      
-    public TextMeshProUGUI timerLabel;
-
-    private BuffInstance buff;
-    private BuffTooltipTrigger tooltipTrigger;
-
-    private void Awake()
+    public class BuffIconUI : MonoBehaviour
     {
-        tooltipTrigger = GetComponent<BuffTooltipTrigger>();
-    }
+        public Image icon;
+        public Image radialFill;
+        public TextMeshProUGUI timer;
 
-    public void Bind(BuffInstance buff)
-    {
-        this.buff = buff;
+        private BuffInstance inst;
+        private BuffTooltipTrigger tooltip;
 
-        if (buff.Config.icon != null)
-            icon.sprite = buff.Config.icon;
-
-        if (tooltipTrigger != null)
-            tooltipTrigger.Bind(buff);
-
-        UpdateUI();
-    }
-
-    private void Update()
-    {
-        if (buff == null)
-            return;
-
-        UpdateUI();
-    }
-
-    private void UpdateUI()
-    {
-        float remain = buff.Remaining;
-
-        radialFill.fillAmount = buff.Progress01;
-
-        if (float.IsInfinity(remain))
+        private void Awake()
         {
-            timerLabel.text = "";
-            radialFill.fillAmount = 1f;
-            return;
+            tooltip = GetComponent<BuffTooltipTrigger>();
         }
 
-        timerLabel.text = remain < 1f
-            ? $"{remain:0.0}"
-            : $"{remain:0}";
+        public void Bind(BuffInstance inst)
+        {
+            this.inst = inst;
+
+            if (inst == null || inst.Config == null)
+                return;
+
+            icon.sprite = inst.Config.icon;
+
+            if (tooltip != null)
+                tooltip.Bind(inst);
+
+            Update();
+        }
+
+        private void Update()
+        {
+            if (inst == null || inst.Config == null)
+                return;
+
+            // Если длительность бесконечная — ничего не показываем
+            if (float.IsInfinity(inst.Config.duration))
+            {
+                timer.text = "";
+                radialFill.fillAmount = 0f;
+                return;
+            }
+
+            // Обычные баффы
+            radialFill.fillAmount = inst.Progress01;
+
+            float t = inst.Remaining;
+            timer.text = t < 1f ? $"{t:0.0}" : $"{t:0}";
+        }
+
     }
 }

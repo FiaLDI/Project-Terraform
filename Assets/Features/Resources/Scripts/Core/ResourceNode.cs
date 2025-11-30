@@ -1,4 +1,5 @@
 using UnityEngine;
+using Features.Combat.Domain;
 
 [RequireComponent(typeof(Collider))]
 public class ResourceNode : MonoBehaviour, IMineable, IDamageable

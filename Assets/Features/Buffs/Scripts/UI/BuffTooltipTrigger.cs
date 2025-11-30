@@ -1,24 +1,29 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Features.Buffs.Application;
+using Features.Menu.Tooltip;
 
-public class BuffTooltipTrigger : MonoBehaviour,
-    IPointerEnterHandler, IPointerExitHandler
+namespace Features.Buffs.UI
 {
-    private BuffInstance bound;
-
-    public void Bind(BuffInstance buff)
+    public class BuffTooltipTrigger : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler
     {
-        bound = buff;
-    }
+        private BuffInstance bound;
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (bound != null)
-            TooltipController.Instance.ShowBuff(bound);
-    }
+        public void Bind(BuffInstance buff)
+        {
+            bound = buff;
+        }
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        TooltipController.Instance.Hide();
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (bound != null)
+                TooltipController.Instance?.ShowBuff(bound);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            TooltipController.Instance?.Hide();
+        }
     }
 }

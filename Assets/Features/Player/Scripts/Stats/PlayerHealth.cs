@@ -1,4 +1,5 @@
 using UnityEngine;
+using Features.Combat.Domain;
 
 public class PlayerHealth : MonoBehaviour, IDamageable
 {

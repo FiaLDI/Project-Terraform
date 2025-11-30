@@ -1,9 +1,12 @@
 ﻿using UnityEngine;
+using Features.Combat.Domain;
 
 public class UsableToolDrill : MonoBehaviour, IUsable, IStatItem
 {
     private Camera cam;
     private bool drilling;
+
+    private PlayerMiningStats miningStats;
 
     [Header("Base Stats")]
     [SerializeField] private float baseMiningSpeed = 10f;
@@ -17,6 +20,9 @@ public class UsableToolDrill : MonoBehaviour, IUsable, IStatItem
     public void Initialize(Camera playerCamera)
     {
         cam = playerCamera;
+
+        // Получаем PlayerMiningStats от игрока
+        miningStats = cam.GetComponentInParent<PlayerMiningStats>();
 
         if (range <= 0)
             range = baseRange;
@@ -49,21 +55,20 @@ public class UsableToolDrill : MonoBehaviour, IUsable, IStatItem
 
     private void TryDrill()
     {
-        if (cam == null)
-        {
-            return;
-        }
+        if (cam == null) return;
 
         Ray ray = new Ray(cam.transform.position, cam.transform.forward);
 
         if (!Physics.Raycast(ray, out RaycastHit hit, range))
-        {
             return;
-        }
+
+        // Множитель от баффов
+        float multiplier = miningStats != null ? miningStats.miningMultiplier : 1f;
+
         var mine = hit.collider.GetComponentInParent<IMineable>();
         if (mine != null)
         {
-            float dps = miningSpeed * Time.deltaTime;
+            float dps = miningSpeed * multiplier * Time.deltaTime;
             mine.Mine(dps, null);
             return;
         }
@@ -71,10 +76,9 @@ public class UsableToolDrill : MonoBehaviour, IUsable, IStatItem
         var dmg = hit.collider.GetComponentInParent<IDamageable>();
         if (dmg != null)
         {
-            float dmgAmount = damage * Time.deltaTime;
-            dmg.TakeDamage(dmgAmount, DamageType.Mining);
+            float dmgValue = damage * multiplier * Time.deltaTime;
+            dmg.TakeDamage(dmgValue, DamageType.Mining);
             return;
         }
     }
-
 }

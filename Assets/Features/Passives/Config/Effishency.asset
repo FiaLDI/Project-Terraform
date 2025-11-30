@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce6f156798bdf5248a5212f466a1f76a, type: 3}
+  m_Name: Effishency
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Domain.CompositePassiveSO
+  id: 0
+  displayName: Effect
+  icon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}
+  effects:
+  - {fileID: 11400000, guid: be8db1989014e6848a50044f07527cd2, type: 2}

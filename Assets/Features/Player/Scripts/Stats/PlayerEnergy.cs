@@ -1,5 +1,8 @@
 using UnityEngine;
 using System;
+using Features.Buffs.Application;
+using Features.Buffs.UnityIntegration;
+using Features.Buffs.Domain;
 
 public class PlayerEnergy : MonoBehaviour
 {
@@ -12,6 +15,7 @@ public class PlayerEnergy : MonoBehaviour
     private BuffSystem buffSystem;
 
     private float costReductionPercent = 0f;
+    private float regenBonusPercent = 0f;
 
     private bool initialized = false;
 
@@ -49,7 +53,7 @@ public class PlayerEnergy : MonoBehaviour
     }
 
     // ============================================================
-    // MAX ENERGY
+    // MAX ENERGY (UNIVERSAL BUFFS)
     // ============================================================
     public float MaxEnergy
     {
@@ -57,46 +61,113 @@ public class PlayerEnergy : MonoBehaviour
         {
             float bonus = 0f;
 
-            if (buffSystem != null)
+            // --- Безопасная проверка BuffSystem ---
+            if (buffSystem != null && buffSystem.Active != null)
             {
-                foreach (var b in buffSystem.Active)
-                    if (b.Config is MaxEnergyBuffSO maxBuff)
-                        bonus += maxBuff.extraMaxEnergy;
+                foreach (var inst in buffSystem.Active)
+                {
+                    if (inst?.Config == null)
+                        continue;
+
+                    if (inst.Config.stat == BuffStat.PlayerMaxEnergy)
+                    {
+                        switch (inst.Config.modType)
+                        {
+                            case BuffModType.Add:
+                                bonus += inst.Config.value;
+                                break;
+
+                            case BuffModType.Mult:
+                                bonus += baseMaxEnergy * (inst.Config.value - 1f);
+                                break;
+
+                            case BuffModType.Set:
+                                return inst.Config.value;
+                        }
+                    }
+                }
             }
 
-            // глобальные бафы
+            // --- Безопасная проверка GlobalBuffSystem ---
             if (GlobalBuffSystem.I != null)
-                bonus += GlobalBuffSystem.I.GetValue("player_max_energy");
+            {
+                try
+                {
+                    bonus += GlobalBuffSystem.I.GetValue("player_max_energy");
+                }
+                catch { /* просто пропускаем */ }
+            }
 
             return baseMaxEnergy + bonus;
         }
     }
 
+
+
     // ============================================================
-    // REGEN
+    // REGEN (UNIVERSAL BUFFS)
     // ============================================================
     public float Regen
     {
         get
         {
-            float bonus = 0f;
+            float bonusFlat = 0f;
 
-            if (buffSystem != null)
+            if (buffSystem != null && buffSystem.Active != null)
             {
-                foreach (var b in buffSystem.Active)
-                    if (b.Config is EnergyRegenBuffSO regenBuff)
-                        bonus += regenBuff.bonusRegen;
+                foreach (var inst in buffSystem.Active)
+                {
+                    if (inst?.Config == null)
+                        continue;
+
+                    if (inst.Config.stat == BuffStat.PlayerEnergyRegen)
+                    {
+                        switch (inst.Config.modType)
+                        {
+                            case BuffModType.Add:
+                                bonusFlat += inst.Config.value;
+                                break;
+
+                            case BuffModType.Mult:
+                                bonusFlat += baseRegenPerSecond * (inst.Config.value - 1f);
+                                break;
+
+                            case BuffModType.Set:
+                                return inst.Config.value;
+                        }
+                    }
+                }
             }
 
             if (GlobalBuffSystem.I != null)
-                bonus += GlobalBuffSystem.I.GetValue("player_regen");
+            {
+                try
+                {
+                    bonusFlat += GlobalBuffSystem.I.GetValue("player_regen");
+                }
+                catch {}
+            }
 
-            return baseRegenPerSecond + bonus;
+            float scaledBase = baseRegenPerSecond * (1f + regenBonusPercent / 100f);
+            return scaledBase + bonusFlat;
         }
     }
 
+
+    public void AddRegenPercent(float value)
+    {
+        regenBonusPercent += value;
+    }
+
+    public void RemoveRegenPercent(float value)
+    {
+        regenBonusPercent -= value;
+        if (regenBonusPercent < 0f)
+            regenBonusPercent = 0f;
+    }
+
     // ============================================================
-    // COST REDUCTION (abilities)
+    // COST REDUCTION
     // ============================================================
     public void AddCostReduction(float amount)
     {
@@ -118,7 +189,7 @@ public class PlayerEnergy : MonoBehaviour
     }
 
     // ============================================================
-    // DIRECT CONTROL API
+    // API
     // ============================================================
     public void SetMaxEnergy(float value, bool fill)
     {

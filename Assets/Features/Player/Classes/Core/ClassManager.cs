@@ -1,6 +1,11 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+using Features.Abilities.Domain;
+
+using Features.Passives.Domain;
+using Features.Buffs.Application;
+
 [RequireComponent(typeof(PlayerEnergy))]
 public class ClassManager : MonoBehaviour
 {
@@ -64,15 +69,26 @@ public class ClassManager : MonoBehaviour
 
     private void ApplyPassives(List<PassiveSO> passives)
     {
-        foreach (var p in appliedPassives)
-            p.Remove(gameObject);
+        // снимаем старые
+        if (appliedPassives != null)
+        {
+            foreach (var p in appliedPassives)
+                p?.Remove(gameObject);
 
-        appliedPassives.Clear();
+            appliedPassives.Clear();
+        }
 
+        // если новых нет — просто выходим
+        if (passives == null)
+            return;
+
+        // применяем новые
         foreach (var p in passives)
         {
+            if (p == null) continue;
             p.Apply(gameObject);
             appliedPassives.Add(p);
         }
     }
+
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Features.Enemy;
 
 namespace Quests
 {

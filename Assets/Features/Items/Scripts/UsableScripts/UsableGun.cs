@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using Features.Combat.Domain;
 public class UsableGun : MonoBehaviour, IUsable, IStatItem
 {
     private Camera cam;

@@ -2,39 +2,66 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using Features.Abilities.Domain;
+using Features.Abilities.UnityIntegration;
+using Features.Menu.Tooltip;
 
-public class AbilitySlotUI : MonoBehaviour,
-    IPointerEnterHandler, IPointerExitHandler
+namespace Features.Abilities.UI
 {
-    [Header("UI")]
-    public Image icon;
-    public Slider cooldownSlider;
-    public TextMeshProUGUI keyLabel;
-
-    private AbilitySO ability;
-    private AbilityCaster caster;
-    private int index;
-
-    private Sprite defaultIcon;
-
-    private void Awake()
+    public class AbilitySlotUI : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler
     {
-        if (icon != null)
-            defaultIcon = icon.sprite;
-    }
+        [Header("UI")]
+        public Image icon;
+        public Slider cooldownSlider;
+        public TextMeshProUGUI keyLabel;
 
-    public void Bind(AbilitySO ability, AbilityCaster caster, int index)
-    {
-        Unsubscribe();
+        [Header("Channel Highlight")]
+        public GameObject channelHighlight;    
+        public Image channelProgressFill;
 
-        this.ability = ability;
-        this.caster = caster;
-        this.index = index;
+        [HideInInspector] public AbilitySO boundAbility;
 
-        if (keyLabel != null)
-            keyLabel.text = (index + 1).ToString();
+        private AbilityCaster caster;
+        private int index;
 
-        if (ability == null)
+        private Sprite defaultIcon;
+
+        private void Awake()
+        {
+            if (icon != null)
+                defaultIcon = icon.sprite;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
+        public void Bind(AbilitySO ability, AbilityCaster caster, int index)
+        {
+            Unsubscribe();
+
+            this.boundAbility = ability;
+            this.caster = caster;
+            this.index = index;
+
+            if (keyLabel != null)
+                keyLabel.text = (index + 1).ToString();
+
+            if (ability == null)
+            {
+                SetEmptySlotState();
+                return;
+            }
+
+            SetupIcon(ability);
+            SetupCooldown(ability);
+            Subscribe();
+        }
+
+        private void SetEmptySlotState()
         {
             if (icon != null)
             {
@@ -48,63 +75,137 @@ public class AbilitySlotUI : MonoBehaviour,
                 cooldownSlider.maxValue = 1;
                 cooldownSlider.value = 1;
             }
-            return;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
         }
 
-        if (icon != null)
+        private void SetupIcon(AbilitySO ability)
         {
+            if (icon == null) return;
+
             icon.sprite = ability.icon != null ? ability.icon : defaultIcon;
             icon.color = ability.icon != null ? Color.white : Color.yellow;
         }
 
-        if (cooldownSlider != null)
+        private void SetupCooldown(AbilitySO ability)
         {
+            if (cooldownSlider == null) return;
+
             cooldownSlider.minValue = 0;
             cooldownSlider.maxValue = ability.cooldown;
             cooldownSlider.value = ability.cooldown;
         }
 
-        if (caster != null)
+        private void Subscribe()
         {
+            if (caster == null) return;
+
             caster.OnAbilityCast += HandleCastReset;
             caster.OnCooldownChanged += HandleCooldownUpdate;
-        }
-    }
 
-    private void Unsubscribe()
-    {
-        if (caster != null)
+            caster.OnChannelStarted += HandleChannelStart;
+            caster.OnChannelProgress += HandleChannelProgress;
+            caster.OnChannelCompleted += HandleChannelEnd;
+            caster.OnChannelInterrupted += HandleChannelEnd;
+        }
+
+        private void Unsubscribe()
         {
+            if (caster == null) return;
+
             caster.OnAbilityCast -= HandleCastReset;
             caster.OnCooldownChanged -= HandleCooldownUpdate;
+
+            caster.OnChannelStarted -= HandleChannelStart;
+            caster.OnChannelProgress -= HandleChannelProgress;
+            caster.OnChannelCompleted -= HandleChannelEnd;
+            caster.OnChannelInterrupted -= HandleChannelEnd;
         }
-    }
 
-    private void OnDestroy()
-    {
-        Unsubscribe();
-    }
+        private void OnDestroy()
+        {
+            Unsubscribe();
+        }
 
-    private void HandleCastReset(AbilitySO usedAbility)
-    {
-        if (usedAbility != ability) return;
-        cooldownSlider.value = 0;
-    }
+        // ============================================================
+        // COOLDOWN UI
+        // ============================================================
 
-    private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
-    {
-        if (updated != ability) return;
-        cooldownSlider.value = max - remaining;
-    }
+        private void HandleCastReset(AbilitySO usedAbility)
+        {
+            if (usedAbility != boundAbility) return;
+            if (cooldownSlider != null)
+                cooldownSlider.value = 0;
+        }
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (ability != null)
-            TooltipController.Instance.ShowAbility(ability, caster);
-    }
+        private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
+        {
+            if (updated != boundAbility) return;
+            if (cooldownSlider != null)
+                cooldownSlider.value = max - remaining;
+        }
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        TooltipController.Instance.Hide();
+        // ============================================================
+        // CHANNEL UI
+        // ============================================================
+
+        private void HandleChannelStart(AbilitySO ability)
+        {
+            if (ability != boundAbility) return;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(true);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
+        private void HandleChannelProgress(AbilitySO ability, float time, float duration)
+        {
+            if (ability != boundAbility) return;
+
+            if (channelProgressFill != null && duration > 0)
+                channelProgressFill.fillAmount = time / duration;
+        }
+
+        private void HandleChannelEnd(AbilitySO ability)
+        {
+            if (ability != boundAbility) return;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
+        // ============================================================
+        // TOOLTIP
+        // ============================================================
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (boundAbility != null)
+                TooltipController.Instance.ShowAbility(boundAbility, caster);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            TooltipController.Instance.Hide();
+        }
+
+        public void SetChannelHighlight(bool active)
+        {
+            if (channelHighlight != null)
+                channelHighlight.SetActive(active);
+
+            if (!active && channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
     }
 }

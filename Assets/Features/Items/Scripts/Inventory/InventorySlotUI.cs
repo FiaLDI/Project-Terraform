@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using Features.Menu.Tooltip;
 
 public class InventorySlotUI : MonoBehaviour, 
     IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler,
