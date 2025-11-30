@@ -24,7 +24,7 @@ public enum WaterType
 [System.Serializable]
 public class EnvironmentEntry
 {
-    [Header("Base")]
+    [Header("Base Settings Bioms Entry")]
     public GameObject prefab;
 
     [Range(0f, 1f)]

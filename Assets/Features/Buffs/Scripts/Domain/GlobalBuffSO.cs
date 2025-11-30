@@ -6,6 +6,5 @@ namespace Features.Buffs.Domain
     public class GlobalBuffSO : BuffSO
     {
         public string key;
-        public float value;
     }
 }
