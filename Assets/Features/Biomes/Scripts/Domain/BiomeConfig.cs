@@ -119,6 +119,12 @@ namespace Features.Biomes.Domain
         [Range(0.1f, 1f)] public float fractalPersistence = 0.5f;
         [Range(1.5f, 4f)] public float fractalLacunarity = 2f;
 
+        [Header("Blending")]
+        [Range(0f, 1f)]
+        public float blendStrength = 0f; 
+        // 0 = резкий переход (старое поведение)
+        // 1 = полное смешивание высот с соседними биомами
+
         [Header("Environment Objects")]
         public EnvironmentEntry[] environmentPrefabs;
         [Range(0f, 1f)] public float environmentDensity = 0.05f;

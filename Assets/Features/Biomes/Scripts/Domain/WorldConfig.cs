@@ -65,20 +65,40 @@ namespace Features.Biomes.Domain
 
         public BiomeBlendResult[] GetBiomeBlend(Vector3 worldPos)
         {
-            // это твой старый код биомов — я оставляю КАК ЕСТЬ:
-            // (примерная логика)
-            
-            List<BiomeBlendResult> list = new List<BiomeBlendResult>(4);
+            var list = new List<BiomeBlendResult>(4);
 
             foreach (var layer in biomes)
             {
-                float w = layer.mask.GetWeight(worldPos);
-                if (w > 0f)
+                if (layer.config == null)
+                    continue;
+
+                // шум слоя (основное распределение биомов)
+                float noise = Mathf.PerlinNoise(
+                    worldPos.x * layer.scale + layer.offset.x,
+                    worldPos.z * layer.scale + layer.offset.y
+                );
+
+                // маску можно использовать как дополнительное влияние
+                float maskW = layer.mask != null ? layer.mask.GetWeight(worldPos) : 1f;
+
+                float w = noise * layer.weight * maskW;
+
+                if (w > 0.0001f)
                     list.Add(new BiomeBlendResult(layer.config, w));
             }
 
             if (list.Count == 0)
-                return new[] { new BiomeBlendResult(default, 0f) };
+                return new[] { new BiomeBlendResult(null, 0f) };
+
+            // нормируем
+            float sum = 0f;
+            foreach (var b in list) sum += b.weight;
+
+            if (sum > 0f)
+            {
+                for (int i = 0; i < list.Count; i++)
+                    list[i] = new BiomeBlendResult(list[i].biome, list[i].weight / sum);
+            }
 
             return list.ToArray();
         }

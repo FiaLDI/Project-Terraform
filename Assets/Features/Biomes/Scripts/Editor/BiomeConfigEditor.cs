@@ -43,6 +43,9 @@ public class BiomeConfigEditor : Editor
 
         DrawHeader("Tilling");
         DrawProps("textureTiling");
+        
+        DrawHeader("Blending");
+        DrawProps("blendStrength");
 
         // ─────────────────────────────────────────────
         // ENVIRONMENT

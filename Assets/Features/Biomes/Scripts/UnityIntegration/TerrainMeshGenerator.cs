@@ -69,13 +69,47 @@ namespace Features.Biomes.UnityIntegration
         // вместо старого SampleHeightBlended
         private static float SampleHeightBlended(WorldConfig world, float wx, float wz)
         {
-            // берём биом так же, как для материала чанка
-            var biome = world.GetBiomeAtWorldPos(new Vector3(wx, 0, wz));
-            if (biome == null)
+            var blends = world.GetBiomeBlend(new Vector3(wx, 0, wz));
+            if (blends == null || blends.Length == 0)
                 return 0f;
 
-            return BiomeHeightUtility.GetHeight(biome, wx, wz);
+            // Находим главный биом (у которого локальный вес выше остальных)
+            BiomeConfig main = blends[0].biome;
+            float best = blends[0].weight;
+
+            for (int i = 1; i < blends.Length; i++)
+            {
+                if (blends[i].weight > best)
+                {
+                    best = blends[i].weight;
+                    main = blends[i].biome;
+                }
+            }
+
+            // Высота доминирующего биома
+            float hMain = BiomeHeightUtility.GetHeight(main, wx, wz);
+
+            // Если он не хочет смешиваться → возврат
+            if (main.blendStrength <= 0.001f)
+                return hMain;
+
+            // Смешиваем с соседними биомами в зависимости от их веса
+            float sumH = hMain * best;
+            float sumW = best;
+
+            foreach (var b in blends)
+            {
+                if (b.biome == null || b.biome == main)
+                    continue;
+
+                float w = b.weight * main.blendStrength; 
+                sumH += BiomeHeightUtility.GetHeight(b.biome, wx, wz) * w;
+                sumW += w;
+            }
+
+            return sumW > 0f ? sumH / sumW : hMain;
         }
+
 
 
         // =====================================================================
