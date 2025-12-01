@@ -8,7 +8,7 @@ namespace Features.Biomes.Runtime.Visual
     public class BiomeAtmosphereController : MonoBehaviour
     {
         [Header("Targets")]
-        public Transform player;  // можно оставить пустым — возьмёт RuntimeWorldGenerator.PlayerInstance
+        public Transform player;
 
         [Header("Weather Root")]
         public Transform weatherRoot;

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Features.Biomes.Application;
+using Features.Pooling;
 
 namespace Features.Biomes.Application.Spawning
 {
@@ -44,8 +45,19 @@ namespace Features.Biomes.Application.Spawning
 
             foreach (var go in list)
             {
-                if (go != null)
+                if (go == null)
+                    continue;
+
+                var pooled = go.GetComponent<PoolObject>();
+                if (pooled != null)
+                {
+                    // Вернуть в пул
+                    pooled.ReturnToPool();
+                }
+                else
+                {
                     Object.Destroy(go);
+                }
             }
 
             storage.Remove(coord);

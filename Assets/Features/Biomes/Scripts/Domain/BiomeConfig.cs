@@ -29,9 +29,7 @@ namespace Features.Biomes.Domain
     {
         public GameObject prefab;
 
-        [Range(0f, 1f)]
-        public float spawnChance = 1f;
-
+        [Range(0f, 1f)] public float spawnChance = 1f;
         public float weight = 1f;
 
         [Header("Slope")]
@@ -58,14 +56,12 @@ namespace Features.Biomes.Domain
         public QuestAsset questAsset;
         public GameObject questPointPrefab;
 
-        [Range(0f, 1f)]
-        public float spawnChance = 1f;
+        [Range(0f, 1f)] public float spawnChance = 1f;
 
         public int spawnPointsMin = 1;
         public int spawnPointsMax = 3;
 
-        [Min(1)]
-        public int requiredTargets = 1;
+        [Min(1)] public int requiredTargets = 1;
 
         public float safetyRadius = 5f;
     }
@@ -105,12 +101,8 @@ namespace Features.Biomes.Domain
         public TerrainType terrainType = TerrainType.SmoothHills;
 
         [Header("Texture / UV")]
-        [Tooltip("UV tiling applied to terrain mesh. Affects texture scale.")]
         public float textureTiling = 1f;
-
-        [Tooltip("Material for ground mesh")]
         public Material groundMaterial;
-
         public float terrainScale = 10f;
         public float heightMultiplier = 5f;
 
@@ -120,10 +112,7 @@ namespace Features.Biomes.Domain
         [Range(1.5f, 4f)] public float fractalLacunarity = 2f;
 
         [Header("Blending")]
-        [Range(0f, 1f)]
-        public float blendStrength = 0f; 
-        // 0 = резкий переход (старое поведение)
-        // 1 = полное смешивание высот с соседними биомами
+        [Range(0f, 1f)] public float blendStrength = 0f;
 
         [Header("Environment Objects")]
         public EnvironmentEntry[] environmentPrefabs;
@@ -131,23 +120,22 @@ namespace Features.Biomes.Domain
 
         [Header("Resources")]
         public ResourceEntry[] possibleResources;
-        [Range(0f, 0.01f)]
-        public float resourceDensity = 0.001f;
+        [Range(0f, 0.01f)] public float resourceDensity = 0.001f;
         public float resourceSpawnYOffset = 0.3f;
-        [Range(0f, 1f)]
-        public float resourceEdgeFalloff = 1f;
+        [Range(0f, 1f)] public float resourceEdgeFalloff = 1f;
 
         [Header("Quests")]
         public QuestEntry[] possibleQuests;
         public int questTargetsMin = 2;
         public int questTargetsMax = 5;
 
-        [Header("Enemy")]
+        // -------- ENEMIES ---------
+        [Header("Enemies")]
         public EnemySpawnEntry[] enemyTable;
         public float enemyDensity = 0.0008f;
         public float enemyRespawnDelay = 20f;
 
-        // ---------- SKYBOX / UI / FOG GRADIENT ----------
+        // ---------- SKYBOX / UI / FOG ----------
         [Header("Skybox Settings")]
         public Material skyboxMaterial;
         public Color skyTopColor = Color.white;
@@ -160,7 +148,6 @@ namespace Features.Biomes.Domain
         public Color fogHeavyColor = Color.blue;
         public float fogGradientScale = 10f;
 
-        // ---------- FOG ----------
         [Header("Fog")]
         public bool enableFog = true;
         public FogMode fogMode = FogMode.Exponential;
@@ -174,8 +161,7 @@ namespace Features.Biomes.Domain
         public GameObject rainPrefab;
         public GameObject dustPrefab;
         public GameObject firefliesPrefab;
-        [Range(0f, 1f)]
-        public float weatherIntensity = 1f;
+        [Range(0f, 1f)] public float weatherIntensity = 1f;
 
         // ---------- WATER ----------
         [Header("Water")]
@@ -190,7 +176,6 @@ namespace Features.Biomes.Domain
         // ---------- LAKES ----------
         [Header("Lakes")]
         public bool generateLakes = false;
-        [Tooltip("Lake threshold relative to max height")]
         public float lakeLevel = 0.6f;
         public float lakeNoiseScale = 0.05f;
 
@@ -198,11 +183,10 @@ namespace Features.Biomes.Domain
         [Header("Rivers")]
         public bool generateRivers = false;
         public float riverNoiseScale = 0.02f;
-        [Range(0f, 0.5f)]
-        public float riverWidth = 0.1f;
+        [Range(0f, 0.5f)] public float riverWidth = 0.1f;
         public float riverDepth = 2f;
 
-        [Header("Biome Area Size (used for lakes/water sampling)")]
+        [Header("Biome Area Size")]
         public int width = 100;
         public int height = 100;
     }

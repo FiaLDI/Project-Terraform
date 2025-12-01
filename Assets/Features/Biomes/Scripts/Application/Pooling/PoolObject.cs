@@ -10,7 +10,17 @@ namespace Features.Pooling
 
         public void ReturnToPool()
         {
-            Pool.Release(this);
+            // Если объект пришёл из пула – вернём его в пул
+            if (Pool != null)
+            {
+                Pool.Release(this);
+            }
+            else
+            {
+                // Если пул не прописан (заспавнен обычным Instantiate),
+                // просто уничтожаем объект, чтобы не ловить NullReference
+                Object.Destroy(gameObject);
+            }
         }
     }
 }

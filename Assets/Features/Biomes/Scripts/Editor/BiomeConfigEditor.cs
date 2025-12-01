@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using Quests;
 using Features.Biomes.Domain;
 
 [CustomEditor(typeof(BiomeConfig))]
@@ -8,7 +7,6 @@ public class BiomeConfigEditor : Editor
 {
     private const int PreviewSize = 128;
     private Texture2D _preview;
-
     private SerializedProperty questsProp;
 
     private void OnEnable()
@@ -21,17 +19,13 @@ public class BiomeConfigEditor : Editor
         serializedObject.Update();
         var config = (BiomeConfig)target;
 
-        // ─────────────────────────────────────────────
-        // BASIC INFO
-        // ─────────────────────────────────────────────
+        // ----- INFO -----
         DrawHeader("Biome Info");
         DrawProps("biomeName", "mapColor", "isGenerate", "useLowPoly");
 
         DrawBiomePreview(config);
 
-        // ─────────────────────────────────────────────
-        // TERRAIN
-        // ─────────────────────────────────────────────
+        // ----- TERRAIN -----
         DrawHeader("Terrain");
         DrawProps("terrainType", "groundMaterial", "terrainScale", "heightMultiplier");
 
@@ -41,110 +35,60 @@ public class BiomeConfigEditor : Editor
             DrawProps("fractalOctaves", "fractalPersistence", "fractalLacunarity");
         }
 
-        DrawHeader("Tilling");
+        DrawHeader("Texture / UV");
         DrawProps("textureTiling");
-        
+
         DrawHeader("Blending");
         DrawProps("blendStrength");
 
-        // ─────────────────────────────────────────────
-        // ENVIRONMENT
-        // ─────────────────────────────────────────────
+        // ----- ENVIRONMENT -----
         DrawHeader("Environment Objects");
         DrawProps("environmentPrefabs", "environmentDensity");
 
-        // ─────────────────────────────────────────────
-        // RESOURCES
-        // ─────────────────────────────────────────────
+        // ----- RESOURCES -----
         DrawHeader("Resources");
-        DrawProps(
-            "possibleResources",
-            "resourceDensity",
-            "resourceSpawnYOffset",
-            "resourceEdgeFalloff"
-        );
+        DrawProps("possibleResources", "resourceDensity", "resourceSpawnYOffset", "resourceEdgeFalloff");
 
-        // ─────────────────────────────────────────────
-        // QUESTS
-        // ─────────────────────────────────────────────
+        // ----- QUESTS -----
         DrawHeader("Quests");
         EditorGUILayout.PropertyField(questsProp, true);
         DrawProps("questTargetsMin", "questTargetsMax");
 
-        // ─────────────────────────────────────────────
-        // ENEMY
-        // ─────────────────────────────────────────────
+        // ----- ENEMY -----
         DrawHeader("Enemies");
         DrawProps("enemyTable", "enemyDensity", "enemyRespawnDelay");
 
-        // ─────────────────────────────────────────────
-        // SKYBOX / UI / FOG GRADIENT
-        // ─────────────────────────────────────────────
+        // ----- SKYBOX / FOG -----
         DrawHeader("Skybox / UI / Fog Gradient");
-        DrawProps(
-            "skyboxMaterial",
-            "skyTopColor",
-            "skyBottomColor",
-            "skyExposure",
-            "uiColor",
-            "fogLightColor",
-            "fogHeavyColor",
-            "fogGradientScale"
-        );
+        DrawProps("skyboxMaterial", "skyTopColor", "skyBottomColor", "skyExposure",
+                  "uiColor", "fogLightColor", "fogHeavyColor", "fogGradientScale");
 
-        // ─────────────────────────────────────────────
-        // FOG
-        // ─────────────────────────────────────────────
         DrawHeader("Fog Settings");
         DrawProps("enableFog", "fogMode", "fogColor", "fogDensity", "fogLinearStart", "fogLinearEnd");
 
-        // ─────────────────────────────────────────────
-        // WEATHER
-        // ─────────────────────────────────────────────
+        // ----- WEATHER -----
         DrawHeader("Weather");
-        DrawProps(
-            "rainPrefab",
-            "dustPrefab",
-            "firefliesPrefab",
-            "weatherIntensity"
-        );
+        DrawProps("rainPrefab", "dustPrefab", "firefliesPrefab", "weatherIntensity");
 
-        // ─────────────────────────────────────────────
-        // WATER
-        // ─────────────────────────────────────────────
+        // ----- WATER -----
         DrawHeader("Water");
-        DrawProps(
-            "useWater",
-            "waterType",
-            "seaLevel",
-            "waterMaterial",
-            "swampWaterMaterial",
-            "lakeWaterMaterial",
-            "oceanWaterMaterial"
-        );
+        DrawProps("useWater", "waterType", "seaLevel",
+                  "waterMaterial", "swampWaterMaterial", "lakeWaterMaterial", "oceanWaterMaterial");
 
-        // ─────────────────────────────────────────────
-        // LAKES
-        // ─────────────────────────────────────────────
+        // ----- LAKES -----
         DrawHeader("Lakes");
         DrawProps("generateLakes", "lakeLevel", "lakeNoiseScale");
 
-        // ─────────────────────────────────────────────
-        // RIVERS
-        // ─────────────────────────────────────────────
+        // ----- RIVERS -----
         DrawHeader("Rivers");
         DrawProps("generateRivers", "riverNoiseScale", "riverWidth", "riverDepth");
 
-        // Size fields
+        // ----- SIZE -----
         DrawHeader("Biome Area Size");
         DrawProps("width", "height");
 
         serializedObject.ApplyModifiedProperties();
     }
-
-    // ─────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────
 
     private void DrawHeader(string title)
     {
@@ -162,9 +106,6 @@ public class BiomeConfigEditor : Editor
         }
     }
 
-    // ─────────────────────────────────────────────
-    // MINIMAP PREVIEW
-    // ─────────────────────────────────────────────
     private void DrawBiomePreview(BiomeConfig config)
     {
         if (_preview == null)

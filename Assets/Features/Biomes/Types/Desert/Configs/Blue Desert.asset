@@ -16,14 +16,15 @@ MonoBehaviour:
   mapColor: {r: 0.94716984, g: 0.14118181, b: 0.14118181, a: 1}
   isGenerate: 1
   useLowPoly: 1
-  terrainType: 6
+  terrainType: 1
   textureTiling: 3
   groundMaterial: {fileID: 2100000, guid: c4a4ec3a829cab84f8ca3330f6aac8e3, type: 2}
-  terrainScale: 3
-  heightMultiplier: 60
+  terrainScale: 6
+  heightMultiplier: 30
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2
+  blendStrength: 0.44
   environmentPrefabs: []
   environmentDensity: 0.05
   possibleResources: []
@@ -33,7 +34,17 @@ MonoBehaviour:
   possibleQuests: []
   questTargetsMin: 2
   questTargetsMax: 5
-  enemyTable: []
+  enemyTable:
+  - prefab: {fileID: 0}
+    weight: 0
+    spawnChance: 0
+    minGroup: 0
+    maxGroup: 0
+    minSlope: 0
+    maxSlope: 0
+    minHeight: 0
+    maxHeight: 0
+    alignToNormal: 0
   enemyDensity: 0.0008
   enemyRespawnDelay: 20
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
@@ -47,9 +58,9 @@ MonoBehaviour:
   enableFog: 1
   fogMode: 2
   fogColor: {r: 0, g: 0.46446562, b: 1, a: 1}
-  fogDensity: 0.09
+  fogDensity: 0.05
   fogLinearStart: 0
-  fogLinearEnd: 200
+  fogLinearEnd: 150
   rainPrefab: {fileID: 0}
   dustPrefab: {fileID: 0}
   firefliesPrefab: {fileID: 0}

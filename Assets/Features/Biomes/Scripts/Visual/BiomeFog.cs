@@ -47,31 +47,75 @@ namespace Features.Biomes.Runtime.Visual
             if (blends == null || blends.Length == 0)
                 return;
 
-            BiomeConfig biome = blends[0].biome;
-            float weight = blends[0].weight;
+            // ------------------------
+            // 1) ВЫБИРАЕМ ГЛАВНЫЙ БИОМ
+            // ------------------------
+            BiomeConfig mainBiome = null;
+            float mainWeight = 0f;
 
-            if (biome == null || !biome.enableFog)
+            foreach (var b in blends)
+            {
+                if (b.biome == null) continue;
+                if (b.weight > mainWeight)
+                {
+                    mainBiome = b.biome;
+                    mainWeight = b.weight;
+                }
+            }
+
+            if (mainBiome == null)
                 return;
 
-            RenderSettings.fog = true;
+            RenderSettings.fogMode = mainBiome.fogMode;
 
-            Color  tColor   = biome.fogColor;
-            float  tDensity = biome.fogDensity * weight;
-            float  tStart   = biome.fogLinearStart;
-            float  tEnd     = biome.fogLinearEnd;
+            // ------------------------
+            // 2) BLEND ВСЕХ БИОМОВ
+            // ------------------------
+            Color  blendedColor   = Color.black;
+            float  blendedDensity = 0f;
+            float  blendedStart   = 0f;
+            float  blendedEnd     = 0f;
+            float  totalW         = 0f;
 
+            foreach (var b in blends)
+            {
+                if (b.biome == null || !b.biome.enableFog) 
+                    continue;
+
+                blendedColor   += b.biome.fogColor        * b.weight;
+                blendedDensity += b.biome.fogDensity      * b.weight;
+                blendedStart   += b.biome.fogLinearStart  * b.weight;
+                blendedEnd     += b.biome.fogLinearEnd    * b.weight;
+
+                totalW += b.weight;
+            }
+
+            if (totalW > 0f)
+            {
+                blendedColor   /= totalW;
+                blendedDensity /= totalW;
+                blendedStart   /= totalW;
+                blendedEnd     /= totalW;
+            }
+
+            // ------------------------
+            // 3) ПЛАВНОЕ ПЕРЕЛИВАНИЕ
+            // ------------------------
             float t = Time.deltaTime * blendSpeed * 60f;
 
-            fogColor   = Color.Lerp(fogColor, tColor, t);
-            fogDensity = Mathf.Lerp(fogDensity, tDensity, t);
-            fogStart   = Mathf.Lerp(fogStart, tStart, t);
-            fogEnd     = Mathf.Lerp(fogEnd, tEnd, t);
+            fogColor   = Color.Lerp(fogColor, blendedColor, t);
+            fogDensity = Mathf.Lerp(fogDensity, blendedDensity, t);
+            fogStart   = Mathf.Lerp(fogStart, blendedStart, t);
+            fogEnd     = Mathf.Lerp(fogEnd, blendedEnd, t);
 
+            // ------------------------
+            // 4) ПРИМЕНЕНИЕ FOG
+            // ------------------------
+            RenderSettings.fog = true;
             RenderSettings.fogColor         = fogColor;
             RenderSettings.fogDensity       = fogDensity;
             RenderSettings.fogStartDistance = fogStart;
             RenderSettings.fogEndDistance   = fogEnd;
-            RenderSettings.fogMode          = biome.fogMode;
         }
 
         public float GetFogFactor()

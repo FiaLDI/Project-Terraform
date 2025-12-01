@@ -119,6 +119,8 @@ GameObject:
   - component: {fileID: 252376953482608172}
   - component: {fileID: 2560376705473308636}
   - component: {fileID: 5863539914605405000}
+  - component: {fileID: 1745300881015787059}
+  - component: {fileID: 5194683901345809829}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Enemy
@@ -207,6 +209,38 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1745300881015787059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4823896413690452315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d239c38c52d2b04d913af5ce65e05d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.EnemyBehavior
+--- !u!114 &5194683901345809829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4823896413690452315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36a2e74da6ebcc4459fe4c54adc7f7c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemies.EnemyDefinition
+  enemyId: 0
+  displayName: RORO
+  icon: {fileID: 21300000, guid: dae159f0e042fb140b81217b40e2667d, type: 3}
+  prefabLOD0: {fileID: 4823896413690452315}
+  prefabLOD1: {fileID: 4823896413690452315, guid: c58f6cd61e5d381459b754d1f5f91578, type: 3}
+  prefabLOD2: {fileID: 4823896413690452315, guid: 9631ceeeabc26e0448bfa870965bd4ea, type: 3}
+  lod0Distance: 15
+  lod1Distance: 40
 --- !u!1 &5425803783331266846
 GameObject:
   m_ObjectHideFlags: 0

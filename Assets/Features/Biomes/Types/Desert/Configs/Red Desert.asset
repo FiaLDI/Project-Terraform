@@ -16,14 +16,15 @@ MonoBehaviour:
   mapColor: {r: 1, g: 1, b: 1, a: 1}
   isGenerate: 1
   useLowPoly: 1
-  terrainType: 7
+  terrainType: 2
   textureTiling: 3
   groundMaterial: {fileID: 2100000, guid: 692d2bd798c06364fb48e609ab56bc9a, type: 2}
-  terrainScale: 5
-  heightMultiplier: 2
+  terrainScale: 1
+  heightMultiplier: 1
   fractalOctaves: 3
   fractalPersistence: 1
   fractalLacunarity: 2.29
+  blendStrength: 0
   environmentPrefabs:
   - prefab: {fileID: 7989835467096096610, guid: a20a2eb9288d4174fb7ffc923e6a0db5, type: 3}
     spawnChance: 0.0083
@@ -81,17 +82,7 @@ MonoBehaviour:
     safetyRadius: 10
   questTargetsMin: 2
   questTargetsMax: 5
-  enemyTable:
-  - prefab: {fileID: 4823896413690452315, guid: ba79223540d0017488c0e42578c10964, type: 3}
-    weight: 2
-    spawnChance: 0.009
-    minGroup: 1
-    maxGroup: 6
-    minSlope: 0
-    maxSlope: 50
-    minHeight: -1000
-    maxHeight: 1000
-    alignToNormal: 1
+  enemyTable: []
   enemyDensity: 0.09
   enemyRespawnDelay: 20
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
@@ -104,10 +95,10 @@ MonoBehaviour:
   fogGradientScale: 10
   enableFog: 1
   fogMode: 2
-  fogColor: {r: 1, g: 0.4232047, b: 0.26226407, a: 1}
+  fogColor: {r: 1, g: 0.9121525, b: 0.68235296, a: 1}
   fogDensity: 0.05
   fogLinearStart: 0
-  fogLinearEnd: 200
+  fogLinearEnd: 250
   rainPrefab: {fileID: 0}
   dustPrefab: {fileID: 0}
   firefliesPrefab: {fileID: 0}
