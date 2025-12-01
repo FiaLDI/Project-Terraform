@@ -59,8 +59,14 @@ public class BiomeEnemySpawner : MonoBehaviour
 
     private void SpawnEnemy(BiomeConfig biome)
     {
+        if (biome.enemyTable == null || biome.enemyTable.Length == 0) return;
         // Random enemy type из таблицы биома
         var entry = biome.enemyTable[Random.Range(0, biome.enemyTable.Length)];
+
+        if (entry != null || entry.prefab == null)
+        {
+            return;
+        }
 
         // Берём дефиницию типа с базового префаба
         EnemyDefinition baseDef = entry.prefab.GetComponent<EnemyDefinition>();

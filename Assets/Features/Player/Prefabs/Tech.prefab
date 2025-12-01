@@ -6933,6 +6933,7 @@ GameObject:
   - component: {fileID: 137488500786898619}
   - component: {fileID: 8876648923045464215}
   - component: {fileID: 4645391566659564386}
+  - component: {fileID: 3628320967526121916}
   m_Layer: 8
   m_Name: Tech
   m_TagString: Player
@@ -7412,6 +7413,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeEnemySpawner
   player: {fileID: 677253391065705017}
   world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+--- !u!114 &3628320967526121916
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fadbf73bb3ea8c48b26caa059ad0878, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBiomeTracker
+  ui: {fileID: 6428671949933417812}
+  world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+  checkInterval: 0.25
+  biomeChangeCooldown: 1.5
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0

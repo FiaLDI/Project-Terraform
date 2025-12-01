@@ -82,8 +82,18 @@ MonoBehaviour:
     safetyRadius: 10
   questTargetsMin: 2
   questTargetsMax: 5
-  enemyTable: []
-  enemyDensity: 0.09
+  enemyTable:
+  - prefab: {fileID: 4823896413690452315, guid: ba79223540d0017488c0e42578c10964, type: 3}
+    weight: 1
+    spawnChance: 0.01
+    minGroup: 0
+    maxGroup: 5
+    minSlope: 0
+    maxSlope: 0
+    minHeight: -10
+    maxHeight: 20
+    alignToNormal: 1
+  enemyDensity: 0.03
   enemyRespawnDelay: 20
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
   skyTopColor: {r: 1, g: 1, b: 1, a: 1}

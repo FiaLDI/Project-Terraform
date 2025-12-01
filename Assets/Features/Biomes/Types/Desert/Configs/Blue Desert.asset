@@ -34,17 +34,7 @@ MonoBehaviour:
   possibleQuests: []
   questTargetsMin: 2
   questTargetsMax: 5
-  enemyTable:
-  - prefab: {fileID: 0}
-    weight: 0
-    spawnChance: 0
-    minGroup: 0
-    maxGroup: 0
-    minSlope: 0
-    maxSlope: 0
-    minHeight: 0
-    maxHeight: 0
-    alignToNormal: 0
+  enemyTable: []
   enemyDensity: 0.0008
   enemyRespawnDelay: 20
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}

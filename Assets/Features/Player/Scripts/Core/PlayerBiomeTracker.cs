@@ -1,5 +1,6 @@
 using UnityEngine;
 using Features.Biomes.Runtime.Visual;
+using Features.Biomes.Domain;
 
 public class PlayerBiomeTracker : MonoBehaviour
 {
@@ -58,7 +59,7 @@ public class PlayerBiomeTracker : MonoBehaviour
             return;
 
         // Обновляем градиент тумана каждый тик
-        ui.UpdateFogGradient(biome.lightTextColor, biome.heavyTextColor, biome.fogGradientScale);
+        ui.UpdateFogGradient(biome.fogLightColor, biome.fogHeavyColor, biome.fogGradientScale);
 
         // Если биом прежний или cooldown не вышел — ничего не делаем
         if (biome == lastBiome || cooldownTimer > 0f)
