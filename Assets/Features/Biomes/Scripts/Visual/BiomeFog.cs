@@ -1,21 +1,19 @@
 using UnityEngine;
-using Unity.Mathematics;
 using Features.Biomes.Domain;
 using Features.Biomes.UnityIntegration;
 
 namespace Features.Biomes.Runtime.Visual
 {
-    [DefaultExecutionOrder(200)]
+    [DefaultExecutionOrder(50)] // Fog раньше UI
     public class BiomeFog : MonoBehaviour
     {
-        [Header("Interpolation")]
         [Range(0.0f, 2.0f)]
-        public float blendSpeed = 0.2f;
+        public float blendSpeed = 0.25f;
 
-        private Color currentColor;
-        private float currentDensity;
-        private float currentStart;
-        private float currentEnd;
+        private Color fogColor;
+        private float fogDensity;
+        private float fogStart;
+        private float fogEnd;
 
         private bool initialized = false;
 
@@ -23,10 +21,18 @@ namespace Features.Biomes.Runtime.Visual
         {
             if (RuntimeWorldGenerator.World == null)
             {
-                Debug.LogWarning("[BiomeFog] RuntimeWorldGenerator not initialized.");
+                Debug.LogWarning("[BiomeFog] No world config");
                 enabled = false;
                 return;
             }
+
+            RenderSettings.fog = true;
+
+            // начальная инициализация
+            fogColor   = RenderSettings.fogColor;
+            fogDensity = RenderSettings.fogDensity;
+            fogStart   = RenderSettings.fogStartDistance;
+            fogEnd     = RenderSettings.fogEndDistance;
 
             initialized = true;
         }
@@ -36,37 +42,45 @@ namespace Features.Biomes.Runtime.Visual
             if (!initialized) return;
             if (RuntimeWorldGenerator.PlayerInstance == null) return;
 
-            // Fog must be enabled EVERY FRAME
-            RenderSettings.fog = true;
-
             Vector3 pos = RuntimeWorldGenerator.PlayerInstance.transform.position;
-
-            // Use the REAL GetBiomeBlend (array)
             var blends = RuntimeWorldGenerator.World.GetBiomeBlend(new Vector3(pos.x, 0, pos.z));
+
             if (blends == null || blends.Length == 0)
                 return;
 
+            // главный биом = самый сильный weight
             BiomeConfig biome = blends[0].biome;
+            float weight = blends[0].weight;
+
             if (biome == null || !biome.enableFog)
                 return;
 
-            Color tColor = biome.fogColor;
-            float tDensity = biome.fogDensity;
-            float tStart = biome.fogLinearStart;
-            float tEnd = biome.fogLinearEnd;
+            RenderSettings.fog = true;
 
-            float f = blendSpeed * Time.deltaTime * 60f;
+            // целевые значения
+            Color  tColor   = biome.fogColor;
+            float  tDensity = biome.fogDensity * weight;
+            float  tStart   = biome.fogLinearStart;
+            float  tEnd     = biome.fogLinearEnd;
 
-            currentColor = Color.Lerp(currentColor, tColor, f);
-            currentDensity = Mathf.Lerp(currentDensity, tDensity, f);
-            currentStart = Mathf.Lerp(currentStart, tStart, f);
-            currentEnd = Mathf.Lerp(currentEnd, tEnd, f);
+            float t = Time.deltaTime * blendSpeed * 60f;
 
-            RenderSettings.fogMode = biome.fogMode;
-            RenderSettings.fogColor = currentColor;
-            RenderSettings.fogDensity = currentDensity;
-            RenderSettings.fogStartDistance = currentStart;
-            RenderSettings.fogEndDistance = currentEnd;
+            fogColor   = Color.Lerp(fogColor, tColor, t);
+            fogDensity = Mathf.Lerp(fogDensity, tDensity, t);
+            fogStart   = Mathf.Lerp(fogStart, tStart, t);
+            fogEnd     = Mathf.Lerp(fogEnd, tEnd, t);
+
+            // применяем финальные значения
+            RenderSettings.fogColor         = fogColor;
+            RenderSettings.fogDensity       = fogDensity;
+            RenderSettings.fogStartDistance = fogStart;
+            RenderSettings.fogEndDistance   = fogEnd;
+            RenderSettings.fogMode          = biome.fogMode;
+        }
+
+        public float GetFogFactor()
+        {
+            return fogDensity;
         }
     }
 }
