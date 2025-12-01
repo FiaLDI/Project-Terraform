@@ -1,10 +1,15 @@
 using UnityEngine;
+using Unity.Mathematics;
+using Features.Biomes.Domain;
 
 public static class BiomeHeightUtility
 {
     public static float GetHeight(BiomeConfig biome, float x, float z)
     {
-        float baseNoise = Mathf.PerlinNoise(
+        if (biome == null)
+            return 0f;
+
+        float baseNoise = SafePerlin(
             x * biome.terrainScale * 0.01f,
             z * biome.terrainScale * 0.01f
         );
@@ -30,23 +35,32 @@ public static class BiomeHeightUtility
                 break;
 
             case TerrainType.Dunes:
-                float dune = Mathf.PerlinNoise(x * biome.terrainScale * 0.05f, 0f);
-                y = dune * biome.heightMultiplier * 0.5f;
-                break;
+                {
+                    float dune = SafePerlin(
+                        x * biome.terrainScale * 0.05f,
+                        0f
+                    );
+                    y = dune * biome.heightMultiplier * 0.5f;
+                    break;
+                }
 
             case TerrainType.Islands:
-                float dist = Vector2.Distance(
-                    new Vector2(x, z),
-                    new Vector2(biome.width / 2f, biome.height / 2f)
-                );
-                float gradient = Mathf.Clamp01(1f - dist / (biome.width / 2f));
-                y = baseNoise * biome.heightMultiplier * gradient;
-                break;
+                {
+                    float dist = Vector2.Distance(
+                        new Vector2(x, z),
+                        new Vector2(biome.width / 2f, biome.height / 2f)
+                    );
+                    float gradient = Mathf.Clamp01(1f - dist / (biome.width / 2f));
+                    y = baseNoise * biome.heightMultiplier * gradient;
+                    break;
+                }
 
             case TerrainType.Canyons:
-                float canyon = Mathf.Abs(Mathf.PerlinNoise(x * 0.05f, 0f) - 0.5f) * 2f;
-                y = baseNoise * biome.heightMultiplier * canyon;
-                break;
+                {
+                    float canyon = Mathf.Abs(SafePerlin(x * 0.05f, 0f) - 0.5f) * 2f;
+                    y = baseNoise * biome.heightMultiplier * canyon;
+                    break;
+                }
 
             case TerrainType.FractalMountains:
                 y = RidgedNoise(
@@ -59,7 +73,27 @@ public static class BiomeHeightUtility
                 break;
         }
 
+        // защита от NaN
+        if (float.IsNaN(y) || float.IsInfinity(y))
+            y = 0f;
+
         return y;
+    }
+
+    private static float SafePerlin(float x, float z)
+    {
+        // ограничиваем входные координаты, чтобы Perlin не уходил в странные режимы
+        x = math.fmod(x, 10000f);
+        z = math.fmod(z, 10000f);
+
+        if (x < 0f) x += 10000f;
+        if (z < 0f) z += 10000f;
+
+        float n = Mathf.PerlinNoise(x, z);
+        if (float.IsNaN(n) || float.IsInfinity(n))
+            return 0f;
+
+        return n;
     }
 
     private static float RidgedNoise(
@@ -73,7 +107,10 @@ public static class BiomeHeightUtility
 
         for (int i = 0; i < octaves; i++)
         {
-            float n = Mathf.PerlinNoise(x * scale * frequency, z * scale * frequency);
+            float n = SafePerlin(
+                x * scale * frequency,
+                z * scale * frequency
+            );
             n = 1f - Mathf.Abs(n * 2f - 1f);
             total += n * amplitude;
 
@@ -82,6 +119,13 @@ public static class BiomeHeightUtility
             frequency *= lacunarity;
         }
 
-        return maxValue > 0f ? total / maxValue : 0f;
+        if (maxValue <= 0f)
+            return 0f;
+
+        float v = total / maxValue;
+        if (float.IsNaN(v) || float.IsInfinity(v))
+            return 0f;
+
+        return v;
     }
 }

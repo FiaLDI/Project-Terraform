@@ -1,5 +1,6 @@
 using UnityEngine;
-
+using Features.Biomes.Domain;
+using Features.Biomes.UnityIntegration;
 public class TerrainLOD
 {
     private readonly Vector2Int coord;

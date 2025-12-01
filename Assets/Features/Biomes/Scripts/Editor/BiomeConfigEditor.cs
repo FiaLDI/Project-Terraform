@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using Quests;
+using Features.Biomes.Domain;
 
 [CustomEditor(typeof(BiomeConfig))]
 public class BiomeConfigEditor : Editor
@@ -20,14 +21,17 @@ public class BiomeConfigEditor : Editor
         serializedObject.Update();
         var config = (BiomeConfig)target;
 
-        // ─────────── Базовая информация ───────────
-        EditorGUILayout.LabelField("Biome Settings", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("biomeName"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("mapColor"));
+        // ─────────────────────────────────────────────
+        // BASIC INFO
+        // ─────────────────────────────────────────────
+        DrawHeader("Biome Info");
+        DrawProps("biomeName", "mapColor", "isGenerate", "useLowPoly");
 
         DrawBiomePreview(config);
 
-        // ─────────── Параметры генерации ───────────
+        // ─────────────────────────────────────────────
+        // TERRAIN
+        // ─────────────────────────────────────────────
         DrawHeader("Terrain");
         DrawProps("terrainType", "groundMaterial", "terrainScale", "heightMultiplier");
 
@@ -37,63 +41,107 @@ public class BiomeConfigEditor : Editor
             DrawProps("fractalOctaves", "fractalPersistence", "fractalLacunarity");
         }
 
-        DrawHeader("LowPoly");
-        DrawProps("useLowPoly");
+        DrawHeader("Tilling");
+        DrawProps("textureTiling");
 
-        DrawHeader("Environment");
+        // ─────────────────────────────────────────────
+        // ENVIRONMENT
+        // ─────────────────────────────────────────────
+        DrawHeader("Environment Objects");
         DrawProps("environmentPrefabs", "environmentDensity");
 
+        // ─────────────────────────────────────────────
+        // RESOURCES
+        // ─────────────────────────────────────────────
         DrawHeader("Resources");
-        DrawProps("possibleResources", "resourceDensity", "resourceSpawnYOffset");
-
-        // ─────────── КВЕСТЫ ───────────
-        DrawHeader("🎯 Quests");
-        DrawQuestEditor();
-
-        DrawHeader("⚔ Enemies");
-        DrawProps("enemyTable", "enemyDensity", "enemyRespawnDelay");
-
-        // ─────────── Эффекты ───────────
-        DrawHeader("Effects");
-        DrawProps("weatherPrefabs", "ambientSounds", "skyboxMaterial");
-
-        DrawHeader("Fog");
-        DrawProps("enableFog", "fogMode", "fogColor", "fogDensity", "fogLinearStart", "fogLinearEnd");
-
-  
-
-         DrawHeader("Water");
         DrawProps(
-            "useWater",
-            "seaLevel",
-            "waterMaterial",
-            "generateLakes",
-            "lakeLevel",
-            "lakeNoiseScale",
-            "generateRivers",
-            "riverNoiseScale",
-            "riverWidth",
-            "riverDepth"
+            "possibleResources",
+            "resourceDensity",
+            "resourceSpawnYOffset",
+            "resourceEdgeFalloff"
         );
 
-        
+        // ─────────────────────────────────────────────
+        // QUESTS
+        // ─────────────────────────────────────────────
+        DrawHeader("Quests");
+        EditorGUILayout.PropertyField(questsProp, true);
+        DrawProps("questTargetsMin", "questTargetsMax");
+
+        // ─────────────────────────────────────────────
+        // ENEMY
+        // ─────────────────────────────────────────────
+        DrawHeader("Enemies");
+        DrawProps("enemyTable", "enemyDensity", "enemyRespawnDelay");
+
+        // ─────────────────────────────────────────────
+        // SKYBOX / UI / FOG GRADIENT
+        // ─────────────────────────────────────────────
+        DrawHeader("Skybox / UI / Fog Gradient");
+        DrawProps(
+            "skyboxMaterial",
+            "skyTopColor",
+            "skyBottomColor",
+            "skyExposure",
+            "uiColor",
+            "fogLightColor",
+            "fogHeavyColor",
+            "fogGradientScale"
+        );
+
+        // ─────────────────────────────────────────────
+        // FOG
+        // ─────────────────────────────────────────────
+        DrawHeader("Fog Settings");
+        DrawProps("enableFog", "fogMode", "fogColor", "fogDensity", "fogLinearStart", "fogLinearEnd");
+
+        // ─────────────────────────────────────────────
+        // WEATHER
+        // ─────────────────────────────────────────────
+        DrawHeader("Weather");
+        DrawProps(
+            "rainPrefab",
+            "dustPrefab",
+            "firefliesPrefab",
+            "weatherIntensity"
+        );
+
+        // ─────────────────────────────────────────────
+        // WATER
+        // ─────────────────────────────────────────────
+        DrawHeader("Water");
+        DrawProps(
+            "useWater",
+            "waterType",
+            "seaLevel",
+            "waterMaterial",
+            "swampWaterMaterial",
+            "lakeWaterMaterial",
+            "oceanWaterMaterial"
+        );
+
+        // ─────────────────────────────────────────────
+        // LAKES
+        // ─────────────────────────────────────────────
+        DrawHeader("Lakes");
+        DrawProps("generateLakes", "lakeLevel", "lakeNoiseScale");
+
+        // ─────────────────────────────────────────────
+        // RIVERS
+        // ─────────────────────────────────────────────
+        DrawHeader("Rivers");
+        DrawProps("generateRivers", "riverNoiseScale", "riverWidth", "riverDepth");
+
+        // Size fields
+        DrawHeader("Biome Area Size");
+        DrawProps("width", "height");
+
         serializedObject.ApplyModifiedProperties();
-
-        // ─────────── ТЕСТОВЫЙ СПАВН КВЕСТОВ ───────────
-        DrawHeader("Debug Tools");
-
-        if (GUILayout.Button("🎯 Test Spawn Quests In Scene"))
-        {
-            TestSpawnQuests(config);
-        }
-
-        DrawHeader("Biome Generation (ChunkManager)");
-
-        if (GUILayout.Button("▶ Generate Biome Preview (ChunkManager)"))
-        {
-            GenerateBiomePreview(config);
-        }
     }
+
+    // ─────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────
 
     private void DrawHeader(string title)
     {
@@ -111,14 +159,16 @@ public class BiomeConfigEditor : Editor
         }
     }
 
-    // ─────────── Мини-карта ───────────
+    // ─────────────────────────────────────────────
+    // MINIMAP PREVIEW
+    // ─────────────────────────────────────────────
     private void DrawBiomePreview(BiomeConfig config)
     {
         if (_preview == null)
             _preview = new Texture2D(PreviewSize, PreviewSize);
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Mini-map", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Mini-map Preview", EditorStyles.boldLabel);
 
         GeneratePreviewTexture(config, _preview);
         Rect r = GUILayoutUtility.GetRect(PreviewSize, PreviewSize);
@@ -149,83 +199,4 @@ public class BiomeConfigEditor : Editor
 
         tex.Apply();
     }
-
-    // ─────────── Редактор квестов ───────────
-    private void DrawQuestEditor()
-    {
-        EditorGUILayout.PropertyField(questsProp, true);
-    }
-
-    // ─────────── Test Spawn ───────────
-    private void TestSpawnQuests(BiomeConfig config)
-    {
-        if (config.possibleQuests == null || config.possibleQuests.Length == 0)
-        {
-            Debug.LogWarning("No quests defined.");
-            return;
-        }
-
-        foreach (var entry in config.possibleQuests)
-        {
-            if (entry.questAsset == null || entry.questPointPrefab == null)
-                continue;
-
-            int count = Random.Range(entry.spawnPointsMin, entry.spawnPointsMax + 1);
-
-            for (int i = 0; i < count; i++)
-            {
-                Vector3 pos = new Vector3(
-                    Random.Range(0f, config.width),
-                    1000f,
-                    Random.Range(0f, config.height)
-                );
-
-                if (Physics.Raycast(pos, Vector3.down, out RaycastHit hit, 5000f))
-                {
-                    pos = hit.point + Vector3.up * 0.5f;
-                }
-
-                GameObject point = PrefabUtility.InstantiatePrefab(entry.questPointPrefab) as GameObject;
-                point.transform.position = pos;
-
-                var qp = point.GetComponent<QuestPoint>();
-                if (qp != null)
-                {
-                    qp.linkedQuest = entry.questAsset;
-                }
-            }
-        }
-
-        Debug.Log("🎯 Test quests spawned into scene.");
-    }
-
-    private void GenerateBiomePreview(BiomeConfig config)
-{
-    // ищем WorldConfig, чтобы взять chunkSize и blending
-    string[] guids = AssetDatabase.FindAssets("t:WorldConfig");
-    if (guids.Length == 0)
-    {
-        Debug.LogError("❌ WorldConfig not found in project!");
-        return;
-    }
-
-    WorldConfig world = AssetDatabase.LoadAssetAtPath<WorldConfig>(AssetDatabase.GUIDToAssetPath(guids[0]));
-
-    GameObject old = GameObject.Find("BiomePreview_" + config.biomeName);
-    if (old != null)
-        GameObject.DestroyImmediate(old);
-
-    GameObject previewRoot = new GameObject("BiomePreview_" + config.biomeName);
-
-    ChunkManager manager = new ChunkManager(world);
-
-    // Генерация довольно маленькой зоны вокруг 0,0
-    Vector2Int center = new Vector2Int(0, 0);
-    int radius = 3; // 7×7 чанков
-
-    GameObject area = manager.GenerateStaticArea(center, radius);
-    area.transform.SetParent(previewRoot.transform);
-
-    Debug.Log($"✅ Biome preview generated for '{config.biomeName}' using ChunkManager.");
-}
 }

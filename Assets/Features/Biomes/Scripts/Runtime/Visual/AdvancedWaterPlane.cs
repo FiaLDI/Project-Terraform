@@ -1,148 +1,54 @@
 using UnityEngine;
+using Unity.Mathematics;
+using Features.Biomes.Domain;
+using Features.Biomes.UnityIntegration;
 
-public class AdvancedWaterPlane : MonoBehaviour
+namespace Features.Biomes.Runtime.Visual
 {
-    public float fadeSpeed = 1.5f;
-
-    private Renderer rend;
-    private Material currentMaterial;
-    private float currentAlpha = 0f;
-
-    private Transform player;
-
-    private void Start()
+    public class AdvancedWaterPlane : MonoBehaviour
     {
-        rend = GetComponent<Renderer>();
-        if (rend == null)
-            rend = GetComponentInChildren<Renderer>();
+        [Header("World")]
+        public WorldConfig world;
 
-        if (RuntimeWorldGenerator.PlayerInstance != null)
-            player = RuntimeWorldGenerator.PlayerInstance.transform;
+        [Header("Follow Target (player or camera)")]
+        public Transform followTarget;
 
-        UpdateWaterMaterial();
-        ApplyAlphaInstant(0f);
-    }
+        [Header("Renderer")]
+        public MeshRenderer waterRenderer;
 
-    private void Update()
-    {
-        if (player == null)
+        private void Reset()
         {
-            if (RuntimeWorldGenerator.PlayerInstance != null)
-                player = RuntimeWorldGenerator.PlayerInstance.transform;
-            else
+            waterRenderer = GetComponent<MeshRenderer>();
+        }
+
+        private void LateUpdate()
+        {
+            if (world == null)
                 return;
+
+            Vector3 pos = followTarget != null ? followTarget.position : Vector3.zero;
+
+            float2 wp = new float2(pos.x, pos.z);
+            var blend = world.GetBiomeBlend(wp);
+            BiomeConfig biome = blend.biome;
+            if (biome == null || !biome.useWater)
+                return;
+
+            Vector3 p = transform.position;
+            p.y = biome.seaLevel;
+            transform.position = p;
+
+            if (waterRenderer == null)
+                return;
+
+            Material mat =
+                biome.waterType == WaterType.Swamp ? biome.swampWaterMaterial :
+                biome.waterType == WaterType.Lake  ? biome.lakeWaterMaterial :
+                biome.waterMaterial != null        ? biome.waterMaterial :
+                                                     biome.oceanWaterMaterial;
+
+            if (mat != null)
+                waterRenderer.sharedMaterial = mat;
         }
-
-        bool waterEnabled = UpdateWaterMaterial();
-
-        if (waterEnabled)
-            FadeIn();
-        else
-            FadeOut();
-
-        UpdateHeight();
-    }
-
-    // --------------------------------------------------------------
-    //                ВЫБОР МАТЕРИАЛА ПО БИОМУ
-    // --------------------------------------------------------------
-    private bool UpdateWaterMaterial()
-    {
-        var world = RuntimeWorldGenerator.World;
-        if (world == null) return false;
-
-        var pos = player.position;
-        var biomeBlend = world.GetBiomeBlend(pos);
-
-        BiomeConfig dominant = null;
-        float best = 0f;
-
-        foreach (var b in biomeBlend)
-        {
-            if (b.weight > best)
-            {
-                best = b.weight;
-                dominant = b.biome;
-            }
-        }
-
-        if (dominant == null || !dominant.useWater)
-            return false;
-
-        Material target = dominant.waterMaterial;
-
-        if (dominant.waterType == WaterType.Ocean && dominant.oceanWaterMaterial != null)
-            target = dominant.oceanWaterMaterial;
-
-        if (dominant.waterType == WaterType.Lake && dominant.lakeWaterMaterial != null)
-            target = dominant.lakeWaterMaterial;
-
-        if (dominant.waterType == WaterType.Swamp && dominant.swampWaterMaterial != null)
-            target = dominant.swampWaterMaterial;
-
-        if (rend == null)
-            return false;
-
-        if (currentMaterial != target)
-        {
-            rend.sharedMaterial = target;
-            currentMaterial = target;
-        }
-
-
-        return true;
-    }
-
-    // --------------------------------------------------------------
-    //                ПЛАВНОЕ ПОЯВЛЕНИЕ / ИСЧЕЗНОВЕНИЕ
-    // --------------------------------------------------------------
-    private void FadeIn()
-    {
-        currentAlpha = Mathf.MoveTowards(currentAlpha, 1f, Time.deltaTime * fadeSpeed);
-        ApplyAlpha(currentAlpha);
-    }
-
-    private void FadeOut()
-    {
-        currentAlpha = Mathf.MoveTowards(currentAlpha, 0f, Time.deltaTime * fadeSpeed);
-        ApplyAlpha(currentAlpha);
-    }
-
-    private void ApplyAlphaInstant(float a)
-    {
-        currentAlpha = a;
-        ApplyAlpha(a);
-    }
-
-    private void ApplyAlpha(float a)
-    {
-        if (currentMaterial == null) return;
-
-        currentMaterial.SetFloat("_Alpha", a);
-    }
-
-    // --------------------------------------------------------------
-    //                УРОВЕНЬ ВОДЫ
-    // --------------------------------------------------------------
-    private void UpdateHeight()
-    {
-        var world = RuntimeWorldGenerator.World;
-        if (world == null) return;
-
-        var pos = player.position;
-        var blend = world.GetBiomeBlend(pos);
-
-        float sea = float.MaxValue;
-
-        foreach (var b in blend)
-        {
-            if (b.biome.useWater)
-                sea = Mathf.Min(sea, b.biome.seaLevel);
-        }
-
-        if (sea == float.MaxValue)
-            return;
-
-        transform.position = new Vector3(transform.position.x, sea, transform.position.z);
     }
 }

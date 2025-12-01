@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6dfcc09296954b418c8065bb3d566d7, type: 3}
+  m_Name: Blue Desert
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
+  biomeName: 
+  mapColor: {r: 0.94716984, g: 0.14118181, b: 0.14118181, a: 1}
+  isGenerate: 1
+  useLowPoly: 1
+  terrainType: 6
+  textureTiling: 3
+  groundMaterial: {fileID: 2100000, guid: c4a4ec3a829cab84f8ca3330f6aac8e3, type: 2}
+  terrainScale: 3
+  heightMultiplier: 60
+  fractalOctaves: 5
+  fractalPersistence: 0.5
+  fractalLacunarity: 2
+  environmentPrefabs: []
+  environmentDensity: 0.05
+  possibleResources: []
+  resourceDensity: 0.001
+  resourceSpawnYOffset: 0.3
+  resourceEdgeFalloff: 1
+  possibleQuests: []
+  questTargetsMin: 2
+  questTargetsMax: 5
+  enemyTable: []
+  enemyDensity: 0.0008
+  enemyRespawnDelay: 20
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  skyTopColor: {r: 0.103773475, g: 0.53717464, b: 1, a: 1}
+  skyBottomColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  skyExposure: 1
+  uiColor: {r: 0, g: 0.35944772, b: 1, a: 1}
+  fogLightColor: {r: 1, g: 1, b: 1, a: 1}
+  fogHeavyColor: {r: 0, g: 0, b: 1, a: 1}
+  fogGradientScale: 10
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0, g: 0.46446562, b: 1, a: 1}
+  fogDensity: 0.09
+  fogLinearStart: 0
+  fogLinearEnd: 200
+  rainPrefab: {fileID: 0}
+  dustPrefab: {fileID: 0}
+  firefliesPrefab: {fileID: 0}
+  weatherIntensity: 1
+  useWater: 0
+  waterType: 1
+  seaLevel: 1
+  waterMaterial: {fileID: 0}
+  swampWaterMaterial: {fileID: 0}
+  lakeWaterMaterial: {fileID: 0}
+  oceanWaterMaterial: {fileID: 0}
+  generateLakes: 0
+  lakeLevel: 0.6
+  lakeNoiseScale: 0.05
+  generateRivers: 0
+  riverNoiseScale: 0.02
+  riverWidth: 0.1
+  riverDepth: 2
+  width: 100
+  height: 100

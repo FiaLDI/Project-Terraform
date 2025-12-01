@@ -1,5 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Mathematics;
+using Features.Biomes.Domain;
+using Features.Biomes.Application;
+using Features.Biomes.UnityIntegration;
+using Features.Biomes.Utility;
+using Features.Biomes.Application.Spawning;
+using Unity.Jobs;
 
 public class Chunk
 {
@@ -13,6 +21,8 @@ public class Chunk
 
     private readonly int chunkSize;
     private readonly Transform parent;
+
+    private bool spawnedWithMegaJob = false;
 
     public Chunk(Vector2Int coord, WorldConfig world)
         : this(coord, world, world.chunkSize, null)
@@ -34,14 +44,16 @@ public class Chunk
         if (IsLoaded) return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
+
+        // 🔥 ВАЖНО — ставим чанк на своё место!
+        rootObject.transform.position =
+            new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
+
         if (parent != null)
-            rootObject.transform.SetParent(parent);
+            rootObject.transform.SetParent(parent, false);
 
         GenerateLOD();
-        SpawnEnvironment();
-        SpawnResources();
-        SpawnQuests();
-        SpawnEnemies();
+        RunMegaSpawn();
     }
 
     public void LoadImmediate()
@@ -49,18 +61,18 @@ public class Chunk
         if (IsLoaded) return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
+        
+        rootObject.transform.position =
+            new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
         if (parent != null)
-            rootObject.transform.SetParent(parent);
+            rootObject.transform.SetParent(parent, false);
 
         GenerateImmediateMesh();
-        SpawnEnvironment();
-        SpawnResources();
-        SpawnQuests();
-        SpawnEnemies();
+        RunMegaSpawn();
     }
 
     // ============================
-    // TERRAIN GENERATION
+    // TERRAIN GENERATION (LOD0/1/2)
     // ============================
 
     private void GenerateLOD()
@@ -68,21 +80,65 @@ public class Chunk
         var blend = world.GetDominantBiome(coord);
         BiomeConfig biome = blend.biome;
 
-        if (biome == null)
-        {
-            Debug.LogWarning($"Chunk {coord}: no biome found.");
-            return;
-        }
+        int res0 = chunkSize;
+        int res1 = Mathf.Max(2, chunkSize / 2);
+        int res2 = Mathf.Max(2, chunkSize / 4);
 
-        var lod = new TerrainLOD(
-            coord,
-            biome,
-            world,
-            chunkSize,
-            rootObject.transform
-        );
+        // --- Generate meshes ---
+        Mesh lod0 = TerrainMeshGenerator.GenerateMeshSync(coord, chunkSize, chunkSize, world, biome.useLowPoly);
+        Mesh lod1 = TerrainMeshGenerator.GenerateMeshSync(coord, chunkSize, chunkSize / 2, world, biome.useLowPoly);
+        Mesh lod2 = TerrainMeshGenerator.GenerateMeshSync(coord, chunkSize, chunkSize / 4, world, biome.useLowPoly);
 
-        lod.Generate();
+
+        BurstMeshUtility.RecalculateNormalsBurst(lod0);
+        BurstMeshUtility.RecalculateNormalsBurst(lod1);
+        BurstMeshUtility.RecalculateNormalsBurst(lod2);
+
+        // ======================================================
+        // 1) RENDER OBJECT (LOD system)
+        // ======================================================
+
+        var renderObj = new GameObject("Mesh_LOD");
+        renderObj.transform.SetParent(rootObject.transform, false);
+        renderObj.layer = LayerMask.NameToLayer("Default");
+
+        var mf = renderObj.AddComponent<MeshFilter>();
+        var mr = renderObj.AddComponent<MeshRenderer>();
+        mr.sharedMaterial = biome.groundMaterial;
+
+        // стартуем с LOD0
+        mf.sharedMesh = lod0;
+
+        var lodComp = renderObj.AddComponent<ChunkMeshLOD>();
+        lodComp.lod0Mesh = lod0;
+        lodComp.lod1Mesh = lod1;
+        lodComp.lod2Mesh = lod2;
+        lodComp.lod1Distance = 80f;
+        lodComp.lod2Distance = 160f;
+
+        // ======================================================
+        // 2) COLLIDER OBJECT (ALWAYS LOD0)
+        // ======================================================
+
+        var colliderObj = new GameObject("Mesh_Collider_LOD0");
+        colliderObj.transform.SetParent(rootObject.transform, false);
+        colliderObj.layer = LayerMask.NameToLayer("Default");
+
+        var mc = colliderObj.AddComponent<MeshCollider>();
+        mc.sharedMesh = null;      // форс пересоздания BVH
+        mc.sharedMesh = lod0;      // всегда самый детальный меш
+
+        mc.cookingOptions =
+            MeshColliderCookingOptions.EnableMeshCleaning |
+            MeshColliderCookingOptions.CookForFasterSimulation |
+            MeshColliderCookingOptions.WeldColocatedVertices;
+
+        // фиксированная система
+        var colFix = colliderObj.AddComponent<ChunkColliderLODFixed>();
+        colFix.physicsMesh = lod0;
+
+        if (lod0 == null)
+            Debug.LogError($"[Chunk {coord}] COLLIDER LOD0 MESH IS NULL!");
     }
 
     private void GenerateImmediateMesh()
@@ -98,76 +154,146 @@ public class Chunk
         );
 
         var go = new GameObject("Mesh");
-        go.transform.SetParent(rootObject.transform);
+        go.transform.SetParent(rootObject.transform, false);
 
         var mf = go.AddComponent<MeshFilter>();
         var mr = go.AddComponent<MeshRenderer>();
 
         mr.sharedMaterial = biome != null ? biome.groundMaterial : null;
         mf.sharedMesh = m;
-    }
 
+        var collider = go.AddComponent<MeshCollider>();
+        collider.sharedMesh = m;
+    }
 
     // ============================
-    // SPAWNER
+    // MEGA SPAWN
     // ============================
 
-    private void SpawnEnvironment()
+    private void RunMegaSpawn()
     {
-        var biome = world.GetBiomeAtChunk(coord);
-        if (biome == null) return;
+        if (coord.x == 0 && coord.y == 0)
+        {
+            spawnedWithMegaJob = true; // чтобы не запускать повторно
+            return;                    // НИЧЕГО НЕ СПАВНИМ
+        }
+        if (spawnedWithMegaJob)
+            return;
+        spawnedWithMegaJob = true;
 
-        new EnvironmentChunkSpawner(
+        if (!BiomeRuntimeDatabase.Initialized)
+        {
+            Debug.LogWarning(
+                $"[Chunk {coord}] BiomeRuntimeDatabase not initialized. " +
+                "Call BiomeRuntimeDatabase.Build(worldConfig) before RuntimeWorldGenerator.Start()."
+            );
+            return;
+        }
+
+        var biomeCfg = world.GetBiomeAtChunk(coord);
+        if (biomeCfg == null)
+            return;
+
+        int biomeIndex = -1;
+        var layers = world.biomes;
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (layers[i].config == biomeCfg)
+            {
+                biomeIndex = i;
+                break;
+            }
+        }
+
+        if (biomeIndex < 0 ||
+            BiomeRuntimeDatabase.BiomeParamsArray == null ||
+            biomeIndex >= BiomeRuntimeDatabase.BiomeParamsArray.Length)
+        {
+            Debug.LogWarning($"[Chunk {coord}] Cannot find BiomeParams for biome {biomeCfg.name}");
+            return;
+        }
+
+        BiomeParams biomeParams = BiomeRuntimeDatabase.BiomeParamsArray[biomeIndex];
+
+        int resolution = chunkSize;
+        Mesh spawnMesh = TerrainMeshGenerator.GenerateMeshSync(
             coord,
             chunkSize,
-            biome,
-            rootObject.transform,
-            environmentBlockers
-        ).Spawn();
+            resolution,
+            world,
+            biomeCfg.useLowPoly
+        );
+
+        Vector3[] vertsManaged = spawnMesh.vertices;
+        int vertCount = vertsManaged.Length;
+        if (vertCount == 0)
+            return;
+
+        var vertices = new NativeArray<float3>(vertCount, Allocator.TempJob);
+        Vector3 chunkOffset = new Vector3(coord.x * chunkSize, 0f, coord.y * chunkSize);
+
+        for (int i = 0; i < vertCount; i++)
+        {
+            Vector3 v = vertsManaged[i];
+            Vector3 worldPos = v + chunkOffset;
+            vertices[i] = new float3(worldPos.x, worldPos.y, worldPos.z);
+        }
+
+        const int sampleStep = 4;
+
+        int maxPerVertex =
+            biomeParams.envRuleCount +
+            biomeParams.resRuleCount +
+            biomeParams.enemyRuleCount +
+            biomeParams.questRuleCount;
+
+        if (maxPerVertex <= 0)
+            maxPerVertex = 1;
+
+        int sampledVertices = (vertCount + (sampleStep - 1)) / sampleStep;
+        int estimatedCapacity = math.max(128, sampledVertices * maxPerVertex);
+
+        var spawnList = new NativeList<SpawnInstance>(estimatedCapacity, Allocator.TempJob);
+
+        var job = new MegaSpawnJob
+        {
+            vertices     = vertices,
+            biome        = biomeParams,
+            envRules     = BiomeRuntimeDatabase.EnvRules,
+            resRules     = BiomeRuntimeDatabase.ResRules,
+            enemyRules   = BiomeRuntimeDatabase.EnemyRules,
+            questRules   = BiomeRuntimeDatabase.QuestRules,
+            output       = spawnList.AsParallelWriter(),
+            randomSeed   = (uint)(coord.x * 73856093 ^ coord.y * 19349663),
+            sampleStep   = sampleStep,
+            vertsPerLine = resolution + 1
+        };
+
+        JobHandle handle = job.Schedule(vertCount, 64);
+        handle.Complete();
+
+        if (InstancedSpawnerSystem.Instance != null)
+        {
+            InstancedSpawnerSystem.Instance.AddSpawnInstances(spawnList);
+
+            for (int i = 0; i < spawnList.Length; i++)
+            {
+                var inst = spawnList[i];
+
+                if ((SpawnKind)inst.spawnType == SpawnKind.EnvironmentInstanced)
+                    continue;
+
+                RuntimeSpawnerSystem.SpawnObject(inst, coord);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[Chunk {coord}] InstancedSpawnerSystem.Instance is null — instances won’t render.");
+        }
+
+        spawnList.Dispose();
+        vertices.Dispose();
     }
-
-    private void SpawnResources()
-    {
-        var biome = world.GetBiomeAtChunk(coord);
-        if (biome == null) return;
-
-        new WorldResourceSpawner(
-            coord,
-            chunkSize,
-            biome,
-            rootObject.transform,
-            environmentBlockers
-        ).Spawn();
-    }
-
-    private void SpawnQuests()
-    {
-        var biome = world.GetBiomeAtChunk(coord);
-        if (biome == null) return;
-
-        new QuestChunkSpawner(
-            coord,
-            chunkSize,
-            biome,
-            rootObject.transform,
-            environmentBlockers
-        ).Spawn();
-    }
-
-    private void SpawnEnemies()
-    {
-        var biome = world.GetBiomeAtChunk(coord);
-        if (biome == null) return;
-
-        new EnemyChunkSpawner(
-            coord,
-            chunkSize,
-            biome,
-            rootObject.transform,
-            environmentBlockers
-        ).Spawn();
-    }
-
 
     // ============================
     // UNLOAD
@@ -182,6 +308,7 @@ public class Chunk
 
         if (dx > unloadDist || dy > unloadDist)
         {
+            ChunkedGameObjectStorage.Unload(coord);
             Object.Destroy(rootObject);
             rootObject = null;
         }

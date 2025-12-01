@@ -131,6 +131,7 @@ Transform:
   - {fileID: 2614566185856777654}
   - {fileID: 3670166688983725451}
   - {fileID: 4883803314202207549}
+  - {fileID: 5551819165624009912}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3113337560978388492
@@ -143,6 +144,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3806544932420228657}
   - component: {fileID: 3187203654629010810}
+  - component: {fileID: 4159462212250329790}
   m_Layer: 0
   m_Name: Fog
   m_TagString: Untagged
@@ -177,7 +179,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b09e80bceb7a759499f4eab89172bcf6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BiomeFog
-  transitionDuration: 1.5
+  blendSpeed: 0.2
+--- !u!114 &4159462212250329790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3113337560978388492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e653e7a0e28be44985d744ea6497ee8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Runtime.Visual.BiomeAtmosphereController
+  player: {fileID: 0}
+  weatherRoot: {fileID: 0}
+  rainContainer: {fileID: 0}
+  dustContainer: {fileID: 0}
+  firefliesContainer: {fileID: 0}
 --- !u!1 &3272256485146023465
 GameObject:
   m_ObjectHideFlags: 0
@@ -310,7 +329,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0519714563d0c6a4bad1c22da3a3aa5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AdvancedWaterPlane
-  fadeSpeed: 1.5
+  world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+  followTarget: {fileID: 0}
+  waterRenderer: {fileID: 0}
+--- !u!1 &4530640731143628429
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5551819165624009912}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5551819165624009912
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4530640731143628429}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7284224207844058202}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5546970576752519005
 GameObject:
   m_ObjectHideFlags: 0

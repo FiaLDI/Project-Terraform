@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
+using Features.Biomes.UnityIntegration; // ← ДОБАВЛЕНО
 
 namespace Features.Buffs.UI
 {
@@ -22,18 +23,34 @@ namespace Features.Buffs.UI
 
         private void TryBind()
         {
-            var target = FindFirstObjectByType<PlayerBuffTarget>();
-            if (!target) return;
+            if (RuntimeWorldGenerator.PlayerInstance == null)
+                return;
 
-            buffSystem = target.GetComponent<BuffSystem>();
-            if (buffSystem == null) return;
+            var player = RuntimeWorldGenerator.PlayerInstance;
+
+            var bs = player.GetComponent<BuffSystem>();
+            if (bs == null || !bs.ServiceReady)
+                return;
+
+            Bind(bs);
+        }
+
+        // ================================
+        // BIND
+        // ================================
+        private void Bind(BuffSystem bs)
+        {
+            buffSystem = bs;
 
             buffSystem.OnBuffAdded += HandleAdd;
             buffSystem.OnBuffRemoved += HandleRemove;
 
-            // восстанавливаем уже активные баффы
-            foreach (var inst in buffSystem.Active)
-                HandleAdd(inst);
+            // уже активные баффы, если они есть
+            if (buffSystem.Active != null)
+            {
+                foreach (var inst in buffSystem.Active)
+                    HandleAdd(inst);
+            }
         }
 
         private void HandleAdd(BuffInstance inst)
@@ -43,7 +60,7 @@ namespace Features.Buffs.UI
             var ui = Instantiate(iconPrefab, container);
             ui.Bind(inst);
 
-            // добавляем TooltipTrigger
+            // Tooltip
             var trigger = ui.gameObject.AddComponent<BuffTooltipTrigger>();
             trigger.Bind(inst);
 

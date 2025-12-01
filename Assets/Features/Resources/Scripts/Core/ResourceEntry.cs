@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using Features.Biomes.Domain;
 public enum ResourceClusterType
 {
     Single,
