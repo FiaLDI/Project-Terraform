@@ -15,7 +15,6 @@ public class ResourceVisualizer : MonoBehaviour
     public static readonly List<(Vector3 pos, ResourceClusterType type)> resourcePositions 
         = new List<(Vector3 pos, ResourceClusterType type)>();
 
-
     private void OnDrawGizmos()
     {
         if (resourcePositions.Count == 0)

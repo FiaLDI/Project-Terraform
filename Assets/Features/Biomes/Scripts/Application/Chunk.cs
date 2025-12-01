@@ -230,13 +230,12 @@ public class Chunk
             return;
 
         var vertices = new NativeArray<float3>(vertCount, Allocator.TempJob);
-        Vector3 chunkOffset = new Vector3(coord.x * chunkSize, 0f, coord.y * chunkSize);
+        float3 chunkOffset = new float3(coord.x * chunkSize, 0f, coord.y * chunkSize);
 
         for (int i = 0; i < vertCount; i++)
         {
-            Vector3 v = vertsManaged[i];
-            Vector3 worldPos = v + chunkOffset;
-            vertices[i] = new float3(worldPos.x, worldPos.y, worldPos.z);
+            Vector3 v = vertsManaged[i]; // ЛОКАЛЬНАЯ вершина (0..chunkSize)
+            vertices[i] = new float3(v.x, v.y, v.z);
         }
 
         const int sampleStep = 4;
@@ -266,7 +265,8 @@ public class Chunk
             output       = spawnList.AsParallelWriter(),
             randomSeed   = (uint)(coord.x * 73856093 ^ coord.y * 19349663),
             sampleStep   = sampleStep,
-            vertsPerLine = resolution + 1
+            vertsPerLine = resolution + 1,
+            chunkOffset  = chunkOffset
         };
 
         JobHandle handle = job.Schedule(vertCount, 64);

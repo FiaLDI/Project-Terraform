@@ -66,31 +66,17 @@ namespace Features.Biomes.UnityIntegration
             return hmap;
         }
 
+        // вместо старого SampleHeightBlended
         private static float SampleHeightBlended(WorldConfig world, float wx, float wz)
         {
-            var blends = world.GetBiomeBlend(new Vector3(wx, 0, wz));
-            if (blends == null || blends.Length == 0)
+            // берём биом так же, как для материала чанка
+            var biome = world.GetBiomeAtWorldPos(new Vector3(wx, 0, wz));
+            if (biome == null)
                 return 0f;
 
-            float sum = 0f;
-            float wsum = 0f;
-
-            foreach (var b in blends)
-            {
-                if (b.biome == null) continue;
-
-                float w = b.weight;
-                if (w <= 0f || !float.IsFinite(w)) continue;
-
-                float h = BiomeHeightUtility.GetHeight(b.biome, wx, wz);
-                if (!float.IsFinite(h)) continue;
-
-                sum  += h * w;
-                wsum += w;
-            }
-
-            return (wsum > 0f) ? sum / wsum : 0f;
+            return BiomeHeightUtility.GetHeight(biome, wx, wz);
         }
+
 
         // =====================================================================
         // 2) DOWNSAMPLE

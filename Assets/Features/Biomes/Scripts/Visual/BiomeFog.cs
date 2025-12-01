@@ -4,7 +4,7 @@ using Features.Biomes.UnityIntegration;
 
 namespace Features.Biomes.Runtime.Visual
 {
-    [DefaultExecutionOrder(50)] // Fog раньше UI
+    [DefaultExecutionOrder(50)]
     public class BiomeFog : MonoBehaviour
     {
         [Range(0.0f, 2.0f)]
@@ -28,7 +28,6 @@ namespace Features.Biomes.Runtime.Visual
 
             RenderSettings.fog = true;
 
-            // начальная инициализация
             fogColor   = RenderSettings.fogColor;
             fogDensity = RenderSettings.fogDensity;
             fogStart   = RenderSettings.fogStartDistance;
@@ -48,7 +47,6 @@ namespace Features.Biomes.Runtime.Visual
             if (blends == null || blends.Length == 0)
                 return;
 
-            // главный биом = самый сильный weight
             BiomeConfig biome = blends[0].biome;
             float weight = blends[0].weight;
 
@@ -57,7 +55,6 @@ namespace Features.Biomes.Runtime.Visual
 
             RenderSettings.fog = true;
 
-            // целевые значения
             Color  tColor   = biome.fogColor;
             float  tDensity = biome.fogDensity * weight;
             float  tStart   = biome.fogLinearStart;
@@ -70,7 +67,6 @@ namespace Features.Biomes.Runtime.Visual
             fogStart   = Mathf.Lerp(fogStart, tStart, t);
             fogEnd     = Mathf.Lerp(fogEnd, tEnd, t);
 
-            // применяем финальные значения
             RenderSettings.fogColor         = fogColor;
             RenderSettings.fogDensity       = fogDensity;
             RenderSettings.fogStartDistance = fogStart;
