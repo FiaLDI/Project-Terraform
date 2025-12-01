@@ -1,5 +1,6 @@
 using UnityEngine;
 using Features.Biomes.Domain;
+
 public class BiomeController : MonoBehaviour
 {
     public WorldConfig world;
