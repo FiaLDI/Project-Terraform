@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Red Desert
   m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
   biomeName: 
-  mapColor: {r: 1, g: 1, b: 1, a: 1}
+  mapColor: {r: 1, g: 0, b: 0, a: 1}
   isGenerate: 1
   useLowPoly: 1
-  terrainType: 2
+  terrainType: 4
   textureTiling: 3
   groundMaterial: {fileID: 2100000, guid: 692d2bd798c06364fb48e609ab56bc9a, type: 2}
   terrainScale: 1
-  heightMultiplier: 1
+  heightMultiplier: 10
   fractalOctaves: 3
   fractalPersistence: 1
   fractalLacunarity: 2.29
