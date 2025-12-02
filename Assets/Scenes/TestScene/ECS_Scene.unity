@@ -149,8 +149,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerAuthoring
   EnemyPrefab: {fileID: 5886046190554101884, guid: 7d4309ef596f6024a8f1e1f513f1e71e, type: 3}
-  Count: 3403
-  Radius: 125.5
+  Count: 15331
+  Radius: 124.8
 --- !u!4 &959747368
 Transform:
   m_ObjectHideFlags: 0
