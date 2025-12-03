@@ -6924,7 +6924,6 @@ GameObject:
   - component: {fileID: 5317785943666993004}
   - component: {fileID: 5378648646771462602}
   - component: {fileID: 8288522546826159422}
-  - component: {fileID: 8617315626693463952}
   - component: {fileID: 2902122526011650924}
   - component: {fileID: 7640833787225455698}
   - component: {fileID: 7584912983401593739}
@@ -6934,6 +6933,9 @@ GameObject:
   - component: {fileID: 8876648923045464215}
   - component: {fileID: 4645391566659564386}
   - component: {fileID: 3628320967526121916}
+  - component: {fileID: 6637292959054270540}
+  - component: {fileID: 5794585894674423641}
+  - component: {fileID: 4079254263345519049}
   m_Layer: 8
   m_Name: Tech
   m_TagString: Player
@@ -7275,19 +7277,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerEnergy
   baseMaxEnergy: 100
   baseRegenPerSecond: 8
---- !u!114 &8617315626693463952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3004063548674256600}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eaf5538aa3b968242a392396d3b8eb41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClassManager
-  startingClass: {fileID: 11400000, guid: a2ee4ad21d9f04141b72a76908735b12, type: 2}
 --- !u!114 &2902122526011650924
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7429,6 +7418,46 @@ MonoBehaviour:
   world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
   checkInterval: 0.25
   biomeChangeCooldown: 1.5
+--- !u!114 &6637292959054270540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2ddaa5341eaa684babdedfb57e4a634, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerClassController
+  library: {fileID: 11400000, guid: 7cf9dd02606876848acd0bb963f6a0a5, type: 2}
+  defaultClassId: 0
+--- !u!114 &5794585894674423641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b706845393a372f41839ab4b6ab29ac3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
+  baseDamageMultiplier: 1
+--- !u!114 &4079254263345519049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 404e3da75d6e9a74186445094da9f8a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.UnityIntegration.PassiveSystem
+  equipped: []
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0
@@ -9801,7 +9830,6 @@ MonoBehaviour:
   - {fileID: 4629385492624779421}
   - {fileID: 4678140430173553158}
   caster: {fileID: 2902122526011650924}
-  classManager: {fileID: 8617315626693463952}
 --- !u!1 &3835414610895982877
 GameObject:
   m_ObjectHideFlags: 0

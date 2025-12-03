@@ -50,4 +50,16 @@ public class PlayerMovementStats : MonoBehaviour
         bonusSpeed -= v;
         if (bonusSpeed < 0) bonusSpeed = 0;
     }
+
+    public void SetBaseSpeed(float amount) {
+        baseSpeed = amount;
+    }
+
+    public void SetSprint(float amount) {
+        sprintSpeed = amount;
+    }
+
+    public void SetCrouch(float amount) {
+        crouchSpeed = amount;
+    }
 }

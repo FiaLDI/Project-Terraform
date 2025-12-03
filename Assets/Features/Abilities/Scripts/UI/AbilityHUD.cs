@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Features.Abilities.Domain;
-using Features.Abilities.UnityIntegration;
 
 namespace Features.Abilities.UI
 {
@@ -19,46 +18,37 @@ namespace Features.Abilities.UI
         public Image channelFill;
 
         private AbilityCaster caster;
-        private ClassManager classManager;
-
         private AbilitySO _currentChannelAbility;
 
         private void Awake()
         {
-            caster = FindFirstObjectByType<AbilityCaster>();
-            classManager = FindFirstObjectByType<ClassManager>();
+            caster = FindAnyObjectByType<AbilityCaster>();
 
             if (!caster)
                 Debug.LogError("AbilityHUD: AbilityCaster not found");
-
-            if (!classManager)
-                Debug.LogError("AbilityHUD: ClassManager not found");
         }
 
         private void Start()
         {
-            // === ENERGY ===
+            // ENERGY UI
             if (energy != null)
                 energy.OnEnergyChanged += UpdateEnergyView;
 
-            // === CASTER EVENTS ===
+            // CASTER EVENTS
             if (caster != null)
             {
                 caster.OnChannelStarted += HandleChannelStarted;
                 caster.OnChannelProgress += HandleChannelProgress;
                 caster.OnChannelCompleted += HandleChannelCompleted;
                 caster.OnChannelInterrupted += HandleChannelInterrupted;
+
+                caster.OnAbilitiesChanged += RebindAbilities;
             }
 
             if (channelRoot != null)
                 channelRoot.SetActive(false);
 
-            // === CLASS CHANGES ===
-            if (classManager != null)
-            {
-                classManager.OnAbilitiesChanged += RebindAbilities;
-                RebindAbilities();   // первый раз
-            }
+            RebindAbilities();
         }
 
         private void OnDestroy()
@@ -72,33 +62,28 @@ namespace Features.Abilities.UI
                 caster.OnChannelProgress -= HandleChannelProgress;
                 caster.OnChannelCompleted -= HandleChannelCompleted;
                 caster.OnChannelInterrupted -= HandleChannelInterrupted;
-            }
 
-            if (classManager != null)
-                classManager.OnAbilitiesChanged -= RebindAbilities;
+                caster.OnAbilitiesChanged -= RebindAbilities;
+            }
         }
 
         // =====================================================================
-        // REBIND ALL ABILITIES (AFTER CLASS CHANGE)
+        // ABILITIES UI
         // =====================================================================
         private void RebindAbilities()
         {
-            if (caster == null || classManager == null || slots == null)
+            if (caster == null || caster.abilities == null || slots == null)
                 return;
-
-            var active = classManager.ActiveAbilities;
 
             for (int i = 0; i < slots.Length; i++)
             {
-                var ability = (i < active.Length ? active[i] : null);
+                var ability = i < caster.abilities.Length ? caster.abilities[i] : null;
                 slots[i].Bind(ability, caster, i);
             }
-
-            Debug.Log("[AbilityHUD] RebindAbilities() — updated from ClassManager");
         }
 
         // =====================================================================
-        // ENERGY
+        // ENERGY UI
         // =====================================================================
         private void UpdateEnergyView(float current, float max)
         {

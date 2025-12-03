@@ -25,4 +25,9 @@ public class PlayerCombat : MonoBehaviour
         BonusDamage -= amount;
         if (BonusDamage < 0f) BonusDamage = 0f;
     }
+
+    public void SetBaseDamage(float amount)
+    {
+        baseDamageMultiplier = amount;
+    }
 }

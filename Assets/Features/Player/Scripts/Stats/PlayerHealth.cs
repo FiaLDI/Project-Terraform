@@ -72,4 +72,12 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         return shield;
     }
+
+    public void SetMaxHp(float hp) {
+        maxHp = hp;
+    }
+
+    public void SetShield(float inputshield) {
+        shield = inputshield;
+    }
 }

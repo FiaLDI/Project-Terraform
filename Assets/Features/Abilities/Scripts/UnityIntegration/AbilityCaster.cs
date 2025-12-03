@@ -1,5 +1,5 @@
-using UnityEngine;
 using System;
+using UnityEngine;
 using Features.Abilities.Domain;
 using Features.Abilities.Application;
 using Features.Abilities.UnityIntegration;
@@ -16,25 +16,23 @@ public class AbilityCaster : MonoBehaviour
     public AbilityExecutor executor;
 
     private AbilityService service;
-    private ClassManager classManager;
 
+    // EVENTS
     public event Action<AbilitySO> OnAbilityCast;
     public event Action<AbilitySO, float, float> OnCooldownChanged;
     public event Action<AbilitySO> OnChannelStarted;
     public event Action<AbilitySO, float, float> OnChannelProgress;
     public event Action<AbilitySO> OnChannelCompleted;
     public event Action<AbilitySO> OnChannelInterrupted;
+    public event Action OnAbilitiesChanged;
 
     private void Awake()
     {
         if (energy == null)
             energy = GetComponent<PlayerEnergy>();
 
-        classManager = FindAnyObjectByType<ClassManager>();
-
         AutoDetectCamera();
 
-        // пока executor может быть null — это норм
         executor = AbilityExecutor.I;
 
         service = new AbilityService(
@@ -45,7 +43,6 @@ public class AbilityCaster : MonoBehaviour
             executor: executor
         );
 
-        // events
         service.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
         service.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
         service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
@@ -54,24 +51,8 @@ public class AbilityCaster : MonoBehaviour
         service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
     }
 
-    private void Start()
-    {
-        if (classManager != null)
-        {
-            classManager.OnAbilitiesChanged += UpdateAbilities;
-            UpdateAbilities();
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (classManager != null)
-            classManager.OnAbilitiesChanged -= UpdateAbilities;
-    }
-
     private void LateUpdate()
     {
-        // главное: если Executor появился после игрока — подцепляем
         if (executor == null && AbilityExecutor.I != null)
         {
             executor = AbilityExecutor.I;
@@ -103,17 +84,29 @@ public class AbilityCaster : MonoBehaviour
         aimCamera = Camera.main;
     }
 
-    private void UpdateAbilities()
+    // 🔥 Новый основной метод
+    public void SetAbilities(AbilitySO[] newAbilities)
     {
-        if (classManager == null || classManager.ActiveAbilities == null) return;
+        if (newAbilities == null)
+        {
+            for (int i = 0; i < abilities.Length; i++)
+                abilities[i] = null;
+        }
+        else
+        {
+            for (int i = 0; i < abilities.Length; i++)
+                abilities[i] = i < newAbilities.Length ? newAbilities[i] : null;
+        }
 
-        for (int i = 0; i < 5; i++)
-            abilities[i] = classManager.ActiveAbilities[i];
+        OnAbilitiesChanged?.Invoke();
     }
+
+    // ---------------------------------------------------------------------
 
     public void TryCast(int index)
     {
         if (index < 0 || index >= abilities.Length) return;
+
         var ab = abilities[index];
         if (ab == null) return;
 

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99765ebccd44b9045b8a57a3d08f8918, type: 3}
+  m_Name: Tech
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Classes.Data.PlayerClassConfigSO
+  id: 0
+  displayName: Tech
+  description: 
+  baseHp: 120
+  baseShield: 0
+  baseMaxEnergy: 100
+  baseEnergyRegen: 8
+  baseDamageMultiplier: 1
+  baseMoveSpeed: 5
+  sprintSpeed: 8
+  crouchSpeed: 1.5
+  miningMultiplier: 1
+  passives:
+  - {fileID: 11400000, guid: e497cbe8c9ed9ab42a224730970ee31f, type: 2}
+  - {fileID: 11400000, guid: 46d2df12eb2d6e745aa306b4d2a19b6a, type: 2}
+  - {fileID: 11400000, guid: 40c171f4028e3914f906158433749fe8, type: 2}
+  abilities:
+  - {fileID: 11400000, guid: cd3d053f16cd1754cab26de7a5fd1801, type: 2}
+  - {fileID: 11400000, guid: 00dc3ae3775acae4b850ce8abecd76c8, type: 2}
+  - {fileID: 11400000, guid: 4538c64d06fd4ba4da4265c9dd516bac, type: 2}
+  - {fileID: 11400000, guid: dcfad4cced3d5674ebd56387576f2ca7, type: 2}
+  - {fileID: 11400000, guid: 716f1ca509d1bfb40ac40122c46cac1e, type: 2}
