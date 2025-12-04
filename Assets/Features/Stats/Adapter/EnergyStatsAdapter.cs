@@ -1,45 +1,48 @@
-using Features.Energy.Domain;
-using Features.Stats.Domain;
 using UnityEngine;
+using Features.Stats.Domain;
 
 namespace Features.Stats.Adapter
 {
-    public class EnergyStatsAdapter : MonoBehaviour, IEnergy, IEnergyCostModifier
+    /// <summary>
+    /// Адаптер, превращающий IEnergyStats → IEnergyView для UI/HUD.
+    /// AbilityCaster и AbilityService НЕ используют этот класс.
+    /// </summary>
+    public class EnergyStatsAdapter : MonoBehaviour, IEnergyView
     {
         private IEnergyStats _stats;
 
-        public float CurrentEnergy => _stats.CurrentEnergy;
-        public float MaxEnergy => _stats.MaxEnergy;
-        public float Regen => _stats.Regen;
+        public float MaxEnergy => _stats?.MaxEnergy ?? 0f;
+        public float CurrentEnergy => _stats?.CurrentEnergy ?? 0f;
+        public float Regen => _stats?.Regen ?? 0f;
+
+        public float CostMultiplier =>
+            _stats != null ? _stats.CostMultiplier : 1f;
 
         public event System.Action<float, float> OnEnergyChanged;
 
         public void Init(IEnergyStats stats)
         {
+            if (_stats != null)
+                _stats.OnEnergyChanged -= HandleChanged;
+
             _stats = stats;
 
-            _stats.OnEnergyChanged += (cur, max) =>
+            if (_stats != null)
             {
-                OnEnergyChanged?.Invoke(cur, max);
-            };
-
-            OnEnergyChanged?.Invoke(_stats.CurrentEnergy, _stats.MaxEnergy);
+                _stats.OnEnergyChanged += HandleChanged;
+                HandleChanged(_stats.CurrentEnergy, _stats.MaxEnergy);
+            }
         }
 
-        // --------------------------
-        // Новый метод для костов
-        // --------------------------
-        public float ModifyCost(float baseCost)
+        private void HandleChanged(float cur, float max)
         {
-            return baseCost * (_stats as EnergyStats).CostMultiplier;
+            OnEnergyChanged?.Invoke(cur, max);
         }
 
-        public bool HasEnergy(float amount) => _stats.HasEnergy(amount);
-
-        public bool TrySpend(float amount)
+        private void OnDestroy()
         {
-            bool ok = _stats.TrySpend(amount);
-            return ok;
+            if (_stats != null)
+                _stats.OnEnergyChanged -= HandleChanged;
         }
     }
 }

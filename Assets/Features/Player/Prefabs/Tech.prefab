@@ -2956,7 +2956,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -200, y: 0}
+  m_AnchoredPosition: {x: -215, y: 207}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1070144219797147125
@@ -7070,6 +7070,7 @@ GameObject:
   - component: {fileID: 4079254263345519049}
   - component: {fileID: 6880523723762496354}
   - component: {fileID: 139148081018008215}
+  - component: {fileID: 7885062789697620343}
   m_Layer: 8
   m_Name: Tech
   m_TagString: Player
@@ -7141,8 +7142,6 @@ MonoBehaviour:
   abilityCaster: {fileID: 2902122526011650924}
   energyUI: {fileID: 6683157767188208734}
   hpUI: {fileID: 373714237610234219}
-  energyAdapter: {fileID: 0}
-  healthAdapter: {fileID: 0}
 --- !u!114 &4984043908315376758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7555,6 +7554,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.PlayerStats
   preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
+--- !u!114 &7885062789697620343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eefe9874e88c6b54fb5f77e2a929969c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsUpdateSystem
+  statsAdapter: {fileID: 0}
+  useUnscaledTime: 0
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0

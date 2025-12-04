@@ -54,6 +54,16 @@ namespace Features.Stats.Domain
         void ApplyMaxHpBuff(BuffSO config, bool apply);
     }
 
+    public interface IHealthStatReceiver
+    {
+        /// <summary>
+        /// Применяет или снимает баффы, влияющие на HP, MaxHP, Regeneration.
+        /// </summary>
+        /// <param name="cfg">Конфиг баффа</param>
+        /// <param name="apply">true = применить, false = снять</param>
+        void ApplyHealthBuff(BuffSO cfg, bool apply);
+    }
+
     // =============================
     //       TURRET
     // =============================

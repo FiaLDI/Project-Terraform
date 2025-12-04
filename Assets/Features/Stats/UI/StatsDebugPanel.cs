@@ -5,50 +5,65 @@ using Features.Stats.UnityIntegration;
 
 public class StatsDebugPanel : MonoBehaviour
 {
-    public StatsFacadeAdapter adapter;
     public TextMeshProUGUI label;
 
-    private void Awake()
-    {
-        TryFindAdapters();
-    }
+    private StatsFacadeAdapter adapter;
 
     private void Update()
     {
-        // если адаптера нет — пробуем снова
+        // Если адаптера нет — пробуем найти через PlayerRegistry
+        if (adapter == null)
+            TryFindAdapter();
+
         if (adapter == null)
         {
-            TryFindAdapters();
-            if (adapter == null)
-            {
-                label.text =
-                    $"HP: <color=red>NO ADAPTER</color>\n" +
-                    $"Energy: <color=red>NO ADAPTER</color>\n" +
-                    $"DMG: <color=red>NO ADAPTER</color>\n" +
-                    $"Movement: <color=red>NO ADAPTER</color>\n" +
-                    $"Mining: <color=red>NO ADAPTER</color>\n";
-                return;
-            }
+            label.text =
+                "<color=red>NO PLAYER STATS</color>";
+            return;
         }
 
-        var hp = adapter.HealthStats;
-        var energy = adapter.EnergyStats;
-        var combat = adapter.CombatStats;
-        var movement = adapter.MovementStats;
-        var mining = adapter.MiningStats;
+        var hp      = adapter.HealthStats;
+        var energy  = adapter.EnergyStats;
+        var combat  = adapter.CombatStats;
+        var move    = adapter.MovementStats;
+        var mining  = adapter.MiningStats;
 
         label.text =
-            $"HP: {(hp != null ? $"{hp.CurrentHp}/{hp.MaxHp}" : "<color=red>NO</color>")}\n" +
-            $"Energy: {(energy != null ? $"{energy.CurrentEnergy}/{energy.MaxEnergy}" : "<color=red>NO</color>")}\n" +
-            $"DMG: {(combat != null ? combat.DamageMultiplier.ToString("0.00") : "<color=red>NO</color>")}\n" +
-            $"Movement: {(movement != null ? movement.BaseSpeed.ToString("0.00") : "<color=red>NO</color>")}\n" +
-            $"Mining: {(mining != null ? mining.MiningPower.ToString("0.00") : "<color=red>NO</color>")}\n";
+$@"=== PLAYER STATS DEBUG ===
+
+<color=#FFD090>HEALTH</color>
+HP: {(hp != null ? $"{hp.CurrentHp:0}/{hp.MaxHp:0}" : "NO")}
+Regen: {(hp != null ? $"{hp.Regen:0.0}" : "NO")}
+
+<color=#90E0FF>ENERGY</color>
+Energy: {(energy != null ? $"{energy.CurrentEnergy:0}/{energy.MaxEnergy:0}" : "NO")}
+Regen: {(energy != null ? $"{energy.Regen:0.0}" : "NO")}
+Cost Mult: {(energy != null ? $"x{energy.CostMultiplier:0.00}" : "NO")}
+
+<color=#FFB060>COMBAT</color>
+Damage Mult: {(combat != null ? $"x{combat.DamageMultiplier:0.00}" : "NO")}
+
+<color=#A0FF90>MOVEMENT</color>
+BaseSpeed: {(move != null ? $"{move.BaseSpeed:0.00}" : "NO")}
+WalkSpeed: {(move != null ? $"{move.WalkSpeed:0.00}" : "NO")}
+SprintSpeed: {(move != null ? $"{move.SprintSpeed:0.00}" : "NO")}
+CrouchSpeed: {(move != null ? $"{move.CrouchSpeed:0.00}" : "NO")}
+
+<color=#E0FF80>MINING</color>
+Power: {(mining != null ? $"{mining.MiningPower:0.00}" : "NO")}
+";
     }
 
-    private void TryFindAdapters()
+    private void TryFindAdapter()
     {
-        if (adapter != null) return;
+        // Через PlayerRegistry (лучший способ)
+        if (PlayerRegistry.Instance != null)
+        {
+            adapter = PlayerRegistry.Instance.LocalAdapter;
+            if (adapter != null) return;
+        }
 
+        // Фоллбэк — поиск PlayerStats на сцене
         var player = FindAnyObjectByType<PlayerStats>();
         if (player != null)
             adapter = player.GetFacadeAdapter();

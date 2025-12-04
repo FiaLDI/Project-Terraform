@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Features.Energy.Domain;
+using Features.Stats.Domain;
 
 public class EnergyBarUI : MonoBehaviour
 {
@@ -12,26 +12,8 @@ public class EnergyBarUI : MonoBehaviour
     [Header("Smooth")]
     [SerializeField] private float smoothSpeed = 10f;
 
-    private IEnergy energy;
+    private IEnergyView energy;
     private float targetFill = 1f;
-
-    private void Start()
-    {
-        if (energy == null)
-        {
-            energy = GetComponentInParent<IEnergy>();
-
-            if (energy != null)
-            {
-                energy.OnEnergyChanged += UpdateView;
-                UpdateView(energy.CurrentEnergy, energy.MaxEnergy);
-            }
-            else
-            {
-                Debug.LogWarning("EnergyBarUI: IEnergy not found!", this);
-            }
-        }
-    }
 
     private void OnDestroy()
     {
@@ -39,8 +21,7 @@ public class EnergyBarUI : MonoBehaviour
             energy.OnEnergyChanged -= UpdateView;
     }
 
-    // PUBLIC API
-    public void Bind(IEnergy e)
+    public void Bind(IEnergyView e)
     {
         if (energy != null)
             energy.OnEnergyChanged -= UpdateView;
@@ -52,11 +33,15 @@ public class EnergyBarUI : MonoBehaviour
             energy.OnEnergyChanged += UpdateView;
             UpdateView(energy.CurrentEnergy, energy.MaxEnergy);
         }
+        else
+        {
+            Debug.LogWarning("[EnergyBarUI] Bind() received null reference!");
+        }
     }
 
     private void UpdateView(float current, float max)
     {
-        targetFill = max > 0 ? current / max : 0f;
+        targetFill = (max > 0) ? current / max : 0f;
 
         if (label != null)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";

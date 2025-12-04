@@ -4,13 +4,14 @@ using Features.Combat.Domain;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
-using Features.Buffs.Domain;
 
 namespace Features.Combat.Devices
 {
     public class TurretBehaviour : MonoBehaviour, IDamageable, IBuffTarget
     {
-        // IBuffTarget
+        // -------------------------------------
+        //   IBuffTarget
+        // -------------------------------------
         public Transform Transform => transform;
         public GameObject GameObject => gameObject;
         public BuffSystem BuffSystem => buffSystem;
@@ -19,14 +20,19 @@ namespace Features.Combat.Devices
         private BuffSystem buffSystem;
         private Transform player;
 
-        // Base stats
+        // -------------------------------------
+        //   BASE STATS
+        // -------------------------------------
         [Header("Base Stats")]
         public float baseDamagePerSecond = 4f;
         public float baseRange = 15f;
         public float lifetime = 25f;
         public int baseHp = 150;
 
-        // multipliers
+        // runtime
+        private float currentHp;
+
+        // multipliers from buffs
         [HideInInspector] public float damageMultiplier = 1f;
         [HideInInspector] public float fireRateMultiplier = 1f;
         [HideInInspector] public float rotationSpeedMultiplier = 1f;
@@ -45,34 +51,38 @@ namespace Features.Combat.Devices
         public Color laserColor = Color.red;
         public float laserWidth = 0.04f;
 
-        private float currentHp;
         private float fireTimer;
         private float retargetTimer;
         private Transform target;
         private float sphereHeight = 0.8f;
 
-        // ==========================
-        // INIT (CALL FROM ABILITY)
-        // ==========================
+        // ============================================
+        // INIT (CALLED BY ABILITY)
+        // ============================================
         public void Init(GameObject owner, int hp, float dps, float range, float life)
         {
             var globals = GlobalBuffRegistryAdapter.I;
-
             float hpBonusPercent = globals?.GetValue("turret_hp") ?? 0f;
 
             baseHp = Mathf.RoundToInt(hp * (1f + hpBonusPercent / 100f));
             baseDamagePerSecond = dps;
             baseRange = range;
             lifetime = life;
+
+            // OPTIONAL — можно привязать owner BuffSystem
+            if (owner.TryGetComponent<BuffSystem>(out var ownerBuffs))
+            {
+                // например, turret может наследовать пассивные баффы игрока
+                // но оставляем это опционально
+            }
         }
 
-        // ==========================
+        // ============================================
         // UNITY
-        // ==========================
+        // ============================================
         private void Awake()
         {
             buffSystem = GetComponent<BuffSystem>();
-
             if (buffSystem == null)
                 Debug.LogWarning($"[Turret] No BuffSystem found on {name}");
 
@@ -83,6 +93,7 @@ namespace Features.Combat.Devices
         {
             Buffs = buffSystem?.GetServiceSafe();
 
+            // Apply global HP multipliers
             var globals = GlobalBuffRegistryAdapter.I;
             float hpBonusPercent = globals?.GetValue("turret_hp") ?? 0f;
 
@@ -93,20 +104,28 @@ namespace Features.Combat.Devices
             StartCoroutine(LifeTimer());
         }
 
+        // ============================================
+        // PLAYER TRACKING
+        // ============================================
         private void TryFindPlayer()
         {
-            if (PlayerPositionStore.Player != null)
+            // 🔥 NEW: use PlayerRegistry
+            var localPlayer = PlayerRegistry.Instance.LocalPlayer;
+            if (localPlayer != null)
             {
-                player = PlayerPositionStore.Player;
+                player = localPlayer.transform;
                 return;
             }
 
-            var p = FindAnyObjectByType<PlayerController>();
-            if (p != null)
-                player = p.transform;
+            // fallback
+            var pc = FindAnyObjectByType<PlayerController>();
+            if (pc != null)
+                player = pc.transform;
         }
 
-        // Laser + lifetime
+        // ============================================
+        // LASER + LIFETIME
+        // ============================================
         private void SetupLaser()
         {
             if (!laser) return;
@@ -133,9 +152,9 @@ namespace Features.Combat.Devices
             TickCombat();
         }
 
-        // ==========================
+        // ============================================
         // BUFF MULTIPLIERS
-        // ==========================
+        // ============================================
         private void ApplyBuffMultipliers()
         {
             damageMultiplier = 1f;
@@ -175,9 +194,9 @@ namespace Features.Combat.Devices
                 stat *= cfg.value;
         }
 
-        // ==========================
+        // ============================================
         // COMBAT
-        // ==========================
+        // ============================================
         private void TickCombat()
         {
             retargetTimer -= Time.deltaTime;
@@ -273,11 +292,14 @@ namespace Features.Combat.Devices
                 laser.enabled = false;
         }
 
-        // HP
+        // ============================================
+        // HP SYSTEM
+        // ============================================
         public void TakeDamage(float amount, DamageType type)
         {
             currentHp -= amount;
-            if (currentHp <= 0f) Destroy(gameObject);
+            if (currentHp <= 0f)
+                Destroy(gameObject);
         }
 
         public void Heal(float amount)

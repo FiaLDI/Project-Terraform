@@ -1,153 +1,152 @@
 using System;
 using Features.Buffs.Domain;
-using UnityEngine;   // для Mathf.Clamp
 
 namespace Features.Stats.Domain
 {
     public class EnergyStats : IEnergyStats
     {
-        public float MaxEnergy { get; private set; }
-        public float CurrentEnergy { get; private set; }
-        public float Regen { get; private set; }
+        // -------------------------
+        // BASE VALUES
+        // -------------------------
+        private float _baseMax;
+        private float _baseRegen;
 
-        // коэффициент стоимости (1 = базовая, 0.8 = -20% cost, 1.2 = +20% cost)
-        private float _costMult = 1f;
+        // +ADD / *MULT bonus values
+        private float _maxAdd = 0f;
+        private float _maxMult = 1f;
+
+        private float _regenAdd = 0f;
+        private float _regenMult = 1f;
+
+        private float _costMult = 1f; // 1 = normal
+
+        // -------------------------
+        // FINAL VALUES
+        // -------------------------
+        public float MaxEnergy => Math.Max(1f, (_baseMax + _maxAdd) * _maxMult);
+        public float Regen     => Math.Max(0f, (_baseRegen + _regenAdd) * _regenMult);
+
+        public float CurrentEnergy { get; private set; }
         public float CostMultiplier => _costMult;
 
         public event Action<float, float> OnEnergyChanged;
 
-        // ------------------------------------------
-        // BASE
-        // ------------------------------------------
+        // -------------------------
+        // APPLY BASE
+        // -------------------------
         public void ApplyBase(float max, float regen)
         {
-            MaxEnergy = max;
-            Regen = regen;
-            CurrentEnergy = MaxEnergy;
-            _costMult = 1f; // по умолчанию без модификаторов
+            _baseMax = max;
+            _baseRegen = regen;
 
-            OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
+            // Обновляем current без потери
+            CurrentEnergy = Math.Clamp(CurrentEnergy, 0, MaxEnergy);
+
+            Notify();
         }
 
-        // ------------------------------------------
+        // -------------------------
         // BUFFS
-        // ------------------------------------------
+        // -------------------------
         public void ApplyBuff(BuffSO cfg, bool apply)
         {
-            if (cfg == null) return;
-
-            float sign = apply ? 1f : -1f;
+            float s = apply ? 1f : -1f;
 
             switch (cfg.stat)
             {
                 case BuffStat.PlayerMaxEnergy:
-                    ApplyMaxEnergyBuff(cfg, sign);
+                    ApplyMaxBuff(cfg, s);
                     break;
 
                 case BuffStat.PlayerEnergyRegen:
-                    ApplyRegenBuff(cfg, sign);
+                    ApplyRegenBuff(cfg, s);
                     break;
 
                 case BuffStat.PlayerEnergyCostReduction:
-                    ApplyCostBuff(cfg, sign);
+                    ApplyCostBuff(cfg, s);
                     break;
             }
 
-            CurrentEnergy = Mathf.Clamp(CurrentEnergy, 0, MaxEnergy);
-            OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
+            CurrentEnergy = Math.Clamp(CurrentEnergy, 0f, MaxEnergy);
+            Notify();
         }
 
-        private void ApplyMaxEnergyBuff(BuffSO cfg, float sign)
+        private void ApplyMaxBuff(BuffSO cfg, float s)
         {
             switch (cfg.modType)
             {
                 case BuffModType.Add:
-                    MaxEnergy += cfg.value * sign;
+                    _maxAdd += cfg.value * s;
                     break;
 
                 case BuffModType.Mult:
-                    if (sign > 0) MaxEnergy *= cfg.value;
-                    else MaxEnergy /= cfg.value;
-                    break;
-
-                case BuffModType.Set:
-                    if (sign > 0) MaxEnergy = cfg.value;
-                    // при снятии Set откатывать не будем (обычно не надо),
-                    // при необходимости — можно держать базу отдельно.
+                    _maxMult = s > 0 ? _maxMult * cfg.value : _maxMult / cfg.value;
                     break;
             }
         }
 
-        private void ApplyRegenBuff(BuffSO cfg, float sign)
+        private void ApplyRegenBuff(BuffSO cfg, float s)
         {
             switch (cfg.modType)
             {
                 case BuffModType.Add:
-                    Regen += cfg.value * sign;
+                    _regenAdd += cfg.value * s;
                     break;
 
                 case BuffModType.Mult:
-                    if (sign > 0) Regen *= cfg.value;
-                    else Regen /= cfg.value;
+                    _regenMult = s > 0 ? _regenMult * cfg.value : _regenMult / cfg.value;
                     break;
 
                 case BuffModType.Set:
-                    if (sign > 0) Regen = cfg.value;
+                    if (s > 0) _baseRegen = cfg.value;
                     break;
             }
         }
 
-        private void ApplyCostBuff(BuffSO cfg, float sign)
+        private void ApplyCostBuff(BuffSO cfg, float s)
         {
             switch (cfg.modType)
             {
                 case BuffModType.Add:
-                    // Add — всегда процент -> value = 0.2 = +20%, value = -0.2 = -20%
-                    _costMult += cfg.value * sign;
+                    _costMult += cfg.value * s;
                     break;
 
                 case BuffModType.Mult:
-                    if (sign > 0) 
-                        _costMult *= cfg.value;   // value < 1  → уменьшение стоимости
-                    else 
-                        _costMult /= cfg.value;
+                    _costMult = s > 0 ? _costMult * cfg.value : _costMult / cfg.value;
                     break;
 
                 case BuffModType.Set:
-                    if (sign > 0) _costMult = cfg.value;
+                    if (s > 0) _costMult = cfg.value;
                     else _costMult = 1f;
                     break;
             }
 
-            // Clamp чтобы не улететь
-            _costMult = Mathf.Clamp(_costMult, 0.1f, 10f);
+            _costMult = Math.Clamp(_costMult, 0.1f, 10f);
         }
 
-
-        // ------------------------------------------
-        // SPEND / CHECK / RECOVER
-        // ------------------------------------------
+        // -------------------------
+        // ENERGY ACTIONS
+        // -------------------------
         public bool HasEnergy(float amount) => CurrentEnergy >= amount;
 
         public bool TrySpend(float amount)
         {
-            if (!HasEnergy(amount)) return false;
+            if (CurrentEnergy < amount) return false;
 
             CurrentEnergy -= amount;
-            OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
+            Notify();
             return true;
         }
 
         public void Recover(float amount)
         {
-            if (amount <= 0f) return;
+            if (amount <= 0) return;
 
-            float newValue = Math.Clamp(CurrentEnergy + amount, 0, MaxEnergy);
-            if (!Mathf.Approximately(newValue, CurrentEnergy))
-            {
-                CurrentEnergy = newValue;
-                OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
-            }
+            CurrentEnergy = Math.Clamp(CurrentEnergy + amount, 0, MaxEnergy);
+            Notify();
         }
+
+        private void Notify() =>
+            OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
     }
 }

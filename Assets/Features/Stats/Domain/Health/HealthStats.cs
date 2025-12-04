@@ -11,6 +11,10 @@ namespace Features.Stats.Domain
         private float _baseHp;
         private float _baseShield;
 
+        // Natural regeneration
+        private float _regen = 0f;
+        public float Regen => _regen;
+
         // ============================
         // BUFF MODIFIERS
         // ============================
@@ -19,6 +23,9 @@ namespace Features.Stats.Domain
 
         private float _shieldAdd = 0f;
         private float _shieldMult = 1f;
+
+        private float _regenAdd = 0f;
+        private float _regenMult = 1f;
 
         // ============================
         // RUNTIME VALUES
@@ -41,25 +48,31 @@ namespace Features.Stats.Domain
         public float MaxShield =>
             Math.Max(0f, (_baseShield + _shieldAdd) * _shieldMult);
 
+        public float FinalRegen =>
+            Math.Max(0f, (_regen + _regenAdd) * _regenMult);
+
         // ============================
         // BASE APPLIERS
         // ============================
         public void ApplyBase(float hp)
         {
             _baseHp = hp;
-
-            // refresh HP but don't overflow
-            CurrentHp = Math.Min(CurrentHp <= 0 ? MaxHp : CurrentHp, MaxHp);
+            CurrentHp = Math.Min(CurrentHp > 0 ? CurrentHp : MaxHp, MaxHp);
             NotifyHp();
         }
 
         public void ApplyShieldBase(float shield)
         {
             _baseShield = shield;
-
-            CurrentShield = Math.Min(CurrentShield <= 0 ? MaxShield : CurrentShield, MaxShield);
+            CurrentShield = Math.Min(CurrentShield > 0 ? CurrentShield : MaxShield, MaxShield);
             NotifyShield();
         }
+
+        public void ApplyRegenBase(float baseRegen)
+        {
+            _regen = baseRegen;
+        }
+
 
         // ============================
         // DAMAGE & HEAL
@@ -68,7 +81,6 @@ namespace Features.Stats.Domain
         {
             if (amount <= 0) return;
 
-            // shield absorbs first
             if (CurrentShield > 0)
             {
                 float absorb = Math.Min(CurrentShield, amount);
@@ -93,8 +105,16 @@ namespace Features.Stats.Domain
             NotifyHp();
         }
 
+        public void Recover(float amount)
+        {
+            if (amount <= 0) return;
+
+            CurrentHp = Math.Min(CurrentHp + amount, MaxHp);
+            NotifyHp();
+        }
+
         // ============================
-        // APPLY BUFF (NEW SYSTEM)
+        // APPLY BUFF
         // ============================
         public void ApplyBuff(BuffSO cfg, bool apply)
         {
@@ -102,50 +122,44 @@ namespace Features.Stats.Domain
 
             switch (cfg.stat)
             {
-                // ---------------------
-                // MAX HP
-                // ---------------------
-                case BuffStat.PlayerDamage:
-                    // ignore, belongs to CombatStats
-                    return;
+                case BuffStat.PlayerHpRegen:
+                    ApplyRegenBuff(cfg, sign);
+                    break;
 
-                case BuffStat.PlayerMoveSpeed:
-                case BuffStat.PlayerMiningSpeed:
-                case BuffStat.PlayerEnergyRegen:
-                case BuffStat.PlayerEnergyCostReduction:
-                case BuffStat.PlayerMaxEnergy:
-                    // ignore — not part of HealthStats
-                    return;
-
-                // ---------------------
-                // HP BUFF
-                // ---------------------
-                case BuffStat.HealPerSecond:
-                    // handled in BuffExecutor.Tick
-                    return;
-
-                // ---------------------
-                // SHIELD BUFF
-                // ---------------------
                 case BuffStat.PlayerShield:
-                    ApplyShieldBuffInternal(cfg, sign);
+                    ApplyShieldBuff(cfg, sign);
                     break;
 
                 default:
-                    // HP buff is generic
-                    ApplyHpBuffInternal(cfg, sign);
+                    ApplyHpBuff(cfg, sign);
                     break;
             }
 
-            ClampValues();
+            Clamp();
             NotifyHp();
             NotifyShield();
         }
 
-        // ============================
-        // INTERNAL HP BUFF LOGIC
-        // ============================
-        private void ApplyHpBuffInternal(BuffSO cfg, float sign)
+        private void ApplyRegenBuff(BuffSO cfg, float sign)
+        {
+            switch (cfg.modType)
+            {
+                case BuffModType.Add:
+                    _regenAdd += cfg.value * sign;
+                    break;
+
+                case BuffModType.Mult:
+                    _regenMult = sign > 0 ? _regenMult * cfg.value : _regenMult / cfg.value;
+                    break;
+
+                case BuffModType.Set:
+                    if (sign > 0) _regen = cfg.value;
+                    else _regen = 0f;
+                    break;
+            }
+        }
+
+        private void ApplyHpBuff(BuffSO cfg, float sign)
         {
             switch (cfg.modType)
             {
@@ -158,15 +172,12 @@ namespace Features.Stats.Domain
                     break;
 
                 case BuffModType.Set:
-                    _hpMult = sign > 0 ? cfg.value : 1f;
+                    if (sign > 0) _baseHp = cfg.value;
                     break;
             }
         }
 
-        // ============================
-        // INTERNAL SHIELD BUFF LOGIC
-        // ============================
-        private void ApplyShieldBuffInternal(BuffSO cfg, float sign)
+        private void ApplyShieldBuff(BuffSO cfg, float sign)
         {
             switch (cfg.modType)
             {
@@ -179,15 +190,12 @@ namespace Features.Stats.Domain
                     break;
 
                 case BuffModType.Set:
-                    _shieldMult = sign > 0 ? cfg.value : 1f;
+                    if (sign > 0) _baseShield = cfg.value;
                     break;
             }
         }
 
-        // ============================
-        // HELPERS
-        // ============================
-        private void ClampValues()
+        private void Clamp()
         {
             CurrentHp = Math.Min(CurrentHp, MaxHp);
             CurrentShield = Math.Min(CurrentShield, MaxShield);

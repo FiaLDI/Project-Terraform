@@ -7,7 +7,7 @@ using Features.Stats.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
 
-[DefaultExecutionOrder(-40)]
+[DefaultExecutionOrder(-100)]
 public class PlayerClassController : MonoBehaviour
 {
     [Header("Class Library")]
@@ -34,46 +34,74 @@ public class PlayerClassController : MonoBehaviour
 
 
     // ============================================================
-    // INIT
+    private void OnEnable()
+    {
+        PlayerStats.OnStatsReady += HandleStatsReady;
+    }
+
+    private void OnDisable()
+    {
+        PlayerStats.OnStatsReady -= HandleStatsReady;
+    }
+
+
     // ============================================================
     private void Awake()
     {
-        // Создаём доменный фасад статов
-        _stats = new StatsFacade();
+        // 1) Кэшируем компоненты адаптеров
+        CacheAdapters();
 
-        CacheComponents();
+        // 2) Кэш пассивов и абилок
+        _passiveSystem = GetComponent<PassiveSystem>();
+        _abilityCaster = GetComponent<AbilityCaster>();
 
-        // Правильно создаём и инициализируем бафф-ресивер
-        _buffReceiver = gameObject.AddComponent<StatBuffReceiver>();
-        _buffReceiver.Init(_stats);       // <<=== FIX: главный момент
-
-        // Инициализируем сервис классов
+        // 3) Сервис классов
         _service = new PlayerClassService(library.classes, defaultClassId);
     }
 
 
-    private void Start()
-    {
-        if (_service.Current != null)
-            ApplyClass(_service.Current);
-    }
-
-
-    private void CacheComponents()
+    private void CacheAdapters()
     {
         _health = GetComponent<HealthStatsAdapter>();
         _energy = GetComponent<EnergyStatsAdapter>();
         _combat = GetComponent<CombatStatsAdapter>();
         _movement = GetComponent<MovementStatsAdapter>();
         _mining = GetComponent<MiningStatsAdapter>();
-
-        _passiveSystem = GetComponent<PassiveSystem>();
-        _abilityCaster = GetComponent<AbilityCaster>();
     }
 
 
     // ============================================================
-    // APPLY CLASS BY ID
+    private void HandleStatsReady(PlayerStats ps)
+    {
+        // Фасад гарантированно существует
+        _stats = ps.Facade;
+
+        // Инициализация адаптеров
+        _health?.Init(_stats.Health);
+        _energy?.Init(_stats.Energy);
+        _combat?.Init(_stats.Combat);
+        _movement?.Init(_stats.Movement);
+        _mining?.Init(_stats.Mining);
+
+        // Бафф-ресивер теперь можно создавать
+        if (_buffReceiver == null)
+            _buffReceiver = gameObject.AddComponent<StatBuffReceiver>();
+
+        _buffReceiver.Init(_stats);
+
+        // Применить дефолтный класс
+        if (_service.Current != null)
+            ApplyClass(_service.Current);
+    }
+
+
+    // ============================================================
+    private void Start()
+    {
+        // Start больше НИЧЕГО не делает — всё через HandleStatsReady()
+    }
+
+
     // ============================================================
     public void ApplyClass(string id)
     {
@@ -84,39 +112,30 @@ public class PlayerClassController : MonoBehaviour
 
 
     // ============================================================
-    // APPLY CLASS CONFIG
-    // ============================================================
     public void ApplyClass(PlayerClassConfigSO cfg)
     {
         if (cfg == null) return;
 
         _service.SelectClass(cfg);
 
-        // ====== 1) APPLY BASE STATS (домен) ======
+        // --- APPLY DOMAIN STATS ---
         _stats.Combat.ApplyBase(cfg.baseDamageMultiplier);
         _stats.Energy.ApplyBase(cfg.baseMaxEnergy, cfg.baseEnergyRegen);
         _stats.Health.ApplyBase(cfg.baseHp);
 
         _stats.Movement.ApplyBase(
             cfg.baseMoveSpeed,
-            4f,                  // walkSpeed — дефолт
+            4f,
             cfg.sprintSpeed,
             cfg.crouchSpeed
         );
 
         _stats.Mining.ApplyBase(cfg.miningMultiplier);
 
-        // ====== 2) INIT ADAPTERS ======
-        _health?.Init(_stats.Health);
-        _energy?.Init(_stats.Energy);
-        _combat?.Init(_stats.Combat);
-        _movement?.Init(_stats.Movement);
-        _mining?.Init(_stats.Mining);
-
-        // ====== 3) PASSIVES ======
+        // --- PASSIVES ---
         _passiveSystem?.SetPassives(cfg.passives.ToArray());
 
-        // ====== 4) ABILITIES ======
+        // --- ABILITIES ---
         _abilityCaster?.SetAbilities(cfg.abilities.ToArray());
     }
 }

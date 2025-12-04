@@ -19,6 +19,8 @@ namespace Features.Buffs.Domain
         PlayerEnergyCostReduction,
         PlayerEnergyRegen,
         PlayerMiningSpeed,
+        PlayerHpRegen,
+        PlayerHp,
 
         // TURRET
         TurretDamage,

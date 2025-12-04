@@ -4,6 +4,7 @@ using Features.Stats.Domain;
 
 namespace Features.Stats.UnityIntegration
 {
+    [DefaultExecutionOrder(-450)]
     public class StatBuffReceiver : MonoBehaviour,
         ICombatStatReceiver,
         IMovementStatReceiver,

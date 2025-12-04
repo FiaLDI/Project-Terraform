@@ -9,35 +9,40 @@ namespace Features.Stats.UnityIntegration
     {
         public StatsPresetSO preset;
 
-        public IStatsFacade Stats { get; private set; }
+        public IStatsFacade Facade { get; private set; }
+        public StatsFacadeAdapter Adapter { get; private set; }
 
-        private StatsFacadeAdapter _adapter;
+        public StatsFacadeAdapter GetFacadeAdapter() => Adapter;
+        public IStatsFacade Stats => Facade;
+
+        public static event System.Action<PlayerStats> OnStatsReady;
 
         private void Awake()
         {
-            // создаём доменную часть
-            Stats = new StatsFacade();
+            Facade = new StatsFacade();
 
-            // применяем пресет
+            // === СОЗДАЕМ ВСЕ АДАПТЕРЫ ДИНАМИЧЕСКИ ===
+            Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
+            Adapter.Init(Facade);
+
+            // === применяем базовые значения ===
             if (preset != null)
             {
-                Stats.Combat.ApplyBase(preset.combat.baseDamageMultiplier);
-                Stats.Energy.ApplyBase(preset.energy.baseMaxEnergy, preset.energy.baseRegen);
-                Stats.Health.ApplyBase(preset.health.baseHp);
-                Stats.Movement.ApplyBase(
+                Facade.Combat.ApplyBase(preset.combat.baseDamageMultiplier);
+                Facade.Energy.ApplyBase(preset.energy.baseMaxEnergy, preset.energy.baseRegen);
+                Facade.Health.ApplyBase(preset.health.baseHp);
+                Facade.Movement.ApplyBase(
                     preset.movement.baseSpeed,
                     preset.movement.walkSpeed,
                     preset.movement.sprintSpeed,
                     preset.movement.crouchSpeed
                 );
-                Stats.Mining.ApplyBase(preset.mining.baseMining);
+                Facade.Mining.ApplyBase(preset.mining.baseMining);
             }
 
-            // создаём адаптер фасада (ТОЛЬКО 1 раз)
-            _adapter = gameObject.AddComponent<StatsFacadeAdapter>();
-            _adapter.Init(Stats);
-        }
+            OnStatsReady?.Invoke(this);
 
-        public StatsFacadeAdapter GetFacadeAdapter() => _adapter;
+            PlayerRegistry.Instance?.Register(gameObject, Adapter);
+        }
     }
 }

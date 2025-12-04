@@ -27,12 +27,14 @@ namespace Features.Combat.Devices
 
         private void Update()
         {
-            if (!owner) return;
+            // fallback: use PlayerRegistry if owner lost
+            if (!owner)
+                owner = PlayerRegistry.Instance.LocalPlayer;
 
-            // follow owner smoothly
-            Vector3 target = owner.transform.position + new Vector3(2f, 3f, 0);
-            transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
+            if (!owner)
+                return;
 
+            FollowOwner();
             UpdateHealAura();
 
             elapsed += Time.deltaTime;
@@ -40,18 +42,24 @@ namespace Features.Combat.Devices
                 Destroy(gameObject);
         }
 
-        // ============================================
+        // ============================================================
+        // FOLLOW OWNER
+        // ============================================================
+        private void FollowOwner()
+        {
+            Vector3 target = owner.transform.position + new Vector3(2f, 3f, 0);
+            transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
+        }
+
+        // ============================================================
         // HEAL AURA
-        // ============================================
+        // ============================================================
         private void UpdateHealAura()
         {
             if (!healBuff) return;
 
-            Collider[] hits = Physics.OverlapSphere(
-                transform.position,
-                healRadius,
-                LayerMask.GetMask("Player")  // или все цели → default
-            );
+            // NEW: wider search — not only Player layer
+            Collider[] hits = Physics.OverlapSphere(transform.position, healRadius);
 
             HashSet<IBuffTarget> inside = new();
 
@@ -62,7 +70,11 @@ namespace Features.Combat.Devices
 
                 inside.Add(target);
 
-                // Already active?
+                // NEW: Don't heal enemies or self unless desired
+                // If needed — uncomment:
+                // if (target.GameObject == this.gameObject) continue;
+
+                // Already buffed?
                 if (!active.ContainsKey(target))
                 {
                     var inst = target.BuffSystem.Add(healBuff);
@@ -71,7 +83,7 @@ namespace Features.Combat.Devices
                 }
             }
 
-            // remove buff when target leaves zone
+            // remove buffs from those who left radius
             List<IBuffTarget> toRemove = new();
 
             foreach (var kv in active)
@@ -89,7 +101,7 @@ namespace Features.Combat.Devices
 
         private void OnDestroy()
         {
-            // cleanup buffs
+            // cleanup
             foreach (var kv in active)
                 kv.Key.BuffSystem?.Remove(kv.Value);
 

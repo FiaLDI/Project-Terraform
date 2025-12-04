@@ -15,45 +15,27 @@ public class HPBarUI : MonoBehaviour
     private HealthStatsAdapter adapter;
     private float targetFill = 1f;
 
-    private void Start()
-    {
-        // Auto-bind if Bind() was not called
-        if (adapter == null)
-        {
-            adapter = GetComponentInParent<HealthStatsAdapter>();
-
-            if (adapter != null)
-            {
-                adapter.OnHealthChanged += UpdateView;
-                UpdateView(adapter.CurrentHp, adapter.MaxHp);
-            }
-            else
-            {
-                Debug.LogWarning("HPBarUI: HealthStatsAdapter not found.", this);
-            }
-        }
-    }
-
     private void OnDestroy()
     {
         if (adapter != null)
             adapter.OnHealthChanged -= UpdateView;
     }
 
-    /// <summary>
-    /// Bind HPBar to a HealthStatsAdapter
-    /// </summary>
-    public void Bind(HealthStatsAdapter h)
+    public void Bind(HealthStatsAdapter a)
     {
         if (adapter != null)
             adapter.OnHealthChanged -= UpdateView;
 
-        adapter = h;
+        adapter = a;
 
         if (adapter != null)
         {
             adapter.OnHealthChanged += UpdateView;
             UpdateView(adapter.CurrentHp, adapter.MaxHp);
+        }
+        else
+        {
+            Debug.LogWarning("[HPBarUI] Bind() received NULL!");
         }
     }
 
@@ -61,13 +43,13 @@ public class HPBarUI : MonoBehaviour
     {
         targetFill = max > 0 ? current / max : 0f;
 
-        if (label != null)
+        if (label)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";
     }
 
     private void Update()
     {
-        if (fillImage == null) return;
+        if (!fillImage) return;
 
         fillImage.fillAmount = Mathf.Lerp(
             fillImage.fillAmount,

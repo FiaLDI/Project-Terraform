@@ -11,18 +11,17 @@ namespace Features.Abilities.UI
 
         private void Start()
         {
-            if (caster == null)
-                caster = FindAnyObjectByType<AbilityCaster>();
-
+            caster = PlayerRegistry.Instance.LocalAbilities;
             if (!caster)
             {
-                Debug.LogError("AbilityUIRoot: no AbilityCaster found");
+                Debug.LogError("AbilityUIRoot: no caster in PlayerRegistry");
                 return;
             }
 
             caster.OnAbilitiesChanged += RefreshSlots;
             RefreshSlots();
         }
+
 
         private void RefreshSlots()
         {

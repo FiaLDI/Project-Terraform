@@ -3,32 +3,35 @@ using Features.Buffs.Domain;
 
 namespace Features.Stats.Domain
 {
+    /// <summary>
+    /// Единственный интерфейс энергии в проекте.
+    /// Никаких IEnergy из Features.Energy.Domain больше не должно быть.
+    /// </summary>
     public interface IEnergyStats
     {
         float MaxEnergy { get; }
-        float Regen { get; }
         float CurrentEnergy { get; }
+        float Regen { get; }
 
         /// <summary>
-        /// Мультипликативный коэффициент цены: 
-        /// 1 = без изменений, 0.8 = -20% стоимости и т.п.
+        /// Коэффициент стоимости (1 = базовая, 0.8 = -20% cost, 1.2 = +20% cost)
         /// </summary>
         float CostMultiplier { get; }
 
-        bool TrySpend(float cost);
-        bool HasEnergy(float amount);
+        /// <summary>
+        /// Текущее/максимальное значение изменилось.
+        /// </summary>
+        event Action<float, float> OnEnergyChanged;
 
-        /// <summary>Добавить «сырую» энергию (используется для регена).</summary>
-        void Recover(float amount);
-
+        // База от класса/предметов
         void ApplyBase(float max, float regen);
 
-        /// <summary>
-        /// Универсальный вход для баффов: 
-        /// MaxEnergy / Regen / CostReduction.
-        /// </summary>
+        // Бафы/дебафы
         void ApplyBuff(BuffSO cfg, bool apply);
 
-        event Action<float, float> OnEnergyChanged;
+        // Трата/проверка/восстановление
+        bool HasEnergy(float amount);
+        bool TrySpend(float amount);
+        void Recover(float amount);
     }
 }

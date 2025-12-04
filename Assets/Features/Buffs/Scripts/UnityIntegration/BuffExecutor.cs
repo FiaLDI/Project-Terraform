@@ -96,6 +96,13 @@ namespace Features.Buffs.UnityIntegration
                 (inst, apply) =>
                     TryCall<IShieldReceiver>(inst, r => r.ApplyShieldBuff(inst.Config, apply)));
 
+            Register(BuffStat.PlayerHp,
+                (inst, apply) =>
+                    TryCall<IHealthStatReceiver>(inst, r => r.ApplyHealthBuff(inst.Config, apply)));
+
+            Register(BuffStat.PlayerHpRegen,
+                (inst, apply) =>
+                    TryCall<IHealthStatReceiver>(inst, r => r.ApplyHealthBuff(inst.Config, apply)));
             // ENERGY
             Register(BuffStat.PlayerMaxEnergy,
                 (inst, apply) =>
@@ -126,8 +133,6 @@ namespace Features.Buffs.UnityIntegration
                 (inst, apply) =>
                     TryCall<ITurretStatReceiver>(inst, r => r.ApplyTurretBuff(inst.Config, apply)));
 
-            // UNIVERSAL — HealPerSecond handled in Tick()
-            // (не регистрируем)
         }
 
         // ============================================================

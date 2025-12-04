@@ -33,15 +33,15 @@ namespace Features.Buffs.UI
         // ==========================================================
         private void TryAutoBind()
         {
-            // Ищем локального игрока
-            var playerTarget = FindAnyObjectByType<PlayerBuffTarget>();
-            if (playerTarget == null) return;
+            var player = PlayerRegistry.Instance.LocalPlayer;
+            if (player == null) return;
 
-            var bs = playerTarget.GetComponent<BuffSystem>();
+            var bs = player.GetComponent<BuffSystem>();
             if (bs == null || !bs.ServiceReady) return;
 
             Bind(bs);
         }
+
 
         // ==========================================================
         // BIND

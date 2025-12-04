@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
-using Features.Energy.Application;
-using Features.Energy.Domain;
+using Features.Stats.Domain;
 
 namespace Features.Abilities.Application
 {
@@ -12,11 +11,11 @@ namespace Features.Abilities.Application
     {
         private readonly GameObject _owner;
         private Camera _aimCamera;
-        private IEnergy _energy;
+
+        private IEnergyStats _energy;
+
         private LayerMask _groundMask;
         private AbilityExecutor _executor;
-
-        private readonly EnergyCostService _costService;
 
         private readonly Dictionary<AbilitySO, float> _cooldowns = new();
 
@@ -36,31 +35,36 @@ namespace Features.Abilities.Application
         public bool IsChanneling => _isChanneling;
         public AbilitySO CurrentChannelAbility => _channelAbility;
 
+
+        // ============================================================
+        // CONSTRUCTOR
+        // ============================================================
         public AbilityService(
             GameObject owner,
             Camera aimCamera,
-            IEnergy energy,
+            IEnergyStats energy,   
             LayerMask groundMask,
-            AbilityExecutor executor,
-            EnergyCostService costService
+            AbilityExecutor executor
         )
         {
-            _owner      = owner;
-            _aimCamera  = aimCamera;
-            _energy     = energy;
+            _owner = owner;
+            _aimCamera = aimCamera;
+            _energy = energy;
             _groundMask = groundMask;
-            _executor   = executor;
-            _costService = costService;
+            _executor = executor;
         }
 
         // External overrides
-        public void SetCamera(Camera cam)         => _aimCamera = cam;
-        public void SetEnergy(IEnergy e)         => _energy = e;
-        public void SetExecutor(AbilityExecutor e)=> _executor = e;
-        public void SetGroundMask(LayerMask m)    => _groundMask = m;
+        public void SetCamera(Camera cam) => _aimCamera = cam;
+        public void SetEnergy(IEnergyStats e) => _energy = e;   // <<==== FIX
+        public void SetExecutor(AbilityExecutor e) => _executor = e;
+        public void SetGroundMask(LayerMask m) => _groundMask = m;
 
-        // ========================= TICK =========================
 
+
+        // ============================================================
+        // MAIN LOOP
+        // ============================================================
         public void Tick(float deltaTime)
         {
             UpdateCooldowns(deltaTime);
@@ -72,12 +76,12 @@ namespace Features.Abilities.Application
             if (_cooldowns.Count == 0) return;
 
             var keys = new List<AbilitySO>(_cooldowns.Keys);
+
             foreach (var ab in keys)
             {
-                float t = _cooldowns[ab] - dt;
-                if (t < 0f) t = 0f;
-
+                float t = Mathf.Max(0f, _cooldowns[ab] - dt);
                 _cooldowns[ab] = t;
+
                 OnCooldownChanged?.Invoke(ab, t, ab.cooldown);
             }
         }
@@ -88,39 +92,37 @@ namespace Features.Abilities.Application
                 return;
 
             _channelTimer += dt;
+
             OnChannelProgress?.Invoke(_channelAbility, _channelTimer, _channelDuration);
 
             if (_channelTimer >= _channelDuration)
                 CompleteChannel();
         }
 
-        // ========================= CAST =========================
 
+
+        // ============================================================
+        // CAST
+        // ============================================================
         public bool TryCast(AbilitySO ability, int slot)
         {
-            if (ability == null) 
-                return false;
-
-            if (_isChanneling)
-                return false;
-
-            if (_executor == null)
-                return false;
+            if (ability == null) return false;
+            if (_isChanneling) return false;
+            if (_executor == null) return false;
 
             if (_energy == null)
             {
-                Debug.LogError("[AbilityService] No IEnergy provided!");
+                Debug.LogError("[AbilityService] No IEnergyStats assigned!");
                 return false;
             }
 
-            // Cooldown check
+            // ��� Cooldown ���
             if (GetCooldownRemaining(ability) > 0f)
                 return false;
 
-            // ================================
-            // COST → через EnergyStatsAdapter + EnergyCostService
-            // ================================
-            float finalCost = _costService.ApplyModifiers(ability.energyCost);
+            // ��� COST ���
+            float baseCost = ability.energyCost;
+            float finalCost = baseCost * _energy.CostMultiplier; 
 
             if (!_energy.HasEnergy(finalCost))
                 return false;
@@ -130,6 +132,7 @@ namespace Features.Abilities.Application
 
             var ctx = BuildContext(ability, slot);
 
+            // ��� Instant ���
             if (ability.castType == AbilityCastType.Instant)
             {
                 OnAbilityCast?.Invoke(ability);
@@ -138,6 +141,7 @@ namespace Features.Abilities.Application
                 return true;
             }
 
+            // ��� Channel ���
             if (ability.castType == AbilityCastType.Channel)
             {
                 StartChannel(ability, ctx);
@@ -147,25 +151,28 @@ namespace Features.Abilities.Application
             return false;
         }
 
-        // ========================= CHANNEL =========================
 
+
+        // ============================================================
+        // CHANNEL LOGIC
+        // ============================================================
         private void StartChannel(AbilitySO ability, AbilityContext ctx)
         {
-            _isChanneling   = true;
+            _isChanneling = true;
             _channelAbility = ability;
             _channelContext = ctx;
             _channelDuration = Mathf.Max(0.01f, ability.castTime);
-            _channelTimer    = 0f;
+            _channelTimer = 0f;
 
             OnChannelStarted?.Invoke(ability);
         }
 
         private void CompleteChannel()
         {
-            var ab  = _channelAbility;
+            var ab = _channelAbility;
             var ctx = _channelContext;
 
-            _isChanneling   = false;
+            _isChanneling = false;
             _channelAbility = null;
 
             _executor.Execute(ab, ctx);
@@ -174,18 +181,20 @@ namespace Features.Abilities.Application
             _cooldowns[ab] = ab.cooldown;
         }
 
-        // ========================= CONTEXT =========================
 
+
+        // ============================================================
+        // UTILS
+        // ============================================================
         public float GetCooldownRemaining(AbilitySO ab)
         {
-            if (_cooldowns.TryGetValue(ab, out var t))
-                return Mathf.Max(0f, t);
-            return 0f;
+            return _cooldowns.TryGetValue(ab, out var t) ? t : 0f;
         }
 
         private AbilityContext BuildContext(AbilitySO ab, int slot)
         {
             Vector3 targetPoint = GetTargetPoint();
+
             Vector3 dir = _aimCamera != null
                 ? _aimCamera.transform.forward
                 : _owner.transform.forward;

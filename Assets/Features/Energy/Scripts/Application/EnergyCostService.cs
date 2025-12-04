@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Features.Energy.Domain;
+using UnityEngine;
 
 namespace Features.Energy.Application
 {
@@ -15,6 +16,8 @@ namespace Features.Energy.Application
         {
             if (mod != null && !_mods.Contains(mod))
                 _mods.Add(mod);
+            
+            Debug.Log(mod);
         }
 
         public void RemoveModifier(IEnergyCostModifier mod)
