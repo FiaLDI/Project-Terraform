@@ -22,6 +22,7 @@ namespace Features.Stats.Application
         public class HealthBlock
         {
             public float baseHp = 100f;
+            public float baseRegen = 1f;   // <-- ДОБАВЛЕНО
         }
 
         [System.Serializable]

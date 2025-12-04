@@ -3,29 +3,20 @@ using Features.Stats.Domain;
 
 public class HealthViewAdapter : MonoBehaviour
 {
-    private IHealthStats stats;
+    private IHealthStats _stats;
 
-    public float MaxHp => stats?.MaxHp ?? 0;
-    public float CurrentHp => stats?.CurrentHp ?? 0;
+    public float CurrentHp => _stats?.CurrentHp ?? 0f;
+    public float MaxHp => _stats?.MaxHp ?? 0f;
 
-    public event System.Action<float, float> OnHealthChanged;
+    public event System.Action<float, float> OnHpChanged;
 
-    public void Init(IHealthStats s)
+    public void Init(IHealthStats stats)
     {
-        stats = s;
+        _stats = stats;
 
-        stats.OnHealthChanged += Relay;
-        Relay(stats.CurrentHp, stats.MaxHp);
-    }
-
-    private void Relay(float cur, float max)
-    {
-        OnHealthChanged?.Invoke(cur, max);
-    }
-
-    private void OnDestroy()
-    {
-        if (stats != null)
-            stats.OnHealthChanged -= Relay;
+        stats.OnHealthChanged += (cur, max) =>
+        {
+            OnHpChanged?.Invoke(cur, max);
+        };
     }
 }

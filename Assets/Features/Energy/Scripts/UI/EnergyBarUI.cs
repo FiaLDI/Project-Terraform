@@ -28,6 +28,9 @@ public class EnergyBarUI : MonoBehaviour
 
         energy = e;
 
+         Debug.Log("[UI] Bind Energy: " +
+        $"Current={energy.CurrentEnergy} Max={energy.MaxEnergy}");
+
         if (energy != null)
         {
             energy.OnEnergyChanged += UpdateView;

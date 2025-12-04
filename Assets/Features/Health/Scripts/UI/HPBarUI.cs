@@ -17,21 +17,33 @@ public class HPBarUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (adapter != null)
-            adapter.OnHealthChanged -= UpdateView;
+        Unsubscribe();
     }
 
+    private void Unsubscribe()
+    {
+        if (adapter == null) return;
+
+        adapter.OnHealthChanged -= UpdateHp;
+        adapter.OnShieldChanged -= UpdateShield;
+    }
+
+    /// <summary>
+    /// Привязка к адаптеру HP. Вызывать из PlayerController.HandleStatsReady()
+    /// </summary>
     public void Bind(HealthStatsAdapter a)
     {
-        if (adapter != null)
-            adapter.OnHealthChanged -= UpdateView;
+        Unsubscribe();
 
         adapter = a;
 
         if (adapter != null)
         {
-            adapter.OnHealthChanged += UpdateView;
-            UpdateView(adapter.CurrentHp, adapter.MaxHp);
+            adapter.OnHealthChanged += UpdateHp;
+            adapter.OnShieldChanged += UpdateShield;
+
+            // Инициализация UI текущими значениями
+            UpdateHp(adapter.CurrentHp, adapter.MaxHp);
         }
         else
         {
@@ -39,12 +51,18 @@ public class HPBarUI : MonoBehaviour
         }
     }
 
-    private void UpdateView(float current, float max)
+    private void UpdateHp(float current, float max)
     {
         targetFill = max > 0 ? current / max : 0f;
 
         if (label)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";
+    }
+
+    private void UpdateShield(float current, float max)
+    {
+        // OPTIONAL: если хочешь отображение щита в баре
+        // пока игнорируем
     }
 
     private void Update()

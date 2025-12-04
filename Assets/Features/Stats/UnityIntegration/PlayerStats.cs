@@ -31,6 +31,7 @@ namespace Features.Stats.UnityIntegration
                 Facade.Combat.ApplyBase(preset.combat.baseDamageMultiplier);
                 Facade.Energy.ApplyBase(preset.energy.baseMaxEnergy, preset.energy.baseRegen);
                 Facade.Health.ApplyBase(preset.health.baseHp);
+                Facade.Health.ApplyRegenBase(preset.health.baseRegen);
                 Facade.Movement.ApplyBase(
                     preset.movement.baseSpeed,
                     preset.movement.walkSpeed,
@@ -38,11 +39,13 @@ namespace Features.Stats.UnityIntegration
                     preset.movement.crouchSpeed
                 );
                 Facade.Mining.ApplyBase(preset.mining.baseMining);
+                Debug.Log($"[PlayerStats] After ApplyBase: Facade.Energy Current={Facade.Energy.CurrentEnergy} Max={Facade.Energy.MaxEnergy}");
+    
             }
 
-            OnStatsReady?.Invoke(this);
 
             PlayerRegistry.Instance?.Register(gameObject, Adapter);
+            OnStatsReady?.Invoke(this);
         }
     }
 }

@@ -45,6 +45,11 @@ public class PlayerRegistry : MonoBehaviour
     // =======================================================================
     public void Register(GameObject player, StatsFacadeAdapter statsAdapter)
     {
+        if (!player.CompareTag("Player"))
+        {
+            Debug.Log("IGNORE non-player stats");
+            return;
+        }
         if (!Players.Contains(player))
             Players.Add(player);
 
@@ -53,7 +58,5 @@ public class PlayerRegistry : MonoBehaviour
 
         LocalStats = statsAdapter;
         LocalAbilities = player.GetComponent<AbilityCaster>();
-
-        Debug.Log($"<color=cyan>[PlayerRegistry] Registered player: {player.name}</color>");
     }
 }

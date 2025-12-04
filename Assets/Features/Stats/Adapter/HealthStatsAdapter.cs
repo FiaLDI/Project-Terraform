@@ -13,7 +13,7 @@ namespace Features.Stats.Adapter
         public float MaxShield => _stats?.MaxShield ?? 0f;
         public float CurrentShield => _stats?.CurrentShield ?? 0f;
 
-        public float Regen => _stats?.Regen ?? 0f;
+        public float Regen => _stats?.FinalRegen ?? 0f;
 
         public event System.Action<float, float> OnHealthChanged;
         public event System.Action<float, float> OnShieldChanged;
@@ -22,27 +22,18 @@ namespace Features.Stats.Adapter
         {
             _stats = stats;
 
-            // �������� �� HP
             _stats.OnHealthChanged += (cur, max) =>
             {
                 OnHealthChanged?.Invoke(cur, max);
             };
 
-            // �������� �� Shield
             _stats.OnShieldChanged += (cur, max) =>
             {
                 OnShieldChanged?.Invoke(cur, max);
             };
         }
 
-        public void Damage(float amount)
-        {
-            _stats?.Damage(amount);
-        }
-
-        public void Heal(float amount)
-        {
-            _stats?.Heal(amount);
-        }
+        public void Damage(float amount) => _stats?.Damage(amount);
+        public void Heal(float amount) => _stats?.Heal(amount);
     }
 }

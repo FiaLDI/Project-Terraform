@@ -12,21 +12,22 @@ namespace Features.Stats.Domain
         float CurrentShield { get; }
 
         /// <summary>
-        /// Естественная регенерация HP (hp / sec)
+        /// Финальная регенерация HP (учитывает бафы + множители)
         /// </summary>
-        float Regen { get; }
+        float FinalRegen { get; }
 
         event Action<float, float> OnHealthChanged;
         event Action<float, float> OnShieldChanged;
 
         void ApplyBase(float hp);
         void ApplyShieldBase(float shield);
+        void ApplyRegenBase(float regen);
 
         void Damage(float amount);
         void Heal(float amount);
 
         /// <summary>
-        /// Используется системами регенерации, например StatsUpdateSystem
+        /// Используется системой регена.
         /// </summary>
         void Recover(float amount);
 

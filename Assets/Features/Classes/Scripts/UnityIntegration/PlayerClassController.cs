@@ -73,7 +73,7 @@ public class PlayerClassController : MonoBehaviour
     // ============================================================
     private void HandleStatsReady(PlayerStats ps)
     {
-        // Фасад гарантированно существует
+         Debug.Log($"[STATS READY] From object: {ps.gameObject.name} | tag={ps.gameObject.tag}");
         _stats = ps.Facade;
 
         // Инициализация адаптеров

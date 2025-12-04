@@ -15,10 +15,10 @@ MonoBehaviour:
   combat:
     baseDamageMultiplier: 1
   energy:
-    baseMaxEnergy: 100
-    baseRegen: 8
+    baseMaxEnergy: 150
+    baseRegen: 1
   health:
-    baseHp: 100
+    baseHp: 130
   movement:
     baseSpeed: 5
     walkSpeed: 4

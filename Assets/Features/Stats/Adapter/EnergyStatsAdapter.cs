@@ -20,6 +20,11 @@ namespace Features.Stats.Adapter
 
         public event System.Action<float, float> OnEnergyChanged;
 
+        private void Awake()
+        {
+            Debug.Log($"[DBG] EnergyStatsAdapter AWAKED at {gameObject.name}  from {GetType()}");
+        }
+
         public void Init(IEnergyStats stats)
         {
             if (_stats != null)

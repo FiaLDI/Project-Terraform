@@ -7068,9 +7068,9 @@ GameObject:
   - component: {fileID: 3628320967526121916}
   - component: {fileID: 6637292959054270540}
   - component: {fileID: 4079254263345519049}
-  - component: {fileID: 6880523723762496354}
   - component: {fileID: 139148081018008215}
   - component: {fileID: 7885062789697620343}
+  - component: {fileID: 1328240074118891106}
   m_Layer: 8
   m_Name: Tech
   m_TagString: Player
@@ -7529,18 +7529,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.UnityIntegration.PassiveSystem
   equipped: []
---- !u!114 &6880523723762496354
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3004063548674256600}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 350b659f02d24fe43ba7bf2afa91fd7c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatBuffReceiver
 --- !u!114 &139148081018008215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7568,6 +7556,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsUpdateSystem
   statsAdapter: {fileID: 0}
   useUnscaledTime: 0
+--- !u!114 &1328240074118891106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac22a0b8f258de744ba2ee29dbf5eba1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Combat.UnityIntegration.PlayerDamageReceiver
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0
@@ -16431,7 +16431,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bef476019736ba241a068164120e0c94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatsDebugPanel
-  adapter: {fileID: 0}
   label: {fileID: 264578917772202516}
 --- !u!1 &6829264381369830684
 GameObject:

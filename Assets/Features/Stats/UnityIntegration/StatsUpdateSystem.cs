@@ -62,8 +62,8 @@ namespace Features.Stats.UnityIntegration
             // ================================
             // HEALTH REGEN (если есть)
             // ================================
-            if (health != null && health.Regen > 0f)
-                health.Recover(health.Regen * dt);
+            if (health != null && health.FinalRegen > 0f)
+                health.Recover(health.FinalRegen * dt);
 
             // ================================
             // SHIELD REGEN (если есть)

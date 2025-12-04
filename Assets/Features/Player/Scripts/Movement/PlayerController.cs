@@ -52,12 +52,6 @@ public class PlayerController : MonoBehaviour
         // Если PlayerRegistry успел инициализироваться до нашего Start —
         // просто обновляем UI вручную.
         var reg = PlayerRegistry.Instance;
-
-        if (reg.LocalEnergy != null && reg.LocalHealth != null)
-        {
-            energyUI.Bind(reg.LocalEnergy);
-            hpUI.Bind(reg.LocalHealth);
-        }
     }
 
     // ============================================================

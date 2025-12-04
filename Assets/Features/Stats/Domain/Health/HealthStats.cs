@@ -5,19 +5,11 @@ namespace Features.Stats.Domain
 {
     public class HealthStats : IHealthStats
     {
-        // ============================
-        // BASE VALUES
-        // ============================
         private float _baseHp;
         private float _baseShield;
 
-        // Natural regeneration
-        private float _regen = 0f;
-        public float Regen => _regen;
+        private float _regen = 0f; // base regen
 
-        // ============================
-        // BUFF MODIFIERS
-        // ============================
         private float _hpAdd = 0f;
         private float _hpMult = 1f;
 
@@ -27,21 +19,12 @@ namespace Features.Stats.Domain
         private float _regenAdd = 0f;
         private float _regenMult = 1f;
 
-        // ============================
-        // RUNTIME VALUES
-        // ============================
         public float CurrentHp { get; private set; }
         public float CurrentShield { get; private set; }
 
-        // ============================
-        // EVENTS
-        // ============================
         public event Action<float, float> OnHealthChanged;
         public event Action<float, float> OnShieldChanged;
 
-        // ============================
-        // FINAL VALUES
-        // ============================
         public float MaxHp =>
             Math.Max(0f, (_baseHp + _hpAdd) * _hpMult);
 
@@ -51,9 +34,6 @@ namespace Features.Stats.Domain
         public float FinalRegen =>
             Math.Max(0f, (_regen + _regenAdd) * _regenMult);
 
-        // ============================
-        // BASE APPLIERS
-        // ============================
         public void ApplyBase(float hp)
         {
             _baseHp = hp;
@@ -73,10 +53,6 @@ namespace Features.Stats.Domain
             _regen = baseRegen;
         }
 
-
-        // ============================
-        // DAMAGE & HEAL
-        // ============================
         public void Damage(float amount)
         {
             if (amount <= 0) return;
@@ -113,9 +89,6 @@ namespace Features.Stats.Domain
             NotifyHp();
         }
 
-        // ============================
-        // APPLY BUFF
-        // ============================
         public void ApplyBuff(BuffSO cfg, bool apply)
         {
             float sign = apply ? 1f : -1f;
