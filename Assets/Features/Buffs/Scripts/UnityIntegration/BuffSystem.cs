@@ -49,7 +49,6 @@ namespace Features.Buffs.Application
             {
                 TryInit();
 
-                // ждём следующий кадр
                 if (!_fullyInitialized)
                     yield return null;
             }
@@ -100,7 +99,6 @@ namespace Features.Buffs.Application
                 _service.OnRemoved += x => OnBuffRemoved?.Invoke(x);
             }
 
-            // теперь система точно готова
             _fullyInitialized = true;
         }
 

@@ -5,20 +5,22 @@ using Features.Menu.Tooltip;
 
 namespace Features.Buffs.UI
 {
-    public class BuffTooltipTrigger : MonoBehaviour,
-        IPointerEnterHandler, IPointerExitHandler
+    public class BuffTooltipTrigger :
+        MonoBehaviour,
+        IPointerEnterHandler,
+        IPointerExitHandler
     {
-        private BuffInstance bound;
+        private BuffInstance inst;
 
-        public void Bind(BuffInstance buff)
+        public void Bind(BuffInstance inst)
         {
-            bound = buff;
+            this.inst = inst;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (bound != null)
-                TooltipController.Instance?.ShowBuff(bound);
+            if (inst != null)
+                TooltipController.Instance?.ShowBuff(inst);
         }
 
         public void OnPointerExit(PointerEventData eventData)

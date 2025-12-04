@@ -10,16 +10,16 @@ namespace Features.Buffs.Application
 
         public int StackCount { get; set; } = 1;
 
-        /// <summary> Время, когда бафф должен исчезнуть </summary>
+        /// <summary> Время, когда бафф должен исчезнуть (Time.time). </summary>
         public float EndTime { get; private set; }
 
-        /// <summary> Сколько осталось секунд </summary>
+        /// <summary> Сколько осталось секунд. </summary>
         public float Remaining => Mathf.Max(0, EndTime - Time.time);
 
-        /// <summary> true → если бафф истёк </summary>
+        /// <summary> true → если бафф истёк. </summary>
         public bool IsExpired => Time.time >= EndTime;
 
-        /// <summary> Прогресс 0..1 для UI </summary>
+        /// <summary> Прогресс 0..1 для UI (1 в начале, 0 в конце). </summary>
         public float Progress01 =>
             Config.duration <= 0 ? 0 : Mathf.Clamp01(Remaining / Config.duration);
 

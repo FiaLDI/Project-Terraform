@@ -3,49 +3,58 @@ using System.Linq;
 using System.Collections.Generic;
 using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
-using Features.Biomes.UnityIntegration; // ← ДОБАВЛЕНО
 
 namespace Features.Buffs.UI
 {
     public class BuffHUD : MonoBehaviour
     {
+        [Header("UI")]
         public Transform container;
         public BuffIconUI iconPrefab;
 
         private BuffSystem buffSystem;
         private readonly Dictionary<BuffInstance, BuffIconUI> icons = new();
 
-        private void Update()
+        private bool bound = false;
+
+        private void Start()
         {
-            if (buffSystem == null)
-                TryBind();
+            TryAutoBind();
         }
 
-        private void TryBind()
+        private void Update()
         {
-            if (RuntimeWorldGenerator.PlayerInstance == null)
-                return;
+            if (!bound)
+                TryAutoBind();
+        }
 
-            var player = RuntimeWorldGenerator.PlayerInstance;
+        // ==========================================================
+        // AUTO-BIND
+        // ==========================================================
+        private void TryAutoBind()
+        {
+            // Ищем локального игрока
+            var playerTarget = FindAnyObjectByType<PlayerBuffTarget>();
+            if (playerTarget == null) return;
 
-            var bs = player.GetComponent<BuffSystem>();
-            if (bs == null || !bs.ServiceReady)
-                return;
+            var bs = playerTarget.GetComponent<BuffSystem>();
+            if (bs == null || !bs.ServiceReady) return;
 
             Bind(bs);
         }
 
-        // ================================
+        // ==========================================================
         // BIND
-        // ================================
+        // ==========================================================
         private void Bind(BuffSystem bs)
         {
             buffSystem = bs;
+            bound = true;
 
             buffSystem.OnBuffAdded += HandleAdd;
             buffSystem.OnBuffRemoved += HandleRemove;
 
-            // уже активные баффы, если они есть
+            // Добавляем уже активные баффы
             if (buffSystem.Active != null)
             {
                 foreach (var inst in buffSystem.Active)
@@ -53,16 +62,20 @@ namespace Features.Buffs.UI
             }
         }
 
+        // ==========================================================
+        // ADD / REMOVE ICONS
+        // ==========================================================
         private void HandleAdd(BuffInstance inst)
         {
+            if (inst == null || inst.Config == null) return;
             if (icons.ContainsKey(inst)) return;
 
             var ui = Instantiate(iconPrefab, container);
             ui.Bind(inst);
 
             // Tooltip
-            var trigger = ui.gameObject.AddComponent<BuffTooltipTrigger>();
-            trigger.Bind(inst);
+            var tt = ui.GetComponent<BuffTooltipTrigger>();
+            if (tt != null) tt.Bind(inst);
 
             icons[inst] = ui;
             Resort();
@@ -70,8 +83,7 @@ namespace Features.Buffs.UI
 
         private void HandleRemove(BuffInstance inst)
         {
-            if (!icons.TryGetValue(inst, out var ui))
-                return;
+            if (!icons.TryGetValue(inst, out var ui)) return;
 
             Destroy(ui.gameObject);
             icons.Remove(inst);
@@ -79,10 +91,13 @@ namespace Features.Buffs.UI
             Resort();
         }
 
+        // ==========================================================
+        // SORT
+        // ==========================================================
         private void Resort()
         {
             var sorted = icons
-                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1)
+                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1) // дебаффы слева
                 .ThenByDescending(kv => kv.Key.Remaining)
                 .ToList();
 

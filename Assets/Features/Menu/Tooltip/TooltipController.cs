@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
+using Features.Abilities.Application;
 using Features.Buffs.Application;
 using Features.Buffs.Domain;
 
@@ -92,13 +93,20 @@ namespace Features.Menu.Tooltip
             float baseCost = ability.energyCost;
             float finalCost = baseCost;
 
-            if (caster != null && caster.energy != null)
-                finalCost = caster.energy.GetActualCost(baseCost);
+            // Берём финальную стоимость через AbilityCaster + EnergyCostService
+            if (caster != null)
+            {
+                finalCost = caster.GetFinalEnergyCost(ability);
+            }
 
             if (Mathf.Approximately(baseCost, finalCost))
+            {
                 stats.text += $"<b>Energy:</b> {finalCost:0}\n";
+            }
             else
+            {
                 stats.text += $"<b>Energy:</b> {finalCost:0}  <color=#888>(was {baseCost:0})</color>\n";
+            }
 
             stats.text += $"<b>Cooldown:</b> {ability.cooldown:0.0}s\n";
 
@@ -153,7 +161,7 @@ namespace Features.Menu.Tooltip
             title.text = cfg.displayName;
             title.color = cfg.isDebuff ? Color.red : Color.white;
 
-            description.text = cfg.ToString();
+            description.text = cfg.description;
             stats.text = "";
 
             stats.text += $"<b>Effect:</b> {cfg.stat} ({cfg.modType} {cfg.value})\n";
@@ -166,14 +174,13 @@ namespace Features.Menu.Tooltip
             else
                 stats.text += $"Duration: <i>Permanent</i>\n";
 
-            if (cfg is GlobalBuffSO g)
-                stats.text += $"<color=#88F>GLOBAL Buff</color>\nKey: {g.key}\n";
-
-            if (cfg.name.ToLower().Contains("aura"))
-                stats.text += "<color=#8F8>Aura Effect</color>\n";
+            if (cfg.targetType == BuffTargetType.Global)
+                stats.text += "<color=#88F>GLOBAL Buff</color>\n";
 
             group.alpha = 1;
         }
+
+
 
         public void Hide(bool instant = false)
         {

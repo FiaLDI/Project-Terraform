@@ -16,7 +16,7 @@ namespace Features.Buffs.UnityIntegration
             BuffSystem = GetComponent<BuffSystem>();
 
             if (BuffSystem == null)
-                Debug.LogError("[PlayerBuffTarget] Missing BuffSystem!");
+                Debug.LogError("[PlayerBuffTarget] Missing BuffSystem!", this);
         }
     }
 }

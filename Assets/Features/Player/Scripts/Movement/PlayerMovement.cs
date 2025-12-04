@@ -1,4 +1,5 @@
 using UnityEngine;
+using Features.Stats.Adapter;   // <-- важно
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -15,12 +16,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float alignStartAngle = 5f;
     [SerializeField] private Transform cameraPivot;
 
-
-    [Header("Movement Parameters")]
-    [SerializeField] private float baseSpeed = 5f;
-    [SerializeField] private float walkSpeed = 2f;
-    [SerializeField] private float sprintSpeed = 8f;
-    [SerializeField] private float crouchSpeed = 1.5f;
+    [Header("Editor Fallback Speeds (Used if Stats not yet initialized)")]
+    [SerializeField] private float fallbackBaseSpeed = 5f;
+    [SerializeField] private float fallbackWalkSpeed = 2f;
+    [SerializeField] private float fallbackSprintSpeed = 8f;
+    [SerializeField] private float fallbackCrouchSpeed = 1.5f;
 
     [Header("Jump & Gravity")]
     [SerializeField] private float gravity = -9.81f;
@@ -39,14 +39,23 @@ public class PlayerMovement : MonoBehaviour
     public Vector2 moveInput = Vector2.zero;
     private Vector3 velocity = Vector3.zero;
     private CharacterController controller;
+
     private bool isSprinting = false;
     private bool isWalking = false;
     private bool isAligning = false;
 
+    // 🔥 NEW: Movement stats adapter
+    private MovementStatsAdapter stats;
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        stats = GetComponent<MovementStatsAdapter>(); // получаем адаптер, если он есть
     }
+
+    // =====================================================================
+    // Input API
+    // =====================================================================
 
     public void SetMoveInput(Vector2 input)
     {
@@ -79,18 +88,21 @@ public class PlayerMovement : MonoBehaviour
             if (CanStandUp())
             {
                 IsCrouching = false;
-                controller.height = 3;
-                controller.center = new Vector3(0, 1.5f, 0);
+                controller.height = standHeight;
+                controller.center = new Vector3(0, standHeight / 2f, 0);
             }
         }
         else
         {
             IsCrouching = true;
-            controller.height = 2.5f;
-            controller.center = new Vector3(0, 1.25f, 0);
+            controller.height = crouchHeight;
+            controller.center = new Vector3(0, crouchHeight / 2f, 0);
         }
     }
 
+    // =====================================================================
+    // Update loop
+    // =====================================================================
 
     private void Update()
     {
@@ -98,13 +110,26 @@ public class PlayerMovement : MonoBehaviour
         HandleAnimation();
     }
 
+    private float GetSpeedFromStats()
+    {
+        if (stats != null)
+        {
+            if (IsCrouching) return stats.CrouchSpeed;
+            if (isSprinting) return stats.SprintSpeed;
+            if (isWalking) return stats.WalkSpeed;
+            return stats.BaseSpeed;
+        }
+
+        // Fallback (editor / testing)
+        if (IsCrouching) return fallbackCrouchSpeed;
+        if (isSprinting) return fallbackSprintSpeed;
+        if (isWalking) return fallbackWalkSpeed;
+        return fallbackBaseSpeed;
+    }
+
     private void HandleMovement()
     {
-        float currentSpeed =
-            IsCrouching ? crouchSpeed :
-            isSprinting ? sprintSpeed :
-            isWalking ? walkSpeed :
-            baseSpeed;
+        float currentSpeed = GetSpeedFromStats();
 
         bool isGrounded = controller.isGrounded;
         if (isGrounded && velocity.y < 0)
@@ -112,8 +137,11 @@ public class PlayerMovement : MonoBehaviour
             velocity.y = -2f;
         }
 
-        Vector3 moveDirection = movementReference.forward * moveInput.y + movementReference.right * moveInput.x;
+        Vector3 moveDirection =
+            movementReference.forward * moveInput.y +
+            movementReference.right * moveInput.x;
 
+        // Ground or air movement
         if (isGrounded)
         {
             velocity.x = moveDirection.x * currentSpeed;
@@ -127,19 +155,23 @@ public class PlayerMovement : MonoBehaviour
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
 
+        HandleBodyAlignment(moveDirection);
+    }
+
+    private void HandleBodyAlignment(Vector3 moveDirection)
+    {
         if (moveInput.y > 0.1f && cameraReference != null && movementReference != null)
         {
             Vector3 bodyForward = movementReference.forward;
             Vector3 camForward = cameraReference.forward;
+
             bodyForward.y = 0;
             camForward.y = 0;
 
             float signedAngle = Vector3.SignedAngle(bodyForward, camForward, Vector3.up);
 
             if (Mathf.Abs(signedAngle) > alignStartAngle)
-            {
                 isAligning = true;
-            }
 
             if (isAligning)
             {
@@ -175,10 +207,13 @@ public class PlayerMovement : MonoBehaviour
         RaycastHit hit;
         float checkDistance = standHeight - crouchHeight;
         Vector3 start = transform.position + Vector3.up * crouchHeight;
+
         return !Physics.SphereCast(start, controller.radius, Vector3.up, out hit, checkDistance);
     }
 
-
+    // =====================================================================
+    // Animation
+    // =====================================================================
 
     private void HandleAnimation()
     {
@@ -191,9 +226,8 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool("sit_walk", IsCrouching && isMoving);
 
         bool movingForwardBackward = Mathf.Abs(moveInput.y) > 0.1f;
-
-
         bool turning = !movingForwardBackward && Mathf.Abs(moveInput.x) > 0.1f;
+
         animator.SetBool("turn", turning);
     }
 }

@@ -32,11 +32,13 @@ namespace Features.Passives.UnityIntegration
                 _service = new PassiveService(gameObject);
 
             _service.DeactivateAll();
+
             equipped = passives;
 
             if (equipped != null && equipped.Length > 0)
                 _service.ActivateAll(equipped);
         }
+
 
     }
 }

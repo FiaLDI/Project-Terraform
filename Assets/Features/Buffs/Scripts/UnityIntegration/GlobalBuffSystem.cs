@@ -6,13 +6,13 @@ namespace Features.Buffs.UnityIntegration
 {
     public class GlobalBuffSystem : MonoBehaviour
     {
-        public static GlobalBuffSystem I;
+        public static GlobalBuffSystem I { get; private set; }
 
-        private readonly Dictionary<string, float> values = new();
+        private readonly Dictionary<string, float> _values = new();
 
         private void Awake()
         {
-            if (I != null)
+            if (I != null && I != this)
             {
                 Destroy(gameObject);
                 return;
@@ -24,27 +24,29 @@ namespace Features.Buffs.UnityIntegration
         public void Add(GlobalBuffSO buff)
         {
             if (buff == null) return;
+            if (string.IsNullOrEmpty(buff.key)) return;
 
-            if (!values.ContainsKey(buff.key))
-                values[buff.key] = 0f;
+            if (!_values.ContainsKey(buff.key))
+                _values[buff.key] = 0f;
 
-            values[buff.key] += buff.value;
+            _values[buff.key] += buff.value;
         }
 
         public void Remove(GlobalBuffSO buff)
         {
             if (buff == null) return;
-            if (!values.ContainsKey(buff.key))
-                return;
+            if (string.IsNullOrEmpty(buff.key)) return;
+            if (!_values.ContainsKey(buff.key)) return;
 
-            values[buff.key] -= buff.value;
-            if (values[buff.key] <= 0f)
-                values.Remove(buff.key);
+            _values[buff.key] -= buff.value;
+            if (_values[buff.key] <= 0f)
+                _values.Remove(buff.key);
         }
 
         public float GetValue(string key)
         {
-            return values.TryGetValue(key, out float v) ? v : 0f;
+            if (string.IsNullOrEmpty(key)) return 0f;
+            return _values.TryGetValue(key, out float v) ? v : 0f;
         }
     }
 }

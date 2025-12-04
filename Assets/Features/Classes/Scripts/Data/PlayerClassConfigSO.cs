@@ -26,6 +26,7 @@ namespace Features.Classes.Data
 
         [Header("Movement")]
         public float baseMoveSpeed = 5f;
+        public float walkSpeed = 4f;        // ← добавить
         public float sprintSpeed = 8f;
         public float crouchSpeed = 1.5f;
 

@@ -32,6 +32,6 @@ MonoBehaviour:
   stat: 3
   modType: 0
   targetType: 0
-  value: 100
+  value: 200
   duration: Infinity
   isStackable: 0

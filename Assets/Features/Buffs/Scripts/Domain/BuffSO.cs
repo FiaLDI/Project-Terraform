@@ -53,7 +53,9 @@ namespace Features.Buffs.Domain
         public BuffModType modType = BuffModType.Add;
         public BuffTargetType targetType = BuffTargetType.Any;
 
-        [Tooltip("Add: +value | Mult: xvalue | Set: =value")]
+        /// <summary>
+        /// Add: +value | Mult: xvalue | Set: =value
+        /// </summary>
         public float value;
 
         [Header("Timing")]

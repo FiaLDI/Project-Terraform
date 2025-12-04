@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using Features.Abilities.Domain;
-using Features.Abilities.UnityIntegration;
+using Features.Abilities.Application;
 using Features.Menu.Tooltip;
 
 namespace Features.Abilities.UI
@@ -43,12 +43,11 @@ namespace Features.Abilities.UI
         {
             Unsubscribe();
 
-            this.boundAbility = ability;
+            boundAbility = ability;
             this.caster = caster;
             this.index = index;
 
-            if (keyLabel != null)
-                keyLabel.text = (index + 1).ToString();
+            keyLabel?.SetText((index + 1).ToString());
 
             if (ability == null)
             {
@@ -58,6 +57,7 @@ namespace Features.Abilities.UI
 
             SetupIcon(ability);
             SetupCooldown(ability);
+
             Subscribe();
         }
 
@@ -76,8 +76,7 @@ namespace Features.Abilities.UI
                 cooldownSlider.value = 1;
             }
 
-            if (channelHighlight != null)
-                channelHighlight.SetActive(false);
+            channelHighlight?.SetActive(false);
 
             if (channelProgressFill != null)
                 channelProgressFill.fillAmount = 0f;
@@ -87,8 +86,16 @@ namespace Features.Abilities.UI
         {
             if (icon == null) return;
 
-            icon.sprite = ability.icon != null ? ability.icon : defaultIcon;
-            icon.color = ability.icon != null ? Color.white : Color.yellow;
+            if (ability.icon != null)
+            {
+                icon.sprite = ability.icon;
+                icon.color = Color.white;
+            }
+            else
+            {
+                icon.sprite = defaultIcon;
+                icon.color = Color.yellow;
+            }
         }
 
         private void SetupCooldown(AbilitySO ability)
@@ -134,17 +141,17 @@ namespace Features.Abilities.UI
         // ============================================================
         // COOLDOWN UI
         // ============================================================
-
         private void HandleCastReset(AbilitySO usedAbility)
         {
             if (usedAbility != boundAbility) return;
-            if (cooldownSlider != null)
-                cooldownSlider.value = 0;
+
+            cooldownSlider?.SetValueWithoutNotify(0);
         }
 
         private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
         {
             if (updated != boundAbility) return;
+
             if (cooldownSlider != null)
                 cooldownSlider.value = max - remaining;
         }
@@ -152,7 +159,6 @@ namespace Features.Abilities.UI
         // ============================================================
         // CHANNEL UI
         // ============================================================
-
         private void HandleChannelStart(AbilitySO ability)
         {
             if (ability != boundAbility) return;
@@ -164,11 +170,12 @@ namespace Features.Abilities.UI
                 channelProgressFill.fillAmount = 0f;
         }
 
+
         private void HandleChannelProgress(AbilitySO ability, float time, float duration)
         {
             if (ability != boundAbility) return;
 
-            if (channelProgressFill != null && duration > 0)
+            if (duration > 0f && channelProgressFill != null)
                 channelProgressFill.fillAmount = time / duration;
         }
 
@@ -186,26 +193,15 @@ namespace Features.Abilities.UI
         // ============================================================
         // TOOLTIP
         // ============================================================
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (boundAbility != null)
-                TooltipController.Instance.ShowAbility(boundAbility, caster);
+                TooltipController.Instance?.ShowAbility(boundAbility, caster);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            TooltipController.Instance.Hide();
+            TooltipController.Instance?.Hide();
         }
-
-        public void SetChannelHighlight(bool active)
-        {
-            if (channelHighlight != null)
-                channelHighlight.SetActive(active);
-
-            if (!active && channelProgressFill != null)
-                channelProgressFill.fillAmount = 0f;
-        }
-
     }
 }

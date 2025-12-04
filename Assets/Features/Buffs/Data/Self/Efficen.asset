@@ -20,6 +20,6 @@ MonoBehaviour:
   stat: 4
   modType: 1
   targetType: 1
-  value: 0.2
+  value: 1.2
   duration: Infinity
   isStackable: 0

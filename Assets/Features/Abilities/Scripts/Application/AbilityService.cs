@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
+using Features.Energy.Application;
+using Features.Energy.Domain;
 
 namespace Features.Abilities.Application
 {
@@ -10,9 +12,11 @@ namespace Features.Abilities.Application
     {
         private readonly GameObject _owner;
         private Camera _aimCamera;
-        private PlayerEnergy _energy;
+        private IEnergy _energy;
         private LayerMask _groundMask;
         private AbilityExecutor _executor;
+
+        private readonly EnergyCostService _costService;
 
         private readonly Dictionary<AbilitySO, float> _cooldowns = new();
 
@@ -35,9 +39,10 @@ namespace Features.Abilities.Application
         public AbilityService(
             GameObject owner,
             Camera aimCamera,
-            PlayerEnergy energy,
+            IEnergy energy,
             LayerMask groundMask,
-            AbilityExecutor executor
+            AbilityExecutor executor,
+            EnergyCostService costService
         )
         {
             _owner      = owner;
@@ -45,11 +50,12 @@ namespace Features.Abilities.Application
             _energy     = energy;
             _groundMask = groundMask;
             _executor   = executor;
+            _costService = costService;
         }
 
         // External overrides
         public void SetCamera(Camera cam)         => _aimCamera = cam;
-        public void SetEnergy(PlayerEnergy e)     => _energy = e;
+        public void SetEnergy(IEnergy e)         => _energy = e;
         public void SetExecutor(AbilityExecutor e)=> _executor = e;
         public void SetGroundMask(LayerMask m)    => _groundMask = m;
 
@@ -92,31 +98,37 @@ namespace Features.Abilities.Application
 
         public bool TryCast(AbilitySO ability, int slot)
         {
-            if (ability == null) return false;
-            if (_isChanneling) return false;
+            if (ability == null) 
+                return false;
+
+            if (_isChanneling)
+                return false;
 
             if (_executor == null)
-            {
-                Debug.LogWarning("[AbilityService] TryCast failed: executor=null");
                 return false;
-            }
 
             if (_energy == null)
             {
-                Debug.LogWarning("[AbilityService] TryCast failed: energy=null");
+                Debug.LogError("[AbilityService] No IEnergy provided!");
                 return false;
             }
 
+            // Cooldown check
             if (GetCooldownRemaining(ability) > 0f)
                 return false;
 
-            if (!_energy.HasEnergy(ability.energyCost))
+            // ================================
+            // COST → через EnergyStatsAdapter + EnergyCostService
+            // ================================
+            float finalCost = _costService.ApplyModifiers(ability.energyCost);
+
+            if (!_energy.HasEnergy(finalCost))
                 return false;
 
-            AbilityContext ctx = BuildContext(ability, slot);
-
-            if (!_energy.TrySpend(ability.energyCost))
+            if (!_energy.TrySpend(finalCost))
                 return false;
+
+            var ctx = BuildContext(ability, slot);
 
             if (ability.castType == AbilityCastType.Instant)
             {

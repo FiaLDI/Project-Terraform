@@ -1,124 +1,183 @@
 using System;
 using UnityEngine;
+using System.Collections;
 using Features.Abilities.Domain;
-using Features.Abilities.Application;
 using Features.Abilities.UnityIntegration;
+using Features.Energy.Application;
+using Features.Energy.Domain;
+using Features.Stats.Adapter;
 
-public class AbilityCaster : MonoBehaviour
+namespace Features.Abilities.Application
 {
-    [Header("Ability slots (auto from class)")]
-    public AbilitySO[] abilities = new AbilitySO[5];
-
-    [Header("Auto refs")]
-    public Camera aimCamera;
-    public PlayerEnergy energy;
-    public LayerMask groundMask;
-    public AbilityExecutor executor;
-
-    private AbilityService service;
-
-    // EVENTS
-    public event Action<AbilitySO> OnAbilityCast;
-    public event Action<AbilitySO, float, float> OnCooldownChanged;
-    public event Action<AbilitySO> OnChannelStarted;
-    public event Action<AbilitySO, float, float> OnChannelProgress;
-    public event Action<AbilitySO> OnChannelCompleted;
-    public event Action<AbilitySO> OnChannelInterrupted;
-    public event Action OnAbilitiesChanged;
-
-    private void Awake()
+    public class AbilityCaster : MonoBehaviour
     {
-        if (energy == null)
-            energy = GetComponent<PlayerEnergy>();
+        [Header("Ability slots")]
+        public AbilitySO[] abilities = new AbilitySO[5];
 
-        AutoDetectCamera();
+        [Header("Auto refs")]
+        public Camera aimCamera;
+        public LayerMask groundMask;
+        public AbilityExecutor executor;
 
-        executor = AbilityExecutor.I;
+        private IEnergy energy;
+        public IEnergy Energy => energy;
 
-        service = new AbilityService(
-            owner: gameObject,
-            aimCamera: aimCamera,
-            energy: energy,
-            groundMask: groundMask,
-            executor: executor
-        );
+        private AbilityService service;
+        private EnergyCostService costService;
 
-        service.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
-        service.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
-        service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
-        service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
-        service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
-        service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
-    }
+        public event Action<AbilitySO> OnAbilityCast;
+        public event Action<AbilitySO, float, float> OnCooldownChanged;
+        public event Action<AbilitySO> OnChannelStarted;
+        public event Action<AbilitySO, float, float> OnChannelProgress;
+        public event Action<AbilitySO> OnChannelCompleted;
+        public event Action<AbilitySO> OnChannelInterrupted;
+        public event Action OnAbilitiesChanged;
 
-    private void LateUpdate()
-    {
-        if (executor == null && AbilityExecutor.I != null)
+
+        // ================================================================
+        // INIT
+        // ================================================================
+        private void Awake()
         {
+            AutoDetectCamera();
+            StartCoroutine(DelayedInit());
+        }
+
+        private IEnumerator DelayedInit()
+        {
+            // Даем StatsFacadeAdapter время инициализировать все адаптеры
+            yield return null;
+
+            var statsAdapter = GetComponent<StatsFacadeAdapter>();
+            if (statsAdapter != null)
+                energy = statsAdapter.EnergyStats;
+
+            if (energy == null)
+                Debug.LogError("[AbilityCaster] No EnergyStatsAdapter found!");
+
+            FinalInit();
+        }
+
+
+        private void FinalInit()
+        {
+            AutoDetectCamera();
             executor = AbilityExecutor.I;
-            service.SetExecutor(executor);
 
-            Debug.Log("[AbilityCaster] Late-linked AbilityExecutor");
+            // ----------------------------------------------------
+            // Создаём сервис расчёта стоимости энергии
+            // ----------------------------------------------------
+            costService = new EnergyCostService();
+
+            // локальные модификаторы
+            foreach (var m in GetComponentsInChildren<IEnergyCostModifier>())
+                costService.AddModifier(m);
+
+            // глобальный поставщик
+            if (GlobalEnergyCostProvider.I != null)
+                costService.AddModifier(GlobalEnergyCostProvider.I);
+
+            // ----------------------------------------------------
+            // Создаём AbilityService (главный управляющий)
+            // ----------------------------------------------------
+            service = new AbilityService(
+                owner: gameObject,
+                aimCamera: aimCamera,
+                energy: energy,
+                groundMask: groundMask,
+                executor: executor,
+                costService: costService
+            );
+
+            // EVENTS
+            service.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
+            service.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
+            service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
+            service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
+            service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
+            service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
         }
 
-        service?.Tick(Time.deltaTime);
-    }
 
-    private void AutoDetectCamera()
-    {
-        if (aimCamera != null) return;
-
-        if (CameraRegistry.I?.CurrentCamera != null)
+        // ================================================================
+        // UPDATE
+        // ================================================================
+        private void LateUpdate()
         {
-            aimCamera = CameraRegistry.I.CurrentCamera;
-            return;
+            if (service == null)
+                return;
+
+            // Late binding executor
+            if (executor == null && AbilityExecutor.I != null)
+            {
+                executor = AbilityExecutor.I;
+                service.SetExecutor(executor);
+            }
+
+            service.Tick(Time.deltaTime);
         }
 
-        var cross = FindAnyObjectByType<CrosshairController>();
-        if (cross?.cam != null)
+
+        // ================================================================
+        // HELPERS
+        // ================================================================
+        private void AutoDetectCamera()
         {
-            aimCamera = cross.cam;
-            return;
+            if (aimCamera != null) return;
+
+            if (CameraRegistry.I?.CurrentCamera != null)
+            {
+                aimCamera = CameraRegistry.I.CurrentCamera;
+                return;
+            }
+
+            var cross = FindAnyObjectByType<CrosshairController>();
+            if (cross?.cam != null)
+            {
+                aimCamera = cross.cam;
+                return;
+            }
+
+            aimCamera = Camera.main;
         }
 
-        aimCamera = Camera.main;
-    }
 
-    // 🔥 Новый основной метод
-    public void SetAbilities(AbilitySO[] newAbilities)
-    {
-        if (newAbilities == null)
+        // ================================================================
+        // PUBLIC API
+        // ================================================================
+        public void SetAbilities(AbilitySO[] newAbilities)
         {
             for (int i = 0; i < abilities.Length; i++)
-                abilities[i] = null;
+                abilities[i] = (newAbilities != null && i < newAbilities.Length) ? newAbilities[i] : null;
+
+            OnAbilitiesChanged?.Invoke();
         }
-        else
+
+        public void TryCast(int index)
         {
-            for (int i = 0; i < abilities.Length; i++)
-                abilities[i] = i < newAbilities.Length ? newAbilities[i] : null;
+            if (index < 0 || index >= abilities.Length) return;
+
+            var ab = abilities[index];
+            if (ab == null) return;
+
+            service.TryCast(ab, index);
         }
 
-        OnAbilitiesChanged?.Invoke();
+        public float GetCooldown(int index)
+        {
+            if (index < 0 || index >= abilities.Length) return 0;
+            return service.GetCooldownRemaining(abilities[index]);
+        }
+
+        public float GetFinalEnergyCost(AbilitySO ability)
+        {
+            if (ability == null) return 0f;
+            if (costService == null) return ability.energyCost;
+
+            return costService.ApplyModifiers(ability.energyCost);
+        }
+
+        public bool IsChanneling => service?.IsChanneling ?? false;
+        public AbilitySO CurrentChannelAbility => service?.CurrentChannelAbility;
     }
-
-    // ---------------------------------------------------------------------
-
-    public void TryCast(int index)
-    {
-        if (index < 0 || index >= abilities.Length) return;
-
-        var ab = abilities[index];
-        if (ab == null) return;
-
-        service.TryCast(ab, index);
-    }
-
-    public float GetCooldown(int index)
-    {
-        if (index < 0 || index >= abilities.Length) return 0;
-        return service.GetCooldownRemaining(abilities[index]);
-    }
-
-    public bool IsChanneling => service.IsChanneling;
-    public AbilitySO CurrentChannelAbility => service.CurrentChannelAbility;
 }
