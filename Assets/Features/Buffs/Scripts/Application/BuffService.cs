@@ -1,22 +1,18 @@
+// Assets/Features/Buffs/Scripts/Application/BuffService.cs
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Features.Buffs.Domain;
 using Features.Buffs.UnityIntegration;
 
 namespace Features.Buffs.Application
 {
     /// <summary>
-    /// Бафф-сервис с защитой от дублирования, корректной работой стак-баффов
-    /// и отменой повторного применения нестекаемых баффов.
+    /// Бафф-сервис: отвечает за список активных баффов и их время жизни.
     /// </summary>
     public class BuffService
     {
         private readonly BuffExecutor executor;
 
-        /// <summary>
-        /// Активные баффы. Один объект BuffInstance — один раз.
-        /// </summary>
         private readonly List<BuffInstance> active = new();
         public IReadOnlyList<BuffInstance> Active => active;
 
@@ -29,7 +25,7 @@ namespace Features.Buffs.Application
         }
 
         // =====================================================================
-        // ADD BUFF (главная логика)
+        // ADD
         // =====================================================================
         public BuffInstance AddBuff(BuffSO config, IBuffTarget target)
         {
@@ -38,53 +34,39 @@ namespace Features.Buffs.Application
 
             var existing = FindExisting(config, target);
 
-            // --------------------------------------------------------------
-            // 1) Бафф уже существует
-            // --------------------------------------------------------------
+            // если уже есть бафф с таким stat+modType на этом таргете
             if (existing != null)
             {
-                // --- STACKABLE ---
                 if (config.isStackable)
                 {
                     existing.StackCount++;
                     existing.Refresh();
-                    executor.Apply(existing);       // применяем только если он стакается
-                    OnAdded?.Invoke(existing);
+                    executor.Apply(existing);
                 }
                 else
                 {
-                    // --- NOT STACKABLE ---
-                    // НЕ применяем повторно (ВАЖНО!)
-                    // Просто продляем время
+                    // нестакаемый — только продлеваем
                     existing.Refresh();
-
-                    // HUD всё равно нужно обновить
-                    OnAdded?.Invoke(existing);
                 }
 
+                OnAdded?.Invoke(existing);
                 return existing;
             }
 
-            // --------------------------------------------------------------
-            // 2) Баффа нет → создаём новый
-            // --------------------------------------------------------------
+            // создаём новый
             var inst = new BuffInstance(config, target);
             active.Add(inst);
 
-            executor.Apply(inst);               // первая активация
+            executor.Apply(inst);
             OnAdded?.Invoke(inst);
 
             return inst;
         }
 
-        // =====================================================================
-        // FIND EXISTING (по СТАТУ и ТАРГЕТУ)
-        // =====================================================================
         private BuffInstance FindExisting(BuffSO cfg, IBuffTarget target)
         {
             foreach (var inst in active)
             {
-                // Сравниваем по stat, не по config!! иначе разные SO считаются разными.
                 if (inst.Target == target &&
                     inst.Config.stat == cfg.stat &&
                     inst.Config.modType == cfg.modType)
@@ -123,6 +105,10 @@ namespace Features.Buffs.Application
             {
                 var inst = active[i];
 
+                // уменьшаем таймер
+                inst.Tick(dt);
+
+                // тики по времени (HealPerSecond и прочее)
                 executor.Tick(inst, dt);
 
                 if (inst.IsExpired)

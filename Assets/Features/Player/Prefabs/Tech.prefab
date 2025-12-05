@@ -1494,7 +1494,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 308.8966, y: -107.33356}
-  m_SizeDelta: {x: 191.54, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8601371123159779007
 CanvasRenderer:
@@ -7541,7 +7541,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3774e3cdf29f1134db8c792bf047f2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.PlayerStats
-  preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
 --- !u!114 &7885062789697620343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9937,7 +9936,6 @@ MonoBehaviour:
   - {fileID: 7294424731631166668}
   - {fileID: 4629385492624779421}
   - {fileID: 4678140430173553158}
-  caster: {fileID: 2902122526011650924}
 --- !u!1 &3835414610895982877
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Features.Stats.Adapter;
-
+using Features.Stats.UnityIntegration;
 public class HPBarUI : MonoBehaviour
 {
     [Header("UI")]
@@ -18,6 +18,16 @@ public class HPBarUI : MonoBehaviour
     private void OnDestroy()
     {
         Unsubscribe();
+    }
+
+    private void Start()
+    {
+        PlayerStats.OnStatsReady += HandleStatsReady;
+    }
+
+    private void HandleStatsReady(PlayerStats stats)
+    {
+        Bind(stats.GetFacadeAdapter().HealthStats);
     }
 
     private void Unsubscribe()

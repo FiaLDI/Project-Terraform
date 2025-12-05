@@ -8,9 +8,12 @@ public class StatsFacade : IStatsFacade, IStatsCollection
     public IMovementStats Movement { get; }
     public IMiningStats Mining { get; }
 
-    public StatsFacade()
+    public StatsFacade(bool isTurret = false)
     {
-        Combat = new CombatStats();
+        Combat =
+            isTurret
+            ? (ICombatStats)new TurretCombatStats()
+            : new CombatStats();
         Energy = new EnergyStats();
         Health = new HealthStats();
         Movement = new MovementStats();

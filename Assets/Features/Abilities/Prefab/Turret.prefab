@@ -821,7 +821,6 @@ GameObject:
   - component: {fileID: 9012733006345588933}
   - component: {fileID: 2094240665213674160}
   - component: {fileID: 6859820028838700850}
-  - component: {fileID: 8182277090343146957}
   - component: {fileID: 1926531339624578966}
   m_Layer: 7
   m_Name: Turret
@@ -892,18 +891,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.TurretStats
   preset: {fileID: 11400000, guid: 3c0e0f654cc9bbe46b73c974ec5e9f69, type: 2}
---- !u!114 &8182277090343146957
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5885013346192204236}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 742ba4c13ff1b6945bb9292016887b76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TurretStatReceiver
 --- !u!114 &1926531339624578966
 MonoBehaviour:
   m_ObjectHideFlags: 0

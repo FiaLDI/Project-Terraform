@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Features.Abilities.Application;
 using Features.Abilities.Domain;
 using Features.Stats.Adapter;
+using Features.Stats.UnityIntegration;
 
 namespace Features.Abilities.UI
 {
@@ -21,34 +22,27 @@ namespace Features.Abilities.UI
         private EnergyStatsAdapter energy;
 
         private AbilitySO _currentChannelAbility;
-
+        
         private void Start()
         {
-            var reg = PlayerRegistry.Instance;
+            PlayerStats.OnStatsReady += OnReady;
+        }
 
-            caster = reg.LocalAbilities;
-            energy = reg.LocalEnergy;
+        private void OnReady(PlayerStats stats)
+        {
+            var adapter = stats.GetFacadeAdapter();
 
-            if (caster == null)
-            {
-                Debug.LogError("AbilityHUD: No AbilityCaster from PlayerRegistry!");
-                enabled = false;
-                return;
-            }
+            caster = stats.GetComponent<AbilityCaster>();
+            energy = adapter.EnergyStats;
 
-            // ENERGY UI
             if (energy != null)
                 energy.OnEnergyChanged += UpdateEnergyView;
 
-            // CAST / CHANNEL EVENTS
             caster.OnChannelStarted += HandleChannelStarted;
             caster.OnChannelProgress += HandleChannelProgress;
             caster.OnChannelCompleted += HandleChannelCompleted;
             caster.OnChannelInterrupted += HandleChannelInterrupted;
             caster.OnAbilitiesChanged += RebindAbilities;
-
-            if (channelRoot != null)
-                channelRoot.SetActive(false);
 
             RebindAbilities();
         }

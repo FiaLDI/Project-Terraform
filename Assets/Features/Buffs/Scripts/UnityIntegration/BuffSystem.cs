@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Features.Buffs.Domain;
-using Features.Buffs.UnityIntegration;
+using Features.Stats.Domain;
 
 namespace Features.Buffs.Application
 {
@@ -11,24 +11,17 @@ namespace Features.Buffs.Application
         private IBuffTarget _target;
         private BuffExecutor _executor;
         private BuffService _service;
+        private IStatsFacade _stats;
 
         public BuffService Service => _service;
         public IReadOnlyList<BuffInstance> Active => _service?.Active;
+        public bool ServiceReady => _service != null;
 
-        public bool ServiceReady => _fullyInitialized && _service != null;
+        public IBuffTarget Target => _target; // ← ВОССТАНОВЛЕНО
 
         public event System.Action<BuffInstance> OnBuffAdded;
         public event System.Action<BuffInstance> OnBuffRemoved;
 
-        private bool _fullyInitialized = false;
-        private bool _initStarted = false;
-
-        public IBuffTarget Target => _target;
-
-
-        // ------------------------------------------------------
-        // LIFECYCLE
-        // ------------------------------------------------------
         private void Awake()
         {
             TryResolveTarget();
@@ -36,25 +29,13 @@ namespace Features.Buffs.Application
 
         private void Start()
         {
-            if (!_initStarted)
-                StartCoroutine(DelayedInit());
+            StartCoroutine(InitRoutine());
         }
 
-        private IEnumerator DelayedInit()
+        private IEnumerator InitRoutine()
         {
-            _initStarted = true;
-
-            // подождать 1 кадр, чтобы SystemsPrefab успел появиться
             yield return null;
-
-            // ждём полного появления всех систем
-            while (!_fullyInitialized)
-            {
-                TryInit();
-
-                if (!_fullyInitialized)
-                    yield return null;
-            }
+            TryInit();
         }
 
         private void Update()
@@ -63,90 +44,61 @@ namespace Features.Buffs.Application
                 _service.Tick(Time.deltaTime);
         }
 
-        // ------------------------------------------------------
-        // INIT LOGIC
-        // ------------------------------------------------------
-
         private void TryResolveTarget()
         {
-            if (_target != null) return;
-
             _target =
                 GetComponent<IBuffTarget>() ??
                 GetComponentInChildren<IBuffTarget>() ??
                 GetComponentInParent<IBuffTarget>();
 
             if (_target == null)
-                Debug.LogError($"[BuffSystem] No IBuffTarget found on {name}");
+                Debug.LogError("[BuffSystem] No IBuffTarget found!", this);
         }
 
         private void TryInit()
         {
-            if (_fullyInitialized)
-                return;
-
-            TryResolveTarget();
             if (_target == null) return;
 
             if (_executor == null)
-                _executor = FindFirstObjectByType<BuffExecutor>();
+                _executor = FindAnyObjectByType<BuffExecutor>();
 
-            if (_executor == null)
-                return; // ждем SystemsPrefab
+            if (_executor == null) return;
 
             if (_service == null)
             {
                 _service = new BuffService(_executor);
 
-                _service.OnAdded += x => OnBuffAdded?.Invoke(x);
-                _service.OnRemoved += x => OnBuffRemoved?.Invoke(x);
+                _service.OnAdded += inst => OnBuffAdded?.Invoke(inst);
+                _service.OnRemoved += inst => OnBuffRemoved?.Invoke(inst);
             }
-
-            _fullyInitialized = true;
         }
-
-        // ------------------------------------------------------
-        // PUBLIC API
-        // ------------------------------------------------------
 
         public BuffInstance Add(BuffSO cfg)
         {
-            if (cfg == null)
-                return null;
-
-            TryInit();
-            if (!ServiceReady)
-                return null;
-
+            if (!ServiceReady) return null;
             return _service.AddBuff(cfg, _target);
         }
 
         public void Remove(BuffInstance inst)
         {
-            if (inst == null)
-                return;
-
-            TryInit();
-            if (!ServiceReady)
-                return;
-
-            _service.RemoveBuff(inst);
+            if (ServiceReady)
+                _service.RemoveBuff(inst);
         }
 
+        // ← ВОССТАНОВЛЕННАЯ ОБРАТНАЯ СОВМЕСТИМОСТЬ
         public BuffService GetServiceSafe()
         {
-            TryInit();
-            return ServiceReady ? _service : null;
+            return _service;
         }
 
-        /// <summary>
-        /// Позволяет внешним системам (BuffHUD, AbilityHUD) без ошибок ждать
-        /// появления Service и Executor.
-        /// </summary>
-        public bool EnsureInit()
+        public void SetTarget(IBuffTarget target)
         {
-            TryInit();
-            return ServiceReady;
+            _target = target;
+        }
+
+        public void SetStats(IStatsFacade stats)
+        {
+            _stats = stats;
         }
     }
 }

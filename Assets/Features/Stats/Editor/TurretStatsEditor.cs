@@ -16,27 +16,38 @@ public class TurretStatsEditor : Editor
 
         if (!Application.isPlaying)
         {
-            EditorGUILayout.HelpBox("Run Play mode to see live values", MessageType.Info);
+            EditorGUILayout.HelpBox("Enter Play Mode to view live runtime values.", MessageType.Info);
             return;
         }
 
+        //
+        // HEALTH
+        //
+        GUILayout.Space(5);
         EditorGUILayout.LabelField("Health", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("HP", t.Debug_HP);
+        EditorGUILayout.FloatField("Current HP", t.Debug_HP);
         EditorGUILayout.FloatField("Max HP", t.Debug_MaxHP);
 
+        //
+        // COMBAT
+        //
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Combat", EditorStyles.boldLabel);
         EditorGUILayout.FloatField("Damage Multiplier", t.Debug_DamageMultiplier);
         EditorGUILayout.FloatField("Final Damage", t.FinalDamage);
 
+        //
+        // MOVEMENT / ROTATION
+        //
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Movement / Rotation", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("Base Rotation Speed", t.Debug_RotationSpeed);
-        EditorGUILayout.FloatField("Final Rotation Speed", t.FinalRotationSpeed);
+        EditorGUILayout.FloatField("Final Rotation Speed", t.Debug_RotationSpeed);
 
+        //
+        // FIRE RATE
+        //
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Fire Rate", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("Fire Rate Multiplier", t.FireRateMultiplier);
         EditorGUILayout.FloatField("Final Fire Rate", t.FinalFireRate);
     }
 }

@@ -1,25 +1,40 @@
 using UnityEngine;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
-using Features.Buffs.UnityIntegration;
+using Features.Stats.UnityIntegration;
+using Features.Stats.Domain;
 
 public class TurretBuffTarget : MonoBehaviour, IBuffTarget
 {
-    private BuffSystem _system;
-    private BuffService _service;
-
     public Transform Transform => transform;
     public GameObject GameObject => gameObject;
-    public BuffSystem BuffSystem => _system;
-    public BuffService Buffs => _service;
+
+    public BuffSystem BuffSystem { get; private set; }
+    public IStatsFacade Stats { get; private set; }
+
+    private TurretStats _stats;
 
     private void Awake()
     {
-        // РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅР° С‚РѕРј Р¶Рµ РѕР±СЉРµРєС‚Рµ
-        _system = GetComponent<BuffSystem>();
-        if (_system == null)
-            Debug.LogError("[TurretBuffTarget] BuffSystem not found!");
+        // 1) TurretStats must exist
+        _stats = GetComponent<TurretStats>();
+        if (_stats == null)
+        {
+            Debug.LogError("[TurretBuffTarget] No TurretStats found!", this);
+            return;
+        }
 
-        _service = _system?.GetServiceSafe();
+        // 2) Ensure BuffSystem
+        BuffSystem = GetComponent<BuffSystem>();
+        if (BuffSystem == null)
+            BuffSystem = gameObject.AddComponent<BuffSystem>();
+
+        // 3) Связываем BuffSystem с таргетом
+        BuffSystem.SetTarget(this);
+
+        // 4) Пробрасываем фасад статов в IBuffTarget
+        Stats = _stats.Facade;
+
+        Debug.Log("[TurretBuffTarget] Bound successfully.", this);
     }
 }

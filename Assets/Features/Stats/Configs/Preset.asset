@@ -25,5 +25,6 @@ MonoBehaviour:
     walkSpeed: 4
     sprintSpeed: 8
     crouchSpeed: 2
+    rotationSpeed: 0
   mining:
     baseMining: 1

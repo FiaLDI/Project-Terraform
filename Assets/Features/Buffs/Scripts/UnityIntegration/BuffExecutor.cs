@@ -4,164 +4,130 @@ using System.Collections.Generic;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
 using Features.Stats.Domain;
-using Features.Stats.UnityIntegration;
 
-namespace Features.Buffs.UnityIntegration
+public class BuffExecutor : MonoBehaviour
 {
-    public class BuffExecutor : MonoBehaviour
+    private readonly Dictionary<BuffStat, Action<BuffInstance, bool>> handlers =
+        new();
+
+    private void Awake()
     {
-        // ============================================================
-        // REGISTRY — сопоставление BuffStat → обработчика
-        // ============================================================
+        RegisterHandlers();
+    }
 
-        private readonly Dictionary<BuffStat, Action<BuffInstance, bool>> handlers =
-            new Dictionary<BuffStat, Action<BuffInstance, bool>>();
+    public void Apply(BuffInstance inst)
+    {
+        if (!IsValid(inst)) return;
 
-        private void Awake()
-        {
-            RegisterDefaultHandlers();
-        }
+        if (handlers.TryGetValue(inst.Config.stat, out var h))
+            h(inst, true);
+    }
 
-        // ============================================================
-        // PUBLIC API — Apply / Expire / Tick
-        // ============================================================
+    public void Expire(BuffInstance inst)
+    {
+        if (!IsValid(inst)) return;
 
-        public void Apply(BuffInstance inst)
-        {
-            if (!IsValid(inst)) return;
+        if (handlers.TryGetValue(inst.Config.stat, out var h))
+            h(inst, false);
+    }
 
-            var stat = inst.Config.stat;
-            if (handlers.TryGetValue(stat, out var handler))
-                handler.Invoke(inst, true);
-        }
+    public void Tick(BuffInstance inst, float dt)
+    {
+        if (!IsValid(inst)) return;
 
-        public void Expire(BuffInstance inst)
-        {
-            if (!IsValid(inst)) return;
+        if (inst.Config.stat == BuffStat.HealPerSecond)
+            inst.Target.Stats.Health.Heal(inst.Config.value * dt);
+    }
 
-            var stat = inst.Config.stat;
-            if (handlers.TryGetValue(stat, out var handler))
-                handler.Invoke(inst, false);
-        }
+    private bool IsValid(BuffInstance inst)
+    {
+        return inst != null &&
+               inst.Config != null &&
+               inst.Target != null &&
+               inst.Target.Stats != null;
+    }
 
-        public void Tick(BuffInstance inst, float dt)
-        {
-            if (!IsValid(inst)) return;
+    // --------------------------
+    // REGISTER HANDLERS
+    // --------------------------
+    private void RegisterHandlers()
+    {
+        // PLAYER
+        Register(BuffStat.PlayerDamage,
+            (inst, apply) => inst.Target.Stats.Combat.ApplyBuff(inst.Config, apply));
 
-            var cfg = inst.Config;
-            var go = inst.Target.GameObject;
+        Register(BuffStat.PlayerMoveSpeed,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
 
-            if (cfg.stat == BuffStat.HealPerSecond)
+        Register(BuffStat.PlayerMoveSpeedMult,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerWalkSpeed,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerWalkSpeedMult,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerSprintSpeed,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerSprintSpeedMult,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerCrouchSpeed,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerCrouchSpeedMult,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerShield,
+            (inst, apply) => inst.Target.Stats.Health.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerHp,
+            (inst, apply) => inst.Target.Stats.Health.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerHpRegen,
+            (inst, apply) => inst.Target.Stats.Health.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerEnergyRegen,
+            (inst, apply) => inst.Target.Stats.Energy.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerMaxEnergy,
+            (inst, apply) => inst.Target.Stats.Energy.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerEnergyCostReduction,
+            (inst, apply) => inst.Target.Stats.Energy.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.PlayerMiningSpeed,
+            (inst, apply) => inst.Target.Stats.Mining.ApplyBuff(inst.Config, apply));
+        
+         Register(BuffStat.RotationSpeed,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.RotationSpeedMult,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+
+        // TURRET
+        Register(BuffStat.TurretDamage,
+            (inst, apply) => inst.Target.Stats.Combat.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.TurretRotationSpeed,
+            (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.TurretMaxHP,
+            (inst, apply) => inst.Target.Stats.Health.ApplyBuff(inst.Config, apply));
+
+        Register(BuffStat.TurretFireRate,
+            (inst, apply) =>
             {
-                if (go.TryGetComponent<IHealthReceiver>(out var hp))
-                    hp.Heal(cfg.value * dt);
-            }
-        }
+                if (inst.Target.Stats.Combat is ITurretCombatStats tc)
+                    tc.ApplyFireRateBuff(inst.Config, apply);
+            });
+    }
 
-        // ============================================================
-        // VALIDATION
-        // ============================================================
-
-        private bool IsValid(BuffInstance inst)
-        {
-            return inst != null &&
-                   inst.Config != null &&
-                   inst.Target != null &&
-                   inst.Target.GameObject != null;
-        }
-
-        // ============================================================
-        // REGISTRATION OF HANDLERS
-        // ============================================================
-
-        private void RegisterDefaultHandlers()
-        {
-            // PLAYER COMBAT
-            Register(BuffStat.PlayerDamage,
-                (inst, apply) =>
-                    TryCall<ICombatStatReceiver>(inst, r => r.ApplyCombatBuff(inst.Config, apply)));
-
-            // MOVEMENT
-            Register(BuffStat.PlayerMoveSpeed,
-                (inst, apply) =>
-                    TryCall<IMovementStatReceiver>(inst, r => r.ApplyMovementBuff(inst.Config, apply)));
-
-            // MINING
-            Register(BuffStat.PlayerMiningSpeed,
-                (inst, apply) =>
-                    TryCall<IMiningStatReceiver>(inst, r => r.ApplyMiningBuff(inst.Config, apply)));
-
-            // SHIELD
-            Register(BuffStat.PlayerShield,
-                (inst, apply) =>
-                    TryCall<IShieldReceiver>(inst, r => r.ApplyShieldBuff(inst.Config, apply)));
-
-            Register(BuffStat.PlayerHp,
-                (inst, apply) =>
-                    TryCall<IHealthStatReceiver>(inst, r => r.ApplyHealthBuff(inst.Config, apply)));
-
-            Register(BuffStat.PlayerHpRegen,
-                (inst, apply) =>
-                    TryCall<IHealthStatReceiver>(inst, r => r.ApplyHealthBuff(inst.Config, apply)));
-            // ENERGY
-            Register(BuffStat.PlayerMaxEnergy,
-                (inst, apply) =>
-                    TryCall<IEnergyStatReceiver>(inst, r => r.ApplyEnergyBuff(inst.Config, apply)));
-
-            Register(BuffStat.PlayerEnergyRegen,
-                (inst, apply) =>
-                    TryCall<IEnergyStatReceiver>(inst, r => r.ApplyEnergyBuff(inst.Config, apply)));
-
-            Register(BuffStat.PlayerEnergyCostReduction,
-                (inst, apply) =>
-                    TryCall<IEnergyStatReceiver>(inst, r => r.ApplyEnergyBuff(inst.Config, apply)));
-
-            // TURRET
-            Register(BuffStat.TurretDamage,
-                (inst, apply) =>
-                    TryCall<ITurretStatReceiver>(inst, r => r.ApplyTurretBuff(inst.Config, apply)));
-
-            Register(BuffStat.TurretFireRate,
-                (inst, apply) =>
-                    TryCall<ITurretStatReceiver>(inst, r => r.ApplyTurretBuff(inst.Config, apply)));
-
-            Register(BuffStat.TurretRotationSpeed,
-                (inst, apply) =>
-                    TryCall<ITurretStatReceiver>(inst, r => r.ApplyTurretBuff(inst.Config, apply)));
-
-            Register(BuffStat.TurretMaxHP,
-                (inst, apply) =>
-                    TryCall<ITurretStatReceiver>(inst, r => r.ApplyTurretBuff(inst.Config, apply)));
-
-        }
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
-        private void Register(BuffStat stat, Action<BuffInstance, bool> handler)
-        {
-            handlers[stat] = handler;
-        }
-
-        /// <summary>
-        /// Унифицированный вызов интерфейса с TryGetComponent.
-        /// </summary>
-        private void TryCall<T>(BuffInstance inst, Action<T> call)
-        {
-            var go = inst.Target.GameObject;
-
-            // 🔥 приоритет: StatBuffReceiver
-            if (go.TryGetComponent<StatBuffReceiver>(out var statRecv) && statRecv is T t1)
-            {
-                call(t1);
-                return;
-            }
-
-            // 🔥 fallback: старые системы (например, Turret)
-            if (go.TryGetComponent<T>(out var receiver))
-                call(receiver);
-        }
-
+    private void Register(BuffStat stat, Action<BuffInstance, bool> handler)
+    {
+        handlers[stat] = handler;
     }
 }

@@ -1,22 +1,26 @@
 using UnityEngine;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
+using Features.Stats.Domain;
 
-namespace Features.Buffs.UnityIntegration
+public class PlayerBuffTarget : MonoBehaviour, IBuffTarget
 {
-    public class PlayerBuffTarget : MonoBehaviour, IBuffTarget
+    public BuffSystem BuffSystem { get; private set; }
+    public IStatsFacade Stats { get; private set; }
+
+    public Transform Transform => transform;
+    public GameObject GameObject => gameObject;
+
+    private void Awake()
     {
-        public Transform Transform => transform;
-        public GameObject GameObject => gameObject;
+        BuffSystem = GetComponent<BuffSystem>();
+        if (BuffSystem == null)
+            Debug.LogError("[PlayerBuffTarget] Missing BuffSystem");
+    }
 
-        public BuffSystem BuffSystem { get; private set; }
-
-        private void Awake()
-        {
-            BuffSystem = GetComponent<BuffSystem>();
-
-            if (BuffSystem == null)
-                Debug.LogError("[PlayerBuffTarget] Missing BuffSystem!", this);
-        }
+    // вызывается PlayerClassController
+    public void SetStats(IStatsFacade stats)
+    {
+        Stats = stats;
     }
 }

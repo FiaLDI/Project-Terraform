@@ -13,34 +13,49 @@ namespace Features.Stats.Domain
         private float _baseCrouch;
 
         // =============================
-        // BUFF MODIFIERS
+        // BUFF MODIFIERS (ADD & MULT)
         // =============================
-        private float _addBonus = 0f;
-        private float _multBonus = 1f;
+        private float _speedAdd = 0f;
+        private float _speedMult = 1f;
+
+        private float _walkAdd = 0f;
+        private float _walkMult = 1f;
+
+        private float _sprintAdd = 0f;
+        private float _sprintMult = 1f;
+
+        private float _crouchAdd = 0f;
+        private float _crouchMult = 1f;
+
+        private float _baseRotation;
+        private float _rotationAdd = 0f;
+        private float _rotationMult = 1f;
 
         // =============================
-        // FINAL VALUES (CALCULATED)
+        // FINAL VALUES
         // =============================
         public float BaseSpeed { get; private set; }
         public float WalkSpeed { get; private set; }
         public float SprintSpeed { get; private set; }
         public float CrouchSpeed { get; private set; }
+        public float RotationSpeed { get; private set; }
 
         // =============================
-        // APPLY BASE STATS
+        // APPLY BASE
         // =============================
-        public void ApplyBase(float baseSpeed, float walk, float sprint, float crouch)
+        public void ApplyBase(float baseSpeed, float walk, float sprint, float crouch, float rotation)
         {
-            _baseSpeed  = baseSpeed;
-            _baseWalk   = walk;
+            _baseSpeed = baseSpeed;
+            _baseWalk = walk;
             _baseSprint = sprint;
             _baseCrouch = crouch;
+            _baseRotation = rotation;
 
             Recalc();
         }
 
         // =============================
-        // APPLY BUFFS
+        // APPLY BUFF
         // =============================
         public void ApplyBuff(BuffSO cfg, bool apply)
         {
@@ -48,33 +63,63 @@ namespace Features.Stats.Domain
 
             float sign = apply ? 1f : -1f;
 
-            switch (cfg.modType)
+            switch (cfg.stat)
             {
-                case BuffModType.Add:
-                    _addBonus += sign * cfg.value;
+                // ---------------------------------
+                // BASE SPEED
+                // ---------------------------------
+                case BuffStat.PlayerMoveSpeed:
+                    _speedAdd += sign * cfg.value;
                     break;
 
-                case BuffModType.Mult:
-                    if (apply)  _multBonus *= cfg.value;
-                    else        _multBonus /= cfg.value;
+                case BuffStat.PlayerMoveSpeedMult:
+                    if (apply) _speedMult *= cfg.value;
+                    else _speedMult /= cfg.value;
                     break;
 
-                case BuffModType.Set:
-                    // SET → заменяем всю скорость
-                    if (apply)
-                    {
-                        BaseSpeed  = cfg.value;
-                        WalkSpeed  = cfg.value * 0.8f;
-                        SprintSpeed = cfg.value * 1.5f;
-                        CrouchSpeed = cfg.value * 0.5f;
-                        return;
-                    }
-                    else
-                    {
-                        // снимаем Set → возвращаем оригинальные
-                        _addBonus = 0f;
-                        _multBonus = 1f;
-                    }
+                // ---------------------------------
+                // WALK
+                // ---------------------------------
+                case BuffStat.PlayerWalkSpeed:
+                    _walkAdd += sign * cfg.value;
+                    break;
+
+                case BuffStat.PlayerWalkSpeedMult:
+                    if (apply) _walkMult *= cfg.value;
+                    else _walkMult /= cfg.value;
+                    break;
+
+                // ---------------------------------
+                // SPRINT
+                // ---------------------------------
+                case BuffStat.PlayerSprintSpeed:
+                    _sprintAdd += sign * cfg.value;
+                    break;
+
+                case BuffStat.PlayerSprintSpeedMult:
+                    if (apply) _sprintMult *= cfg.value;
+                    else _sprintMult /= cfg.value;
+                    break;
+
+                // ---------------------------------
+                // CROUCH
+                // ---------------------------------
+                case BuffStat.PlayerCrouchSpeed:
+                    _crouchAdd += sign * cfg.value;
+                    break;
+
+                case BuffStat.PlayerCrouchSpeedMult:
+                    if (apply) _crouchMult *= cfg.value;
+                    else _crouchMult /= cfg.value;
+                    break;
+                
+                case BuffStat.RotationSpeed:
+                    _rotationAdd += sign * cfg.value;
+                    break;
+
+                case BuffStat.RotationSpeedMult:
+                    if (apply) _rotationMult *= cfg.value;
+                    else _rotationMult /= cfg.value;
                     break;
             }
 
@@ -82,16 +127,15 @@ namespace Features.Stats.Domain
         }
 
         // =============================
-        // RECALCULATE FINAL VALUES
+        // RECALC FINAL VALUES
         // =============================
         private void Recalc()
         {
-            float final = (_baseSpeed + _addBonus) * _multBonus;
-
-            BaseSpeed   = final;
-            WalkSpeed   = final * 0.8f;
-            SprintSpeed = final * 1.5f;
-            CrouchSpeed = final * 0.5f;
+            BaseSpeed = (_baseSpeed + _speedAdd) * _speedMult;
+            WalkSpeed = (_baseWalk + _walkAdd) * _walkMult;
+            SprintSpeed = (_baseSprint + _sprintAdd) * _sprintMult;
+            CrouchSpeed = (_baseCrouch + _crouchAdd) * _crouchMult;
+            RotationSpeed  = (_baseRotation + _rotationAdd) * _rotationMult;
         }
     }
 }

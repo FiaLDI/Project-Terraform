@@ -1,6 +1,8 @@
 using UnityEngine;
 using Features.Abilities.Domain;
-using Features.Combat.Devices;
+using Features.Buffs.Application;
+using Features.Buffs.Domain;
+using Features.Buffs.UnityIntegration;
 
 namespace Features.Abilities.UnityIntegration
 {
@@ -24,6 +26,14 @@ namespace Features.Abilities.UnityIntegration
                 ctx.TargetPoint,
                 Quaternion.identity
             );
+
+            // Ensure buff system
+            if (!obj.TryGetComponent<BuffSystem>(out var bs))
+                bs = obj.AddComponent<BuffSystem>();
+
+            // Ensure buff target
+            if (!obj.TryGetComponent<IBuffTarget>(out _))
+                obj.AddComponent<TurretBuffTarget>();
 
             // Register turret to player
             if (PlayerRegistry.Instance != null)

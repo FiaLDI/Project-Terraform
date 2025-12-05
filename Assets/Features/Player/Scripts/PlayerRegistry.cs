@@ -3,6 +3,7 @@ using UnityEngine;
 using Features.Stats.Adapter;
 using Features.Abilities.Application;
 
+[DefaultExecutionOrder(-1000)]
 public class PlayerRegistry : MonoBehaviour
 {
     public static PlayerRegistry Instance { get; private set; }

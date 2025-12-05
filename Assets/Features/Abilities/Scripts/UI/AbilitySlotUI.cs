@@ -17,7 +17,7 @@ namespace Features.Abilities.UI
         public TextMeshProUGUI keyLabel;
 
         [Header("Channel Highlight")]
-        public GameObject channelHighlight;    
+        public GameObject channelHighlight;
         public Image channelProgressFill;
 
         [HideInInspector] public AbilitySO boundAbility;
@@ -27,16 +27,32 @@ namespace Features.Abilities.UI
 
         private Sprite defaultIcon;
 
+        private bool warnedMissingRefs = false;
+
+        private void WarnMissing(string field)
+        {
+            if (warnedMissingRefs) return;
+            warnedMissingRefs = true;
+
+            Debug.LogWarning($"[AbilitySlotUI] Missing reference: {field} on {name}. UI will still work safely.");
+        }
+
         private void Awake()
         {
+            // Icon
             if (icon != null)
                 defaultIcon = icon.sprite;
 
+            // Channel UI
             if (channelHighlight != null)
                 channelHighlight.SetActive(false);
+            else
+                WarnMissing(nameof(channelHighlight));
 
             if (channelProgressFill != null)
                 channelProgressFill.fillAmount = 0f;
+            else
+                WarnMissing(nameof(channelProgressFill));
         }
 
         public void Bind(AbilitySO ability, AbilityCaster caster, int index)
@@ -76,7 +92,8 @@ namespace Features.Abilities.UI
                 cooldownSlider.value = 1;
             }
 
-            channelHighlight?.SetActive(false);
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
 
             if (channelProgressFill != null)
                 channelProgressFill.fillAmount = 0f;
@@ -138,9 +155,9 @@ namespace Features.Abilities.UI
             Unsubscribe();
         }
 
-        // ============================================================
-        // COOLDOWN UI
-        // ============================================================
+        // ===============================
+        // COOLDOWN
+        // ===============================
         private void HandleCastReset(AbilitySO usedAbility)
         {
             if (usedAbility != boundAbility) return;
@@ -156,9 +173,9 @@ namespace Features.Abilities.UI
                 cooldownSlider.value = max - remaining;
         }
 
-        // ============================================================
+        // ===============================
         // CHANNEL UI
-        // ============================================================
+        // ===============================
         private void HandleChannelStart(AbilitySO ability)
         {
             if (ability != boundAbility) return;
@@ -169,7 +186,6 @@ namespace Features.Abilities.UI
             if (channelProgressFill != null)
                 channelProgressFill.fillAmount = 0f;
         }
-
 
         private void HandleChannelProgress(AbilitySO ability, float time, float duration)
         {
@@ -190,9 +206,9 @@ namespace Features.Abilities.UI
                 channelProgressFill.fillAmount = 0f;
         }
 
-        // ============================================================
+        // ===============================
         // TOOLTIP
-        // ============================================================
+        // ===============================
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (boundAbility != null)

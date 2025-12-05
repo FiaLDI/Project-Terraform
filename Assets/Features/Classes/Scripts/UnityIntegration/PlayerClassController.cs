@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using Features.Classes.Data;
 using Features.Classes.Application;
 using Features.Passives.UnityIntegration;
@@ -6,11 +7,12 @@ using Features.Abilities.Application;
 using Features.Stats.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
+using Features.Buffs.UnityIntegration;
 
 [DefaultExecutionOrder(-100)]
 public class PlayerClassController : MonoBehaviour
 {
-    [Header("Class Library")]
+    [Header("Classes Library")]
     public PlayerClassLibrarySO library;
 
     [Header("Default Class ID")]
@@ -18,10 +20,10 @@ public class PlayerClassController : MonoBehaviour
 
     private PlayerClassService _service;
 
-    // ===== DOMAIN =====
+    // DOMAIN facade
     private IStatsFacade _stats;
 
-    // ===== ADAPTERS (MonoBehaviours) =====
+    // ADAPTERS
     private HealthStatsAdapter _health;
     private EnergyStatsAdapter _energy;
     private CombatStatsAdapter _combat;
@@ -30,10 +32,9 @@ public class PlayerClassController : MonoBehaviour
 
     private PassiveSystem _passiveSystem;
     private AbilityCaster _abilityCaster;
-    private StatBuffReceiver _buffReceiver;
 
+    private PlayerBuffTarget _buffTarget;
 
-    // ============================================================
     private void OnEnable()
     {
         PlayerStats.OnStatsReady += HandleStatsReady;
@@ -44,21 +45,19 @@ public class PlayerClassController : MonoBehaviour
         PlayerStats.OnStatsReady -= HandleStatsReady;
     }
 
-
-    // ============================================================
     private void Awake()
     {
-        // 1) Кэшируем компоненты адаптеров
         CacheAdapters();
 
-        // 2) Кэш пассивов и абилок
+        _buffTarget = GetComponent<PlayerBuffTarget>();
+        if (_buffTarget == null)
+            Debug.LogError("[PlayerClassController] PlayerBuffTarget missing!");
+
         _passiveSystem = GetComponent<PassiveSystem>();
         _abilityCaster = GetComponent<AbilityCaster>();
 
-        // 3) Сервис классов
         _service = new PlayerClassService(library.classes, defaultClassId);
     }
-
 
     private void CacheAdapters()
     {
@@ -69,73 +68,81 @@ public class PlayerClassController : MonoBehaviour
         _mining = GetComponent<MiningStatsAdapter>();
     }
 
-
-    // ============================================================
     private void HandleStatsReady(PlayerStats ps)
     {
-         Debug.Log($"[STATS READY] From object: {ps.gameObject.name} | tag={ps.gameObject.tag}");
+        Debug.Log($"[STATS READY] From: {ps.gameObject.name}");
+
         _stats = ps.Facade;
 
-        // Инициализация адаптеров
+        // Init Adapters
         _health?.Init(_stats.Health);
         _energy?.Init(_stats.Energy);
         _combat?.Init(_stats.Combat);
         _movement?.Init(_stats.Movement);
         _mining?.Init(_stats.Mining);
 
-        // Бафф-ресивер теперь можно создавать
-        if (_buffReceiver == null)
-            _buffReceiver = gameObject.AddComponent<StatBuffReceiver>();
+        // BUFF TARGET
+        _buffTarget?.SetStats(_stats);
 
-        _buffReceiver.Init(_stats);
-
-        // Применить дефолтный класс
+        // apply default class (but delayed)
         if (_service.Current != null)
-            ApplyClass(_service.Current);
+            StartCoroutine(DelayedApplyClass(_service.Current));
     }
 
-
-    // ============================================================
-    private void Start()
+    private IEnumerator DelayedApplyClass(PlayerClassConfigSO cfg)
     {
-        // Start больше НИЧЕГО не делает — всё через HandleStatsReady()
+        yield return null;
+
+        // Wait until AbilityCaster is fully initialized
+        yield return new WaitUntil(() =>
+            _abilityCaster != null &&
+            _abilityCaster.Energy != null
+        );
+
+        ApplyClassInternal(cfg);
     }
 
-
-    // ============================================================
     public void ApplyClass(string id)
     {
         var cfg = _service.FindById(id);
         if (cfg != null)
-            ApplyClass(cfg);
+            StartCoroutine(DelayedApplyClass(cfg));
     }
 
-
-    // ============================================================
     public void ApplyClass(PlayerClassConfigSO cfg)
+    {
+        if (cfg != null)
+            StartCoroutine(DelayedApplyClass(cfg));
+    }
+
+    private void ApplyClassInternal(PlayerClassConfigSO cfg)
     {
         if (cfg == null) return;
 
+        Debug.Log($"[Class] Applying class: {cfg.displayName}");
+
         _service.SelectClass(cfg);
 
-        // --- APPLY DOMAIN STATS ---
-        _stats.Combat.ApplyBase(cfg.baseDamageMultiplier);
-        _stats.Energy.ApplyBase(cfg.baseMaxEnergy, cfg.baseEnergyRegen);
-        _stats.Health.ApplyBase(cfg.baseHp);
+        var p = cfg.preset;
+
+        _stats.Health.ApplyBase(p.health.baseHp);
+        _stats.Health.ApplyRegenBase(p.health.baseRegen);
+
+        _stats.Energy.ApplyBase(p.energy.baseMaxEnergy, p.energy.baseRegen);
+
+        _stats.Combat.ApplyBase(p.combat.baseDamageMultiplier);
 
         _stats.Movement.ApplyBase(
-            cfg.baseMoveSpeed,
-            4f,
-            cfg.sprintSpeed,
-            cfg.crouchSpeed
+            p.movement.baseSpeed,
+            p.movement.walkSpeed,
+            p.movement.sprintSpeed,
+            p.movement.crouchSpeed,
+            p.movement.rotationSpeed
         );
 
-        _stats.Mining.ApplyBase(cfg.miningMultiplier);
-
-        // --- PASSIVES ---
+        _stats.Mining.ApplyBase(p.mining.baseMining);
+        
         _passiveSystem?.SetPassives(cfg.passives.ToArray());
-
-        // --- ABILITIES ---
         _abilityCaster?.SetAbilities(cfg.abilities.ToArray());
     }
 }

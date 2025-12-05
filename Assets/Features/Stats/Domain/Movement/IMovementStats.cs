@@ -8,8 +8,9 @@ namespace Features.Stats.Domain
         float WalkSpeed { get; }
         float SprintSpeed { get; }
         float CrouchSpeed { get; }
+        public float RotationSpeed { get; }
 
-        void ApplyBase(float baseSpeed, float walk, float sprint, float crouch);
+        void ApplyBase(float baseSpeed, float walk, float sprint, float crouch, float rotation);
         void ApplyBuff(BuffSO cfg, bool apply);
     }
 }

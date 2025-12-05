@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Features.Stats.Domain;
-
+using Features.Stats.UnityIntegration;
 public class EnergyBarUI : MonoBehaviour
 {
     [Header("UI")]
@@ -14,6 +14,18 @@ public class EnergyBarUI : MonoBehaviour
 
     private IEnergyView energy;
     private float targetFill = 1f;
+    
+    private void Start()
+    {
+        PlayerStats.OnStatsReady += OnReady;
+    }
+
+    private void OnReady(PlayerStats stats)
+    {
+        var adapter = stats.GetFacadeAdapter();
+        Bind(adapter.EnergyStats);
+    }
+
 
     private void OnDestroy()
     {

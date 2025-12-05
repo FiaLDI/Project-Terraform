@@ -13,7 +13,19 @@ namespace Features.Buffs.Domain
     {
         // PLAYER
         PlayerDamage,
+
         PlayerMoveSpeed,
+        PlayerMoveSpeedMult,
+
+        PlayerWalkSpeed,
+        PlayerWalkSpeedMult,
+
+        PlayerSprintSpeed,
+        PlayerSprintSpeedMult,
+
+        PlayerCrouchSpeed,
+        PlayerCrouchSpeedMult,
+
         PlayerShield,
         PlayerMaxEnergy,
         PlayerEnergyCostReduction,
@@ -29,8 +41,12 @@ namespace Features.Buffs.Domain
         TurretMaxHP,
 
         // UNIVERSAL
-        HealPerSecond
+        HealPerSecond,
+
+        RotationSpeed,
+        RotationSpeedMult
     }
+
 
     public enum BuffModType
     {

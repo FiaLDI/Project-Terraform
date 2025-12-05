@@ -1,6 +1,7 @@
 using UnityEngine;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
+using Features.Buffs.UnityIntegration;
 
 namespace Features.Passives.Domain
 {

@@ -32,6 +32,7 @@ namespace Features.Stats.Application
             public float walkSpeed = 4f;
             public float sprintSpeed = 8f;
             public float crouchSpeed = 2f;
+            public float rotationSpeed = 0f;
         }
 
         [System.Serializable]

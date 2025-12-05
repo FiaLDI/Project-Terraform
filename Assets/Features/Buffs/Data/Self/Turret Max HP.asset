@@ -17,7 +17,7 @@ MonoBehaviour:
   description: 
   icon: {fileID: 21300000, guid: bbbc3d2a3181a1b47ab68b72cb2a4144, type: 3}
   isDebuff: 0
-  stat: 12
+  stat: 19
   modType: 0
   targetType: 1
   value: 100

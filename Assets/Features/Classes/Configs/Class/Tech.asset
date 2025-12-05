@@ -15,15 +15,7 @@ MonoBehaviour:
   id: 0
   displayName: Tech
   description: 
-  baseHp: 120
-  baseShield: 0
-  baseMaxEnergy: 100
-  baseEnergyRegen: 8
-  baseDamageMultiplier: 1
-  baseMoveSpeed: 5
-  sprintSpeed: 8
-  crouchSpeed: 1.5
-  miningMultiplier: 1
+  preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
   passives:
   - {fileID: 11400000, guid: e497cbe8c9ed9ab42a224730970ee31f, type: 2}
   - {fileID: 11400000, guid: 46d2df12eb2d6e745aa306b4d2a19b6a, type: 2}

@@ -15,5 +15,5 @@ MonoBehaviour:
   radius: 10
   targetMask:
     serializedVersion: 2
-    m_Bits: 384
+    m_Bits: 4294967295
   buff: {fileID: 11400000, guid: b4b1f20e5eedd294f81af59828976a3d, type: 2}
