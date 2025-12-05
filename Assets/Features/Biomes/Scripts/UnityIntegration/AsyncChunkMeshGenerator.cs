@@ -1,20 +1,15 @@
 using UnityEngine;
 using System.Threading.Tasks;
 using Features.Biomes.Domain;
+using Features.Biomes.UnityIntegration;
 
 namespace Features.Biomes.UnityIntegration
 {
     /// <summary>
-    /// Асинхронная генерация мешей чанка.
-    /// Работает поверх новой версии TerrainMeshGenerator.
-    /// Используется для того, чтобы не блокировать главный поток Unity.
+    /// Асинхронная генерация мешей чанка, не трогает Unity API внутри Task.Run.
     /// </summary>
     public static class AsyncChunkMeshGenerator
     {
-        /// <summary>
-        /// Генерирует Mesh для чанка асинхронно (Task.Run).
-        /// Можно использовать в RuntimeWorldGenerator или ChunkManager.
-        /// </summary>
         public static async Task<Mesh> GenerateAsync(
             Vector2Int coord,
             int chunkSize,
@@ -23,7 +18,12 @@ namespace Features.Biomes.UnityIntegration
             bool useLowPoly
         )
         {
-            // ⚠ Важно: внутри Task.Run никакого Unity API!
+            Vector3 chunkOffset = new Vector3(
+                coord.x * chunkSize,
+                0,
+                coord.y * chunkSize
+            );
+
             return await Task.Run(() =>
             {
                 try

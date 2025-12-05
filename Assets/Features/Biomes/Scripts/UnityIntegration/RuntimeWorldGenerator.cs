@@ -58,24 +58,37 @@ namespace Features.Biomes.UnityIntegration
 
             // 4) Асинхронный спавн
             StartCoroutine(SpawnSequence());
+            manager.ProcessLoadQueue();
         }
 
         private void Update()
         {
-            if (worldReady && playerInstance != null)
-            {
-                manager.UpdateChunks(
-                    playerInstance.transform.position,
-                    loadDistance,
-                    unloadDistance
-                );
-            }
+            if (manager == null)
+                return;
+
+            Vector3 focusPos;
+
+            if (playerInstance != null)
+                focusPos = playerInstance.transform.position;
+            else
+                focusPos = Vector3.zero;
+
+            manager.UpdateChunks(
+                focusPos,
+                loadDistance,
+                unloadDistance
+            );
+
+            manager.ProcessLoadQueue();
         }
 
         private IEnumerator SpawnSequence()
         {
-            // Ждём, пока появится хоть один MeshCollider от чанков
-            while (FindAnyObjectByType<MeshCollider>() == null)
+            // Чанк, в котором хотим заспавнить игрока — (0,0)
+            Vector2Int playerChunk = new Vector2Int(0, 0);
+
+            // Ждём, пока этот чанк реально появится и на нём будет MeshCollider
+            while (!ChunkExistsAndReady(playerChunk))
                 yield return null;
 
             // ещё пара кадров на обновление физики
@@ -107,6 +120,7 @@ namespace Features.Biomes.UnityIntegration
 
             worldReady = true;
         }
+
 
         /// <summary>
         /// Находит безопасную позицию для спавна:
@@ -205,5 +219,18 @@ namespace Features.Biomes.UnityIntegration
             );
             systemsInstance.name = "GameSystems";
         }
+
+        private bool ChunkExistsAndReady(Vector2Int c)
+        {
+            // Ищем объект чанка в сцене
+            string name = $"Chunk_{c.x}_{c.y}";
+            var chunkGO = GameObject.Find(name);
+            if (chunkGO == null)
+                return false;
+
+            // Collider должен уже создаться
+            return chunkGO.GetComponentInChildren<MeshCollider>() != null;
+        }
+
     }
 }
