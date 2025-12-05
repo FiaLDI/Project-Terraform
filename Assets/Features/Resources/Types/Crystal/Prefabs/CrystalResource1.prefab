@@ -73,7 +73,7 @@ PrefabInstance:
       addedObject: {fileID: 7759676426381297443}
     - targetCorrespondingSourceObject: {fileID: -3926615038541985941, guid: 101ac031d428b7c4dbf5981e2981d93a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8940027810209271398}
+      addedObject: {fileID: 8908232903812529167}
   m_SourcePrefab: {fileID: -4161369568681901532, guid: 101ac031d428b7c4dbf5981e2981d93a, type: 3}
 --- !u!1 &3167794824480302338 stripped
 GameObject:
@@ -101,7 +101,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.3
   m_Center: {x: 0, y: 0.1, z: 0}
---- !u!114 &8940027810209271398
+--- !u!114 &8908232903812529167
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -110,12 +110,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3167794824480302338}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 731a811e055fa0543bb51436efef8b4b, type: 3}
+  m_Script: {fileID: 11500000, guid: d826361863f48cd479b7bd8ac5f7f491, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ResourceNode
-  nodeData: {fileID: 11400000, guid: fa8f709455a646949b398860c4fe2fba, type: 2}
-  maxHealth: 50
-  currentHealth: 0
-  hitEffect: {fileID: 0}
-  destroyEffect: {fileID: 0}
-  isDepleted: 0
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Resources.UnityIntegration.ResourceNodePresenter
+  config: {fileID: 11400000, guid: e4e91796d5445cc4e9358bb7d608f4a2, type: 2}
