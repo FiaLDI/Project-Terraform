@@ -1494,7 +1494,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 308.8966, y: -107.33356}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 191.54, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8601371123159779007
 CanvasRenderer:
@@ -13852,7 +13852,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5348005678369101517}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e00c25b9996f12448f6fcb98bdb3f1a, type: 3}
+  m_Script: {fileID: 11500000, guid: 4ccfe2c2100c1c14e92abbcaef8bb815, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnergyBarUI
   fillImage: {fileID: 4239762428902433602}

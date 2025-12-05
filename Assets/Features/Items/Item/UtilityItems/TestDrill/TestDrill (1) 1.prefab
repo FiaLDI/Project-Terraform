@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: 6591926274832533534}
   - component: {fileID: 2744031165468463533}
   - component: {fileID: 8426488278509790473}
-  - component: {fileID: 2560185141565185910}
+  - component: {fileID: 2794225434112037452}
   m_Layer: 0
   m_Name: TestDrill (1)
   m_TagString: Untagged
@@ -279,7 +279,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &2560185141565185910
+--- !u!114 &2794225434112037452
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -288,12 +288,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3360301487101487544}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 55d9ccaa036a9b240b9028e4ef88a243, type: 3}
+  m_Script: {fileID: 11500000, guid: 6cb3673874b032346ac4362352f07e26, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UsableToolDrill
-  baseMiningSpeed: 10
-  baseDamage: 5
-  baseRange: 3
+  m_EditorClassIdentifier: Assembly-CSharp::DrillToolPresenter
 --- !u!1 &3579673380293029900
 GameObject:
   m_ObjectHideFlags: 0
