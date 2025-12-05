@@ -1,64 +1,61 @@
 using UnityEngine;
 using Features.Abilities.Domain;
-using Features.Abilities.UnityIntegration;
+using Features.Abilities.Application;
+using Features.Stats.UnityIntegration;
 
 namespace Features.Abilities.UI
 {
     public class AbilityUIRoot : MonoBehaviour
     {
         public AbilitySlotUI[] slots;
-        public AbilityCaster caster;
-        public ClassManager classManager;
 
-        private void Start()
+        private AbilityCaster caster;
+
+        private void OnEnable()
         {
-            if (caster == null) caster = FindAnyObjectByType<AbilityCaster>();
-            if (classManager == null) classManager = FindAnyObjectByType<ClassManager>();
+            // ЛОВИМ даже если PlayerStats уже выстрелил событием
+            PlayerStats.OnStatsReady += OnReady;
+        }
 
-            Debug.Log($"AbilityUIRoot Start: caster={caster}, classManager={classManager}");
+        private void OnDisable()
+        {
+            PlayerStats.OnStatsReady -= OnReady;
 
-            if (classManager != null)
+            if (caster != null)
+                caster.OnAbilitiesChanged -= RefreshSlots;
+        }
+
+        private void OnReady(PlayerStats stats)
+        {
+            caster = stats.GetComponent<AbilityCaster>();
+
+            if (caster == null)
             {
-                classManager.OnAbilitiesChanged += RefreshSlots;
-                Debug.Log("Subscribed to OnAbilitiesChanged");
+                Debug.LogError("[AbilityUIRoot] AbilityCaster not found!");
+                return;
             }
 
+            // Подписываемся ДО начальной загрузки
+            caster.OnAbilitiesChanged -= RefreshSlots;
+            caster.OnAbilitiesChanged += RefreshSlots;
+
+            // Сразу обновляем слоты
             RefreshSlots();
         }
 
         private void RefreshSlots()
         {
-            if (classManager != null && classManager.ActiveAbilities != null)
-            {
-                Debug.Log($"Refreshing {slots.Length} slots, ActiveAbilities length: {classManager.ActiveAbilities.Length}");
+            if (caster == null || slots == null)
+                return;
 
-                for (int i = 0; i < slots.Length; i++)
-                {
-                    AbilitySO ability = null;
-                    if (i < classManager.ActiveAbilities.Length)
-                    {
-                        ability = classManager.ActiveAbilities[i];
-                    }
+            var abilities = caster.abilities;
 
-                    Debug.Log($"Slot {i}: {ability?.name ?? "NULL"}");
-                    if (slots[i] != null)
-                    {
-                        slots[i].Bind(ability, caster, i);
-                    }
-                }
-            }
-            else
-            {
-                Debug.LogWarning("ClassManager or ActiveAbilities is null, will retry...");
-                Invoke(nameof(RefreshSlots), 0.1f);
-            }
-        }
+            Debug.Log($"[AbilityUIRoot] RefreshSlots(): found {abilities.Length} abilities");
 
-        private void OnDestroy()
-        {
-            if (classManager != null)
+            for (int i = 0; i < slots.Length; i++)
             {
-                classManager.OnAbilitiesChanged -= RefreshSlots;
+                AbilitySO ability = (i < abilities.Length) ? abilities[i] : null;
+                slots[i].Bind(ability, caster, i);
             }
         }
     }

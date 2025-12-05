@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Features.Biomes.Domain;
 
 public class ResourceVisualizer : MonoBehaviour
 {

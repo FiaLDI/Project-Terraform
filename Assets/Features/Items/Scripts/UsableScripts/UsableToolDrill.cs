@@ -62,8 +62,7 @@ public class UsableToolDrill : MonoBehaviour, IUsable, IStatItem
         if (!Physics.Raycast(ray, out RaycastHit hit, range))
             return;
 
-        // Множитель от баффов
-        float multiplier = miningStats != null ? miningStats.miningMultiplier : 1f;
+        float multiplier = miningStats != null ? miningStats.MiningMultiplier : 1f;
 
         var mine = hit.collider.GetComponentInParent<IMineable>();
         if (mine != null)

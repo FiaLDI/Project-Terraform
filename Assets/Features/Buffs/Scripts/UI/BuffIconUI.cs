@@ -12,12 +12,6 @@ namespace Features.Buffs.UI
         public TextMeshProUGUI timer;
 
         private BuffInstance inst;
-        private BuffTooltipTrigger tooltip;
-
-        private void Awake()
-        {
-            tooltip = GetComponent<BuffTooltipTrigger>();
-        }
 
         public void Bind(BuffInstance inst)
         {
@@ -27,11 +21,6 @@ namespace Features.Buffs.UI
                 return;
 
             icon.sprite = inst.Config.icon;
-
-            if (tooltip != null)
-                tooltip.Bind(inst);
-
-            Update();
         }
 
         private void Update()
@@ -39,7 +28,7 @@ namespace Features.Buffs.UI
             if (inst == null || inst.Config == null)
                 return;
 
-            // Если длительность бесконечная — ничего не показываем
+            // Бесконечные баффы
             if (float.IsInfinity(inst.Config.duration))
             {
                 timer.text = "";
@@ -47,12 +36,10 @@ namespace Features.Buffs.UI
                 return;
             }
 
-            // Обычные баффы
             radialFill.fillAmount = inst.Progress01;
 
             float t = inst.Remaining;
             timer.text = t < 1f ? $"{t:0.0}" : $"{t:0}";
         }
-
     }
 }

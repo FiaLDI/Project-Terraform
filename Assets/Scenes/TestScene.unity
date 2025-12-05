@@ -242,9 +242,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: Generator
       objectReference: {fileID: 0}
-    - target: {fileID: 484403358512921624, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
-      propertyPath: m_IsActive
-      value: 0
+    - target: {fileID: 2359123666482985354, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
+      propertyPath: loadDistance
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2359123666482985354, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
+      propertyPath: unloadDistance
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2861818377613526688, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
       propertyPath: m_LocalPosition.x

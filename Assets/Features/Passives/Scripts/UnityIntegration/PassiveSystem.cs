@@ -4,9 +4,11 @@ using Features.Passives.Application;
 
 namespace Features.Passives.UnityIntegration
 {
+
+    [DefaultExecutionOrder(-50)]
     public class PassiveSystem : MonoBehaviour
     {
-        [Header("Equipped Passives")]
+        [Header("Equipped Passives (debug only)")]
         public PassiveSO[] equipped;
 
         private PassiveService _service;
@@ -16,26 +18,27 @@ namespace Features.Passives.UnityIntegration
             _service = new PassiveService(gameObject);
         }
 
-        private void OnEnable()
-        {
-            if (_service == null)
-                _service = new PassiveService(gameObject);
-
-            if (equipped != null)
-                _service.ActivateAll(equipped);
-        }
-
         private void OnDisable()
         {
             _service?.DeactivateAll();
         }
 
+        // -------------------------------------------
+        // NEW CORRECT BEHAVIOR
+        // -------------------------------------------
         public void SetPassives(PassiveSO[] passives)
         {
+            if (_service == null)
+                _service = new PassiveService(gameObject);
+
             _service.DeactivateAll();
+
             equipped = passives;
-            if (equipped != null)
+
+            if (equipped != null && equipped.Length > 0)
                 _service.ActivateAll(equipped);
         }
+
+
     }
 }

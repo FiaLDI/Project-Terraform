@@ -13,12 +13,26 @@ namespace Features.Buffs.Domain
     {
         // PLAYER
         PlayerDamage,
+
         PlayerMoveSpeed,
+        PlayerMoveSpeedMult,
+
+        PlayerWalkSpeed,
+        PlayerWalkSpeedMult,
+
+        PlayerSprintSpeed,
+        PlayerSprintSpeedMult,
+
+        PlayerCrouchSpeed,
+        PlayerCrouchSpeedMult,
+
         PlayerShield,
         PlayerMaxEnergy,
         PlayerEnergyCostReduction,
         PlayerEnergyRegen,
         PlayerMiningSpeed,
+        PlayerHpRegen,
+        PlayerHp,
 
         // TURRET
         TurretDamage,
@@ -27,8 +41,12 @@ namespace Features.Buffs.Domain
         TurretMaxHP,
 
         // UNIVERSAL
-        HealPerSecond
+        HealPerSecond,
+
+        RotationSpeed,
+        RotationSpeedMult
     }
+
 
     public enum BuffModType
     {
@@ -53,7 +71,9 @@ namespace Features.Buffs.Domain
         public BuffModType modType = BuffModType.Add;
         public BuffTargetType targetType = BuffTargetType.Any;
 
-        [Tooltip("Add: +value | Mult: xvalue | Set: =value")]
+        /// <summary>
+        /// Add: +value | Mult: xvalue | Set: =value
+        /// </summary>
         public float value;
 
         [Header("Timing")]

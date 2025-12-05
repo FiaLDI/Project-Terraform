@@ -2,23 +2,34 @@ using UnityEngine;
 
 namespace Features.Pooling
 {
+    /// <summary>
+    /// Компонент, который делает объект управляемым пулом.
+    /// </summary>
     public class PoolObject : MonoBehaviour
     {
+        /// <summary>
+        /// Пул, из которого объект был получен.
+        /// </summary>
         public SmartPool Pool { get; set; }
 
+        /// <summary>
+        /// Метаданные, в т.ч. prefabIndex.
+        /// </summary>
         public PoolMeta meta;
 
+        /// <summary>
+        /// Вернуть объект в пул или уничтожить, если пул не задан.
+        /// Вызывать только игровым кодом (не самим пулом).
+        /// </summary>
         public void ReturnToPool()
         {
-            // Если объект пришёл из пула – вернём его в пул
             if (Pool != null)
             {
                 Pool.Release(this);
             }
             else
             {
-                // Если пул не прописан (заспавнен обычным Instantiate),
-                // просто уничтожаем объект, чтобы не ловить NullReference
+                // На всякий случай — если объект был создан обычным Instantiate
                 Object.Destroy(gameObject);
             }
         }

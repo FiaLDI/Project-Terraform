@@ -1,6 +1,8 @@
-using UnityEngine;
-
 namespace Features.Buffs.Domain
-{   
-    public interface IBuffPayload {}
+{
+    /// <summary>
+    /// Маркерный интерфейс для доп. данных баффа (если нужно).
+    /// Пока пустой.
+    /// </summary>
+    public interface IBuffPayload { }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Features.Biomes.Domain;
 using Features.Biomes.UnityIntegration;
+
 public class TerrainLOD
 {
     private readonly Vector2Int coord;
@@ -25,10 +26,7 @@ public class TerrainLOD
 
     public void Generate()
     {
-        // ✔ Всегда создаём LODGroup
         LODGroup group = lodRoot.AddComponent<LODGroup>();
-
-        // Временный список рендереров для LODов
         LOD[] lods = new LOD[4];
 
         lods[0] = CreateLOD(32, 0.6f);
@@ -36,13 +34,18 @@ public class TerrainLOD
         lods[2] = CreateLOD(8, 0.2f);
         lods[3] = CreateLOD(4, 0.05f);
 
-        // ✔ Только здесь вызываем SetLODs — когда все LOD-объекты созданы
         group.SetLODs(lods);
         group.RecalculateBounds();
     }
 
     private LOD CreateLOD(int resolution, float transition)
     {
+        Vector3 chunkOffset = new Vector3(
+            coord.x * size,
+            0,
+            coord.y * size
+        );
+
         Mesh mesh = TerrainMeshGenerator.GenerateMeshSync(
             coord,
             size,
@@ -50,7 +53,6 @@ public class TerrainLOD
             world,
             biome.useLowPoly
         );
-
 
         GameObject go = new GameObject($"LOD_{resolution}");
         go.transform.SetParent(lodRoot.transform, false);
@@ -62,7 +64,6 @@ public class TerrainLOD
         mr.sharedMaterial = biome.groundMaterial;
         mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
-        // ✔ Коллайдер ТОЛЬКО на фулл-LOD
         if (resolution == 32)
         {
             MeshCollider mc = go.AddComponent<MeshCollider>();

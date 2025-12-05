@@ -1,6 +1,8 @@
 using UnityEngine;
 using Features.Abilities.Domain;
-using Features.Combat.Devices;
+using Features.Buffs.Application;
+using Features.Buffs.Domain;
+using Features.Buffs.UnityIntegration;
 
 namespace Features.Abilities.UnityIntegration
 {
@@ -14,28 +16,33 @@ namespace Features.Abilities.UnityIntegration
 
             if (!ability.turretPrefab)
             {
-                Debug.LogWarning("[DeployTurretHandler] turretPrefab is null.");
+                Debug.LogWarning("[DeployTurretHandler] TurretPrefab is null.");
                 return;
             }
 
+            // Spawn
             GameObject obj = Object.Instantiate(
                 ability.turretPrefab,
                 ctx.TargetPoint,
                 Quaternion.identity
             );
 
-            if (obj.TryGetComponent<TurretBehaviour>(out var turret))
+            // Ensure buff system
+            if (!obj.TryGetComponent<BuffSystem>(out var bs))
+                bs = obj.AddComponent<BuffSystem>();
+
+            // Ensure buff target
+            if (!obj.TryGetComponent<IBuffTarget>(out _))
+                obj.AddComponent<TurretBuffTarget>();
+
+            // Register turret to player
+            if (PlayerRegistry.Instance != null)
             {
-                turret.Init(
-                    ctx.Owner,
-                    ability.hp,
-                    ability.damagePerSecond,
-                    ability.range,
-                    ability.duration
-                );
+                PlayerRegistry.Instance.RegisterTurret(ctx.Owner, obj);
             }
 
-            Object.Destroy(obj, ability.duration + 0.3f);
+            // Destroy after ability duration
+            Object.Destroy(obj, ability.duration + 0.1f);
         }
     }
 }

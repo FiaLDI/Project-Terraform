@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6dfcc09296954b418c8065bb3d566d7, type: 3}
   m_Name: Blue Desert
   m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
-  biomeName: 
+  biomeName: Blue
   mapColor: {r: 0.94716984, g: 0.14118181, b: 0.14118181, a: 1}
   isGenerate: 1
   useLowPoly: 1
@@ -24,10 +24,40 @@ MonoBehaviour:
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2
-  blendStrength: 0.44
+  blendStrength: 0.765
   environmentPrefabs: []
   environmentDensity: 0.05
-  possibleResources: []
+  possibleResources:
+  - resourcePrefab: {fileID: 0}
+    spawnChance: 0
+    weight: 0
+    clusterType: 0
+    clusterCountRange: {x: 0, y: 0}
+    clusterRadius: 0
+    verticalStep: 0
+    noiseScale: 0
+    noiseAmplitude: 0
+    followTerrain: 0
+    minSlope: 0
+    maxSlope: 0
+    alignToNormal: 0
+    randomYRotation: 0
+    randomScale: 0
+    minScale: 0
+    maxScale: 0
+    useHeightLimit: 0
+    minHeight: 0
+    maxHeight: 0
+    useMinDistance: 0
+    minDistance: 0
+    resourceEdgeFalloff: 0
+    avoidEnvironment: 0
+    environmentRadius: 0
+    useDistributionMap: 0
+    distributionStrength: 0
+    distributionScale: 0
+    distributionOffset: {x: 0, y: 0}
+    allowedBiomes: 
   resourceDensity: 0.001
   resourceSpawnYOffset: 0.3
   resourceEdgeFalloff: 1

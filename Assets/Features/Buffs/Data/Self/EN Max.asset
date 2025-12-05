@@ -29,9 +29,9 @@ MonoBehaviour:
 '
   icon: {fileID: 21300000, guid: 555d2bda37ff03c49a431f4dd4d6be66, type: 3}
   isDebuff: 0
-  stat: 3
+  stat: 10
   modType: 0
   targetType: 0
-  value: 100
+  value: 200
   duration: Infinity
   isStackable: 0

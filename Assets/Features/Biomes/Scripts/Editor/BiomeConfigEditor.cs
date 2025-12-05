@@ -39,39 +39,94 @@ public class BiomeConfigEditor : Editor
 
     private void OnEnable()
     {
-        pQuests = serializedObject.FindProperty("possibleQuests");
-        pEnvPrefabs = serializedObject.FindProperty("environmentPrefabs");
-        pResources = serializedObject.FindProperty("possibleResources");
+        // ВАЖНО: всегда брать properties из актуального serializedObject
+        pQuests      = serializedObject.FindProperty("possibleQuests");
+        pEnvPrefabs  = serializedObject.FindProperty("environmentPrefabs");
+        pResources   = serializedObject.FindProperty("possibleResources");
 
         SetupReorderableLists();
     }
 
     private void SetupReorderableLists()
     {
+        // если что-то не нашли — позже просто покажем DefaultInspector
+        if (pQuests == null || pEnvPrefabs == null || pResources == null)
+            return;
+
+        // ----------------- QUESTS -----------------
         questList = new ReorderableList(serializedObject, pQuests, true, true, true, true);
+
+        questList.drawHeaderCallback = rect =>
+        {
+            EditorGUI.LabelField(rect, "Possible Quests");
+        };
+
         questList.drawElementCallback = (rect, index, active, focused) =>
         {
-            EditorGUI.PropertyField(rect, pQuests.GetArrayElementAtIndex(index), GUIContent.none);
+            var elem = pQuests.GetArrayElementAtIndex(index);
+            rect.y += 2;
+            EditorGUI.PropertyField(rect, elem, GUIContent.none, true);
         };
-        questList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Possible Quests");
 
+        questList.elementHeightCallback = index =>
+        {
+            var elem = pQuests.GetArrayElementAtIndex(index);
+            return EditorGUI.GetPropertyHeight(elem, true) + 4;
+        };
+
+        // ----------------- ENVIRONMENT PREFABS -----------------
         envPrefabList = new ReorderableList(serializedObject, pEnvPrefabs, true, true, true, true);
+
+        envPrefabList.drawHeaderCallback = rect =>
+        {
+            EditorGUI.LabelField(rect, "Environment Prefabs");
+        };
+
         envPrefabList.drawElementCallback = (rect, index, active, focused) =>
         {
-            EditorGUI.PropertyField(rect, pEnvPrefabs.GetArrayElementAtIndex(index), GUIContent.none);
+            var elem = pEnvPrefabs.GetArrayElementAtIndex(index);
+            rect.y += 2;
+            EditorGUI.PropertyField(rect, elem, GUIContent.none, true);
         };
-        envPrefabList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Environment Prefabs");
 
+        envPrefabList.elementHeightCallback = index =>
+        {
+            var elem = pEnvPrefabs.GetArrayElementAtIndex(index);
+            return EditorGUI.GetPropertyHeight(elem, true) + 4;
+        };
+
+        // ----------------- RESOURCES -----------------
         resourceList = new ReorderableList(serializedObject, pResources, true, true, true, true);
+
+        resourceList.drawHeaderCallback = rect =>
+        {
+            EditorGUI.LabelField(rect, "Possible Resources");
+        };
+
         resourceList.drawElementCallback = (rect, index, active, focused) =>
         {
-            EditorGUI.PropertyField(rect, pResources.GetArrayElementAtIndex(index), GUIContent.none);
+            var elem = pResources.GetArrayElementAtIndex(index);
+            rect.y += 2;
+            EditorGUI.PropertyField(rect, elem, GUIContent.none, true);
         };
-        resourceList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Possible Resources");
+
+        resourceList.elementHeightCallback = index =>
+        {
+            var elem = pResources.GetArrayElementAtIndex(index);
+            return EditorGUI.GetPropertyHeight(elem, true) + 4;
+        };
     }
 
     public override void OnInspectorGUI()
     {
+        // защита: если вдруг properties не нашлись — не ломаемся
+        if (pQuests == null || pEnvPrefabs == null || pResources == null)
+        {
+            EditorGUILayout.HelpBox("Custom BiomeConfigEditor: some properties not found. Showing default inspector.", MessageType.Warning);
+            DrawDefaultInspector();
+            return;
+        }
+
         serializedObject.Update();
         var config = (BiomeConfig)target;
 
@@ -90,6 +145,7 @@ public class BiomeConfigEditor : Editor
 
         GUILayout.Space(10);
 
+        // --- PREVIEW ---
         if (_previewDirty || _preview == null)
             UpdatePreview(config);
 
@@ -105,12 +161,12 @@ public class BiomeConfigEditor : Editor
         GUILayout.Space(10);
         if (GUILayout.Button("Generate Test Chunk (64×64)"))
         {
-            GenerateTestChunk((BiomeConfig)target, 64, 64);
+            GenerateTestChunk(config, 64, 64);
         }
 
         if (GUILayout.Button("Generate Test Chunk (128×128)"))
         {
-            GenerateTestChunk((BiomeConfig)target, 128, 128);
+            GenerateTestChunk(config, 128, 128);
         }
     }
 
@@ -233,7 +289,6 @@ public class BiomeConfigEditor : Editor
         return state;
     }
 
-
     private void DrawHeaderSmall(string title)
     {
         GUILayout.Space(4);
@@ -255,6 +310,10 @@ public class BiomeConfigEditor : Editor
             return;
         }
 
+        // Главное: НЕ рисуем массивы, которые ведут ReorderableList
+        if (p.isArray && p.propertyType != SerializedPropertyType.String)
+            return;
+
         EditorGUILayout.PropertyField(p, true);
     }
 
@@ -264,13 +323,21 @@ public class BiomeConfigEditor : Editor
 
     private void UpdatePreview(BiomeConfig config)
     {
-        if (_preview == null)
-            _preview = new Texture2D(PreviewSize, PreviewSize);
+        try
+        {
+            if (_preview == null)
+                _preview = new Texture2D(PreviewSize, PreviewSize);
 
-        if (showAdvancedPreview)
-            GeneratePreviewTextureAdvanced(config, _preview);
-        else
-            GeneratePreviewTexture(config, _preview);
+            if (showAdvancedPreview)
+                GeneratePreviewTextureAdvanced(config, _preview);
+            else
+                GeneratePreviewTexture(config, _preview);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"Biome Preview failed: {e.Message}");
+        }
+
         _previewDirty = false;
     }
 
@@ -280,7 +347,10 @@ public class BiomeConfigEditor : Editor
         EditorGUILayout.LabelField("Biome Preview", EditorStyles.boldLabel);
 
         Rect r = GUILayoutUtility.GetRect(PreviewSize, PreviewSize);
-        EditorGUI.DrawPreviewTexture(r, _preview, null, ScaleMode.StretchToFill);
+        if (_preview != null)
+            EditorGUI.DrawPreviewTexture(r, _preview, null, ScaleMode.StretchToFill);
+        else
+            EditorGUI.DrawRect(r, Color.black);
     }
 
     private void GeneratePreviewTexture(BiomeConfig config, Texture2D tex)
@@ -314,7 +384,6 @@ public class BiomeConfigEditor : Editor
         int h = tex.height;
 
         float maxH = Mathf.Max(0.001f, config.heightMultiplier);
-
         float seaLevel = config.seaLevel;
 
         for (int y = 0; y < h; y++)
@@ -329,7 +398,6 @@ public class BiomeConfigEditor : Editor
 
                 Color c;
 
-                // --- ВОДА ---
                 if (config.useWater && height <= seaLevel)
                 {
                     c = Color.Lerp(
@@ -339,13 +407,11 @@ public class BiomeConfigEditor : Editor
                 }
                 else
                 {
-                    // --- НОРМАЛЬНЫЙ ЛАНДШАФТ ---
                     Color low = config.skyBottomColor * 0.75f;
                     Color high = Color.Lerp(config.skyTopColor, Color.white, 0.5f);
 
                     c = Color.Lerp(low, high, t);
 
-                    // выделение склонов
                     if (config.terrainType == TerrainType.FractalMountains)
                     {
                         float slope = Mathf.Abs(
@@ -369,7 +435,7 @@ public class BiomeConfigEditor : Editor
             root = new GameObject("BiomePreview");
 
         while (root.transform.childCount > 0)
-            DestroyImmediate(root.transform.GetChild(0).gameObject);
+            Object.DestroyImmediate(root.transform.GetChild(0).gameObject);
 
         GameObject chunkObj = new GameObject($"PreviewChunk_{size}");
         chunkObj.transform.SetParent(root.transform);
@@ -405,7 +471,6 @@ public class BiomeConfigEditor : Editor
         {
             for (int x = 0; x <= res; x++)
             {
-                // ВАЖНО: биомные координаты, а не world-size
                 float wx = (float)x / res * biome.width;
                 float wz = (float)y / res * biome.height;
 
@@ -444,7 +509,4 @@ public class BiomeConfigEditor : Editor
 
         return mesh;
     }
-
-
-
 }

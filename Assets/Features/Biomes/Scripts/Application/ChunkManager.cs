@@ -1,9 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
-using Features.Biomes.Domain;
 using Features.Biomes.Application;
 using Features.Biomes.Application.Spawning;
+using Features.Biomes.Domain;
 
 public class ChunkManager
 {
@@ -12,21 +11,25 @@ public class ChunkManager
 
     private readonly Dictionary<Vector2Int, Chunk> chunks = new();
 
-    // LOD списки
+    // Активные чанк-координаты
     private readonly List<Vector2Int> activeChunkCoords = new();
     private readonly List<ChunkRuntimeData> activeRuntimeChunks = new();
 
+    // Очередь загрузки чанков
+    private readonly Queue<Vector2Int> loadQueue = new();
+
+    public int chunksPerFrame = 2;
+
     public ChunkManager(WorldConfig worldConfig)
     {
-        this.world = worldConfig;
-        this.chunkSize = worldConfig.chunkSize;
+        world = worldConfig;
+        chunkSize = worldConfig.chunkSize;
 
-        // Новая система хранения → обновлённая
         ChunkedGameObjectStorage.chunkSize = chunkSize;
     }
 
     // ========================================================
-    // UPDATE CHUNKS (LOAD + UNLOAD + UPDATE LOD)
+    // ПОИСК НУЖНЫХ ЧАНКОВ
     // ========================================================
     public void UpdateChunks(Vector3 playerPos, int loadDist, int unloadDist)
     {
@@ -37,7 +40,7 @@ public class ChunkManager
 
         HashSet<Vector2Int> needed = new();
 
-        // LOAD AREA
+        // вычисляем зону загрузки
         for (int dz = -loadDist; dz <= loadDist; dz++)
         {
             for (int dx = -loadDist; dx <= loadDist; dx++)
@@ -47,40 +50,33 @@ public class ChunkManager
 
                 if (!chunks.ContainsKey(coord))
                 {
-                    Chunk c = new Chunk(coord, world, chunkSize);
-                    chunks.Add(coord, c);
-                    c.Load();
+                    chunks[coord] = new Chunk(coord, world, chunkSize);
+                    loadQueue.Enqueue(coord);
                 }
                 else if (!chunks[coord].IsLoaded)
                 {
-                    chunks[coord].Load();
+                    loadQueue.Enqueue(coord);
                 }
             }
         }
 
-        // UNLOAD AREA
+        // Выгружаем те, что далеко
         foreach (var kv in chunks)
         {
             if (!needed.Contains(kv.Key))
                 kv.Value.Unload(unloadDist, playerChunk);
         }
 
-        // ACTIVE CHUNKS LIST
+        // Активные координаты
         activeChunkCoords.Clear();
         activeChunkCoords.AddRange(needed);
 
-        // ACTIVE RUNTIME DATA
+        // runtimeChunks (для LOD system)
         activeRuntimeChunks.Clear();
-        if (InstancedSpawnerSystem.Instance == null)
-        {
-            return;
-        }
-
         activeRuntimeChunks.AddRange(
             ChunkedGameObjectStorage.GetActiveChunks(activeChunkCoords)
         );
 
-        // UPDATE LOD SYSTEM
         if (ChunkedInstanceLODSystem.Instance != null)
         {
             ChunkedInstanceLODSystem.Instance.UpdateVisibleChunks(activeRuntimeChunks);
@@ -88,41 +84,20 @@ public class ChunkManager
     }
 
     // ========================================================
-    // STATIC AREA
+    // ОБРАБОТКА ОЧЕРЕДИ ЗАГРУЗКИ
     // ========================================================
-    public GameObject GenerateStaticArea(Vector2Int centerChunk, int radius)
+    public void ProcessLoadQueue()
     {
-        GameObject root = new GameObject("Biome_StaticArea");
+        int count = Mathf.Min(chunksPerFrame, loadQueue.Count);
 
-        for (int y = -radius; y <= radius; y++)
+        for (int i = 0; i < count; i++)
         {
-            for (int x = -radius; x <= radius; x++)
-            {
-                Vector2Int coord = centerChunk + new Vector2Int(x, y);
+            Vector2Int coord = loadQueue.Dequeue();
 
-                Chunk chunk = new Chunk(coord, world, world.chunkSize, root.transform);
-                chunk.LoadImmediate();
+            if (chunks.TryGetValue(coord, out var chunk) && !chunk.IsLoaded)
+            {
+                chunk.Load();
             }
         }
-
-        return root;
-    }
-
-    // ========================================================
-    // BLOCKERS
-    // ========================================================
-    public List<Vector3> GetAllEnvironmentBlockers()
-    {
-        List<Vector3> result = new List<Vector3>();
-
-        foreach (var kv in chunks)
-        {
-            if (!kv.Value.IsLoaded)
-                continue;
-
-            result.AddRange(kv.Value.environmentBlockers.Select(b => b.position));
-        }
-
-        return result;
     }
 }
