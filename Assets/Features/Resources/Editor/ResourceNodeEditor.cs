@@ -21,12 +21,6 @@ public class ResourceNodeEditor : MonoBehaviour
         CreateScriptableObject<ResourceDropSO>("ResourceDrop");
     }
 
-    [MenuItem("Assets/Create/Resources/Biome Spawn Table", priority = 3)]
-    public static void CreateBiomeSpawnTable()
-    {
-        CreateScriptableObject<BiomeSpawnTableSO>("BiomeSpawnTable");
-    }
-
     private static void CreateScriptableObject<T>(string defaultName) where T : ScriptableObject
     {
         T asset = ScriptableObject.CreateInstance<T>();
