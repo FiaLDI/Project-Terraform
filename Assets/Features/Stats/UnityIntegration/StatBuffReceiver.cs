@@ -10,7 +10,9 @@ namespace Features.Stats.UnityIntegration
         IMovementStatReceiver,
         IMiningStatReceiver,
         IShieldReceiver,
-        IEnergyStatReceiver
+        IEnergyStatReceiver,
+        IHealthStatReceiver,
+        ITurretStatReceiver
     {
         private IStatsFacade stats;
 
@@ -53,6 +55,19 @@ namespace Features.Stats.UnityIntegration
         {
             if (!Ready()) return;
             stats.Energy.ApplyBuff(cfg, apply);
+        }
+
+        public void ApplyHealthBuff(BuffSO cfg, bool apply)
+        {
+            if (!Ready()) return;
+            stats.Health.ApplyBuff(cfg, apply);
+        }
+
+        public void ApplyTurretBuff(BuffSO cfg, bool apply)
+        {
+            stats.Combat.ApplyBuff(cfg, apply);
+            stats.Movement.ApplyBuff(cfg, apply);
+            stats.Health.ApplyBuff(cfg, apply);
         }
     }
 }

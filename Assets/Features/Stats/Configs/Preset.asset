@@ -19,6 +19,7 @@ MonoBehaviour:
     baseRegen: 1
   health:
     baseHp: 130
+    baseRegen: 0.1
   movement:
     baseSpeed: 5
     walkSpeed: 4

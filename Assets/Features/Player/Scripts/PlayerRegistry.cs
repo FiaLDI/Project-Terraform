@@ -7,6 +7,8 @@ public class PlayerRegistry : MonoBehaviour
 {
     public static PlayerRegistry Instance { get; private set; }
 
+    public readonly List<GameObject> PlayerTurrets = new();
+
     /// <summary> Все игроки (для будущего мультиплеера FishNet) </summary>
     public readonly List<GameObject> Players = new();
 
@@ -26,6 +28,8 @@ public class PlayerRegistry : MonoBehaviour
 
     public StatsFacadeAdapter LocalAdapter => LocalStats;
 
+    public readonly Dictionary<GameObject, List<GameObject>> PlayerOwnedTurrets
+        = new Dictionary<GameObject, List<GameObject>>();
 
 
     private void Awake()
@@ -59,4 +63,23 @@ public class PlayerRegistry : MonoBehaviour
         LocalStats = statsAdapter;
         LocalAbilities = player.GetComponent<AbilityCaster>();
     }
+
+    public void RegisterTurret(GameObject ownerPlayer, GameObject turret)
+    {
+        if (!PlayerOwnedTurrets.ContainsKey(ownerPlayer))
+            PlayerOwnedTurrets[ownerPlayer] = new List<GameObject>();
+
+        PlayerOwnedTurrets[ownerPlayer].Add(turret);
+
+        PlayerTurrets.Add(turret);
+    }
+
+    public void UnregisterTurret(GameObject ownerPlayer, GameObject turret)
+    {
+        if (PlayerOwnedTurrets.TryGetValue(ownerPlayer, out var list))
+            list.Remove(turret);
+
+        PlayerTurrets.Remove(turret);
+    }
+
 }

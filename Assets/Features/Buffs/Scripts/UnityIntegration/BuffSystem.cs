@@ -23,6 +23,9 @@ namespace Features.Buffs.Application
         private bool _fullyInitialized = false;
         private bool _initStarted = false;
 
+        public IBuffTarget Target => _target;
+
+
         // ------------------------------------------------------
         // LIFECYCLE
         // ------------------------------------------------------

@@ -34,5 +34,11 @@ namespace Features.Buffs.Application
         {
             EndTime = Time.time + Config.duration;
         }
+
+        public void SetDuration(float duration)
+        {
+            EndTime = Time.time + duration;
+        }
+
     }
 }

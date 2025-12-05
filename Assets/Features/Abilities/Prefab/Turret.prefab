@@ -820,7 +820,9 @@ GameObject:
   - component: {fileID: 5981669487698793137}
   - component: {fileID: 9012733006345588933}
   - component: {fileID: 2094240665213674160}
-  - component: {fileID: 7269853318878893690}
+  - component: {fileID: 6859820028838700850}
+  - component: {fileID: 8182277090343146957}
+  - component: {fileID: 1926531339624578966}
   m_Layer: 7
   m_Name: Turret
   m_TagString: Untagged
@@ -857,23 +859,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4122c357dae6bc342bd5ef25ffdbbbf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurretBehaviour
-  baseDamagePerSecond: 4
-  baseRange: 15
-  lifetime: 25
-  baseHp: 150
-  damageMultiplier: 1
-  fireRateMultiplier: 1
-  rotationSpeedMultiplier: 1
-  baseFireInterval: 0.1
-  retargetInterval: 0.2
-  targetMask:
-    serializedVersion: 2
-    m_Bits: 128
   turretHead: {fileID: 3241219567218010373}
   muzzlePoint: {fileID: 6145001486089969691}
   laser: {fileID: 4386018491568941130}
-  laserColor: {r: 1, g: 0, b: 0, a: 1}
-  laserWidth: 0.04
+  baseRange: 15
+  lifetime: 25
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!114 &2094240665213674160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -886,7 +879,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a598ae0d0a239844191a98d1694e1afb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffSystem
---- !u!114 &7269853318878893690
+--- !u!114 &6859820028838700850
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -895,11 +888,34 @@ MonoBehaviour:
   m_GameObject: {fileID: 5885013346192204236}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85b9db1ba7e81094c860f6ba898ca92e, type: 3}
+  m_Script: {fileID: 11500000, guid: ca505d3f0c6a0924e9f4fc09bc86167b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HealthComponent
-  maxHp: 100
-  currentHp: 100
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.TurretStats
+  preset: {fileID: 11400000, guid: 3c0e0f654cc9bbe46b73c974ec5e9f69, type: 2}
+--- !u!114 &8182277090343146957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742ba4c13ff1b6945bb9292016887b76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurretStatReceiver
+--- !u!114 &1926531339624578966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b94ec7f2359655e478dd46aa10740633, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurretBuffTarget
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0
