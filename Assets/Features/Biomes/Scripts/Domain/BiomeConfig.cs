@@ -1,5 +1,6 @@
 using UnityEngine;
 using Features.Quests.Data;
+using Features.Enemy.Data;
 
 namespace Features.Biomes.Domain
 {
@@ -70,13 +71,13 @@ namespace Features.Biomes.Domain
     [System.Serializable]
     public class EnemySpawnEntry
     {
-        public GameObject prefab;
+        public EnemyConfigSO config;
+
         public float weight = 1f;
         public float spawnChance = 0.6f;
         public int minGroup = 1;
         public int maxGroup = 3;
 
-        [Header("Spawn conditions")]
         public float minSlope = 0f;
         public float maxSlope = 25f;
         public float minHeight = -100f;

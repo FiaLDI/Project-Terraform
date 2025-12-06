@@ -6,15 +6,12 @@ public class EnemyWorldManager : MonoBehaviour
 {
     public static EnemyWorldManager Instance;
 
-    [Header("Global Enemy Limits")]
+    [Header("Global Enemy Limit")]
     public int maxEnemiesInWorld = 150;
 
-    private readonly List<EnemyDefinition> allEnemies = new();
+    private readonly List<EnemyInstanceTracker> enemies = new();
 
-    void Awake()
-    {
-        Instance = this;
-    }
+    void Awake() => Instance = this;
 
     public bool CanSpawn()
     {
@@ -23,21 +20,21 @@ public class EnemyWorldManager : MonoBehaviour
             : 1f;
 
         int softLimit = Mathf.RoundToInt(maxEnemiesInWorld * scale);
-        return allEnemies.Count < softLimit;
+        return enemies.Count < softLimit;
     }
 
-    public void Register(EnemyDefinition def)
+    public void Register(EnemyInstanceTracker inst)
     {
-        if (def == null) return;
-        if (!allEnemies.Contains(def))
-            allEnemies.Add(def);
+        if (inst == null) return;
+        if (!enemies.Contains(inst))
+            enemies.Add(inst);
     }
 
-    public void Unregister(EnemyDefinition def)
+    public void Unregister(EnemyInstanceTracker inst)
     {
-        if (def == null) return;
-        allEnemies.Remove(def);
+        if (inst == null) return;
+        enemies.Remove(inst);
     }
 
-    public int GetCount() => allEnemies.Count;
+    public int GetCount() => enemies.Count;
 }

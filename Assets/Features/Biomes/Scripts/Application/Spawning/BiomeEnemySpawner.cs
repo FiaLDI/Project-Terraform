@@ -1,33 +1,27 @@
 using UnityEngine;
 using Features.Biomes.Domain;
-using Features.Enemies;
+using Features.Enemy.Data;
 using Features.Pooling;
-using Features.Biomes.Application;
+using Features.Enemy;
 
 public class BiomeEnemySpawner : MonoBehaviour
 {
     public Transform player;
     public WorldConfig world;
 
-    private float spawnTimer = 0f;
+    private float spawnTimer;
 
     void LateUpdate()
     {
-        if (player == null || world == null)
-            return;
+        if (!player || !world) return;
 
         BiomeConfig biome = GetDominantBiome();
-        if (biome == null) return;
-
-        // No enemies in this biome
-        if (biome.enemyTable == null || biome.enemyTable.Length == 0)
+        if (!biome || biome.enemyTable == null || biome.enemyTable.Length == 0)
             return;
 
-        // per-biome limit (простой лимит: N врагов на биом)
         if (EnemyBiomeCounter.GetCount(biome) >= biome.enemyTable.Length * 12)
             return;
 
-        // world limit
         if (!EnemyWorldManager.Instance.CanSpawn())
             return;
 
@@ -43,14 +37,14 @@ public class BiomeEnemySpawner : MonoBehaviour
         var blend = world.GetBiomeBlend(player.position);
 
         BiomeConfig best = null;
-        float bestW = 0f;
+        float bestWeight = 0f;
 
         foreach (var b in blend)
         {
-            if (b.biome != null && b.weight > bestW)
+            if (b.biome && b.weight > bestWeight)
             {
                 best = b.biome;
-                bestW = b.weight;
+                bestWeight = b.weight;
             }
         }
 
@@ -59,89 +53,68 @@ public class BiomeEnemySpawner : MonoBehaviour
 
     private void SpawnEnemy(BiomeConfig biome)
     {
-        if (biome.enemyTable == null || biome.enemyTable.Length == 0) return;
-        // Random enemy type из таблицы биома
         var entry = biome.enemyTable[Random.Range(0, biome.enemyTable.Length)];
 
-        if (entry != null || entry.prefab == null)
-        {
+        EnemyConfigSO config = entry.config;
+        if (!config || !config.prefab)
             return;
-        }
 
-        // Берём дефиницию типа с базового префаба
-        EnemyDefinition baseDef = entry.prefab.GetComponent<EnemyDefinition>();
+        Vector3 pos = GetSpawnPosition();
 
-        if (baseDef == null)
+        // --- ПУЛЛИНГ ---
+        PoolMeta meta = config.prefab.GetComponent<PoolMeta>();
+        GameObject enemyGO;
+
+        if (meta != null)
         {
-            Debug.LogError($"[BiomeEnemySpawner] Enemy prefab '{entry.prefab.name}' missing EnemyDefinition!");
-            return;
+            // Index must be set in editor or automatically assigned
+            PoolObject pooled = SmartPool.Instance.Get(meta.prefabIndex, config.prefab);
+            if (pooled == null) return;
+            
+            enemyGO = pooled.gameObject;
+
+            pooled.transform.position = pos;
+            pooled.transform.rotation = Quaternion.identity;
         }
-
-        Vector3 pos = GetSpawnPosition(biome);
-
-        // Выбор LOD-префаба по дистанции
-        GameObject prefabToSpawn = SelectLOD(baseDef, pos);
-        if (prefabToSpawn == null)
+        else
         {
-            Debug.LogWarning("[BiomeEnemySpawner] Selected LOD prefab is NULL, skip spawn.");
-            return;
+            // Нет PoolMeta? — обычный Instantiate.
+            enemyGO = Instantiate(config.prefab, pos, Quaternion.identity);
         }
 
-        // Спавн (через пул или Instantiate)
-        GameObject enemyInstance = SpawnFromPool(prefabToSpawn, pos);
-        if (enemyInstance == null) return;
+        // --- Настройка врага ---
+        var tracker = enemyGO.GetComponent<EnemyInstanceTracker>();
+        if (!tracker)
+            tracker = enemyGO.AddComponent<EnemyInstanceTracker>();
+        tracker.config = config;
 
-        // Пытаемся взять EnemyDefinition с инстанса (если он есть)
-        EnemyDefinition instanceDef = enemyInstance.GetComponent<EnemyDefinition>();
-        if (instanceDef == null)
-        {
-            // Если на LOD-префабе нет EnemyDefinition (что нормально для LOD1/2),
-            // считаем логическим "владельцем" базовый def
-            instanceDef = baseDef;
-        }
+        // EnemyHealth также должен иметь ссылку на config
+        var health = enemyGO.GetComponent<EnemyHealth>();
+        if (health)
+            health.config = config;
 
-        // Регистрация в глобальном менеджере и по биому
-        EnemyWorldManager.Instance.Register(instanceDef);
-        EnemyBiomeCounter.Register(biome, instanceDef);
+        // EnemyLODController тоже
+        var lod = enemyGO.GetComponent<EnemyLODController>();
+        if (lod)
+            lod.config = config;
 
-        // Автоматический Unregister при уничтожении / деактивации
-        var unreg = enemyInstance.AddComponent<EnemyAutoUnregister>();
+        // --- Регистрация ---
+        EnemyWorldManager.Instance.Register(tracker);
+        EnemyBiomeCounter.Register(biome, tracker);
+
+        // --- Auto-unregister ---
+        var unreg = enemyGO.GetComponent<EnemyAutoUnregister>();
+        if (!unreg)
+            unreg = enemyGO.AddComponent<EnemyAutoUnregister>();
+
         unreg.biome = biome;
-        unreg.definition = instanceDef;
+        unreg.tracker = tracker;
     }
 
-    private Vector3 GetSpawnPosition(BiomeConfig biome)
+    private Vector3 GetSpawnPosition()
     {
         float r = Random.Range(12f, 40f);
-        Vector2 c = Random.insideUnitCircle.normalized * r;
-
-        return player.position + new Vector3(c.x, 0, c.y);
-    }
-
-    private GameObject SelectLOD(EnemyDefinition def, Vector3 pos)
-    {
-        float dist = Vector3.Distance(player.position, pos);
-        float scale = EnemyPerformanceManager.Instance?.LodScale ?? 1f;
-
-        float lod0 = def.lod0Distance * scale;
-        float lod1 = def.lod1Distance * scale;
-
-        if (dist < lod0) return def.prefabLOD0;
-        if (dist < lod1) return def.prefabLOD1;
-        return def.prefabLOD2;
-    }
-
-    private GameObject SpawnFromPool(GameObject prefab, Vector3 pos)
-    {
-        var meta = prefab.GetComponent<PoolMeta>();
-        if (meta == null)
-            return Instantiate(prefab, pos, Quaternion.identity);
-
-        var pooled = SmartPool.Instance.Get(meta.prefabIndex, prefab);
-        if (pooled == null) return null;
-
-        pooled.transform.position = pos;
-        pooled.Pool = SmartPool.Instance;
-        return pooled.gameObject;
+        Vector2 circle = Random.insideUnitCircle.normalized * r;
+        return player.position + new Vector3(circle.x, 0, circle.y);
     }
 }

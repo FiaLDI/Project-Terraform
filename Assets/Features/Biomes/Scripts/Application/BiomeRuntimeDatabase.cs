@@ -145,13 +145,16 @@ namespace Features.Biomes.Application
                 p.enemyRuleStart = ene.Count;
                 foreach (var entry in cfg.enemyTable)
                 {
-                    if (entry.prefab == null) continue;
+                    if (entry == null || entry.config == null || entry.config.prefab == null)
+                        continue;
 
-                    InstanceRegistry.Register(entry.prefab, allowInstancing: false);
+                    var prefab = entry.config.prefab;
+
+                    InstanceRegistry.Register(prefab, allowInstancing: false);
 
                     ene.Add(new EnemyRule
                     {
-                        prefabIndex   = entry.prefab.GetInstanceID(),
+                        prefabIndex   = prefab.GetInstanceID(),
                         spawnChance   = cfg.enemyDensity * entry.spawnChance,
                         minSlope      = entry.minSlope,
                         maxSlope      = entry.maxSlope,

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Features.Quests.Domain;
 using Features.Quests.Domain.Behaviours;
+using Features.Enemy.Data;
 
 namespace Features.Quests.Data
 {
@@ -17,8 +18,9 @@ namespace Features.Quests.Data
         [Header("Тип поведения")]
         public QuestBehaviourType behaviourType;
 
-        [Header("Параметры KillEnemies")]
-        public string enemyTag;
+        [Header("Enemy Database")]
+        public EnemyDatabaseSO enemyDatabase;
+        public string enemyId;
         public int requiredKills = 5;
 
         [Header("Параметры CollectItems")]
@@ -36,7 +38,7 @@ namespace Features.Quests.Data
             IQuestBehaviour behaviour = behaviourType switch
             {
                 QuestBehaviourType.KillEnemies =>
-                    new KillEnemiesQuestBehaviour(enemyTag, requiredKills),
+                    new KillEnemiesQuestBehaviour(enemyId, requiredKills),
 
                 QuestBehaviourType.CollectItems =>
                     new CollectItemsQuestBehaviour(

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEngine.GraphicsBuffer;
 
 namespace Features.Enemy
 {
@@ -7,8 +8,22 @@ namespace Features.Enemy
     public class EnemyHealthBarUI : MonoBehaviour
     {
         [SerializeField] private Image fillImage;
-        [SerializeField] private EnemyHealth target;
+        [SerializeField] private EnemyHealth target; 
         [SerializeField] private Transform headAnchor;
+
+        private float uiTimer;
+
+        public EnemyHealth Target
+        {
+            get => target;
+            set => target = value;
+        }
+
+        public Transform HeadAnchor
+        {
+            get => headAnchor;
+            set => headAnchor = value;
+        }
 
         private Camera cam;
         private Canvas canvas;
@@ -63,6 +78,9 @@ namespace Features.Enemy
 
         private void LateUpdate()
         {
+            uiTimer += Time.deltaTime;
+                if (uiTimer < 0.1f) return;
+                uiTimer = 0f;
             if (!target)
             {
                 return;

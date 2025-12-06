@@ -1,13 +1,12 @@
 using UnityEngine;
 using Features.Quests.Domain;
-using Features.Enemy; // твой неймспейс с EnemyHealth
+using Features.Enemy;
 
 namespace Features.Quests.UnityIntegration.Adapters
 {
     public sealed class EnemyQuestEventsAdapter : MonoBehaviour
     {
         [SerializeField] private QuestManagerMB questManager;
-        [SerializeField] private string enemyTag = "Enemy";
 
         private void OnEnable()
         {
@@ -21,10 +20,10 @@ namespace Features.Quests.UnityIntegration.Adapters
 
         private void HandleEnemyKilled(EnemyHealth enemy)
         {
-            if (!enemy.CompareTag(enemyTag))
-                return;
-
-            questManager?.Service.HandleEvent(new EnemyKilledEvent(enemyTag));
+            // Отправляем именно enemy.EnemyId
+            questManager?.Service.HandleEvent(
+                new EnemyKilledEvent(enemy.EnemyId)
+            );
         }
     }
 }

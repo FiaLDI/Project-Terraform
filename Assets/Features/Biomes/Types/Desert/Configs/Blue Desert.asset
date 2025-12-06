@@ -27,37 +27,7 @@ MonoBehaviour:
   blendStrength: 0.765
   environmentPrefabs: []
   environmentDensity: 0.05
-  possibleResources:
-  - resourcePrefab: {fileID: 0}
-    spawnChance: 0
-    weight: 0
-    clusterType: 0
-    clusterCountRange: {x: 0, y: 0}
-    clusterRadius: 0
-    verticalStep: 0
-    noiseScale: 0
-    noiseAmplitude: 0
-    followTerrain: 0
-    minSlope: 0
-    maxSlope: 0
-    alignToNormal: 0
-    randomYRotation: 0
-    randomScale: 0
-    minScale: 0
-    maxScale: 0
-    useHeightLimit: 0
-    minHeight: 0
-    maxHeight: 0
-    useMinDistance: 0
-    minDistance: 0
-    resourceEdgeFalloff: 0
-    avoidEnvironment: 0
-    environmentRadius: 0
-    useDistributionMap: 0
-    distributionStrength: 0
-    distributionScale: 0
-    distributionOffset: {x: 0, y: 0}
-    allowedBiomes: 
+  possibleResources: []
   resourceDensity: 0.001
   resourceSpawnYOffset: 0.3
   resourceEdgeFalloff: 1

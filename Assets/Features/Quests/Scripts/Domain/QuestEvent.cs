@@ -5,8 +5,12 @@ namespace Features.Quests.Domain
     // Уничтожен враг
     public sealed class EnemyKilledEvent : IQuestEvent
     {
-        public string EnemyTag { get; }
-        public EnemyKilledEvent(string enemyTag) => EnemyTag = enemyTag;
+        public string EnemyId { get; }
+
+        public EnemyKilledEvent(string enemyId)
+        {
+            EnemyId = enemyId;
+        }
     }
 
     // Добавлен предмет в инвентарь

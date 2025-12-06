@@ -2,7 +2,6 @@ using UnityEngine;
 using TMPro;
 using System.Linq;
 using Features.Biomes.Domain;
-using Features.Enemies;
 using Features.Biomes.UnityIntegration;
 
 public class DebugHUD : MonoBehaviour
@@ -18,12 +17,34 @@ public class DebugHUD : MonoBehaviour
 
         if (label == null)
         {
-            GameObject go = new GameObject("DebugHUD_Label");
-            go.transform.SetParent(FindAnyObjectByType<Canvas>().transform, false);
+            // вместо FindObjectsByType + OrderBy
+            float nearestDist = -1f;
+            string nearestName = "-";
 
-            label = go.AddComponent<TextMeshProUGUI>();
-            label.fontSize = 22;
-            label.color = new Color(1, 1, 1, 0.9f);
+            if (EnemyInstanceTracker.All.Count > 0 && RuntimeWorldGenerator.PlayerInstance != null)
+            {
+                Vector3 playerPos = RuntimeWorldGenerator.PlayerInstance.transform.position;
+
+                EnemyInstanceTracker nearest = null;
+
+                foreach (var t in EnemyInstanceTracker.All)
+                {
+                    if (t == null) continue;
+
+                    float d = Vector3.Distance(playerPos, t.transform.position);
+                    if (nearest == null || d < nearestDist)
+                    {
+                        nearest = t;
+                        nearestDist = d;
+                    }
+                }
+
+                if (nearest != null && nearest.config != null)
+                    nearestName = string.IsNullOrEmpty(nearest.config.displayName)
+                        ? nearest.config.name
+                        : nearest.config.displayName;
+            }
+
         }
     }
 
@@ -72,11 +93,13 @@ public class DebugHUD : MonoBehaviour
                 biomeEnemies = EnemyBiomeCounter.GetCount(biome);
         }
 
-        // Find nearest enemy definition
+        // -----------------------------
+        // FIND NEAREST ENEMY INSTANCE
+        // -----------------------------
         float nearestDist = -1f;
         string nearestName = "-";
 
-        var enemies = FindObjectsByType<EnemyDefinition>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var enemies = FindObjectsByType<EnemyInstanceTracker>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         if (enemies.Length > 0 && RuntimeWorldGenerator.PlayerInstance != null)
         {
@@ -89,11 +112,15 @@ public class DebugHUD : MonoBehaviour
             if (nearest != null)
             {
                 nearestDist = Vector3.Distance(playerPos, nearest.transform.position);
-                nearestName = nearest.displayName != "" ? nearest.displayName : nearest.name;
+                nearestName = nearest.config != null && !string.IsNullOrEmpty(nearest.config.displayName)
+                    ? nearest.config.displayName
+                    : nearest.name;
             }
         }
 
-        // Build HUD text
+        // -----------------------------
+        // BUILD HUD TEXT
+        // -----------------------------
         label.text =
             $"<b>DEBUG HUD</b>\n" +
             $"FPS: <b>{fps:0}</b>\n" +

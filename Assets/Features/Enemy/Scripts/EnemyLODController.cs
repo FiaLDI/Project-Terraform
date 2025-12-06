@@ -1,144 +1,239 @@
 using UnityEngine;
-using Features.Biomes.UnityIntegration; // для RuntimeWorldGenerator
+using Features.Biomes.UnityIntegration;
 using Features.Enemies;
+using Features.Enemy.Data;
+using Features.Enemy;
 
-[RequireComponent(typeof(EnemyLODConfig))]
 public class EnemyLODController : MonoBehaviour
 {
-    private EnemyLODConfig _cfg;
-    private Transform _player;
+    public EnemyConfigSO config;
 
-    private Animator _animator;
-    private Rigidbody _rb;
+    private Renderer lod0;
+    private Renderer lod1;
+    private Renderer lod2;
 
-    private bool _instancingMode;
+    private Canvas worldCanvas;
+
+    private Animator anim;
+    private Rigidbody rb;
+    private Transform player;
+
+    private bool instancingMode = false;
+
+    // throttling LOD updates
+    private int currentLod = -1;              // -1 = none / instancing
+    private float nextUpdateTime;             // когда в следующий раз пересчитывать LOD
+    private const float UpdateInterval = 0.08f; // ~12 раз/сек
 
     private void Awake()
     {
-        _cfg = GetComponent<EnemyLODConfig>();
-        _animator = GetComponentInChildren<Animator>();
-        _rb = GetComponent<Rigidbody>();
+        anim = GetComponentInChildren<Animator>();
+        rb   = GetComponent<Rigidbody>();
 
-        // если рендеры не проставлены руками — попытка найти автоматически
-        if (_cfg.lod0Renderer == null)
-            _cfg.lod0Renderer = GetComponentInChildren<Renderer>();
+        AutoAssignLODRenderers();
+        AutoAssignCanvas();
+
+        // разброс апдейтов по времени, чтобы не всё в один кадр
+        nextUpdateTime = Time.time + Random.Range(0f, UpdateInterval);
     }
 
     private void Start()
     {
         if (RuntimeWorldGenerator.PlayerInstance != null)
-            _player = RuntimeWorldGenerator.PlayerInstance.transform;
+            player = RuntimeWorldGenerator.PlayerInstance.transform;
     }
 
     private void Update()
     {
-        if (_player == null)
+        if (player == null || config == null)
+            return;
+
+        // throttling
+        if (Time.time < nextUpdateTime)
+            return;
+
+        nextUpdateTime = Time.time + UpdateInterval;
+
+        float dist = Vector3.Distance(player.position, transform.position);
+
+        // ------------ CANVAS ------------
+        if (worldCanvas != null)
         {
-            if (RuntimeWorldGenerator.PlayerInstance != null)
-                _player = RuntimeWorldGenerator.PlayerInstance.transform;
-            else
-                return;
+            bool shouldShow = dist < config.canvasHideDistance;
+            if (worldCanvas.enabled != shouldShow)
+                worldCanvas.enabled = shouldShow;
         }
 
-        float dist = Vector3.Distance(_player.position, transform.position);
-
-        float lodScale = EnemyPerformanceManager.Instance != null
-            ? EnemyPerformanceManager.Instance.LodScale
-            : 1f;
-
-        float d0 = _cfg.lod0Distance * lodScale;
-        float d1 = _cfg.lod1Distance * lodScale;
-        float instDist = _cfg.instancingDistance * lodScale;
-
-        // --- Canvas ---
-        if (_cfg.worldCanvas != null)
-        {
-            bool showCanvas = dist < _cfg.canvasHideDistance;
-            if (_cfg.worldCanvas.enabled != showCanvas)
-                _cfg.worldCanvas.enabled = showCanvas;
-        }
-
-        // --- Выбор LOD / instancing ---
-        bool useInstancing = _cfg.useGPUInstancing && dist > instDist;
+        // ------------ INSTANCING ------------
+        bool useInstancing =
+            config.useGPUInstancing &&
+            dist > config.instancingDistance;
 
         if (useInstancing)
         {
-            if (!_instancingMode)
-                SwitchToInstancingMode();
+            if (!instancingMode)
+            {
+                SwitchToInstancing();
+                currentLod = -1; // выйдем из instancing → принудительно пересчитаем LOD
+            }
+
             SubmitInstancingDraw();
             return;
         }
 
-        if (_instancingMode)
-            SwitchToNormalMode();
+        if (instancingMode)
+        {
+            SwitchToNormal();
+        }
 
-        // простой переключатель рендереров
-        SetRendererEnabled(_cfg.lod0Renderer, dist <= d0);
-        SetRendererEnabled(_cfg.lod1Renderer, dist > d0 && dist <= d1);
-        SetRendererEnabled(_cfg.lod2Renderer, dist > d1 && dist <= instDist);
+        // ------------ NORMAL LOD ------------
+        float lodScale = EnemyPerformanceManager.Instance != null
+            ? EnemyPerformanceManager.Instance.LodScale
+            : 1f;
+
+        float d0 = config.lod0Distance * lodScale;
+        float d1 = config.lod1Distance * lodScale;
+
+        int newLod;
+        if (dist <= d0) newLod = 0;
+        else if (dist <= d1) newLod = 1;
+        else newLod = 2;
+
+        if (newLod == currentLod)
+            return;
+
+        currentLod = newLod;
+
+        if (lod0) lod0.enabled = (newLod == 0);
+        if (lod1) lod1.enabled = (newLod == 1);
+        if (lod2) lod2.enabled = (newLod == 2);
     }
 
-    private void SetRendererEnabled(Renderer r, bool enabled)
+    // -----------------------------------------------------------
+    // AUTO–DISCOVERY
+    // -----------------------------------------------------------
+
+    private void AutoAssignLODRenderers()
     {
-        if (r == null) return;
-        if (r.enabled != enabled)
-            r.enabled = enabled;
+        Transform root = transform.Find("Model");
+        if (!root)
+        {
+            Debug.LogError("[EnemyLODController] No 'Model' root found!", this);
+            return;
+        }
+
+        lod0 = FindRenderer(root, "Model_LOD0");
+        lod1 = FindRenderer(root, "Model_LOD1");
+        lod2 = FindRenderer(root, "Model_LOD2");
+
+        if (!lod0)
+            Debug.LogWarning("[LOD] LOD0 renderer not found!", this);
+
+        if (!lod1)
+            Debug.LogWarning("[LOD] LOD1 renderer not found! (optional)", this);
+
+        if (!lod2)
+            Debug.LogWarning("[LOD] LOD2 renderer not found! (optional)", this);
     }
 
-    private void SwitchToInstancingMode()
+    private Renderer FindRenderer(Transform root, string childName)
     {
-        _instancingMode = true;
+        var child = root.Find(childName);
+        if (!child) return null;
 
-        SetRendererEnabled(_cfg.lod0Renderer, false);
-        SetRendererEnabled(_cfg.lod1Renderer, false);
-        SetRendererEnabled(_cfg.lod2Renderer, false);
-
-        if (_cfg.disableAnimatorInInstancing && _animator != null)
-            _animator.enabled = false;
-
-        if (_cfg.makeRigidbodyKinematicInInstancing && _rb != null)
-            _rb.isKinematic = true;
+        return child.GetComponentInChildren<Renderer>();
     }
 
-    private void SwitchToNormalMode()
+    private void AutoAssignCanvas()
     {
-        _instancingMode = false;
+        // Canvas вынесен в отдельный префаб в EnemyConfigSO
+        if (config != null && config.worldCanvasPrefab != null)
+        {
+            GameObject canvasObj = Instantiate(config.worldCanvasPrefab, transform);
+            worldCanvas = canvasObj.GetComponent<Canvas>();
 
-        if (_cfg.disableAnimatorInInstancing && _animator != null)
-            _animator.enabled = true;
+            var bar = canvasObj.GetComponent<EnemyHealthBarUI>();
+            if (bar != null)
+            {
+                var health = GetComponent<EnemyHealth>();
+                bar.Target = health;
 
-        if (_cfg.makeRigidbodyKinematicInInstancing && _rb != null)
-            _rb.isKinematic = false;
+                Transform anchor = transform.Find("Anchor");
+                if (anchor != null)
+                    bar.HeadAnchor = anchor;
+            }
+
+            return;
+        }
+
+        // Иначе ищем Canvas как дитя врага
+        var canvasTransform = transform.Find("Canvas");
+        if (canvasTransform != null)
+            worldCanvas = canvasTransform.GetComponent<Canvas>();
+    }
+
+    // -----------------------------------------------------------
+    // INSTANCING MODE
+    // -----------------------------------------------------------
+
+    private void SwitchToInstancing()
+    {
+        instancingMode = true;
+
+        if (lod0) lod0.enabled = false;
+        if (lod1) lod1.enabled = false;
+        if (lod2) lod2.enabled = false;
+
+        if (config.disableAnimatorInInstancing && anim)
+            anim.enabled = false;
+
+        if (config.makeRigidbodyKinematicInInstancing && rb)
+            rb.isKinematic = true;
+    }
+
+    private void SwitchToNormal()
+    {
+        instancingMode = false;
+
+        if (config.disableAnimatorInInstancing && anim)
+            anim.enabled = true;
+
+        if (config.makeRigidbodyKinematicInInstancing && rb)
+            rb.isKinematic = false;
     }
 
     private void SubmitInstancingDraw()
     {
-        if (!_cfg.useGPUInstancing) return;
-        if (EnemyGPUInstancer.Instance == null) return;
+        if (EnemyGPUInstancer.Instance == null)
+            return;
 
-        // берём самый дальний / дешёвый рендерер (lod2, потом lod1, потом lod0)
-        Renderer r = _cfg.lod2Renderer ?? _cfg.lod1Renderer ?? _cfg.lod0Renderer;
-        if (r == null) return;
+        Renderer r = lod2 ?? lod1 ?? lod0;
+        if (!r) return;
 
-        var meshFilter = r.GetComponent<MeshFilter>();
-        if (meshFilter == null) return;
+        var mf = r.GetComponent<MeshFilter>();
+        if (!mf) return;
 
-        Mesh mesh = meshFilter.sharedMesh;
+        Mesh mesh = mf.sharedMesh;
         Material mat = r.sharedMaterial;
-        if (mesh == null || mat == null) return;
 
-        // материал должен поддерживать instancing
-        if (!mat.enableInstancing)
+        if (!mesh || !mat || !mat.enableInstancing)
             return;
 
         EnemyInstance inst = new EnemyInstance
         {
             position = transform.position,
             rotation = transform.rotation,
-            scale = transform.lossyScale.x,
-            color = Color.white
+            scale    = transform.lossyScale.x,
+            color    = Color.white
         };
 
-        EnemyGPUInstancer.Instance.AddInstance(mesh, mat, inst, r.shadowCastingMode, r.receiveShadows, gameObject.layer);
+        EnemyGPUInstancer.Instance.AddInstance(
+            mesh,
+            mat,
+            inst,
+            r.shadowCastingMode,
+            r.receiveShadows,
+            gameObject.layer
+        );
     }
 }
