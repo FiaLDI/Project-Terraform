@@ -1,82 +1,68 @@
 using UnityEditor;
 using UnityEngine;
-using Quests;
-using System;
-using System.Linq;
+using Features.Quests.Data; // ✅ QUEST ASSET находится здесь (проверь)
+using Features.Quests.Domain;
 
-[CustomEditor(typeof(QuestAsset))]
-public class QuestAssetEditor : Editor
+namespace Features.Quests.Editor
 {
-    private QuestAsset questAsset;
-    private string[] behaviourTypes;
-    private Type[] behaviourClasses;
-    private int selectedIndex;
-
-    SerializedProperty descriptionProp;
-    SerializedProperty behaviourProp;
-    SerializedProperty rewardsProp;
-
-    private void OnEnable()
+    [CustomEditor(typeof(QuestAsset))]
+    public class QuestAssetEditor : UnityEditor.Editor
     {
-        questAsset = (QuestAsset)target;
-
-        descriptionProp = serializedObject.FindProperty("description");
-        behaviourProp = serializedObject.FindProperty("behaviour");
-        rewardsProp = serializedObject.FindProperty("rewards");
-
-        behaviourClasses = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(a => a.GetTypes())
-            .Where(t => t.IsSubclassOf(typeof(QuestBehaviour)) && !t.IsAbstract)
-            .ToArray();
-
-        behaviourTypes = behaviourClasses.Select(t => t.Name).ToArray();
-
-        if (questAsset.behaviour != null)
+        public override void OnInspectorGUI()
         {
-            var currentType = questAsset.behaviour.GetType();
-            selectedIndex = Array.FindIndex(behaviourClasses, t => t == currentType);
-            if (selectedIndex < 0) selectedIndex = 0;
-        }
-        else
-        {
-            selectedIndex = 0;
-        }
-    }
+            serializedObject.Update();
 
-    public override void OnInspectorGUI()
-    {
-        serializedObject.Update();
+            var quest = (QuestAsset)target;
 
-        EditorGUILayout.LabelField("⚔️ Quest Asset", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Quest ID", EditorStyles.boldLabel);
 
-        questAsset.questName = EditorGUILayout.TextField("Name", questAsset.questName);
-        EditorGUILayout.PropertyField(descriptionProp);
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.TextField(quest.questId);
+            EditorGUI.EndDisabledGroup();
 
-        EditorGUILayout.Space();
+            EditorGUILayout.Space(5);
 
-        // === BEHAVIOUR SELECTOR ===
-        EditorGUILayout.LabelField("Quest Behaviour", EditorStyles.boldLabel);
-        int newIndex = EditorGUILayout.Popup("Type", selectedIndex, behaviourTypes);
-        if (newIndex != selectedIndex || questAsset.behaviour == null)
-        {
-            selectedIndex = newIndex;
-            questAsset.behaviour = (QuestBehaviour)Activator.CreateInstance(behaviourClasses[selectedIndex]);
-            EditorUtility.SetDirty(questAsset);
+            if (string.IsNullOrWhiteSpace(quest.questId))
+            {
+                if (GUILayout.Button("Generate ID"))
+                {
+                    Undo.RecordObject(quest, "Generate Quest ID");
+                    quest.questId = GenerateQuestId(quest);
+                    EditorUtility.SetDirty(quest);
+                }
+            }
+            else
+            {
+                if (GUILayout.Button("Regenerate ID"))
+                {
+                    Undo.RecordObject(quest, "Regenerate Quest ID");
+                    quest.questId = GenerateQuestId(quest);
+                    EditorUtility.SetDirty(quest);
+                }
+            }
+
+            EditorGUILayout.Space(10);
+
+            DrawDefaultInspector();
+            serializedObject.ApplyModifiedProperties();
         }
 
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Progress Settings", EditorStyles.boldLabel);
-        questAsset.targetProgress = EditorGUILayout.IntField("Required Targets", questAsset.targetProgress);
+        private string GenerateQuestId(QuestAsset quest)
+        {
+            // имя может быть null → исправляем
+            string name = string.IsNullOrWhiteSpace(quest.questName)
+                ? "quest"
+                : quest.questName;
 
-        EditorGUILayout.PropertyField(behaviourProp, true);
+            string safeName = name
+                .ToLower()
+                .Replace(" ", "_")
+                .Replace("-", "_");
 
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Rewards", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(rewardsProp, true);
+            string guid = System.Guid.NewGuid().ToString("N").Substring(0, 6);
 
-        serializedObject.ApplyModifiedProperties();
+            return $"quest_{safeName}_{guid}";
+        }
 
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Progress", $"{questAsset.currentProgress}/{questAsset.targetProgress}");
     }
 }

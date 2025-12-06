@@ -55,6 +55,7 @@ public class PlayerRegistry : MonoBehaviour
             Debug.Log("IGNORE non-player stats");
             return;
         }
+
         if (!Players.Contains(player))
             Players.Add(player);
 

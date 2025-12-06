@@ -121,6 +121,7 @@ GameObject:
   - component: {fileID: 5863539914605405000}
   - component: {fileID: 1745300881015787059}
   - component: {fileID: 5194683901345809829}
+  - component: {fileID: -3199873811381707063}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Enemy
@@ -241,6 +242,20 @@ MonoBehaviour:
   prefabLOD2: {fileID: 4823896413690452315, guid: 9631ceeeabc26e0448bfa870965bd4ea, type: 3}
   lod0Distance: 15
   lod1Distance: 40
+--- !u!114 &-3199873811381707063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4823896413690452315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d7149bba10ad184c989a076b969b644, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.UnityIntegration.Adapters.EnemyQuestEventsAdapter
+  questManager: {fileID: 0}
+  enemyTag: Enemy
 --- !u!1 &5425803783331266846
 GameObject:
   m_ObjectHideFlags: 0
