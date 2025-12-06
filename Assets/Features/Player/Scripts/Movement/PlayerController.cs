@@ -27,17 +27,14 @@ public class PlayerController : MonoBehaviour
         SetupMovement();
         SetupCamera();
         SetupAbilities();
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        SetupCursor();
     }
 
     private void OnEnable()
     {
         inputActions.Enable();
 
-        // Подписка должна быть раньше Start других компонентов,
-        // поэтому делаем её здесь, а не в Start().
+        // подписываемся до Start других компонентов
         PlayerStats.OnStatsReady += HandleStatsReady;
     }
 
@@ -49,9 +46,14 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        // Если PlayerRegistry успел инициализироваться до нашего Start —
-        // просто обновляем UI вручную.
-        var reg = PlayerRegistry.Instance;
+        // если PlayerRegistry уже готов — вручную обновляем UI
+        _ = PlayerRegistry.Instance;
+    }
+
+    private void SetupCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     // ============================================================
@@ -98,7 +100,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // ============================================================
-    // STATS READY CALLBACK
+    // STATS READY
     // ============================================================
 
     private void HandleStatsReady(PlayerStats ps)

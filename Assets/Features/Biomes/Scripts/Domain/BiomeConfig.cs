@@ -1,5 +1,5 @@
 using UnityEngine;
-using Quests;
+using Features.Quests.Data;
 
 namespace Features.Biomes.Domain
 {
