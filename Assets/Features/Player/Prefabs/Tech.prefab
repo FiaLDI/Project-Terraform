@@ -7580,11 +7580,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3646f66d39964e44a9c04ea42d203060, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerQuestController
-  databaseAsset: {fileID: 11400000, guid: c0dd76dfc624cca4aa2b105a7b446a75, type: 2}
+  databaseAsset: {fileID: 11400000, guid: 4fb6bb3609cb58842a9469b94900b3b0, type: 2}
   startChains:
   - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}
   startQuests:
-  - {fileID: 11400000, guid: 596d99b4a89a4504aa503ad6ad56ecf0, type: 2}
+  - {fileID: 11400000, guid: f88681f73985baf4ca33f4f09a6e055f, type: 2}
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0
