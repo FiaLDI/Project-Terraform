@@ -8,6 +8,9 @@ namespace Features.Biomes.Domain
     [CreateAssetMenu(menuName = "Game/World Config")]
     public class WorldConfig : ScriptableObject
     {
+        [Header("World Generation")]
+        public int seed = 12345;
+        
         [Header("Chunk Settings")]
         public int chunkSize = 64;
 

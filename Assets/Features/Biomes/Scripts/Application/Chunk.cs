@@ -11,7 +11,7 @@ using Unity.Jobs;
 
 public class Chunk
 {
-    public List<Blocker> environmentBlockers = new List<Blocker>();
+    public List<Blocker> environmentBlockers = new();
 
     public Vector2Int coord;
     public bool IsLoaded => rootObject != null;
@@ -23,6 +23,9 @@ public class Chunk
     private readonly Transform parent;
 
     private bool spawnedWithMegaJob = false;
+
+    // 🎯 ВСЕ runtime-созданные Mesh должны храниться и уничтожаться вручную!
+    private readonly List<Mesh> _runtimeMeshes = new();
 
     public Chunk(Vector2Int coord, WorldConfig world)
         : this(coord, world, world.chunkSize, null)
@@ -37,15 +40,14 @@ public class Chunk
     }
 
     // ================================================================
-    // RUNTIME LOAD
+    // LOAD
     // ================================================================
     public void Load()
     {
         if (IsLoaded) return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
-        rootObject.transform.position =
-            new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
+        rootObject.transform.position = new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
 
         if (parent != null)
             rootObject.transform.SetParent(parent, false);
@@ -59,8 +61,7 @@ public class Chunk
         if (IsLoaded) return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
-        rootObject.transform.position =
-            new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
+        rootObject.transform.position = new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
 
         if (parent != null)
             rootObject.transform.SetParent(parent, false);
@@ -70,22 +71,14 @@ public class Chunk
     }
 
     // ================================================================
-    // TERRAIN MESH (LOD0/1/2)
+    // TERRAIN GENERATION (LOD0/1/2)
     // ================================================================
     private void GenerateLOD()
     {
         var blend = world.GetDominantBiome(coord);
         BiomeConfig biome = blend.biome;
 
-        // Mesh resolutions
-        int res0 = chunkSize;
-        int res1 = Mathf.Max(2, chunkSize / 2);
-        int res2 = Mathf.Max(2, chunkSize / 4);
-
-        // Prepare chunk offset (world pos)
-        Vector3 chunkOffset = new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
-
-        Mesh lod0 = TerrainMeshGenerator.GenerateMeshSync(
+        MeshData data0 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
             chunkSize,
@@ -93,7 +86,10 @@ public class Chunk
             biome.useLowPoly
         );
 
-        Mesh lod1 = TerrainMeshGenerator.GenerateMeshSync(
+        Mesh lod0 = TerrainMeshGenerator.BuildMesh(data0);
+        _runtimeMeshes.Add(lod0);
+
+        MeshData data1 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
             chunkSize / 2,
@@ -101,7 +97,10 @@ public class Chunk
             biome.useLowPoly
         );
 
-        Mesh lod2 = TerrainMeshGenerator.GenerateMeshSync(
+        Mesh lod1 = TerrainMeshGenerator.BuildMesh(data1);
+        _runtimeMeshes.Add(lod1);
+         
+        MeshData data2 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
             chunkSize / 4,
@@ -109,6 +108,8 @@ public class Chunk
             biome.useLowPoly
         );
 
+        Mesh lod2 = TerrainMeshGenerator.BuildMesh(data2);
+        _runtimeMeshes.Add(lod2);
 
         BurstMeshUtility.RecalculateNormalsBurst(lod0);
         BurstMeshUtility.RecalculateNormalsBurst(lod1);
@@ -137,21 +138,13 @@ public class Chunk
 
         var mc = colliderObj.AddComponent<MeshCollider>();
         mc.sharedMesh = lod0;
-        mc.cookingOptions =
-            MeshColliderCookingOptions.EnableMeshCleaning |
-            MeshColliderCookingOptions.CookForFasterSimulation |
-            MeshColliderCookingOptions.WeldColocatedVertices;
 
         colliderObj.AddComponent<ChunkColliderLODFixed>().physicsMesh = lod0;
-
-        if (lod0 == null)
-            Debug.LogError($"[Chunk {coord}] COLLIDER LOD0 MESH IS NULL!");
     }
 
     private void GenerateImmediateMesh()
     {
         var biome = world.GetBiomeAtChunk(coord);
-        Vector3 chunkOffset = new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
 
         Mesh m = TerrainMeshGenerator.GenerateMeshSync(
             coord,
@@ -161,6 +154,8 @@ public class Chunk
             biome.useLowPoly
         );
 
+        _runtimeMeshes.Add(m);
+
         var go = new GameObject("Mesh");
         go.transform.SetParent(rootObject.transform, false);
 
@@ -169,7 +164,6 @@ public class Chunk
         mr.sharedMaterial = biome.groundMaterial;
 
         mf.sharedMesh = m;
-
         go.AddComponent<MeshCollider>().sharedMesh = m;
     }
 
@@ -178,28 +172,37 @@ public class Chunk
     // ================================================================
     private void RunMegaSpawn()
     {
-        if (coord.x == 0 && coord.y == 0)
-        {
-            spawnedWithMegaJob = true;
-            return;
-        }
+        // 1) чтобы не запускать дважды
         if (spawnedWithMegaJob)
             return;
 
         spawnedWithMegaJob = true;
 
+        // 2) Проверяем, инициализирована ли база биомов
         if (!BiomeRuntimeDatabase.Initialized)
         {
-            Debug.LogWarning($"[Chunk {coord}] BiomeRuntimeDatabase not initialized.");
+            Debug.LogWarning($"[Chunk {coord}] BiomeRuntimeDatabase not initialized, skip MegaSpawn");
             return;
         }
 
+        // 3) Узнаём биом чанка
         var biomeCfg = world.GetBiomeAtChunk(coord);
         if (biomeCfg == null)
+        {
+            Debug.LogWarning($"[Chunk {coord}] GetBiomeAtChunk returned NULL, skip MegaSpawn");
             return;
+        }
 
+        // 4) Находим индекс этого биома в WorldConfig.biomes
         int biomeIndex = -1;
         var layers = world.biomes;
+
+        if (layers == null || layers.Length == 0)
+        {
+            Debug.LogWarning($"[Chunk {coord}] World has no biomes, skip MegaSpawn");
+            return;
+        }
+
         for (int i = 0; i < layers.Length; i++)
         {
             if (layers[i].config == biomeCfg)
@@ -209,7 +212,30 @@ public class Chunk
             }
         }
 
+        if (biomeIndex < 0)
+        {
+            Debug.LogError($"[Chunk {coord}] Cannot find biome index for biome '{biomeCfg.biomeName}' in WorldConfig.biomes");
+            return;
+        }
+
+        if (BiomeRuntimeDatabase.BiomeParamsArray == null ||
+            biomeIndex >= BiomeRuntimeDatabase.BiomeParamsArray.Length)
+        {
+            Debug.LogError(
+                $"[Chunk {coord}] biomeIndex={biomeIndex} is out of range " +
+                $"for BiomeParamsArray (len={BiomeRuntimeDatabase.BiomeParamsArray?.Length ?? 0})"
+            );
+            return;
+        }
+
         BiomeParams biomeParams = BiomeRuntimeDatabase.BiomeParamsArray[biomeIndex];
+
+        // 5) Берём LOD0 меш
+        if (rootObject == null)
+        {
+            Debug.LogError($"[Chunk {coord}] rootObject is NULL in MegaSpawn");
+            return;
+        }
 
         var lodComp = rootObject.GetComponentInChildren<ChunkMeshLOD>();
         if (lodComp == null || lodComp.lod0Mesh == null)
@@ -224,6 +250,7 @@ public class Chunk
         if (vertCount == 0)
             return;
 
+        // 6) Готовим данные для джоба
         var vertices = new NativeArray<float3>(vertCount, Allocator.TempJob);
         for (int i = 0; i < vertCount; i++)
             vertices[i] = vertsManaged[i];
@@ -245,23 +272,30 @@ public class Chunk
 
         float3 chunkOffset = new float3(coord.x * chunkSize, 0f, coord.y * chunkSize);
 
+        // 7) Сид мира + координата чанка → уникальный сид
+        uint baseSeed  = (uint)world.seed;
+        uint finalSeed = baseSeed
+                        ^ (uint)(coord.x * 73856093)
+                        ^ (uint)(coord.y * 19349663);
+
         var job = new MegaSpawnJob
         {
-            vertices = vertices,
-            biome = biomeParams,
-            envRules = BiomeRuntimeDatabase.EnvRules,
-            resRules = BiomeRuntimeDatabase.ResRules,
-            enemyRules = BiomeRuntimeDatabase.EnemyRules,
-            questRules = BiomeRuntimeDatabase.QuestRules,
-            output = spawnList.AsParallelWriter(),
-            randomSeed = (uint)(coord.x * 73856093 ^ coord.y * 19349663),
-            sampleStep = sampleStep,
+            vertices    = vertices,
+            biome       = biomeParams,
+            envRules    = BiomeRuntimeDatabase.EnvRules,
+            resRules    = BiomeRuntimeDatabase.ResRules,
+            enemyRules  = BiomeRuntimeDatabase.EnemyRules,
+            questRules  = BiomeRuntimeDatabase.QuestRules,
+            output      = spawnList.AsParallelWriter(),
+            randomSeed  = finalSeed,
+            sampleStep  = sampleStep,
             vertsPerLine = chunkSize + 1,
             chunkOffset = chunkOffset
         };
 
         JobHandle handle = job.Schedule(vertCount, 64);
 
+        // 8) Планировщик, который потом Dispose-ит spawnList/vertices
         if (MegaSpawnScheduler.Instance == null)
         {
             var go = new GameObject("MegaSpawnScheduler");
@@ -277,8 +311,9 @@ public class Chunk
         );
     }
 
+
     // ================================================================
-    // UNLOAD
+    // UNLOAD — MUST DESTROY ALL MESHES!
     // ================================================================
     public void Unload(int unloadDist, Vector2Int playerChunk)
     {
@@ -290,6 +325,15 @@ public class Chunk
         if (dx > unloadDist || dy > unloadDist)
         {
             ChunkedGameObjectStorage.Unload(coord);
+
+            // 🎯 УНИЧТОЖАЕМ ВСЕ СОЗДАННЫЕ МЕШИ
+            foreach (var mesh in _runtimeMeshes)
+            {
+                if (mesh != null)
+                    Object.Destroy(mesh);
+            }
+            _runtimeMeshes.Clear();
+
             Object.Destroy(rootObject);
             rootObject = null;
         }

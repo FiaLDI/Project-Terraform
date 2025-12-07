@@ -142,7 +142,7 @@ public class BiomeConfigEditor : Editor
     {
         fInfo = DrawFold("Biome Info", fInfo, () =>
         {
-            DrawProps("biomeName", "mapColor", "isGenerate", "useLowPoly");
+            DrawProps("biomeID", "biomeName", "mapColor", "isGenerate", "useLowPoly");
         });
 
         fTerrain = DrawFold("Terrain", fTerrain, () =>

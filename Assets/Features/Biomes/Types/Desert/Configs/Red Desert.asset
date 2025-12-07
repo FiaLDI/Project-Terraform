@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6dfcc09296954b418c8065bb3d566d7, type: 3}
   m_Name: Red Desert
   m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
+  biomeID: default1
   biomeName: Red
   mapColor: {r: 1, g: 0, b: 0, a: 1}
   isGenerate: 1

@@ -161,6 +161,9 @@ namespace Features.Biomes.Domain
     [CreateAssetMenu(menuName = "Game/Biome Config")]
     public class BiomeConfig : ScriptableObject
     {
+        [Header("ID")]
+        public string biomeID = "default";
+
         [Header("Info")]
         public string biomeName;
         public Color mapColor = Color.white;
