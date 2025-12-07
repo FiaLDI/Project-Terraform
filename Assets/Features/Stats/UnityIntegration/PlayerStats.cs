@@ -2,6 +2,7 @@ using UnityEngine;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
 using Features.Stats.Application;
+using Features.Player.UnityIntegration;
 
 namespace Features.Stats.UnityIntegration
 {

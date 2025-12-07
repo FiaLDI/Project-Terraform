@@ -1,15 +1,25 @@
+// Assets/Features/Player/Scripts/UnityIntegration/FollowPlayerStore.cs
 using UnityEngine;
 
-public class FollowPlayerStore : MonoBehaviour
+namespace Features.Player.UnityIntegration
 {
-    public float speed = 5f;
-    public Vector3 offset;
-
-    void Update()
+    /// <summary>
+    /// Любой объект, который должен «следить за игроком»
+    /// (например, магазин, UI-камера и т.п.).
+    /// </summary>
+    public class FollowPlayerStore : MonoBehaviour
     {
-        if (!PlayerPositionStore.Player) return;
+        public float speed = 5f;
+        public Vector3 offset;
 
-        Vector3 targetPos = PlayerPositionStore.Player.position + offset;
-        transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * speed);
+        private void LateUpdate()
+        {
+            var reg = PlayerRegistry.Instance;
+            if (reg == null || reg.LocalPlayer == null)
+                return;
+
+            Vector3 targetPos = reg.LocalPlayer.transform.position + offset;
+            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * speed);
+        }
     }
 }

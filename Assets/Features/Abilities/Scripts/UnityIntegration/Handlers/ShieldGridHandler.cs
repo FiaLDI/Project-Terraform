@@ -11,8 +11,27 @@ namespace Features.Abilities.UnityIntegration
         public void Execute(AbilitySO abilityBase, AbilityContext ctx)
         {
             var ability = (ShieldGridAbilitySO)abilityBase;
-            var owner = ctx.Owner;
-            if (!owner) return;
+
+            // ==== ADAPTATION: ctx.Owner is NOW object ====
+            GameObject ownerGO = null;
+
+            switch (ctx.Owner)
+            {
+                case GameObject go:
+                    ownerGO = go;
+                    break;
+
+                case Component comp:
+                    ownerGO = comp.gameObject;
+                    break;
+
+                default:
+                    Debug.LogError("[ShieldGridHandler] AbilityContext.Owner is not GameObject or Component.");
+                    return;
+            }
+
+            if (ownerGO == null)
+                return;
 
             if (!ability.shieldGridPrefab)
             {
@@ -22,7 +41,7 @@ namespace Features.Abilities.UnityIntegration
 
             GameObject gridObj = Object.Instantiate(
                 ability.shieldGridPrefab,
-                owner.transform.position,
+                ownerGO.transform.position,
                 Quaternion.identity
             );
 
@@ -32,7 +51,7 @@ namespace Features.Abilities.UnityIntegration
                     ability.radius,
                     ability.duration,
                     ability.damageReductionPercent,
-                    owner
+                    ownerGO   // explicitly passing GO
                 );
             }
 

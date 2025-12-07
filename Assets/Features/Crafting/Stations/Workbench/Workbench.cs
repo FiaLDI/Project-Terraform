@@ -17,6 +17,8 @@ public class Workbench : MonoBehaviour, IInteractable
 
     public bool Interact()
     {
+        Debug.Log("Workbench Interact() CALLED!!");
+
         ui.Toggle();
         return true;
     }

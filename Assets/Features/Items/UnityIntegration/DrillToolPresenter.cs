@@ -1,10 +1,11 @@
 using UnityEngine;
+using Features.Interaction.Domain;
 using Features.Resources.UnityIntegration;
 using Features.Combat.Domain;
+using Features.Interaction.UnityIntegration;
 
 public class DrillToolPresenter : MonoBehaviour, IUsable, IStatItem
 {
-    private Camera cam;
     private bool drilling;
 
     private float miningSpeed;
@@ -17,14 +18,7 @@ public class DrillToolPresenter : MonoBehaviour, IUsable, IStatItem
 
     private float toolMultiplier = 1f;
 
-    public void Initialize(Camera playerCamera)
-    {
-        cam = playerCamera;
-
-        miningSpeed = baseMiningSpeed;
-        damage = baseDamage;
-        range = baseRange;
-    }
+    public void Initialize(Camera _) { }
 
     public void ApplyRuntimeStats(ItemRuntimeStats stats)
     {
@@ -33,21 +27,12 @@ public class DrillToolPresenter : MonoBehaviour, IUsable, IStatItem
         range       = baseRange       + stats[ItemStatType.Range];
     }
 
-    public void SetMiningMultiplier(float mult)
-    {
-        toolMultiplier = mult;
-    }
+    public void SetMiningMultiplier(float mult) => toolMultiplier = mult;
 
-    // --------------------------
-    // PRIMARY USE
-    // --------------------------
     public void OnUsePrimary_Start() => drilling = true;
     public void OnUsePrimary_Hold()  => drilling = true;
     public void OnUsePrimary_Stop()  => drilling = false;
 
-    // --------------------------
-    // SECONDARY USE (same behavior, or later — alt-mode)
-    // --------------------------
     public void OnUseSecondary_Start() => drilling = true;
     public void OnUseSecondary_Hold()  => drilling = true;
     public void OnUseSecondary_Stop()  => drilling = false;
@@ -60,27 +45,24 @@ public class DrillToolPresenter : MonoBehaviour, IUsable, IStatItem
 
     private void TryDrill()
     {
-        if (cam == null) return;
+        var hit = InteractionServiceProvider.Ray.Raycast();
+        if (!hit.Hit) return;
 
-        if (!Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hit, range))
-            return;
+        var collider = hit.HitInfo.collider;
 
+        // --- MINING ---
         float finalMining = miningSpeed * toolMultiplier * Time.deltaTime;
 
-        // --- mining ---
-        var nodePresenter = hit.collider.GetComponentInParent<ResourceNodePresenter>();
-        if (nodePresenter != null)
+        var node = collider.GetComponentInParent<ResourceNodePresenter>();
+        if (node != null)
         {
-            nodePresenter.ApplyMining(finalMining);
+            node.ApplyMining(finalMining);
             return;
         }
 
-        // --- fallback: damage ---
-        var dmg = hit.collider.GetComponentInParent<IDamageable>();
+        // --- DAMAGE ---
+        var dmg = collider.GetComponentInParent<IDamageable>();
         if (dmg != null)
-        {
-            float dmgValue = damage * toolMultiplier * Time.deltaTime;
-            dmg.TakeDamage(dmgValue, DamageType.Mining);
-        }
+            dmg.TakeDamage(damage * toolMultiplier * Time.deltaTime, DamageType.Mining);
     }
 }

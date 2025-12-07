@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Features.Camera.Application;
+using Features.Camera.Domain;
+using Features.Camera.UnityIntegration;
 
 public abstract class BaseStationUI : MonoBehaviour
 {
@@ -15,13 +18,16 @@ public abstract class BaseStationUI : MonoBehaviour
     protected bool isOpen = false;
     public bool IsOpen => isOpen;
 
+    private ICameraControlService cameraControl;
 
     protected virtual void Awake()
     {
-        if (closeButton != null)
-            closeButton.onClick.AddListener(Toggle);
+        cameraControl = CameraServiceProvider.Control;
 
-        canvas.enabled = false;
+        if (closeButton != null)
+            closeButton.onClick.AddListener(() => Toggle());
+
+        canvas.gameObject.SetActive(false);
     }
 
     public void Init(RecipeSO[] recipes)
@@ -43,23 +49,48 @@ public abstract class BaseStationUI : MonoBehaviour
 
     public void Toggle()
     {
-        isOpen = !isOpen;
-
-        canvas.enabled = isOpen;
-        PlayerUsageController.InteractionLocked = isOpen;
-
-        Cursor.visible = isOpen;
-        Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
-
-        if (isOpen)
-            UIStationManager.I.OpenStation(this);
+        if (!isOpen)
+            Open();
         else
-            UIStationManager.I.CloseStation(this);
+            Close();
+    }
+
+    private void Open()
+    {
+        if (isOpen) return;
+        isOpen = true;
+
+        Debug.Log("Station UI OPEN");
+
+        canvas.gameObject.SetActive(true);
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        cameraControl?.SetInputBlocked(true);
+
+        UIStationManager.I.OpenStation(this);
+    }
+
+    private void Close()
+    {
+        if (!isOpen) return;
+        isOpen = false;
+
+        Debug.Log("Station UI CLOSE");
+
+        canvas.gameObject.SetActive(false);
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        cameraControl?.SetInputBlocked(false);
+
+        UIStationManager.I.CloseStation(this);
     }
 
     public virtual void ShowRecipe(RecipeSO recipe)
     {
         recipePanel.ShowRecipe(recipe);
     }
-
 }

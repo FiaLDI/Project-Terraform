@@ -7,6 +7,7 @@ using Features.Abilities.Domain;
 using Features.Abilities.Application;
 using Features.Buffs.Application;
 using Features.Buffs.Domain;
+using Features.Player.UnityIntegration;
 
 namespace Features.Menu.Tooltip
 {
