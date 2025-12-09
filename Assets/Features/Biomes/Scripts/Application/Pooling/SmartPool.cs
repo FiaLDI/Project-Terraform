@@ -3,34 +3,26 @@ using UnityEngine;
 
 namespace Features.Pooling
 {
-    /// <summary>
-    /// Улучшенный SmartPool:
-    /// - единый синглтон;
-    /// - создаёт контейнеры для каждого prefabIndex;
-    /// - возвращённые объекты хранятся под POOL_ROOT;
-    /// - не засоряет иерархию;
-    /// - безопасно работает с PoolObject/PoolMeta.
-    /// </summary>
     public class SmartPool : MonoBehaviour
     {
         public static SmartPool Instance;
 
-        /// <summary>
-        /// Родитель всех контейнеров пулов.
-        /// </summary>
+        [Header("Pool Limits")]
+        [Tooltip("Максимум объектов одного типа в пуле. Остальное будет уничтожено.")]
+        public int maxPerPrefab = 200;   // можешь увеличить до 400–600 для деревьев и мелочи
+        public int maxTotalObjects = 5000; // глобальный крышняк
+
+        private int _totalPooled = 0;
+
         private Transform _poolRoot;
 
-        /// <summary>
-        /// Свободные объекты по prefabIndex.
-        /// </summary>
+        // prefabIndex → inactive objects
         private readonly Dictionary<int, Stack<PoolObject>> _pool =
             new Dictionary<int, Stack<PoolObject>>();
 
-        /// <summary>
-        /// Контейнеры по prefabIndex.
-        /// </summary>
         private readonly Dictionary<int, Transform> _containers =
             new Dictionary<int, Transform>();
+
 
         private void Awake()
         {
@@ -47,10 +39,10 @@ namespace Features.Pooling
             _poolRoot.SetParent(transform);
         }
 
-        /// <summary>
-        /// Получить объект из пула или создать новый.
-        /// prefabIndex — ключ пула, prefab — образец для Instantiate.
-        /// </summary>
+
+        // =====================================================================
+        // GET
+        // =====================================================================
         public PoolObject Get(int prefabIndex, GameObject prefab)
         {
             PoolObject obj;
@@ -62,54 +54,100 @@ namespace Features.Pooling
             }
             else
             {
-                var go = Object.Instantiate(prefab);
-                obj = go.GetComponent<PoolObject>();
-                if (obj == null)
-                    obj = go.AddComponent<PoolObject>();
+                // Создаём новый объект (НО теперь без утечек!)
+                var go = Instantiate(prefab);
 
-                // Привязываем к пулу
+                obj = go.GetComponent<PoolObject>() ?? go.AddComponent<PoolObject>();
                 obj.Pool = this;
 
-                // Гарантируем наличие meta
                 if (obj.meta == null)
                     obj.meta = go.AddComponent<PoolMeta>();
 
-                // prefabIndex выставится снаружи (RuntimeSpawnerSystem)
+                obj.meta.prefabIndex = prefabIndex;
             }
 
             return obj;
         }
 
-        /// <summary>
-        /// Вернуть объект в пул.
-        /// </summary>
+
+        // =====================================================================
+        // RELEASE
+        // =====================================================================
         public void Release(PoolObject obj)
         {
             if (obj == null)
                 return;
 
             if (obj.meta == null)
-                obj.meta = obj.gameObject.GetComponent<PoolMeta>() ?? obj.gameObject.AddComponent<PoolMeta>();
+                obj.meta = obj.gameObject.AddComponent<PoolMeta>();
 
             int index = obj.meta.prefabIndex;
 
-            obj.gameObject.SetActive(false);
+            // Глобальный лимит: если уже много — просто уничтожаем
+            if (_totalPooled >= maxTotalObjects)
+            {
+                Destroy(obj.gameObject);
+                return;
+            }
 
             var container = GetOrCreateContainer(index);
+
+            if (_pool.TryGetValue(index, out var stack) && stack.Count >= maxPerPrefab)
+            {
+                Destroy(obj.gameObject);
+                return;
+            }
+
+            obj.gameObject.SetActive(false);
             obj.transform.SetParent(container, false);
 
-            if (!_pool.TryGetValue(index, out var stack))
+            if (!_pool.TryGetValue(index, out stack))
             {
                 stack = new Stack<PoolObject>();
                 _pool[index] = stack;
             }
 
             stack.Push(obj);
+            _totalPooled = ComputeTotalPooled(); // или вести счётчик аккуратно
         }
 
-        /// <summary>
-        /// Создать или получить контейнер для prefabIndex.
-        /// </summary>
+        private int ComputeTotalPooled()
+        {
+            int sum = 0;
+            foreach (var kv in _pool)
+                sum += kv.Value.Count;
+            return sum;
+        }
+
+
+
+        // =====================================================================
+        // CLEAR ALL POOLS (на случай смены локации / мира)
+        // =====================================================================
+        public void ClearAll()
+        {
+            foreach (var stack in _pool.Values)
+            {
+                foreach (var obj in stack)
+                {
+                    if (obj != null)
+                        Destroy(obj.gameObject);
+                }
+            }
+
+            _pool.Clear();
+
+            foreach (var c in _containers.Values)
+                if (c != null)
+                    Destroy(c.gameObject);
+
+            _containers.Clear();
+        }
+
+
+        // =====================================================================
+        // INTERNAL
+        // =====================================================================
         private Transform GetOrCreateContainer(int prefabIndex)
         {
             if (_containers.TryGetValue(prefabIndex, out var c))
@@ -117,9 +155,18 @@ namespace Features.Pooling
 
             var go = new GameObject($"Pool_{prefabIndex}");
             go.transform.SetParent(_poolRoot);
-            c = go.transform;
-            _containers[prefabIndex] = c;
-            return c;
+            _containers[prefabIndex] = go.transform;
+
+            return go.transform;
+        }
+
+        public Dictionary<int, int> Debug_GetPoolCounts()
+        {
+            var dict = new Dictionary<int, int>();
+            foreach (var kv in _pool)
+                dict[kv.Key] = kv.Value.Count;
+
+            return dict;
         }
     }
 }

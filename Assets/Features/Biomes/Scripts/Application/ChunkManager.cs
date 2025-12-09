@@ -10,15 +10,18 @@ public class ChunkManager
     private readonly int chunkSize;
 
     private readonly Dictionary<Vector2Int, Chunk> chunks = new();
-
-    // Активные чанк-координаты
     private readonly List<Vector2Int> activeChunkCoords = new();
+
     private readonly List<ChunkRuntimeData> activeRuntimeChunks = new();
 
-    // Очередь загрузки чанков
     private readonly Queue<Vector2Int> loadQueue = new();
+    private readonly HashSet<Vector2Int> neededSet = new();
+    private readonly List<Vector2Int> chunksToRemove = new();
 
     public int chunksPerFrame = 2;
+
+    private Vector2Int _lastPlayerChunk;
+    private bool _hasLastPlayerChunk = false;
 
     public ChunkManager(WorldConfig worldConfig)
     {
@@ -29,7 +32,7 @@ public class ChunkManager
     }
 
     // ========================================================
-    // ПОИСК НУЖНЫХ ЧАНКОВ
+    // MAIN UPDATE
     // ========================================================
     public void UpdateChunks(Vector3 playerPos, int loadDist, int unloadDist)
     {
@@ -38,53 +41,80 @@ public class ChunkManager
             Mathf.FloorToInt(playerPos.z / chunkSize)
         );
 
-        HashSet<Vector2Int> needed = new();
+        bool playerChunkChanged = !_hasLastPlayerChunk || playerChunk != _lastPlayerChunk;
+        _lastPlayerChunk = playerChunk;
+        _hasLastPlayerChunk = true;
 
-        // вычисляем зону загрузки
+        if (playerChunkChanged)
+        {
+            RebuildChunksAroundPlayer(playerChunk, loadDist, unloadDist);
+        }
+
+        // Build runtime data for LOD system
+        ChunkedGameObjectStorage.FillActiveChunks(activeChunkCoords, activeRuntimeChunks);
+
+        if (ChunkedInstanceLODSystem.Instance != null)
+            ChunkedInstanceLODSystem.Instance.UpdateVisibleChunks(activeRuntimeChunks);
+
+        // === DEBUG METRICS ===
+        WorldDebugRegistry.ActiveChunkCount = activeChunkCoords.Count;
+        WorldDebugRegistry.LoadedChunkCount = chunks.Count;
+        WorldDebugRegistry.LoadQueueLength = loadQueue.Count;
+    }
+
+    // ========================================================
+    // BUILD REQUIRED CHUNKS AROUND PLAYER
+    // ========================================================
+    private void RebuildChunksAroundPlayer(Vector2Int playerChunk, int loadDist, int unloadDist)
+    {
+        neededSet.Clear();
+
+        // 1) Compute required chunks
         for (int dz = -loadDist; dz <= loadDist; dz++)
         {
             for (int dx = -loadDist; dx <= loadDist; dx++)
             {
                 Vector2Int coord = playerChunk + new Vector2Int(dx, dz);
-                needed.Add(coord);
+                neededSet.Add(coord);
 
-                if (!chunks.ContainsKey(coord))
+                if (!chunks.TryGetValue(coord, out var chunk))
                 {
-                    chunks[coord] = new Chunk(coord, world, chunkSize);
+                    chunk = new Chunk(coord, world, chunkSize);
+                    chunks[coord] = chunk;
                     loadQueue.Enqueue(coord);
                 }
-                else if (!chunks[coord].IsLoaded)
+                else if (!chunk.IsLoaded)
                 {
                     loadQueue.Enqueue(coord);
                 }
             }
         }
 
-        // Выгружаем те, что далеко
+        // 2) Unload removed chunks
+        chunksToRemove.Clear();
+
         foreach (var kv in chunks)
         {
-            if (!needed.Contains(kv.Key))
-                kv.Value.Unload(unloadDist, playerChunk);
+            Vector2Int coord = kv.Key;
+            Chunk chunk = kv.Value;
+
+            if (!neededSet.Contains(coord))
+            {
+                chunk.Unload(unloadDist, playerChunk);
+                chunksToRemove.Add(coord);
+            }
         }
 
-        // Активные координаты
+        for (int i = 0; i < chunksToRemove.Count; i++)
+            chunks.Remove(chunksToRemove[i]);
+
+        // 3) Build active list
         activeChunkCoords.Clear();
-        activeChunkCoords.AddRange(needed);
-
-        // runtimeChunks (для LOD system)
-        activeRuntimeChunks.Clear();
-        activeRuntimeChunks.AddRange(
-            ChunkedGameObjectStorage.GetActiveChunks(activeChunkCoords)
-        );
-
-        if (ChunkedInstanceLODSystem.Instance != null)
-        {
-            ChunkedInstanceLODSystem.Instance.UpdateVisibleChunks(activeRuntimeChunks);
-        }
+        activeChunkCoords.AddRange(neededSet);
     }
 
     // ========================================================
-    // ОБРАБОТКА ОЧЕРЕДИ ЗАГРУЗКИ
+    // PROCESS LOAD QUEUE
     // ========================================================
     public void ProcessLoadQueue()
     {
@@ -99,5 +129,28 @@ public class ChunkManager
                 chunk.Load();
             }
         }
+    }
+
+    // ========================================================
+    // FULL CLEAR
+    // ========================================================
+    public void ClearAll()
+    {
+        foreach (var kv in chunks)
+            kv.Value.Unload(int.MaxValue, _lastPlayerChunk);
+
+        chunks.Clear();
+        loadQueue.Clear();
+        activeChunkCoords.Clear();
+        activeRuntimeChunks.Clear();
+        neededSet.Clear();
+        chunksToRemove.Clear();
+
+        _hasLastPlayerChunk = false;
+
+        // Debug reset
+        WorldDebugRegistry.ActiveChunkCount = 0;
+        WorldDebugRegistry.LoadedChunkCount = 0;
+        WorldDebugRegistry.LoadQueueLength = 0;
     }
 }

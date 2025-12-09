@@ -44,7 +44,8 @@ public class Chunk
     // ================================================================
     public void Load()
     {
-        if (IsLoaded) return;
+        if (IsLoaded) 
+            return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
         rootObject.transform.position = new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
@@ -58,7 +59,8 @@ public class Chunk
 
     public void LoadImmediate()
     {
-        if (IsLoaded) return;
+        if (IsLoaded) 
+            return;
 
         rootObject = new GameObject($"Chunk_{coord.x}_{coord.y}");
         rootObject.transform.position = new Vector3(coord.x * chunkSize, 0, coord.y * chunkSize);
@@ -78,6 +80,7 @@ public class Chunk
         var blend = world.GetDominantBiome(coord);
         BiomeConfig biome = blend.biome;
 
+        // LOD0
         MeshData data0 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
@@ -85,10 +88,11 @@ public class Chunk
             world,
             biome.useLowPoly
         );
-
         Mesh lod0 = TerrainMeshGenerator.BuildMesh(data0);
+        lod0.MarkDynamic();
         _runtimeMeshes.Add(lod0);
 
+        // LOD1
         MeshData data1 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
@@ -96,10 +100,11 @@ public class Chunk
             world,
             biome.useLowPoly
         );
-
         Mesh lod1 = TerrainMeshGenerator.BuildMesh(data1);
+        lod1.MarkDynamic();
         _runtimeMeshes.Add(lod1);
-         
+
+        // LOD2
         MeshData data2 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
@@ -107,14 +112,16 @@ public class Chunk
             world,
             biome.useLowPoly
         );
-
         Mesh lod2 = TerrainMeshGenerator.BuildMesh(data2);
+        lod2.MarkDynamic();
         _runtimeMeshes.Add(lod2);
 
+        // Нормали через Burst (нативная часть тоже обновится)
         BurstMeshUtility.RecalculateNormalsBurst(lod0);
         BurstMeshUtility.RecalculateNormalsBurst(lod1);
         BurstMeshUtility.RecalculateNormalsBurst(lod2);
 
+        // Render объект
         var renderObj = new GameObject("Mesh_LOD");
         renderObj.transform.SetParent(rootObject.transform, false);
         renderObj.layer = LayerMask.NameToLayer("Default");
@@ -132,13 +139,15 @@ public class Chunk
         lodComp.lod1Distance = 80f;
         lodComp.lod2Distance = 160f;
 
+        // Collider объект (LOD0)
         var colliderObj = new GameObject("Mesh_Collider_LOD0");
         colliderObj.transform.SetParent(rootObject.transform, false);
         colliderObj.layer = LayerMask.NameToLayer("Default");
 
         var mc = colliderObj.AddComponent<MeshCollider>();
-        mc.sharedMesh = lod0;
+        mc.sharedMesh = lod0; // используем тот же Mesh, без копий
 
+        // фиксированный ре-кукинг
         colliderObj.AddComponent<ChunkColliderLODFixed>().physicsMesh = lod0;
     }
 
@@ -153,7 +162,7 @@ public class Chunk
             world,
             biome.useLowPoly
         );
-
+        m.MarkDynamic();
         _runtimeMeshes.Add(m);
 
         var go = new GameObject("Mesh");
@@ -164,7 +173,9 @@ public class Chunk
         mr.sharedMaterial = biome.groundMaterial;
 
         mf.sharedMesh = m;
-        go.AddComponent<MeshCollider>().sharedMesh = m;
+
+        var mc = go.AddComponent<MeshCollider>();
+        mc.sharedMesh = m;
     }
 
     // ================================================================
@@ -280,17 +291,17 @@ public class Chunk
 
         var job = new MegaSpawnJob
         {
-            vertices    = vertices,
-            biome       = biomeParams,
-            envRules    = BiomeRuntimeDatabase.EnvRules,
-            resRules    = BiomeRuntimeDatabase.ResRules,
-            enemyRules  = BiomeRuntimeDatabase.EnemyRules,
-            questRules  = BiomeRuntimeDatabase.QuestRules,
-            output      = spawnList.AsParallelWriter(),
-            randomSeed  = finalSeed,
-            sampleStep  = sampleStep,
+            vertices     = vertices,
+            biome        = biomeParams,
+            envRules     = BiomeRuntimeDatabase.EnvRules,
+            resRules     = BiomeRuntimeDatabase.ResRules,
+            enemyRules   = BiomeRuntimeDatabase.EnemyRules,
+            questRules   = BiomeRuntimeDatabase.QuestRules,
+            output       = spawnList.AsParallelWriter(),
+            randomSeed   = finalSeed,
+            sampleStep   = sampleStep,
             vertsPerLine = chunkSize + 1,
-            chunkOffset = chunkOffset
+            chunkOffset  = chunkOffset
         };
 
         JobHandle handle = job.Schedule(vertCount, 64);
@@ -317,25 +328,32 @@ public class Chunk
     // ================================================================
     public void Unload(int unloadDist, Vector2Int playerChunk)
     {
-        if (!IsLoaded) return;
+        // В новой схеме ChunkManager уже решил, что чанк надо снести.
+        if (!IsLoaded) 
+            return;
 
-        int dx = Mathf.Abs(coord.x - playerChunk.x);
-        int dy = Mathf.Abs(coord.y - playerChunk.y);
+        // 1) выгружаем все спавн-объекты этого чанка (ресурсы, враги, квесты)
+        ChunkedGameObjectStorage.Unload(coord);
 
-        if (dx > unloadDist || dy > unloadDist)
+        // 2) чистим блокеры, чтобы не держать ссылки на уничтоженные компоненты
+        environmentBlockers.Clear();
+
+        // 3) уничтожаем ВСЕ runtime-меши (включая те, что висят на MeshFilter/MeshCollider)
+        foreach (var mesh in _runtimeMeshes)
         {
-            ChunkedGameObjectStorage.Unload(coord);
+            if (mesh == null) 
+                continue;
 
-            // 🎯 УНИЧТОЖАЕМ ВСЕ СОЗДАННЫЕ МЕШИ
-            foreach (var mesh in _runtimeMeshes)
-            {
-                if (mesh != null)
-                    Object.Destroy(mesh);
-            }
-            _runtimeMeshes.Clear();
-
-            Object.Destroy(rootObject);
-            rootObject = null;
+            mesh.Clear();
+            Object.Destroy(mesh);
         }
+        _runtimeMeshes.Clear();
+
+        // 4) уничтожаем корневой объект чанка (с MeshFilter, MeshRenderer, MeshCollider, ChunkMeshLOD и т.д.)
+        Object.Destroy(rootObject);
+        rootObject = null;
+
+        // 5) сбрасываем флаг спавна, чтобы при повторной загрузке можно было снова вызвать RunMegaSpawn()
+        spawnedWithMegaJob = false;
     }
 }

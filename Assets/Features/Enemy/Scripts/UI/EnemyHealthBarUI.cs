@@ -40,12 +40,12 @@ namespace Features.Enemy
 
         private void OnEnable()
         {
-            // слушаем события CameraRegistry
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ CameraRegistry
             if (CameraRegistry.Instance != null)
             {
                 CameraRegistry.Instance.OnCameraChanged += HandleCameraChanged;
 
-                // если камера уже была зарегистрирована — устанавливаем её сразу
+                // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
                 if (CameraRegistry.Instance.CurrentCamera != null)
                 {
                     HandleCameraChanged(CameraRegistry.Instance.CurrentCamera);
@@ -58,7 +58,7 @@ namespace Features.Enemy
             if (target == null)
                 target = GetComponentInParent<EnemyHealth>();
 
-            // создаем head anchor автоматически
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ head anchor пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             if (headAnchor == null && target != null)
             {
                 var go = new GameObject("HeadAnchor");
@@ -74,11 +74,11 @@ namespace Features.Enemy
                 return;
             }
 
-            // подписываемся на здоровье
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             target.OnHealthChanged += HandleHealthChanged;
 
-            // если камера уже есть
-            if (cam != null)
+            // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+            if (canvas != null && cam != null)
                 canvas.worldCamera = cam;
 
             HandleHealthChanged(target.CurrentHealth, target.MaxHealth);
@@ -93,7 +93,7 @@ namespace Features.Enemy
             if (!target || cam == null)
                 return;
 
-            // позиция над головой
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             transform.position = headAnchor.position;
 
             // face the camera

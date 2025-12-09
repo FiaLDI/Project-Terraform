@@ -26,50 +26,9 @@ MonoBehaviour:
   fractalPersistence: 1
   fractalLacunarity: 2.29
   blendStrength: 0
-  environmentPrefabs:
-  - prefab: {fileID: 7989835467096096610, guid: a20a2eb9288d4174fb7ffc923e6a0db5, type: 3}
-    spawnChance: 0.0083
-    weight: 0.5
-    minSlope: 3
-    maxSlope: 60
-    alignToNormal: 1
-    randomYRotation: 1
-    randomScale: 1
-    minScale: 0
-    maxScale: 5
-    markAsResourceBlocker: 1
+  environmentPrefabs: []
   environmentDensity: 0.325
-  possibleResources:
-  - resourcePrefab: {fileID: 3167794824480302338, guid: d12292c9fe7b08040897c69b0af9aabd, type: 3}
-    spawnChance: 0.545
-    weight: 10
-    clusterType: 1
-    clusterCountRange: {x: 0, y: 5}
-    clusterRadius: 3
-    verticalStep: 0.7
-    noiseScale: 1
-    noiseAmplitude: 4
-    followTerrain: 1
-    minSlope: 0
-    maxSlope: 60
-    alignToNormal: 1
-    randomYRotation: 1
-    randomScale: 1
-    minScale: 0.8
-    maxScale: 1.3
-    useHeightLimit: 0
-    minHeight: -1000
-    maxHeight: 1000
-    useMinDistance: 1
-    minDistance: 5
-    resourceEdgeFalloff: 0
-    avoidEnvironment: 0
-    environmentRadius: 0
-    useDistributionMap: 1
-    distributionStrength: 0.398
-    distributionScale: 1
-    distributionOffset: {x: 0, y: 0}
-    allowedBiomes: 
+  possibleResources: []
   resourceDensity: 0.00648
   resourceSpawnYOffset: 0.3
   resourceEdgeFalloff: 1

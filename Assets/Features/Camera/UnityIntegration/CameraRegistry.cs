@@ -36,12 +36,14 @@ namespace Features.Camera.UnityIntegration
         {
             if (cam == CurrentCamera)
             {
-                CurrentCamera = null;
+                if (CurrentCamera != null) {
+                    CurrentCamera = null;
 
-                // удаляем ссылку из runtime-службы
-                CameraServiceProvider.Runtime?.ClearCamera();
+                    // удаляем ссылку из runtime-службы
+                    CameraServiceProvider.Runtime?.ClearCamera();
 
-                OnCameraChanged?.Invoke(null);
+                    OnCameraChanged?.Invoke(null);
+                }
             }
         }
     }
