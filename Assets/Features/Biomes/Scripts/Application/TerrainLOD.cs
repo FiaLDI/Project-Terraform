@@ -61,7 +61,7 @@ public class TerrainLOD
         mf.sharedMesh = mesh;
 
         MeshRenderer mr = go.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = biome.groundMaterial;
+        BiomeMaterialUtility.ApplyBiomeMaterial(mr, biome, world);
         mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         if (resolution == 32)

@@ -181,6 +181,16 @@ namespace Features.Biomes.Domain
         public float terrainScale = 10f;
         public float heightMultiplier = 5f;
 
+        [Header("Biome Material Parameters")]
+        public Color groundColor = Color.white;
+        public float groundSmoothness = 0.4f;
+        public float groundMetallic = 0.0f;
+
+        [Range(0.1f, 4f)]
+        public float textureTilingMultiplier = 1f;
+        public Texture2D biomeAlbedo;
+        public Texture2D biomeNormal;
+
         [Header("Fractal Mountains")]
         [Range(1, 8)] public int fractalOctaves = 5;
         [Range(0.1f, 1f)] public float fractalPersistence = 0.5f;

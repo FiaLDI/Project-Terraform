@@ -17,6 +17,9 @@ namespace Features.Biomes.Domain
         [Header("Biome Layers")]
         public BiomeLayer[] biomes;
 
+        [Header("Global Ground Material")]
+        public Material worldGroundMaterial;
+
         // ===== BIOME RESOLUTION =====
 
         public BiomeConfig GetBiomeAtChunk(Vector2Int chunk)
