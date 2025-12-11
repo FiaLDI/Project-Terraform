@@ -2,34 +2,12 @@ using UnityEngine;
 
 public class ModeSelectController : MonoBehaviour
 {
-    [Header("Screens")]
-    public GameObject modeSelectScreen;
-    public GameObject characterSelectScreen;
-    public GameObject multiplayerPlaceholderScreen;
-    public GameObject mainMenuScreen;
-
     public void OnSingleplayerPressed()
-    {
-        modeSelectScreen.SetActive(false);
-        characterSelectScreen.SetActive(true);
-    }
+        => MainMenuFSM.Instance.Switch(MainMenuStateId.CharacterSelect);
 
     public void OnMultiplayerPressed()
-    {
-        // Заглушка "В разработке"
-        modeSelectScreen.SetActive(false);
-        multiplayerPlaceholderScreen.SetActive(true);
-    }
+        => MainMenuFSM.Instance.Switch(MainMenuStateId.MultiplayerPlaceholder);
 
     public void OnBackPressed()
-    {
-        modeSelectScreen.SetActive(false);
-        mainMenuScreen.SetActive(true);
-    }
-
-    public void OnMultiplayerPlaceholderBack()
-    {
-        multiplayerPlaceholderScreen.SetActive(false);
-        modeSelectScreen.SetActive(true);
-    }
+        => MainMenuFSM.Instance.Switch(MainMenuStateId.Play);
 }

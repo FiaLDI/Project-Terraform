@@ -291,6 +291,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cb3673874b032346ac4362352f07e26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DrillToolPresenter
+  debugEnabled: 1
+  deepDebug: 1
+  debugDrawRay: 1
+  fx: {fileID: 0}
 --- !u!1 &3579673380293029900
 GameObject:
   m_ObjectHideFlags: 0

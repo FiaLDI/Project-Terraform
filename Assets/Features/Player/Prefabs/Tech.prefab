@@ -7209,6 +7209,7 @@ GameObject:
   - component: {fileID: 6773379541020969101}
   - component: {fileID: 63710383395468030}
   - component: {fileID: 1939957361857395306}
+  - component: {fileID: 3708783183599891792}
   m_Layer: 8
   m_Name: Tech
   m_TagString: Player
@@ -7545,6 +7546,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerClassController
   library: {fileID: 11400000, guid: 7cf9dd02606876848acd0bb963f6a0a5, type: 2}
   defaultClassId: 0
+  visualController: {fileID: 0}
 --- !u!114 &4079254263345519049
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7642,8 +7644,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerMovement
   movementReference: {fileID: 677253391065705017}
   cameraReference: {fileID: 3275839684821055722}
-  animatorRoot: {fileID: 677253391065705017}
-  animator: {fileID: 2652293870516987450}
   fallbackBaseSpeed: 5
   fallbackWalkSpeed: 2
   fallbackSprintSpeed: 8
@@ -7667,6 +7667,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feaf1b3cdc716a54e9c9b2bb5abf7885, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractionController
+--- !u!114 &3708783183599891792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79a0bf5cda13dfd4894050a9f1834b07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerVisualController
+  visualLibrary: {fileID: 11400000, guid: 92992d9b3b0baee4aac268ab4ac09620, type: 2}
+  modelRoot: {fileID: 677253391065705017}
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0

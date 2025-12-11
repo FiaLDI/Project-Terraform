@@ -5,21 +5,20 @@ using UnityEngine;
 public class EquipmentManager : MonoBehaviour
 {
     public static EquipmentManager instance;
+
     [SerializeField] private Rigidbody playerRigidbody;
 
-    [Header("Core References")]
+    [Header("References")]
     private Camera playerCamera;
-    [SerializeField] private Transform adsPoint; // точка прицеливания
-    [SerializeField] private Transform handTransform; // Точка в руке, где будет появляться оружие
+    [SerializeField] private Transform adsPoint;       
+    [SerializeField] private Transform handTransform;  
 
-    private GameObject currentWeaponObject; // Ссылка на префаб в руке
+    private GameObject currentItemObject;  
+    private Item currentEquippedItemData; 
+    private Weapon currentWeaponData;     
 
-    [Header("Weapon State")]
-    private Weapon currentWeaponData;       // Данные SO, *если* это оружие
-    private Item currentEquippedItemData; //Данные SO *любого* предмета
-    private IUsable currentUsable;      //  Ссылка на IUsable компонент предмета
+    private IUsable currentUsable;
     private PlayerUsageController usageController;
-
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI ammoText;
@@ -29,138 +28,134 @@ public class EquipmentManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            Debug.Log($"[EquipmentManager] Awake: Я '{this.gameObject.name}', я стал 'instance'.");
+            Debug.Log($"[EquipmentManager] Awake: Instance = {gameObject.name}");
         }
         else
         {
-            Debug.LogWarning($"[EquipmentManager] Awake: 'instance' уже занят объектом '{instance.gameObject.name}'. " +
-                             $"Я - дубликат на '{this.gameObject.name}' и БУДУ УНИЧТОЖЕН.");
+            Debug.LogWarning($"Duplicate EquipmentManager destroyed ({gameObject.name}), instance = {instance.gameObject.name}");
             Destroy(gameObject);
             return;
         }
 
-        // === Автоматический поиск камеры и точки удержания ===
+        // ===== AUTO CAMERA DETECT =====
         if (playerCamera == null)
         {
-            GameObject camObj = GameObject.Find("FirstPersonCamera");
-            if (camObj != null)
-                playerCamera = camObj.GetComponent<Camera>();
-            else
-                Debug.LogWarning("EquipmentManager: объект 'FirstPersonCamera' не найден на сцене!");
+            playerCamera = Camera.main;
+            if (playerCamera == null)
+                Debug.LogError("[EquipmentManager] Camera.main not found!");
         }
 
+        // ===== AUTO HAND TRANSFORM =====
         if (handTransform == null)
         {
             GameObject handObj = GameObject.Find("HandleEquipPoint");
             if (handObj != null)
                 handTransform = handObj.transform;
             else
-                Debug.LogWarning("EquipmentManager: объект 'HandleEquipPoint' не найден на сцене!");
+                Debug.LogError("[EquipmentManager] HandleEquipPoint not found in scene!");
         }
+
         usageController = GetComponent<PlayerUsageController>();
         if (usageController == null)
-            Debug.LogWarning("EquipmentManager: PlayerUsageController не найден на игроке!");
+            Debug.LogError("[EquipmentManager] PlayerUsageController missing on player!");
     }
 
-
+    // ====================================================================
+    // EQUIP LOGIC
+    // ====================================================================
     public void EquipItem(Item itemToEquip)
     {
-        // 1. Уничтожаем старый предмет в руке
-        if (currentWeaponObject != null)
-        {
-            Destroy(currentWeaponObject);
-        }
+        // REMOVE OLD ITEM
+        if (currentItemObject != null)
+            Destroy(currentItemObject);
 
-        // 2. Сбрасываем состояние
-        currentWeaponObject = null;
+        currentItemObject = null;
+        currentEquippedItemData = null;
         currentWeaponData = null;
-        currentEquippedItemData = null; 
-        currentUsable = null;        
+        currentUsable = null;
 
-        // 3. Если слот пуст или у предмета нет 3D-модели, выходим
         if (itemToEquip == null || itemToEquip.worldPrefab == null)
         {
             UpdateAmmoUI();
             return;
         }
 
-        // 4. Создаем новый предмет и сбрасываем его позицию
-        currentWeaponObject = Instantiate(itemToEquip.worldPrefab, handTransform);
-        //Изменение переменной, отвечающей за возможность подбора предмета через E
-        var io = currentWeaponObject.GetComponent<ItemObject>();
-        if (io) io.isWorldObject = false;
+        // SPAWN NEW ITEM
+        currentItemObject = Instantiate(itemToEquip.worldPrefab, handTransform);
+        currentItemObject.transform.localPosition = Vector3.zero;
+        currentItemObject.transform.localRotation = Quaternion.identity;
 
-        currentWeaponObject.transform.localPosition = Vector3.zero;
-        currentWeaponObject.transform.localRotation = Quaternion.identity;
-
-        Debug.Log("LOCAL: " + currentWeaponObject.transform.localScale);
-        Debug.Log("LOSSY: " + currentWeaponObject.transform.lossyScale);
-
-        //foreach (Transform child in currentWeaponObject.GetComponentsInChildren<Transform>())
-        //{
-        //    Debug.Log(child.name + " lossy: " + child.lossyScale);
-        //}
-        //Transform t = currentWeaponObject.transform;
-        //while (t != null)
-        //{
-        //    Debug.Log($"PARENT {t.name} lossy={t.lossyScale} local={t.localScale}");
-        //    t = t.parent;
-        //}
-        //currentWeaponObject.transform.localScale = Vector3.one;
-        // 5. Отключаем физику для предмета в руках
-        Rigidbody rb = currentWeaponObject.GetComponent<Rigidbody>();
+        // DISABLE PHYSICS
+        var rb = currentItemObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            Debug.Log("Отключение физики предмета");
             rb.isKinematic = true;
+            rb.useGravity = false;
         }
 
-        // 6. Инициализируем HeldItemController, если он есть
-        HeldItemController itemController = currentWeaponObject.GetComponent<HeldItemController>();
-        if (itemController != null)
-        {
-            // Передаем все три необходимые ссылки
-            itemController.Initialize(playerCamera, playerRigidbody, adsPoint);
-        }
+        // remove world pickup state
+        var io = currentItemObject.GetComponent<ItemObject>();
+        if (io) io.isWorldObject = false;
 
-        // 7. Сохраняем данные SO и ищем интерфейс IUsable
+        // STORE SCRIPTABLE DATA
         currentEquippedItemData = itemToEquip;
-        currentWeaponData = itemToEquip as Weapon;             // <-- (Осталось)
-        currentUsable = currentWeaponObject.GetComponent<IUsable>();
-        Debug.Log("[EquipmentManager] currentUsable = " + currentUsable);
+        currentWeaponData = itemToEquip as Weapon;
+
+        // FIND USABLE
+        currentUsable = currentItemObject.GetComponent<IUsable>();
+        Debug.Log($"[EquipmentManager] Found IUsable: {currentUsable}");
+
         if (currentUsable != null)
-        {
             currentUsable.Initialize(playerCamera);
-        }
-        if (usageController != null)
+
+        // ===== APPLY RUNTIME STATS =====
+        if (InventoryManager.instance != null)
         {
-            usageController.OnItemEquipped(currentUsable);
+            ItemRuntimeStats runtime = InventoryManager.instance.GetRuntimeStats(itemToEquip);
+
+            var statReceiver = currentItemObject.GetComponent<IStatItem>();
+            if (statReceiver != null)
+            {
+                Debug.Log($"[EquipmentManager] Applying runtime stats → {runtime}");
+                statReceiver.ApplyRuntimeStats(runtime);
+            }
+            else
+            {
+                Debug.Log("[EquipmentManager] This item has NO IStatItem, skipping stats");
+            }
         }
-        // 8. Обновляем UI в самом конце, когда все готово
+
+        // INFORM USAGE CONTROLLER
+        if (usageController != null)
+            usageController.OnItemEquipped(currentUsable);
+
         UpdateAmmoUI();
     }
 
-
-    /// <summary>
-    /// Обновляет UI с количеством патронов.
-    /// </summary>
-    void UpdateAmmoUI()
+    // ====================================================================
+    // UI
+    // ====================================================================
+    private void UpdateAmmoUI()
     {
         if (ammoText == null) return;
 
         if (currentWeaponData != null)
         {
-            // Пытаемся получить данные о патронах из InventoryManager
-            if (InventoryManager.instance != null)
+            if (InventoryManager.instance == null)
             {
-                int ammoInMag = InventoryManager.instance.GetMagazineAmmoForSlot(InventoryManager.instance.selectedHotbarIndex);
-                int ammoInInventory = InventoryManager.instance.GetAmmoCount(currentWeaponData.requiredAmmoType);
-                ammoText.text = $"{ammoInMag} / {ammoInInventory}";
+                ammoText.text = "- / -";
+                return;
             }
-            else
-            {
-                ammoText.text = "- / -"; // Инвентарь еще не загружен
-            }
+
+            int ammoInMag = InventoryManager.instance.GetMagazineAmmoForSlot(
+                InventoryManager.instance.selectedHotbarIndex
+            );
+
+            int ammoInInventory = InventoryManager.instance.GetAmmoCount(
+                currentWeaponData.requiredAmmoType
+            );
+
+            ammoText.text = $"{ammoInMag} / {ammoInInventory}";
         }
         else
         {
@@ -168,34 +163,10 @@ public class EquipmentManager : MonoBehaviour
         }
     }
 
+    // ====================================================================
+    // PUBLIC API
+    // ====================================================================
+    public Item GetCurrentEquippedItem() => currentEquippedItemData;
 
-    /// <summary>
-    /// Возвращает ScriptableObject текущего экипированного предмета (Tool, Weapon, etc.).
-    /// </summary>
-    public Item GetCurrentEquippedItem()
-    {
-        return currentEquippedItemData;
-    }
-
-    /// <summary>
-    /// Возвращает компонент IUsable текущего экипированного предмета (или null).
-    /// </summary>
-    public IUsable GetCurrentUsable()
-    {
-        return currentUsable;
-    }
-
-    public void ApplyRuntimeStats(Item item, ItemRuntimeStats stats)
-    {
-        if (currentWeaponObject == null)
-            return;
-
-        var statReceiver = currentWeaponObject.GetComponent<IStatItem>();
-        if (statReceiver == null)
-            return;
-
-        statReceiver.ApplyRuntimeStats(stats);
-    }
-
-
+    public IUsable GetCurrentUsable() => currentUsable;
 }

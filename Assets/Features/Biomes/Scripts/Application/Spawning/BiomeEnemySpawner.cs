@@ -13,20 +13,46 @@ public class BiomeEnemySpawner : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!player || !world) return;
+        if (player == null || world == null)
+            return;
 
+        // 1) Получаем биом
         BiomeConfig biome = GetDominantBiome();
-        if (!biome || biome.enemyTable == null || biome.enemyTable.Length == 0)
+        if (biome == null)
             return;
 
-        if (EnemyBiomeCounter.GetCount(biome) >= biome.enemyTable.Length * 12)
+        // 2) Проверяем enemyTable
+        var table = biome.enemyTable;
+        if (table == null || table.Length == 0)
             return;
 
+        // 3) EnemyWorldManager может быть null!
+        if (EnemyWorldManager.Instance == null)
+            return;
+
+        // 4) EnemyBiomeCounter может упасть, если biome некорректный
+        int currentCount = 0;
+        try
+        {
+            currentCount = EnemyBiomeCounter.GetCount(biome);
+        }
+        catch
+        {
+            return;
+        }
+
+        if (currentCount >= table.Length * 12)
+            return;
+
+        // 5) Проверяем CanSpawn
         if (!EnemyWorldManager.Instance.CanSpawn())
             return;
 
+        // 6) Таймер
         spawnTimer += Time.deltaTime;
-        if (spawnTimer < 0.3f) return;
+        if (spawnTimer < 0.3f)
+            return;
+
         spawnTimer = 0f;
 
         SpawnEnemy(biome);
@@ -34,14 +60,21 @@ public class BiomeEnemySpawner : MonoBehaviour
 
     private BiomeConfig GetDominantBiome()
     {
+        if (world == null || player == null)
+            return null;
+
         var blend = world.GetBiomeBlend(player.position);
+        if (blend == null || blend.Length == 0)
+            return null;
 
         BiomeConfig best = null;
         float bestWeight = 0f;
 
         foreach (var b in blend)
         {
-            if (b.biome && b.weight > bestWeight)
+            if (b.biome == null) continue;
+
+            if (b.weight > bestWeight)
             {
                 best = b.biome;
                 bestWeight = b.weight;

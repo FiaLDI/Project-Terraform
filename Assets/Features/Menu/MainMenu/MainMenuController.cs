@@ -1,43 +1,35 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class MainMenuController : MonoBehaviour
 {
-    [Header("Screens")]
-    public GameObject modeSelectScreen;
-    public GameObject settingsScreen;
-    public GameObject mainMenuScreen;
-
     private void Start()
     {
-        ShowMain();
+        var input = UnityEngine.Object.FindFirstObjectByType<PlayerInput>();
+        if (input != null)
+            input.SwitchCurrentActionMap("UI");
+        var fsm = MainMenuFSM.Instance;
+        var controller = Object.FindFirstObjectByType<CharacterSelectController>();
+
+        fsm.Init(new Dictionary<MainMenuStateId, IMainMenuState>
+        {
+            { MainMenuStateId.Play, new PlayMenuState() },
+            { MainMenuStateId.ModeSelect, new ModeSelectState() },
+            { MainMenuStateId.CharacterSelect, new CharacterSelectState(controller) },
+            { MainMenuStateId.CharacterCreate, new CharacterCreateState() },
+            { MainMenuStateId.MultiplayerPlaceholder,
+                new MultiplayerPlaceholderState() },
+            { MainMenuStateId.Settings, new SettingsState() } 
+        });
+
+        fsm.Switch(MainMenuStateId.Play);
     }
 
-    public void ShowMain()
-    {
-        mainMenuScreen.SetActive(true);
-        modeSelectScreen.SetActive(false);
-        settingsScreen.SetActive(false);
-    }
-
-    public void OnPlayPressed()
-    {
-        mainMenuScreen.SetActive(false);
-        modeSelectScreen.SetActive(true);
-    }
-
+    public void OnPlayPressed() => MainMenuFSM.Instance.Switch(MainMenuStateId.ModeSelect);
     public void OnSettingsPressed()
     {
-        mainMenuScreen.SetActive(false);
-        settingsScreen.SetActive(true);
+        SettingsMenuManager.I.OpenSettings(SettingsCaller.MainMenu);
     }
-
-    public void OnExitPressed()
-    {
-        Application.Quit();
-    }
-
-    public void OnSettingsBack()
-    {
-        ShowMain();
-    }
+    public void OnExitPressed() => Application.Quit();
 }

@@ -1,22 +1,15 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
-using System;
 
 public class CharacterCreateController : MonoBehaviour
 {
-    [Header("UI")]
     public TMP_Dropdown classDropdown;
     public TMP_InputField nicknameInput;
 
-    [Header("Screens")]
-    public CharacterSelectController characterSelectController;
-    public GameObject characterSelectScreen;
-    public GameObject characterCreateScreen;
-
     private PlayerProgressService _progress;
 
-    private void OnEnable()
+    private void Start()
     {
         _progress = PlayerProgressService.Instance;
 
@@ -24,28 +17,22 @@ public class CharacterCreateController : MonoBehaviour
         classDropdown.AddOptions(new List<string> { "engineer", "miner", "fighter", "comms" });
     }
 
-    public void OnCreatePressed()
+    public void OnCreate()
     {
-        string nickname = nicknameInput.text.Trim();
-        string classId = classDropdown.options[classDropdown.value].text;
+        string nick = nicknameInput.text.Trim();
+        string cls = classDropdown.options[classDropdown.value].text;
 
-        if (nickname.Length == 0)
+        if (nick.Length == 0)
         {
-            Debug.LogWarning("Nickname cannot be empty!");
+            Debug.LogWarning("Nickname cannot be empty");
             return;
         }
 
-        _progress.AddCharacter(classId, nickname);
+        _progress.AddCharacter(cls, nick);
 
-        characterCreateScreen.SetActive(false);
-        characterSelectScreen.SetActive(true);
-
-        characterSelectController.RefreshList();
+        MainMenuFSM.Instance.Switch(MainMenuStateId.CharacterSelect);
     }
 
-    public void OnCancelPressed()
-    {
-        characterCreateScreen.SetActive(false);
-        characterSelectScreen.SetActive(true);
-    }
+    public void OnCancel()
+        => MainMenuFSM.Instance.Switch(MainMenuStateId.CharacterSelect);
 }

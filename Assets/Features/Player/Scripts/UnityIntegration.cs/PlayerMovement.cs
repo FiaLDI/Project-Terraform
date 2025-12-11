@@ -10,8 +10,7 @@ namespace Features.Player.UnityIntegration
         [Header("References")]
         [SerializeField] private Transform movementReference; 
         [SerializeField] private Transform cameraReference;
-        [SerializeField] private Transform animatorRoot;
-        [SerializeField] private Animator animator;
+        private Animator animator;
 
         [Header("Editor Fallback Speeds (Used if Stats not yet initialized)")]
         [SerializeField] private float fallbackBaseSpeed = 5f;
@@ -46,9 +45,6 @@ namespace Features.Player.UnityIntegration
         {
             controller = GetComponent<CharacterController>();
             stats = GetComponent<MovementStatsAdapter>();
-
-            if (animator == null && animatorRoot != null)
-                animator = animatorRoot.GetComponentInChildren<Animator>();
         }
 
         // Input API
@@ -162,5 +158,13 @@ namespace Features.Player.UnityIntegration
 
             animator.SetBool("turn", turning);
         }
+
+        public void SetAnimator(Animator anim)
+        {
+            animator = anim;
+        }
+
     }
+
+    
 }
