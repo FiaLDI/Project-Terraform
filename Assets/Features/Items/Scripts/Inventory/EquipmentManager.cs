@@ -103,7 +103,6 @@ public class EquipmentManager : MonoBehaviour
 
         // FIND USABLE
         currentUsable = currentItemObject.GetComponent<IUsable>();
-        Debug.Log($"[EquipmentManager] Found IUsable: {currentUsable}");
 
         if (currentUsable != null)
             currentUsable.Initialize(playerCamera);
@@ -116,12 +115,10 @@ public class EquipmentManager : MonoBehaviour
             var statReceiver = currentItemObject.GetComponent<IStatItem>();
             if (statReceiver != null)
             {
-                Debug.Log($"[EquipmentManager] Applying runtime stats → {runtime}");
                 statReceiver.ApplyRuntimeStats(runtime);
             }
             else
             {
-                Debug.Log("[EquipmentManager] This item has NO IStatItem, skipping stats");
             }
         }
 
