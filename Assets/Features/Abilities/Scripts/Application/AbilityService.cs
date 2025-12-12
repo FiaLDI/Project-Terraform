@@ -1,21 +1,26 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
+using Features.Camera.Application;
+using Features.Camera.Domain;
+using Features.Camera.UnityIntegration;
 using Features.Stats.Domain;
+using UnityEngine;
 
 namespace Features.Abilities.Application
 {
     public class AbilityService
     {
-        private readonly GameObject _owner;
-        private Camera _aimCamera;
+        private readonly object _owner;
 
         private IEnergyStats _energy;
-
-        private LayerMask _groundMask;
         private AbilityExecutor _executor;
+        private LayerMask _groundMask;
+
+        // ==== NEW CAMERA SERVICES ====
+        private readonly ICameraControlService _control;   // yaw/pitch + view state
+        private readonly ICameraRuntimeService _runtime;   // active Unity camera
 
         private readonly Dictionary<AbilitySO, float> _cooldowns = new();
 
@@ -24,7 +29,6 @@ namespace Features.Abilities.Application
         public event Action<AbilitySO> OnChannelStarted;
         public event Action<AbilitySO, float, float> OnChannelProgress;
         public event Action<AbilitySO> OnChannelCompleted;
-        public event Action<AbilitySO> OnChannelInterrupted;
 
         private bool _isChanneling;
         private AbilitySO _channelAbility;
@@ -35,32 +39,34 @@ namespace Features.Abilities.Application
         public bool IsChanneling => _isChanneling;
         public AbilitySO CurrentChannelAbility => _channelAbility;
 
-
         // ============================================================
         // CONSTRUCTOR
         // ============================================================
         public AbilityService(
-            GameObject owner,
-            Camera aimCamera,
-            IEnergyStats energy,   
+            object owner,
+            IEnergyStats energy,
             LayerMask groundMask,
             AbilityExecutor executor
         )
         {
             _owner = owner;
-            _aimCamera = aimCamera;
             _energy = energy;
             _groundMask = groundMask;
             _executor = executor;
+
+            _control = CameraServiceProvider.Control;
+            _runtime = CameraServiceProvider.Runtime;
+
+            if (_control == null)
+                Debug.LogError("[AbilityService] CameraControlService is NULL!");
+
+            if (_runtime == null)
+                Debug.LogError("[AbilityService] CameraRuntimeService is NULL!");
         }
 
-        // External overrides
-        public void SetCamera(Camera cam) => _aimCamera = cam;
-        public void SetEnergy(IEnergyStats e) => _energy = e;   // <<==== FIX
+        public void SetEnergy(IEnergyStats e) => _energy = e;
         public void SetExecutor(AbilityExecutor e) => _executor = e;
         public void SetGroundMask(LayerMask m) => _groundMask = m;
-
-
 
         // ============================================================
         // MAIN LOOP
@@ -76,12 +82,10 @@ namespace Features.Abilities.Application
             if (_cooldowns.Count == 0) return;
 
             var keys = new List<AbilitySO>(_cooldowns.Keys);
-
             foreach (var ab in keys)
             {
                 float t = Mathf.Max(0f, _cooldowns[ab] - dt);
                 _cooldowns[ab] = t;
-
                 OnCooldownChanged?.Invoke(ab, t, ab.cooldown);
             }
         }
@@ -92,14 +96,11 @@ namespace Features.Abilities.Application
                 return;
 
             _channelTimer += dt;
-
             OnChannelProgress?.Invoke(_channelAbility, _channelTimer, _channelDuration);
 
             if (_channelTimer >= _channelDuration)
                 CompleteChannel();
         }
-
-
 
         // ============================================================
         // CAST
@@ -116,23 +117,17 @@ namespace Features.Abilities.Application
                 return false;
             }
 
-            // ��� Cooldown ���
+            // Cooldown
             if (GetCooldownRemaining(ability) > 0f)
                 return false;
 
-            // ��� COST ���
-            float baseCost = ability.energyCost;
-            float finalCost = baseCost * _energy.CostMultiplier; 
-
-            if (!_energy.HasEnergy(finalCost))
-                return false;
-
+            // Cost
+            float finalCost = ability.energyCost * _energy.CostMultiplier;
             if (!_energy.TrySpend(finalCost))
                 return false;
 
-            var ctx = BuildContext(ability, slot);
+            var ctx = BuildContext(slot);
 
-            // ��� Instant ���
             if (ability.castType == AbilityCastType.Instant)
             {
                 OnAbilityCast?.Invoke(ability);
@@ -141,7 +136,6 @@ namespace Features.Abilities.Application
                 return true;
             }
 
-            // ��� Channel ���
             if (ability.castType == AbilityCastType.Channel)
             {
                 StartChannel(ability, ctx);
@@ -151,10 +145,8 @@ namespace Features.Abilities.Application
             return false;
         }
 
-
-
         // ============================================================
-        // CHANNEL LOGIC
+        // CHANNEL
         // ============================================================
         private void StartChannel(AbilitySO ability, AbilityContext ctx)
         {
@@ -177,47 +169,58 @@ namespace Features.Abilities.Application
 
             _executor.Execute(ab, ctx);
             OnChannelCompleted?.Invoke(ab);
-
             _cooldowns[ab] = ab.cooldown;
         }
 
+        // ============================================================
+        // CONTEXT BUILDING
+        // ============================================================
+        private AbilityContext BuildContext(int slot)
+        {
+            Vector3 dir = BuildDirection();
+            Vector3 point = BuildTargetPoint(dir);
 
+            return new AbilityContext(
+                owner: _owner,
+                targetPoint: point,
+                direction: dir,
+                slotIndex: slot,
+                yaw: _control.State.Yaw,
+                pitch: _control.State.Pitch
+            );
+        }
+
+        private Vector3 BuildDirection()
+        {
+            float yawRad = Mathf.Deg2Rad * _control.State.Yaw;
+            float pitchRad = Mathf.Deg2Rad * _control.State.Pitch;
+
+            return new Vector3(
+                Mathf.Cos(pitchRad) * Mathf.Sin(yawRad),
+                Mathf.Sin(pitchRad),
+                Mathf.Cos(pitchRad) * Mathf.Cos(yawRad)
+            ).normalized;
+        }
+
+        private Vector3 BuildTargetPoint(Vector3 direction)
+        {
+            var cam = _runtime.CurrentCamera;
+            if (cam == null)
+                return direction * 10f;
+
+            Vector3 origin = cam.transform.position;
+
+            return Physics.Raycast(origin, direction, out var hit, 100f, _groundMask)
+                ? hit.point
+                : origin + direction * 30f;
+        }
 
         // ============================================================
         // UTILS
         // ============================================================
         public float GetCooldownRemaining(AbilitySO ab)
         {
-            return _cooldowns.TryGetValue(ab, out var t) ? t : 0f;
-        }
-
-        private AbilityContext BuildContext(AbilitySO ab, int slot)
-        {
-            Vector3 targetPoint = GetTargetPoint();
-
-            Vector3 dir = _aimCamera != null
-                ? _aimCamera.transform.forward
-                : _owner.transform.forward;
-
-            return new AbilityContext(
-                owner: _owner,
-                aimCamera: _aimCamera,
-                targetPoint: targetPoint,
-                direction: dir,
-                slotIndex: slot
-            );
-        }
-
-        private Vector3 GetTargetPoint()
-        {
-            if (_aimCamera == null || _groundMask == 0)
-                return _owner.transform.position + _owner.transform.forward * 3f;
-
-            Ray ray = _aimCamera.ViewportPointToRay(new Vector3(.5f, .5f, 0));
-
-            return Physics.Raycast(ray, out var hit, 100f, _groundMask)
-                ? hit.point
-                : _owner.transform.position + _owner.transform.forward * 3f;
+            return _cooldowns.TryGetValue(ab, out float t) ? t : 0f;
         }
     }
 }

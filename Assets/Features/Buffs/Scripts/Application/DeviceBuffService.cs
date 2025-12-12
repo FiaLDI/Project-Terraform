@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
+using Features.Player.UnityIntegration;
 
 public class PlayerDeviceBuffService : MonoBehaviour
 {

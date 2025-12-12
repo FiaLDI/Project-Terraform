@@ -12,31 +12,63 @@ namespace Features.Abilities.UnityIntegration
         public void Execute(AbilitySO abilityBase, AbilityContext ctx)
         {
             var ability = (ChargeDeviceAbilitySO)abilityBase;
-            var owner = ctx.Owner;
-            if (!owner) return;
 
-            float duration = ability.areaBuff != null && ability.areaBuff.buff != null
-                ? ability.areaBuff.buff.duration
-                : 0f;
+            // ================================
+            // ADAPTATION: ctx.Owner is NOW object — not GameObject
+            // ================================
+            GameObject ownerGO = null;
 
-            if (ability.areaBuff != null)
+            switch (ctx.Owner)
             {
-                var emitter = owner.AddComponent<AreaBuffEmitter>();
-                emitter.area = ability.areaBuff;
-                Object.Destroy(emitter, duration);
+                case GameObject go:
+                    ownerGO = go;
+                    break;
+
+                case Component comp:
+                    ownerGO = comp.gameObject;
+                    break;
+
+                default:
+                    Debug.LogError("[ChargeDeviceHandler] AbilityContext.Owner is not GameObject or Component.");
+                    return;
             }
 
+            if (ownerGO == null)
+                return;
+
+            // ================================
+            // BUFF DURATION
+            // ================================
+            float duration = 0f;
+
+            if (ability.areaBuff != null && ability.areaBuff.buff != null)
+                duration = ability.areaBuff.buff.duration;
+
+            // ================================
+            // APPLY AREA BUFF ON OWNER
+            // ================================
+            if (ability.areaBuff != null)
+            {
+                var emitter = ownerGO.AddComponent<AreaBuffEmitter>();
+                emitter.area = ability.areaBuff;
+
+                if (duration > 0f)
+                    Object.Destroy(emitter, duration);
+            }
+
+            // ================================
             // FX
+            // ================================
             if (ability.chargeFxPrefab)
             {
                 GameObject fx = Object.Instantiate(
                     ability.chargeFxPrefab,
-                    owner.transform.position,
+                    ownerGO.transform.position,
                     Quaternion.identity
                 );
 
                 if (fx.TryGetComponent<ChargeDeviceBehaviour>(out var beh))
-                    beh.Init(owner.transform, duration);
+                    beh.Init(ownerGO.transform, duration);
 
                 Object.Destroy(fx, duration + 0.2f);
             }

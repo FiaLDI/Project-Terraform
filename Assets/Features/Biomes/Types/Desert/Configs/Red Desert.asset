@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6dfcc09296954b418c8065bb3d566d7, type: 3}
   m_Name: Red Desert
   m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
+  biomeID: default1
   biomeName: Red
   mapColor: {r: 1, g: 0, b: 0, a: 1}
   isGenerate: 1
@@ -21,53 +22,48 @@ MonoBehaviour:
   groundMaterial: {fileID: 2100000, guid: 692d2bd798c06364fb48e609ab56bc9a, type: 2}
   terrainScale: 1
   heightMultiplier: 10
+  groundColor: {r: 1, g: 0.5826384, b: 0.50377357, a: 1}
+  groundSmoothness: 0.2
+  groundMetallic: 0
+  textureTilingMultiplier: 2
+  biomeAlbedo: {fileID: 0}
+  biomeNormal: {fileID: 0}
   fractalOctaves: 3
   fractalPersistence: 1
   fractalLacunarity: 2.29
   blendStrength: 0
-  environmentPrefabs:
-  - prefab: {fileID: 7989835467096096610, guid: a20a2eb9288d4174fb7ffc923e6a0db5, type: 3}
-    spawnChance: 0.0083
-    weight: 0.5
-    minSlope: 3
-    maxSlope: 60
-    alignToNormal: 1
-    randomYRotation: 1
-    randomScale: 1
-    minScale: 0
-    maxScale: 5
-    markAsResourceBlocker: 1
+  environmentPrefabs: []
   environmentDensity: 0.325
   possibleResources:
-  - resourcePrefab: {fileID: 3167794824480302338, guid: d12292c9fe7b08040897c69b0af9aabd, type: 3}
-    spawnChance: 0.545
-    weight: 10
-    clusterType: 1
-    clusterCountRange: {x: 0, y: 5}
-    clusterRadius: 3
-    verticalStep: 0.7
+  - resourcePrefab: {fileID: 4655979638605053677, guid: c74fa15d9f2f5bc4086469124c5a058c, type: 3}
+    spawnChance: 0.05
+    weight: 1
+    clusterType: 2
+    clusterCountRange: {x: 1, y: 3}
+    clusterRadius: 4
+    verticalStep: 2
     noiseScale: 1
     noiseAmplitude: 4
     followTerrain: 1
     minSlope: 0
-    maxSlope: 60
+    maxSlope: 0
     alignToNormal: 1
-    randomYRotation: 1
-    randomScale: 1
-    minScale: 0.8
-    maxScale: 1.3
+    randomYRotation: 0
+    randomScale: 0
+    minScale: 0
+    maxScale: 0
     useHeightLimit: 0
-    minHeight: -1000
-    maxHeight: 1000
+    minHeight: 0
+    maxHeight: 0
     useMinDistance: 1
-    minDistance: 5
+    minDistance: 10
     resourceEdgeFalloff: 0
     avoidEnvironment: 0
     environmentRadius: 0
     useDistributionMap: 1
-    distributionStrength: 0.398
+    distributionStrength: 0.6
     distributionScale: 1
-    distributionOffset: {x: 0, y: 0}
+    distributionOffset: {x: 6, y: 8}
     allowedBiomes: 
   resourceDensity: 0.00648
   resourceSpawnYOffset: 0.3

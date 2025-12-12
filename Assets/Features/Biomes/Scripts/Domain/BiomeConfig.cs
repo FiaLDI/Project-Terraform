@@ -161,6 +161,9 @@ namespace Features.Biomes.Domain
     [CreateAssetMenu(menuName = "Game/Biome Config")]
     public class BiomeConfig : ScriptableObject
     {
+        [Header("ID")]
+        public string biomeID = "default";
+
         [Header("Info")]
         public string biomeName;
         public Color mapColor = Color.white;
@@ -177,6 +180,16 @@ namespace Features.Biomes.Domain
         public Material groundMaterial;
         public float terrainScale = 10f;
         public float heightMultiplier = 5f;
+
+        [Header("Biome Material Parameters")]
+        public Color groundColor = Color.white;
+        public float groundSmoothness = 0.4f;
+        public float groundMetallic = 0.0f;
+
+        [Range(0.1f, 4f)]
+        public float textureTilingMultiplier = 1f;
+        public Texture2D biomeAlbedo;
+        public Texture2D biomeNormal;
 
         [Header("Fractal Mountains")]
         [Range(1, 8)] public int fractalOctaves = 5;

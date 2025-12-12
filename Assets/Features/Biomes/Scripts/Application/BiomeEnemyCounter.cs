@@ -37,4 +37,11 @@ public static class EnemyBiomeCounter
 
         return list.Count;
     }
+
+    public static int GetCountSafe(BiomeConfig biome)
+    {
+        if (biome == null) return 0;
+        try { return GetCount(biome); }
+        catch { return 0; }
+    }
 }

@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Features.Biomes.Domain;
 using Features.Biomes.UnityIntegration;
+using Features.Camera.UnityIntegration;
 
 namespace Features.Biomes.Application
 {
@@ -26,14 +27,14 @@ namespace Features.Biomes.Application
         {
             public Vector3 position;
             public Vector3 normal;
-            public float   scale;
-            public float   random;
-            public int     biomeId;
+            public float scale;
+            public float random;
+            public int biomeId;
         }
 
         private class InstanceBucket
         {
-            public Mesh     Mesh;
+            public Mesh Mesh;
             public Material Material;
 
             public readonly List<InstanceData> Instances = new();
@@ -49,7 +50,6 @@ namespace Features.Biomes.Application
 
         private readonly Dictionary<int, InstanceBucket> _buckets = new();
 
-        private Camera _mainCam;
         private MaterialPropertyBlock _mpb;
         private Matrix4x4[] _matrixBatch;
         private float[] _randomBatch;
@@ -73,21 +73,14 @@ namespace Features.Biomes.Application
             _mpb = new MaterialPropertyBlock();
         }
 
-        private void Start()
-        {
-            _mainCam = Camera.main;
-        }
-
         public void Init(Transform target)
         {
             targetOverride = target;
         }
 
-        /// <summary>
-        /// Принимает список SpawnInstance из MegaSpawnJob.
-        /// Обрабатывает ТОЛЬКО EnvironmentInstanced.
-        /// Все ресурсы/враги/квесты спавнятся через RuntimeSpawnerSystem из Chunk.
-        /// </summary>
+        // ============================================================
+        // SPAWN INSTANCE REGISTRATION
+        // ============================================================
         public void AddSpawnInstances(NativeList<SpawnInstance> spawnList)
         {
             int count = spawnList.Length;
@@ -110,12 +103,11 @@ namespace Features.Biomes.Application
                 {
                     bucket = new InstanceBucket
                     {
-                        Mesh     = mesh,
+                        Mesh = mesh,
                         Material = EnsureInstancedMaterial(mat)
                     };
                     _buckets[inst.prefabIndex] = bucket;
                 }
-
 
                 float3 p = inst.position;
                 float random = math.frac(math.sin(p.x * 12.9898f + p.z * 78.233f) * 43758.5453f);
@@ -123,14 +115,17 @@ namespace Features.Biomes.Application
                 bucket.Instances.Add(new InstanceData
                 {
                     position = new Vector3(p.x, p.y, p.z),
-                    normal   = new Vector3(inst.normal.x, inst.normal.y, inst.normal.z),
-                    scale    = inst.scale <= 0f ? 1f : inst.scale,
-                    random   = random,
-                    biomeId  = inst.biomeId
+                    normal = new Vector3(inst.normal.x, inst.normal.y, inst.normal.z),
+                    scale = inst.scale <= 0f ? 1f : inst.scale,
+                    random = random,
+                    biomeId = inst.biomeId
                 });
             }
         }
 
+        // ============================================================
+        // UPDATE (render instanced)
+        // ============================================================
         private void LateUpdate()
         {
             if (_buckets.Count == 0)
@@ -149,7 +144,7 @@ namespace Features.Biomes.Application
                 var bucket = kv.Value;
                 if (bucket.Mesh == null || bucket.Material == null)
                     continue;
-                
+
                 if (!bucket.Material.enableInstancing)
                 {
                     Debug.LogError($"[InstancedSpawner] Material '{bucket.Material.name}' still has instancing disabled. Skipping prefabIndex={kv.Key}");
@@ -169,6 +164,7 @@ namespace Features.Biomes.Application
                         continue;
 
                     float d2 = (inst.position - camPos).sqrMagnitude;
+
                     if (d2 > lod2Sqr)
                         continue;
 
@@ -198,26 +194,30 @@ namespace Features.Biomes.Application
             }
         }
 
+        // ============================================================
+        // REFACTORED CAMERA POSITION LOGIC
+        // ============================================================
         private Vector3 GetTargetPosition()
         {
+            // Highest priority: manual override
             if (targetOverride != null)
                 return targetOverride.position;
 
+            // Player position exists → use it
             if (RuntimeWorldGenerator.PlayerInstance != null)
                 return RuntimeWorldGenerator.PlayerInstance.transform.position;
 
-            if (_mainCam != null)
-                return _mainCam.transform.position;
+            // Active camera from CameraRegistry
+            if (CameraRegistry.Instance != null && CameraRegistry.Instance.CurrentCamera != null)
+                return CameraRegistry.Instance.CurrentCamera.transform.position;
 
-            if (Camera.main != null)
-            {
-                _mainCam = Camera.main;
-                return _mainCam.transform.position;
-            }
-
+            // Fallback (but NO Camera.main anymore)
             return Vector3.zero;
         }
 
+        // ============================================================
+        // HELPERS
+        // ============================================================
         private static bool IsFinite(Vector3 v)
         {
             return !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z) ||
@@ -246,13 +246,11 @@ namespace Features.Biomes.Application
                 normal = Vector3.up;
 
             normal.Normalize();
+
             Quaternion rot = Quaternion.FromToRotation(Vector3.up, normal);
 
-            if (float.IsNaN(rot.x) || float.IsNaN(rot.y) || float.IsNaN(rot.z) || float.IsNaN(rot.w) ||
-                float.IsInfinity(rot.x) || float.IsInfinity(rot.y) || float.IsInfinity(rot.z) || float.IsInfinity(rot.w))
-            {
+            if (!IsFinite(new Vector3(rot.x, rot.y, rot.z)))
                 rot = Quaternion.identity;
-            }
 
             if (scale <= 0f || float.IsNaN(scale) || float.IsInfinity(scale))
                 scale = 1f;

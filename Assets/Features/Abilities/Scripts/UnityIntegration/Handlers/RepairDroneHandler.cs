@@ -13,10 +13,27 @@ namespace Features.Abilities.UnityIntegration
         public void Execute(AbilitySO abilityBase, AbilityContext ctx)
         {
             var ability = (RepairDroneAbilitySO)abilityBase;
-            var owner = ctx.Owner;
-            if (!owner) return;
 
-            var buffs = owner.GetComponent<BuffSystem>();
+            // ==== ADAPTATION: ctx.Owner is NOW object ====
+            GameObject ownerGO = null;
+
+            switch (ctx.Owner)
+            {
+                case GameObject go:
+                    ownerGO = go;
+                    break;
+
+                case Component comp:
+                    ownerGO = comp.gameObject;
+                    break;
+
+                default:
+                    Debug.LogError("[RepairDroneHandler] AbilityContext.Owner is not GameObject or Component.");
+                    return;
+            }
+
+            if (ownerGO == null)
+                return;
 
             if (!ability.dronePrefab)
             {
@@ -26,10 +43,11 @@ namespace Features.Abilities.UnityIntegration
 
             GameObject droneObj = Object.Instantiate(
                 ability.dronePrefab,
-                owner.transform.position,
+                ownerGO.transform.position,
                 Quaternion.identity
             );
 
+            // === Heal Aura Buff ===
             if (ability.healAura != null)
             {
                 var emitter = droneObj.AddComponent<AreaBuffEmitter>();
@@ -37,9 +55,10 @@ namespace Features.Abilities.UnityIntegration
                 Object.Destroy(emitter, ability.lifetime);
             }
 
+            // === Behaviour Init ===
             if (droneObj.TryGetComponent<RepairDroneBehaviour>(out var drone))
             {
-                drone.Init(owner, ability.lifetime, ability.followSpeed);
+                drone.Init(ownerGO, ability.lifetime, ability.followSpeed);
             }
 
             Object.Destroy(droneObj, ability.lifetime + 0.3f);

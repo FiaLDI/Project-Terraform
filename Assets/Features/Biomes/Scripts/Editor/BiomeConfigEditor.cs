@@ -142,7 +142,7 @@ public class BiomeConfigEditor : Editor
     {
         fInfo = DrawFold("Biome Info", fInfo, () =>
         {
-            DrawProps("biomeName", "mapColor", "isGenerate", "useLowPoly");
+            DrawProps("biomeID", "biomeName", "mapColor", "isGenerate", "useLowPoly");
         });
 
         fTerrain = DrawFold("Terrain", fTerrain, () =>
@@ -155,7 +155,7 @@ public class BiomeConfigEditor : Editor
                 DrawProps("fractalOctaves", "fractalPersistence", "fractalLacunarity");
             }
 
-            DrawProps("textureTiling", "blendStrength");
+            DrawProps("groundColor", "groundSmoothness", "textureTilingMultiplier", "biomeAlbedo", "biomeNormal", "blendStrength");
         });
 
         fEnvironment = DrawFold("Environment Objects", fEnvironment, () =>

@@ -1,49 +1,68 @@
 ﻿using UnityEngine;
 using TMPro;
+using Features.Camera.UnityIntegration;
 
 public class PlayerInteraction : MonoBehaviour
 {
     [Header("Interaction Settings")]
-    [SerializeField] private Camera playerCamera;
     [SerializeField] private float interactionDistance = 3f;
-    //[SerializeField] 
+
     private TextMeshProUGUI interactionPromptText;
 
-    private RaycastHit lastHit;
     private bool canInteract = false;
     private ItemObject targetItem;
 
+    private Camera cam;
+
+
     private void Start()
     {
-        // === Автопоиск объекта InteractionPrompt_Text ===
+        // === AUTO CAMERA BIND ===
+        cam = CameraRegistry.Instance?.CurrentCamera;
+        if (cam == null)
+        {
+            Debug.LogWarning("[PlayerInteraction] Camera is not registered yet. Will auto-assign.");
+        }
+
+        // === AUTO UI PROMPT SEARCH ===
         if (interactionPromptText == null)
         {
             GameObject promptObj = GameObject.Find("InteractionPrompt_Text");
             if (promptObj != null)
                 interactionPromptText = promptObj.GetComponent<TextMeshProUGUI>();
             else
-                Debug.LogWarning("PlayerInteraction: объект 'InteractionPrompt_Text' не найден на сцене!");
+                Debug.LogWarning("PlayerInteraction: объект 'InteractionPrompt_Text' не найден!");
         }
 
-        interactionPromptText.text = "";
+        if (interactionPromptText != null)
+            interactionPromptText.text = "";
     }
+
 
     private void Update()
     {
-        // === 1) Предметы (как раньше) ===
-        ItemObject item = NearbyInteractables.instance.GetBestItem(playerCamera);
+        // === Always track latest camera ===
+        if (cam == null || cam != CameraRegistry.Instance?.CurrentCamera)
+        {
+            cam = CameraRegistry.Instance?.CurrentCamera;
+            if (cam == null) return; // camera still not available
+        }
+
+        // === 1) Items (NearbyInteractables) ===
+        ItemObject item = NearbyInteractables.instance.GetBestItem(cam);
         targetItem = item;
 
         if (item != null && item.isWorldObject)
         {
             interactionPromptText.text =
                 $"{item.itemData.itemName}\nНажмите [E] чтобы подобрать";
+
             canInteract = true;
             return;
         }
 
-        // === 2) Станки / двери / любые IInteractable ===
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        // === 2) Generic interactables ===
+        Ray ray = new Ray(cam.transform.position, cam.transform.forward);
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactionDistance))
         {
@@ -52,31 +71,39 @@ public class PlayerInteraction : MonoBehaviour
             {
                 interactionPromptText.text =
                     $"Нажмите [E] чтобы: {interactable.InteractionPrompt}";
+
                 canInteract = true;
-                targetItem = null; // чтобы TryInteract понял что это НЕ ItemObject
+                targetItem = null;
                 return;
             }
         }
 
-        // === 3) Ничего нет ===
+        // === 3) Nothing found ===
         interactionPromptText.text = "";
         canInteract = false;
         targetItem = null;
     }
 
 
+    // =====================================================================
+    // INTERACTION LOGIC
+    // =====================================================================
+
     public void TryInteract()
     {
-        Debug.Log(">>> TryInteract() called");
-
         if (!canInteract) return;
 
-        // === 1) Если это предмет ===
+        // Ensure camera
+        cam = CameraRegistry.Instance?.CurrentCamera;
+        if (cam == null) return;
+
+        // === 1) Item pickup ===
         if (targetItem != null)
         {
             InventoryManager.instance.AddItem(
                 targetItem.itemData,
-                targetItem.quantity);
+                targetItem.quantity
+            );
 
             NearbyInteractables.instance.Unregister(targetItem);
             Destroy(targetItem.gameObject);
@@ -85,8 +112,8 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        // === 2) Если это IInteractable объект ===
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        // === 2) IInteractable objects ===
+        Ray ray = new Ray(cam.transform.position, cam.transform.forward);
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactionDistance))
         {
@@ -99,6 +126,10 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
+
+    // =====================================================================
+    // DROP ITEMS
+    // =====================================================================
 
     public void DropCurrentItem(bool dropFullStack)
     {

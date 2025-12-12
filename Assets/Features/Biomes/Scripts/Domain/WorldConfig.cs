@@ -8,11 +8,17 @@ namespace Features.Biomes.Domain
     [CreateAssetMenu(menuName = "Game/World Config")]
     public class WorldConfig : ScriptableObject
     {
+        [Header("World Generation")]
+        public int seed = 12345;
+        
         [Header("Chunk Settings")]
         public int chunkSize = 64;
 
         [Header("Biome Layers")]
         public BiomeLayer[] biomes;
+
+        [Header("Global Ground Material")]
+        public Material worldGroundMaterial;
 
         // ===== BIOME RESOLUTION =====
 

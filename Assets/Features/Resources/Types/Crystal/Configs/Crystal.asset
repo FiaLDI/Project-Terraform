@@ -16,7 +16,7 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 0c3d25cd4f43bf04eb559ca7677f1ef5, type: 3}
   color: {r: 0.9622642, g: 0.6395807, b: 0.28867915, a: 1}
   item: {fileID: 11400000, guid: 3b83970df4c0fac40a8c976c2ed8e1c2, type: 2}
-  nodePrefab: {fileID: 3167794824480302338, guid: d12292c9fe7b08040897c69b0af9aabd, type: 3}
+  nodePrefab: {fileID: 4655979638605053677, guid: c74fa15d9f2f5bc4086469124c5a058c, type: 3}
   maxHealth: 50
   hitEffect: {fileID: 0}
   destroyEffect: {fileID: 0}

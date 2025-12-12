@@ -10,6 +10,10 @@ public class MegaSpawnScheduler : MonoBehaviour
 {
     public static MegaSpawnScheduler Instance;
 
+    // сколько спавнов выполнять за кадр (можно регулировать)
+    public int batchSize = 300;        // было 50 → очень мало
+    public float maxTaskLifetime = 5f; // сек — страховка от зависших задач
+
     private class SpawnTask
     {
         public Vector2Int coord;
@@ -17,7 +21,10 @@ public class MegaSpawnScheduler : MonoBehaviour
         public NativeList<SpawnInstance> spawnList;
         public NativeArray<Unity.Mathematics.float3> vertices;
         public GameObject chunkRoot;
-        public int index = 0;
+
+        public float startTime;
+        public int index;
+        public bool completed;
     }
 
     private readonly List<SpawnTask> tasks = new();
@@ -38,24 +45,50 @@ public class MegaSpawnScheduler : MonoBehaviour
             job = job,
             spawnList = spawnList,
             vertices = vertices,
-            chunkRoot = chunkRoot
+            chunkRoot = chunkRoot,
+            startTime = Time.realtimeSinceStartup
         });
     }
 
     private void Update()
     {
+        float now = Time.realtimeSinceStartup;
+
         for (int t = tasks.Count - 1; t >= 0; t--)
         {
             var task = tasks[t];
 
-            if (!task.job.IsCompleted)
+            // 1) Чанк был выгружен → удаляем задачу
+            if (task.chunkRoot == null)
+            {
+                ForceDispose(task);
+                tasks.RemoveAt(t);
                 continue;
+            }
 
-            task.job.Complete();
+            // 2) Job ещё выполняется
+            if (!task.completed)
+            {
+                if (task.job.IsCompleted)
+                {
+                    task.job.Complete();
+                    task.completed = true;
+                }
+                else
+                {
+                    // SAFETY: job висит слишком долго → форс-диспоз
+                    if (now - task.startTime > maxTaskLifetime)
+                    {
+                        Debug.LogWarning($"[MegaSpawnScheduler] Job timeout → force dispose ({task.coord})");
+                        ForceDispose(task);
+                        tasks.RemoveAt(t);
+                    }
+                    continue;
+                }
+            }
 
-            int batch = 50;
-
-            for (int i = 0; i < batch && task.index < task.spawnList.Length; i++)
+            // 3) Выполняем спавн порциями
+            for (int i = 0; i < batchSize && task.index < task.spawnList.Length; i++)
             {
                 var inst = task.spawnList[task.index++];
 
@@ -69,12 +102,23 @@ public class MegaSpawnScheduler : MonoBehaviour
                 }
             }
 
+            // 4) Если задача полностью выполнена → очищаем native память
             if (task.index >= task.spawnList.Length)
             {
-                task.spawnList.Dispose();
-                task.vertices.Dispose();
+                ForceDispose(task);
                 tasks.RemoveAt(t);
             }
         }
     }
+
+    private void ForceDispose(SpawnTask task)
+    {
+        if (task.spawnList.IsCreated)
+            task.spawnList.Dispose();
+        if (task.vertices.IsCreated)
+            task.vertices.Dispose();
+    }
+
+    // ==== DEBUG API ====
+    public int Debug_ActiveTaskCount => tasks.Count;
 }

@@ -1,16 +1,23 @@
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEngine.GraphicsBuffer;
+using Features.Camera.UnityIntegration;
 
 namespace Features.Enemy
 {
     [RequireComponent(typeof(Canvas))]
     public class EnemyHealthBarUI : MonoBehaviour
     {
+        [Header("UI")]
         [SerializeField] private Image fillImage;
-        [SerializeField] private EnemyHealth target; 
+
+        [Header("Target")]
+        [SerializeField] private EnemyHealth target;
         [SerializeField] private Transform headAnchor;
 
+        private Canvas canvas;
+        private UnityEngine.Camera cam;
+
+        private float targetFill = 1f;
         private float uiTimer;
 
         public EnemyHealth Target
@@ -25,10 +32,6 @@ namespace Features.Enemy
             set => headAnchor = value;
         }
 
-        private Camera cam;
-        private Canvas canvas;
-        private float targetFill = 1f;
-
         private void Awake()
         {
             canvas = GetComponent<Canvas>();
@@ -37,26 +40,25 @@ namespace Features.Enemy
 
         private void OnEnable()
         {
-            if (CameraRegistry.I != null)
+            // ������� ������� CameraRegistry
+            if (CameraRegistry.Instance != null)
             {
-                CameraRegistry.I.OnCameraChanged += HandleCameraChanged;
-                if (CameraRegistry.I.CurrentCamera != null)
+                CameraRegistry.Instance.OnCameraChanged += HandleCameraChanged;
+
+                // ���� ������ ��� ���� ���������������� � ������������� � �����
+                if (CameraRegistry.Instance.CurrentCamera != null)
                 {
-                    HandleCameraChanged(CameraRegistry.I.CurrentCamera);
+                    HandleCameraChanged(CameraRegistry.Instance.CurrentCamera);
                 }
-            }
-            else
-            {
             }
         }
 
         private void Start()
         {
             if (target == null)
-            {
                 target = GetComponentInParent<EnemyHealth>();
-            }
 
+            // ������� head anchor �������������
             if (headAnchor == null && target != null)
             {
                 var go = new GameObject("HeadAnchor");
@@ -67,34 +69,37 @@ namespace Features.Enemy
 
             if (target == null || headAnchor == null || fillImage == null)
             {
+                Debug.LogError("[EnemyHealthBarUI] Missing references");
                 enabled = false;
                 return;
             }
 
+            // ������������� �� ��������
             target.OnHealthChanged += HandleHealthChanged;
-            TryAssignFallbackCamera();
+
+            // ���� ������ ��� ����
+            if (canvas != null && cam != null)
+                canvas.worldCamera = cam;
+
             HandleHealthChanged(target.CurrentHealth, target.MaxHealth);
         }
 
         private void LateUpdate()
         {
             uiTimer += Time.deltaTime;
-                if (uiTimer < 0.1f) return;
-                uiTimer = 0f;
-            if (!target)
-            {
+            if (uiTimer < 0.1f) return;
+            uiTimer = 0f;
+
+            if (!target || cam == null)
                 return;
-            }
 
-            if (cam == null)
-            {
-                TryAssignFallbackCamera();
-                if (cam == null) return;
-            }
-
+            // ������� ��� �������
             transform.position = headAnchor.position;
-            transform.LookAt(cam.transform);
 
+            // face the camera
+            transform.LookAt(cam.transform, Vector3.up);
+
+            // progress bar
             fillImage.fillAmount = targetFill;
         }
 
@@ -111,31 +116,22 @@ namespace Features.Enemy
             gameObject.SetActive(false);
         }
 
-        private void HandleCameraChanged(Camera newCam)
+        private void HandleCameraChanged(UnityEngine.Camera newCam)
         {
             cam = newCam;
             canvas.worldCamera = cam;
         }
 
+        private void OnDisable()
+        {
+            if (CameraRegistry.Instance != null)
+                CameraRegistry.Instance.OnCameraChanged -= HandleCameraChanged;
+        }
 
         private void OnDestroy()
         {
             if (target != null)
                 target.OnHealthChanged -= HandleHealthChanged;
         }
-
-        private void TryAssignFallbackCamera()
-        {
-            if (cam == null)
-            {
-                var main = Camera.main;
-                if (main != null)
-                {
-                    cam = main;
-                    canvas.worldCamera = cam;
-                }
-            }
-        }
-
     }
 }

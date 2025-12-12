@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Features.Camera.UnityIntegration;
 
 namespace Features.Biomes.Application
 {
@@ -16,7 +17,7 @@ namespace Features.Biomes.Application
         public int batchSize = 1023;
 
         [Header("Update Settings")]
-        [Tooltip("Обновлять чанки в несколько кадров (partial update)")]
+        [Tooltip("Обновлять чанки не за 1 кадр, а порциями")]
         public int updatesPerFrame = 3;
 
         private int _chunkCursor = 0;
@@ -28,8 +29,6 @@ namespace Features.Biomes.Application
         private readonly Dictionary<int, Mesh> _meshCache = new();
         private readonly Dictionary<int, Material[]> _matCache = new();
 
-        private Camera _cam;
-
         private void Awake()
         {
             Instance = this;
@@ -37,53 +36,44 @@ namespace Features.Biomes.Application
 
             _mpb = new MaterialPropertyBlock();
             _matrices = new Matrix4x4[batchSize];
-            _randoms  = new float[batchSize];
+            _randoms = new float[batchSize];
         }
 
-        private void Start()
-        {
-            _cam = Camera.main;
-        }
-
-        // ================================
-        // PUBLIC API — MAIN UPDATE LOGIC
-        // ================================
+        // ====================================================================
+        // MAIN UPDATE ENTRY
+        // ====================================================================
 
         public void UpdateVisibleChunks(List<ChunkRuntimeData> activeChunks)
         {
             if (activeChunks == null || activeChunks.Count == 0)
                 return;
 
-            // камера может появиться ПОСЛЕ старта (например, в префабе игрока)
-            if (_cam == null)
-            {
-                _cam = Camera.main;
-                if (_cam == null)
-                    return; // пока нет камеры — не рендерим LOD
-            }
+            // Берём текущую камеру через CameraRegistry
+            var cam = GetActiveCamera();
+            if (cam == null)
+                return; // камера ещё не появилась → пропускаем кадр
 
-            int count = Mathf.Min(updatesPerFrame, activeChunks.Count);
+            int iterations = Mathf.Min(updatesPerFrame, activeChunks.Count);
 
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < iterations; i++)
             {
                 if (_chunkCursor >= activeChunks.Count)
                     _chunkCursor = 0;
 
-                RenderChunk(activeChunks[_chunkCursor]);
+                RenderChunk(activeChunks[_chunkCursor], cam);
                 _chunkCursor++;
             }
         }
 
-        // ================================
-        // RENDER ONE CHUNK
-        // ================================
-
-        private void RenderChunk(ChunkRuntimeData chunk)
+        // ====================================================================
+        // RENDER SINGLE CHUNK
+        // ====================================================================
+        private void RenderChunk(ChunkRuntimeData chunk, UnityEngine.Camera cam)
         {
-            if (chunk == null || _cam == null)
+            if (chunk == null || cam == null)
                 return;
 
-            Vector3 camPos = _cam.transform.position;
+            Vector3 camPos = cam.transform.position;
 
             float lod0Sqr = lod0Distance * lod0Distance;
             float lod1Sqr = lod1Distance * lod1Distance;
@@ -94,11 +84,12 @@ namespace Features.Biomes.Application
                 int prefabIndex = kv.Key;
                 var instances = kv.Value;
 
-                if (!TryGetMesh(prefabIndex, out var mesh, out var mats))
+                if (!TryGetMesh(prefabIndex, out Mesh mesh, out Material[] mats))
                     continue;
 
-                var material = mats != null && mats.Length > 0 ? mats[0] : null;
-                if (material == null) continue;
+                var mat = (mats != null && mats.Length > 0) ? mats[0] : null;
+                if (mat == null)
+                    continue;
 
                 var lod0 = new List<(Matrix4x4, float)>();
                 var lod1 = new List<(Matrix4x4, float)>();
@@ -106,12 +97,12 @@ namespace Features.Biomes.Application
 
                 foreach (var inst in instances)
                 {
-                    float distance = (inst.position - camPos).sqrMagnitude;
-                    if (distance > lod2Sqr)
+                    float d2 = (inst.position - camPos).sqrMagnitude;
+                    if (d2 > lod2Sqr)
                         continue;
 
                     Quaternion rot = inst.normal.sqrMagnitude > 0.0001f
-                        ? Quaternion.LookRotation(inst.normal)
+                        ? Quaternion.FromToRotation(Vector3.up, inst.normal)
                         : Quaternion.identity;
 
                     Matrix4x4 m = Matrix4x4.TRS(
@@ -120,35 +111,34 @@ namespace Features.Biomes.Application
                         Vector3.one * inst.scale
                     );
 
-                    if (distance <= lod0Sqr)      lod0.Add((m, inst.random));
-                    else if (distance <= lod1Sqr) lod1.Add((m, inst.random));
-                    else                          lod2.Add((m, inst.random));
+                    if (d2 <= lod0Sqr) lod0.Add((m, inst.random));
+                    else if (d2 <= lod1Sqr) lod1.Add((m, inst.random));
+                    else lod2.Add((m, inst.random));
                 }
 
-                DrawBatch(mesh, material, lod0);
-                DrawBatch(mesh, material, lod1);
-                DrawBatch(mesh, material, lod2);
+                DrawBatch(mesh, mat, lod0);
+                DrawBatch(mesh, mat, lod1);
+                DrawBatch(mesh, mat, lod2);
             }
         }
 
-        // ================================
-        // DRAW BATCH
-        // ================================
-
+        // ====================================================================
+        // BATCH DRAW
+        // ====================================================================
         private void DrawBatch(Mesh mesh, Material mat, List<(Matrix4x4, float)> list)
         {
             int total = list.Count;
             if (total == 0) return;
 
-            int start = 0;
-            while (start < total)
+            int index = 0;
+            while (index < total)
             {
-                int count = Mathf.Min(batchSize, total - start);
+                int count = Mathf.Min(batchSize, total - index);
 
                 for (int i = 0; i < count; i++)
                 {
-                    _matrices[i] = list[start + i].Item1;
-                    _randoms[i]  = list[start + i].Item2;
+                    _matrices[i] = list[index + i].Item1;
+                    _randoms[i] = list[index + i].Item2;
                 }
 
                 _mpb.Clear();
@@ -156,14 +146,27 @@ namespace Features.Biomes.Application
 
                 Graphics.DrawMeshInstanced(mesh, 0, mat, _matrices, count, _mpb);
 
-                start += count;
+                index += count;
             }
         }
 
-        // ================================
-        // MESH / MATERIAL CACHE
-        // ================================
+        // ====================================================================
+        // CAMERA RESOLUTION
+        // ====================================================================
+        private UnityEngine.Camera GetActiveCamera()
+        {
+            // 1) активная камера из CameraRegistry
+            if (CameraRegistry.Instance != null &&
+                CameraRegistry.Instance.CurrentCamera != null)
+                return CameraRegistry.Instance.CurrentCamera;
 
+            // 2) камеры ещё нет → ничего не рендерим
+            return null;
+        }
+
+        // ====================================================================
+        // CACHE LOOKUP
+        // ====================================================================
         private bool TryGetMesh(int id, out Mesh mesh, out Material[] mats)
         {
             if (_meshCache.TryGetValue(id, out mesh) &&
@@ -173,7 +176,7 @@ namespace Features.Biomes.Application
             if (InstanceRegistry.TryGetInstancedMesh(id, out mesh, out mats))
             {
                 _meshCache[id] = mesh;
-                _matCache[id]  = mats;
+                _matCache[id] = mats;
                 return true;
             }
 

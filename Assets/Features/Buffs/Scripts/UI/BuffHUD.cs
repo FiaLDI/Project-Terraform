@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
+using Features.Player.UnityIntegration;
 
 namespace Features.Buffs.UI
 {
@@ -33,11 +34,20 @@ namespace Features.Buffs.UI
         // ==========================================================
         private void TryAutoBind()
         {
+            if (PlayerRegistry.Instance == null)
+                return;
+
             var player = PlayerRegistry.Instance.LocalPlayer;
-            if (player == null) return;
+            if (player == null)
+                return;
 
             var bs = player.GetComponent<BuffSystem>();
-            if (bs == null || !bs.ServiceReady) return;
+            if (bs == null)
+                return;
+
+            // Подождать один кадр после инициализации BuffSystem
+            if (!bs.ServiceReady)
+                return;
 
             Bind(bs);
         }

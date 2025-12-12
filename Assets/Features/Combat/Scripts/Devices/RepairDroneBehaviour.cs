@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
+using Features.Player.UnityIntegration;
 
 namespace Features.Combat.Devices
 {

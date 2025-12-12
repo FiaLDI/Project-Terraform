@@ -1,86 +1,231 @@
 using UnityEngine;
 using Features.Resources.UnityIntegration;
 using Features.Combat.Domain;
+using Features.Camera.UnityIntegration;
 
 public class DrillToolPresenter : MonoBehaviour, IUsable, IStatItem
 {
-    private Camera cam;
+    [Header("Debug")]
+    public bool debugEnabled = true;
+    public bool debugDeep = true;
+
     private bool drilling;
 
-    private float miningSpeed;
-    private float damage;
-    private float range;
+    private float miningSpeed=1;
+    private float damage=1;
+    private float range=3f;
 
-    private float baseMiningSpeed = 10f;
-    private float baseDamage = 5f;
-    private float baseRange = 3f;
+    public DrillToolFX fx;
+
+    private float heat;
+    private const float heatMax = 5f;
 
     private float toolMultiplier = 1f;
 
-    public void Initialize(Camera playerCamera)
-    {
-        cam = playerCamera;
+    private string lastDebugMessage = "";
+    private float lastDebugTime = 0f;
 
-        miningSpeed = baseMiningSpeed;
-        damage = baseDamage;
-        range = baseRange;
+
+    // ============================================================
+    // IUsable
+    // ============================================================
+
+    public void Initialize(Camera cam)
+    {
+        Log($"Initialize() called. cam = {(cam ? cam.name : "NULL")}");
     }
+
+    public void OnUsePrimary_Start()
+    {
+        drilling = true;
+        Log("Primary_Start");
+    }
+
+    public void OnUsePrimary_Hold()
+    {
+        drilling = true;
+    }
+
+    public void OnUsePrimary_Stop()
+    {
+        drilling = false;
+        Log("Primary_Stop");
+    }
+
+    public void OnUseSecondary_Start()
+    {
+        drilling = true;
+        Log("Secondary_Start");
+    }
+
+    public void OnUseSecondary_Hold()
+    {
+        drilling = true;
+    }
+
+    public void OnUseSecondary_Stop()
+    {
+        drilling = false;
+        Log("Secondary_Stop");
+    }
+
+    // ============================================================
+    // IStatItem
+    // ============================================================
 
     public void ApplyRuntimeStats(ItemRuntimeStats stats)
     {
-        miningSpeed = baseMiningSpeed + stats[ItemStatType.MiningSpeed];
-        damage      = baseDamage      + stats[ItemStatType.Damage];
-        range       = baseRange       + stats[ItemStatType.Range];
+        miningSpeed = 10f + stats[ItemStatType.MiningSpeed];
+        damage      = 5f  + stats[ItemStatType.Damage];
+        range       = 3f  + stats[ItemStatType.Range];
+
+        Log($"ApplyStats → mining:{miningSpeed}, dmg:{damage}, range:{range}");
     }
 
     public void SetMiningMultiplier(float mult)
     {
         toolMultiplier = mult;
+        Log($"SetMultiplier → {mult}");
     }
 
-    // --------------------------
-    // PRIMARY USE
-    // --------------------------
-    public void OnUsePrimary_Start() => drilling = true;
-    public void OnUsePrimary_Hold()  => drilling = true;
-    public void OnUsePrimary_Stop()  => drilling = false;
-
-    // --------------------------
-    // SECONDARY USE (same behavior, or later — alt-mode)
-    // --------------------------
-    public void OnUseSecondary_Start() => drilling = true;
-    public void OnUseSecondary_Hold()  => drilling = true;
-    public void OnUseSecondary_Stop()  => drilling = false;
+    // ============================================================
 
     private void Update()
     {
-        if (drilling)
-            TryDrill();
+        if (!drilling)
+        {
+            fx?.Stop();
+            heat = Mathf.Max(0, heat - Time.deltaTime * 1.5f);
+            fx?.SetOverheat(false);
+            return;
+        }
+
+        TryDrill();
     }
+
+
+    // ============================================================
+    // DRILL LOGIC
+    // ============================================================
 
     private void TryDrill()
     {
-        if (cam == null) return;
+        Ray ray = GetRay();
+        RaycastHit hit;
 
-        if (!Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hit, range))
-            return;
+        LogDeep($"Ray: origin={ray.origin} dir={ray.direction} range={range}");
 
-        float finalMining = miningSpeed * toolMultiplier * Time.deltaTime;
+        Debug.DrawLine(ray.origin, ray.origin + ray.direction * range, Color.red);
 
-        // --- mining ---
-        var nodePresenter = hit.collider.GetComponentInParent<ResourceNodePresenter>();
-        if (nodePresenter != null)
+        DebugRayDrawer.Instance?.DrawLaserRay(ray.origin, ray.origin + ray.direction * range, 0.2f);
+
+        if (!Physics.Raycast(ray, out hit, range))
         {
-            nodePresenter.ApplyMining(finalMining);
+            fx?.Stop();
+            Log("Raycast MISS");
             return;
         }
 
-        // --- fallback: damage ---
-        var dmg = hit.collider.GetComponentInParent<IDamageable>();
+        Log($"HIT {hit.collider.name} at distance {hit.distance:F2}");
+
+        fx?.Play(hit.point, hit.normal);
+
+        // Heat
+        heat += Time.deltaTime;
+        if (heat > heatMax)
+            fx?.SetOverheat(true);
+
+        // -------------------------------------------------------
+        // FIND ResourceNodePresenter (Unity safe search)
+        // -------------------------------------------------------
+        var node = FindComponentUpwards<ResourceNodePresenter>(hit.collider.transform);
+
+        if (node != null)
+        {
+            float m = miningSpeed * toolMultiplier * Time.deltaTime;
+            node.ApplyMining(m);
+            Log($"MINING {node.name} → +{m:F2}");
+            return;
+        }
+
+        // -------------------------------------------------------
+        // FIND IDamageable (same robust search)
+        // -------------------------------------------------------
+        var dmg = FindComponentUpwards<IDamageable>(hit.collider.transform);
+
         if (dmg != null)
         {
-            float dmgValue = damage * toolMultiplier * Time.deltaTime;
-            dmg.TakeDamage(dmgValue, DamageType.Mining);
+            float d = damage * toolMultiplier * Time.deltaTime;
+            dmg.TakeDamage(d, DamageType.Mining);
+            Log($"DAMAGE {dmg} → {d:F2}");
+            return;
         }
+
+        Log("Hit object has NO mining/damage component");
+    }
+
+
+    // ============================================================
+    // SAFE SEARCH FIX FOR NESTED PREFABS
+    // ============================================================
+
+    private T FindComponentUpwards<T>(Transform t) where T : class
+    {
+        while (t != null)
+        {
+            T c = t.GetComponent<T>();
+            if (c != null)
+                return c;
+
+            t = t.parent;
+        }
+        return null;
+    }
+
+
+    // ============================================================
+    // CAMERA
+    // ============================================================
+
+    private Ray GetRay()
+    {
+        var cam = CameraRegistry.Instance?.CurrentCamera;
+        if (cam)
+        {
+            LogDeep($"Using camera: {cam.name} pos={cam.transform.position}");
+            return cam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+        }
+
+        Log("Camera MISSING! Using forward ray fallback");
+        return new Ray(transform.position, transform.forward);
+    }
+
+
+    // ============================================================
+    // DEBUG SYSTEM
+    // ============================================================
+
+    private void Log(string msg)
+    {
+        if (!debugEnabled) return;
+        lastDebugTime = Time.time;
+        lastDebugMessage = msg;
+
+        Debug.Log($"<color=#ffaa00>[DRILL]</color> {msg}");
+    }
+
+    private void LogDeep(string msg)
+    {
+        if (!debugEnabled || !debugDeep) return;
+        Debug.Log($"<color=#00ffff>[DRILL-DEBUG]</color> {msg}");
+    }
+
+    private void OnGUI()
+    {
+        if (!debugEnabled) return;
+        if (Time.time - lastDebugTime > 1f) return;
+
+        GUI.color = Color.yellow;
+        GUI.Label(new Rect(30, 300, 900, 200), $"<b>DRILL DEBUG:</b> {lastDebugMessage}");
     }
 }
