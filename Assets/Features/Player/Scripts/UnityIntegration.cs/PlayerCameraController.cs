@@ -27,7 +27,9 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private float bodyTurnLimit = 40f;
 
         private ICameraControlService service;
+
         private float currentTpsDistance = 3f;
+        private bool isReady = false;
 
         private void Awake()
         {
@@ -36,45 +38,47 @@ namespace Features.Player.UnityIntegration
 
         private void Start()
         {
-            // начальная дистанция (просто дефолт)
             currentTpsDistance = 3f;
+            isReady = true;
         }
 
         public void SetLookInput(Vector2 input)
         {
+            if (!isReady) return;
+
             TryResolveCamera();
 
             if (cameraTransform == null ||
                 cameraPivot == null ||
                 playerBody == null)
-            {
                 return;
-            }
 
-            service.SetLookInput(input, mouseSensitivity, Time.deltaTime);
+            service?.SetLookInput(input, mouseSensitivity, Time.deltaTime);
         }
 
         private void TryResolveCamera()
         {
-            if (cameraTransform == null)
+            if (cameraTransform != null) return;
+
+            if (CameraRegistry.Instance != null &&
+                CameraRegistry.Instance.CurrentCamera != null)
             {
-                if (CameraRegistry.Instance != null &&
-                    CameraRegistry.Instance.CurrentCamera != null)
-                {
-                    cameraTransform = CameraRegistry.Instance.CurrentCamera.transform;
-                }
+                cameraTransform = CameraRegistry.Instance.CurrentCamera.transform;
             }
         }
 
         public void SwitchView()
         {
-            service.SwitchView();
+            if (!isReady) return;
+            service?.SwitchView();
         }
 
         private void LateUpdate()
         {
+            if (!isReady) return;
+
             TryResolveCamera();
-            
+
             if (cameraTransform == null || cameraPivot == null || playerBody == null)
                 return;
 
@@ -90,17 +94,12 @@ namespace Features.Player.UnityIntegration
                 UpdateTPS();
         }
 
-
-        // -----------------------------------------------------
-        // FPS MODE
-        // -----------------------------------------------------
         private void UpdateFPS()
         {
-            if (cameraTransform == null || fpsPoint == null || playerBody == null)
-                return;
+            if (cameraTransform == null || fpsPoint == null) return;
+
             service.UpdateRotationFPS(playerBody);
 
-            // pitch → камера
             Vector3 camEuler = new Vector3(service.State.Pitch, service.State.Yaw, 0f);
 
             cameraTransform.position = fpsPoint.position;
@@ -110,21 +109,17 @@ namespace Features.Player.UnityIntegration
                 headTransform.localRotation = Quaternion.Euler(service.State.Pitch, 0, 0);
         }
 
-        // -----------------------------------------------------
-        // TPS MODE
-        // -----------------------------------------------------
         private void UpdateTPS()
         {
-            if (cameraTransform == null || cameraPivot == null || playerBody == null)
-                return;
+            if (cameraTransform == null || cameraPivot == null) return;
+
             service.UpdateRotationTPS(cameraPivot, playerBody, bodyTurnLimit);
 
-            // desired camera position (no tpsPoint!)
-            Vector3 tpsDesired = cameraPivot.position - cameraPivot.forward * currentTpsDistance;
+            Vector3 desired = cameraPivot.position - cameraPivot.forward * currentTpsDistance;
 
             float targetDistance = service.ComputeTpsDistance(
                 cameraPivot.position,
-                tpsDesired,
+                desired,
                 collisionMask,
                 collisionRadius,
                 minCameraDistance
@@ -136,7 +131,6 @@ namespace Features.Player.UnityIntegration
                 Time.deltaTime * tpsSmoothSpeed
             );
 
-            // FINALLY APPLY CAMERA POSITION
             cameraTransform.position =
                 cameraPivot.position - cameraPivot.forward * currentTpsDistance;
 

@@ -9,7 +9,7 @@ namespace Features.Player.UnityIntegration
     {
         [Header("Core")]
         [SerializeField] private PlayerMovement playerMovement;
-        [SerializeField] private PlayerCameraController playerCameraController; // <-- должно совпадать с реальным именем класса!
+        [SerializeField] private PlayerCameraController playerCameraController;
         [SerializeField] private AbilityCaster abilityCaster;
 
         private InputSystem_Actions inputActions;
@@ -17,15 +17,22 @@ namespace Features.Player.UnityIntegration
         private void Awake()
         {
             inputActions = new InputSystem_Actions();
+        }
 
+        private void Start()
+        {
             SetupMovement();
             SetupCamera();
             SetupAbilities();
             SetupCursor();
+
+            inputActions.Enable();
         }
 
-        private void OnEnable() => inputActions.Enable();
-        private void OnDisable() => inputActions.Disable();
+        private void OnDisable()
+        {
+            inputActions.Disable();
+        }
 
         private void SetupCursor()
         {
