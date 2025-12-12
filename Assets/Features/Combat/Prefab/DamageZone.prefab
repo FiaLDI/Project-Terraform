@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2544912009605583356}
   - component: {fileID: 7008894659877039885}
-  - component: {fileID: 6907713192178348026}
+  - component: {fileID: 3017728162228571372}
   m_Layer: 0
   m_Name: DamageZone
   m_TagString: Untagged
@@ -54,7 +54,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &6907713192178348026
+--- !u!114 &3017728162228571372
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -63,12 +63,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 8580875627519670937}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68937be1b69db7543b09949b2ad85980, type: 3}
+  m_Script: {fileID: 11500000, guid: b9fc3f979b763dd45ab4bc2fc98cd2ad, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DamageZone
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Combat.Zones.DamageZone
   damagePerTick: 10
   tickInterval: 1
-  damageType: 3
+  damageType: 0
   damageLayers:
     serializedVersion: 2
     m_Bits: 256

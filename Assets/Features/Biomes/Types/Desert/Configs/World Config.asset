@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7a99a1a9e74d4f4f975ace17cc78fa1, type: 3}
+  m_Name: World Config
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.WorldConfig
+  seed: 12345
+  chunkSize: 32
+  biomes:
+  - config: {fileID: 11400000, guid: 844d9e5668c460948bdea1add62460eb, type: 2}
+    weight: 5
+    scale: 0.001
+    offset: {x: 0, y: 0}
+    mask:
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - config: {fileID: 11400000, guid: a2ab62740cf6d974698ca9afa5e6ac71, type: 2}
+    weight: 5
+    scale: 0.001
+    offset: {x: 500, y: 500}
+    mask:
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  worldGroundMaterial: {fileID: 2100000, guid: c5d11e4df107c86428f9a302a3646098, type: 2}

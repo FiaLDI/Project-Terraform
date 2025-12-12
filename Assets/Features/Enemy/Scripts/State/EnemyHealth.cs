@@ -1,65 +1,53 @@
 using UnityEngine;
 using System;
+using Features.Combat.Domain;
+using Features.Enemy.Data;
 
-/// <summary>
-/// Простейший враг, совместимый с IDamageable и турелью.
-/// </summary>
-[RequireComponent(typeof(Collider))]
-public class EnemyHealth : MonoBehaviour, IDamageable
+namespace Features.Enemy
 {
-    [SerializeField] private float maxHealth = 100f;
-    public float MaxHealth => maxHealth;
-    public float CurrentHealth { get; private set; }
-
-    public event Action<float, float> OnHealthChanged;
-    public event Action<EnemyHealth> OnEnemyKilled;
-    public static event Action<EnemyHealth> GlobalEnemyKilled;
-
-
-    private bool isDead;
-
-    private void Awake()
+    public class EnemyHealth : MonoBehaviour, IDamageable
     {
-        CurrentHealth = maxHealth;
-        Notify();
-    }
+        public EnemyConfigSO config;
 
-    public void TakeDamage(float damageAmount, DamageType damageType)
-    {
-        if (isDead) return;
+        public string EnemyId => config.enemyId;
 
-        CurrentHealth -= damageAmount;
-        if (CurrentHealth <= 0f)
+        public float MaxHealth { get; private set; }
+        public float CurrentHealth { get; private set; }
+
+        public event Action<float, float> OnHealthChanged;
+        public static event Action<EnemyHealth> GlobalEnemyKilled;
+
+        private bool isDead;
+
+        private void Awake()
         {
-            CurrentHealth = 0;
-            isDead = true;
-            Notify();
-            Die();
+            MaxHealth = config.baseMaxHealth;
+            CurrentHealth = MaxHealth;
+            OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
         }
-        else
+
+        public void TakeDamage(float amount, DamageType type)
         {
-            Notify();
+            if (isDead) return;
+
+            CurrentHealth -= amount;
+            if (CurrentHealth <= 0)
+            {
+                CurrentHealth = 0;
+                isDead = true;
+                OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
+                GlobalEnemyKilled?.Invoke(this);
+                Destroy(gameObject);
+            }
+            else
+            {
+                OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
+            }
+        }
+
+        public void Heal(float healAmount)
+        {
+            throw new NotImplementedException();
         }
     }
-
-    public void Heal(float amount)
-    {
-        if (isDead) return;
-
-        CurrentHealth = Mathf.Clamp(CurrentHealth + amount, 0, maxHealth);
-        Notify();
-    }
-
-    private void Die()
-    {
-        OnEnemyKilled?.Invoke(this);
-         GlobalEnemyKilled?.Invoke(this);
-        Destroy(gameObject);
-    }
-
-    private void Notify()
-    {
-        OnHealthChanged?.Invoke(CurrentHealth, maxHealth);
-    }
-
 }

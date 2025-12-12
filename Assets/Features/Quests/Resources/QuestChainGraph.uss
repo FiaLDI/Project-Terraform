@@ -1,0 +1,9 @@
+.node {
+    background-color: #2c2c2c;
+    border-radius: 6px;
+    border: 1px solid #555;
+}
+
+.edge {
+    stroke: #00c3ff;
+}

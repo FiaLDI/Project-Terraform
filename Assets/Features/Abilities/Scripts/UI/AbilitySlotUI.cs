@@ -2,39 +2,82 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using Features.Abilities.Domain;
+using Features.Abilities.Application;
+using Features.Menu.Tooltip;
 
-public class AbilitySlotUI : MonoBehaviour,
-    IPointerEnterHandler, IPointerExitHandler
+namespace Features.Abilities.UI
 {
-    [Header("UI")]
-    public Image icon;
-    public Slider cooldownSlider;
-    public TextMeshProUGUI keyLabel;
-
-    private AbilitySO ability;
-    private AbilityCaster caster;
-    private int index;
-
-    private Sprite defaultIcon;
-
-    private void Awake()
+    public class AbilitySlotUI : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler
     {
-        if (icon != null)
-            defaultIcon = icon.sprite;
-    }
+        [Header("UI")]
+        public Image icon;
+        public Slider cooldownSlider;
+        public TextMeshProUGUI keyLabel;
 
-    public void Bind(AbilitySO ability, AbilityCaster caster, int index)
-    {
-        Unsubscribe();
+        [Header("Channel Highlight")]
+        public GameObject channelHighlight;
+        public Image channelProgressFill;
 
-        this.ability = ability;
-        this.caster = caster;
-        this.index = index;
+        [HideInInspector] public AbilitySO boundAbility;
 
-        if (keyLabel != null)
-            keyLabel.text = (index + 1).ToString();
+        private AbilityCaster caster;
+        private int index;
 
-        if (ability == null)
+        private Sprite defaultIcon;
+
+        private bool warnedMissingRefs = false;
+
+        private void WarnMissing(string field)
+        {
+            if (warnedMissingRefs) return;
+            warnedMissingRefs = true;
+
+            Debug.LogWarning($"[AbilitySlotUI] Missing reference: {field} on {name}. UI will still work safely.");
+        }
+
+        private void Awake()
+        {
+            // Icon
+            if (icon != null)
+                defaultIcon = icon.sprite;
+
+            // Channel UI
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+            else
+                WarnMissing(nameof(channelHighlight));
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+            else
+                WarnMissing(nameof(channelProgressFill));
+        }
+
+        public void Bind(AbilitySO ability, AbilityCaster caster, int index)
+        {
+            Unsubscribe();
+
+            boundAbility = ability;
+            this.caster = caster;
+            this.index = index;
+
+            keyLabel?.SetText((index + 1).ToString());
+
+            if (ability == null)
+            {
+                SetEmptySlotState();
+                return;
+            }
+
+            SetupIcon(ability);
+            SetupCooldown(ability);
+
+            Subscribe();
+        }
+
+        private void SetEmptySlotState()
         {
             if (icon != null)
             {
@@ -48,63 +91,133 @@ public class AbilitySlotUI : MonoBehaviour,
                 cooldownSlider.maxValue = 1;
                 cooldownSlider.value = 1;
             }
-            return;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
         }
 
-        if (icon != null)
+        private void SetupIcon(AbilitySO ability)
         {
-            icon.sprite = ability.icon != null ? ability.icon : defaultIcon;
-            icon.color = ability.icon != null ? Color.white : Color.yellow;
+            if (icon == null) return;
+
+            if (ability.icon != null)
+            {
+                icon.sprite = ability.icon;
+                icon.color = Color.white;
+            }
+            else
+            {
+                icon.sprite = defaultIcon;
+                icon.color = Color.yellow;
+            }
         }
 
-        if (cooldownSlider != null)
+        private void SetupCooldown(AbilitySO ability)
         {
+            if (cooldownSlider == null) return;
+
             cooldownSlider.minValue = 0;
             cooldownSlider.maxValue = ability.cooldown;
             cooldownSlider.value = ability.cooldown;
         }
 
-        if (caster != null)
+        private void Subscribe()
         {
+            if (caster == null) return;
+
             caster.OnAbilityCast += HandleCastReset;
             caster.OnCooldownChanged += HandleCooldownUpdate;
-        }
-    }
 
-    private void Unsubscribe()
-    {
-        if (caster != null)
+            caster.OnChannelStarted += HandleChannelStart;
+            caster.OnChannelProgress += HandleChannelProgress;
+            caster.OnChannelCompleted += HandleChannelEnd;
+            caster.OnChannelInterrupted += HandleChannelEnd;
+        }
+
+        private void Unsubscribe()
         {
+            if (caster == null) return;
+
             caster.OnAbilityCast -= HandleCastReset;
             caster.OnCooldownChanged -= HandleCooldownUpdate;
+
+            caster.OnChannelStarted -= HandleChannelStart;
+            caster.OnChannelProgress -= HandleChannelProgress;
+            caster.OnChannelCompleted -= HandleChannelEnd;
+            caster.OnChannelInterrupted -= HandleChannelEnd;
         }
-    }
 
-    private void OnDestroy()
-    {
-        Unsubscribe();
-    }
+        private void OnDestroy()
+        {
+            Unsubscribe();
+        }
 
-    private void HandleCastReset(AbilitySO usedAbility)
-    {
-        if (usedAbility != ability) return;
-        cooldownSlider.value = 0;
-    }
+        // ===============================
+        // COOLDOWN
+        // ===============================
+        private void HandleCastReset(AbilitySO usedAbility)
+        {
+            if (usedAbility != boundAbility) return;
 
-    private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
-    {
-        if (updated != ability) return;
-        cooldownSlider.value = max - remaining;
-    }
+            cooldownSlider?.SetValueWithoutNotify(0);
+        }
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (ability != null)
-            TooltipController.Instance.ShowAbility(ability, caster);
-    }
+        private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
+        {
+            if (updated != boundAbility) return;
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        TooltipController.Instance.Hide();
+            if (cooldownSlider != null)
+                cooldownSlider.value = max - remaining;
+        }
+
+        // ===============================
+        // CHANNEL UI
+        // ===============================
+        private void HandleChannelStart(AbilitySO ability)
+        {
+            if (ability != boundAbility) return;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(true);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
+        private void HandleChannelProgress(AbilitySO ability, float time, float duration)
+        {
+            if (ability != boundAbility) return;
+
+            if (duration > 0f && channelProgressFill != null)
+                channelProgressFill.fillAmount = time / duration;
+        }
+
+        private void HandleChannelEnd(AbilitySO ability)
+        {
+            if (ability != boundAbility) return;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
+        // ===============================
+        // TOOLTIP
+        // ===============================
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (boundAbility != null)
+                TooltipController.Instance?.ShowAbility(boundAbility, caster);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            TooltipController.Instance?.Hide();
+        }
     }
 }
