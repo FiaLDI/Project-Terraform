@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Features.Items.Domain;
+using Features.Items.Data;
 
 public class UpgradeGlowButtonUI : MonoBehaviour
 {
@@ -10,36 +12,34 @@ public class UpgradeGlowButtonUI : MonoBehaviour
     [Header("Item UI")]
     public Image icon;
     public TextMeshProUGUI title;
-    public TextMeshProUGUI level;
+    public TextMeshProUGUI levelText;
 
-    private Item item;
+    private ItemInstance instance;
     private UpgradeRecipeSO recipe;
     private UpgradeStationUIController controller;
 
-    public void Init(Item item, UpgradeRecipeSO recipe, UpgradeStationUIController controller)
+    public void Init(ItemInstance inst, UpgradeRecipeSO recipe, UpgradeStationUIController controller)
     {
-        this.item = item;
+        this.instance = inst;
         this.recipe = recipe;
         this.controller = controller;
 
-        // ---------------------------
-        //   VISUAL
-        // ---------------------------
-        if (item.icon != null)
-            icon.sprite = item.icon;
+        Item def = inst.itemDefinition;
 
-        title.text = item.itemName;
+        // -------- VISUAL ----------
+        if (def.icon != null)
+            icon.sprite = def.icon;
 
-        int maxLv = item.upgrades != null ? item.upgrades.Length : 0;
-        level.text = $"Lv {item.currentLevel}/{maxLv}";
+        title.text = def.itemName;
 
-        // ---------------------------
-        //   Glow Button Action
-        // ---------------------------
+        int maxLv = def.upgrades != null ? def.upgrades.Length : 0;
+        levelText.text = $"Lv {inst.level}/{maxLv}";
+
+        // -------- BUTTON ACTION ----------
         glowButton.onClick.RemoveAllListeners();
         glowButton.onClick.AddListener(() =>
         {
-            controller.OnUpgradeItemSelected(item, recipe);
+            controller.OnUpgradeItemSelected(inst, recipe);
         });
     }
 }

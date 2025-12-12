@@ -1,5 +1,6 @@
 using UnityEngine;
 using Features.Resources.Domain;
+using Features.Items.Data;
 
 namespace Features.Resources.Data 
 {

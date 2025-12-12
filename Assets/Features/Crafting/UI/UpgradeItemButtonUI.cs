@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Features.Items.Domain;
+using Features.Items.Data;
 
 public class UpgradeItemButtonUI : MonoBehaviour
 {
@@ -10,42 +12,38 @@ public class UpgradeItemButtonUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private Button button;
 
-    private Item item;
+    private ItemInstance instance;
     private UpgradeRecipeSO recipe;
     private UpgradeStationUIController controller;
 
-    public void Init(Item item, UpgradeRecipeSO recipe, UpgradeStationUIController controller)
+    public void Init(ItemInstance inst, UpgradeRecipeSO recipe, UpgradeStationUIController controller)
     {
-        this.item = item;
+        this.instance = inst;
         this.recipe = recipe;
         this.controller = controller;
 
-        // -------- ICON --------
+        Item def = inst.itemDefinition;
+
+        // ICON
         if (icon != null)
-        {
-            icon.sprite = item.icon != null ? item.icon : null;
-        }
+            icon.sprite = def.icon;
 
-        // -------- TITLE --------
+        // TITLE
         if (title != null)
-        {
-            title.text = item.itemName;
-        }
+            title.text = def.itemName;
 
-        // -------- LEVEL --------
+        // LEVEL
         if (levelText != null)
         {
-            int current = item.currentLevel;
-            int max = item.upgrades != null ? item.upgrades.Length : 0;
-
-            levelText.text = $"Lv {current}/{max}";
+            int maxLv = def.upgrades != null ? def.upgrades.Length : 0;
+            levelText.text = $"Lv {inst.level}/{maxLv}";
         }
 
-        // -------- CLICK ACTION --------
+        // ACTION
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() =>
         {
-            controller.OnUpgradeItemSelected(item, recipe);
+            controller.OnUpgradeItemSelected(inst, recipe);
         });
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using Features.Resources.Domain;
 using Features.Resources.Application;
 using Features.Resources.Data;
+using Features.Items.Data;
 
 namespace Features.Resources.UnityIntegration
 {
@@ -100,11 +101,17 @@ namespace Features.Resources.UnityIntegration
                 return;
             }
 
-            Instantiate(
+            var go = Instantiate(
                 item.worldPrefab,
                 transform.position + Vector3.up,
                 Random.rotation
             );
+
+            if (go.TryGetComponent<NearbyItemPresenter>(out var presenter))
+            {
+                presenter.Initialize(item, 1);
+            }
         }
+
     }
 }

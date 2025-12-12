@@ -1,29 +1,71 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Features.Quests.Domain;
+using Features.Items.Domain;
+using Features.Inventory;
 
 namespace Features.Quests.UnityIntegration.Adapters
 {
+    /// <summary>
+    /// Адаптер: Inventory → Quest events.
+    /// Player-scoped, без singleton'ов.
+    /// </summary>
     public sealed class InventoryQuestEventsAdapter : MonoBehaviour
     {
         [SerializeField] private QuestManagerMB questManager;
 
-        private void OnEnable()
+        private IInventoryContext inventory;
+
+        // ======================================================
+        // INIT
+        // ======================================================
+
+        public void Init(IInventoryContext inventory)
         {
-            InventoryManager.OnItemAdded += HandleItemAdded;
+            // Защита от повторной инициализации
+            if (this.inventory != null)
+                Unsubscribe();
+
+            this.inventory = inventory;
+
+            if (this.inventory != null)
+                Subscribe();
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
-            InventoryManager.OnItemAdded -= HandleItemAdded;
+            Unsubscribe();
         }
 
-        private void HandleItemAdded(Item item, int amount)
-        {
-            if (item == null) return;
+        // ======================================================
+        // SUBSCRIBE
+        // ======================================================
 
-            // Переводим в доменный itemId
-            string itemId = item.id.ToString(); 
-            questManager?.Service.HandleEvent(new ItemAddedEvent(itemId, amount));
+        private void Subscribe()
+        {
+            inventory.Service.OnItemAdded += HandleItemAdded;
+        }
+
+        private void Unsubscribe()
+        {
+            if (inventory != null)
+                inventory.Service.OnItemAdded -= HandleItemAdded;
+        }
+
+        // ======================================================
+        // HANDLER
+        // ======================================================
+
+        private void HandleItemAdded(ItemInstance inst)
+        {
+            if (inst == null || inst.itemDefinition == null)
+                return;
+
+            questManager?.Service.HandleEvent(
+                new ItemAddedEvent(
+                    inst.itemDefinition.id,
+                    inst.quantity
+                )
+            );
         }
     }
 }

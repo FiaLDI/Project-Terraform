@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 public class UIStationManager : MonoBehaviour
 {
-    public static UIStationManager I;
+    public static UIStationManager Instance { get; private set; }
 
     public BaseStationUI ActiveStation { get; private set; }
 
@@ -12,8 +12,13 @@ public class UIStationManager : MonoBehaviour
 
     private void Awake()
     {
-        if (I == null) I = this;
-        else Destroy(gameObject);
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
 
         if (escAction != null)
         {
@@ -33,12 +38,15 @@ public class UIStationManager : MonoBehaviour
 
     private void OnEsc(InputAction.CallbackContext ctx)
     {
-        if (SettingsMenuManager.I != null && SettingsMenuManager.I.SettingsMenuOpen)
+        // 1. Settings
+        if (SettingsMenuManager.I != null &&
+            SettingsMenuManager.I.SettingsMenuOpen)
         {
             SettingsMenuManager.I.CloseSettings();
             return;
         }
 
+        // 2. Station
         if (ActiveStation != null)
         {
             ActiveStation.Toggle();
@@ -46,16 +54,10 @@ public class UIStationManager : MonoBehaviour
             return;
         }
 
-        if (InventoryManager.instance != null && InventoryManager.instance.IsOpen)
-        {
-            InventoryManager.instance.SetOpen(false);
-            return;
-        }
-
-        PauseMenu.I.Toggle();
+        // 3. Pause
+        PauseMenu.I?.Toggle();
     }
 
-    // -----------------------------------------------------------
     public void OpenStation(BaseStationUI station)
     {
         ActiveStation = station;

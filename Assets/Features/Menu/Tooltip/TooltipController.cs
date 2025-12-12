@@ -8,6 +8,8 @@ using Features.Abilities.Application;
 using Features.Buffs.Application;
 using Features.Buffs.Domain;
 using Features.Player.UnityIntegration;
+using Features.Items.Domain;
+using Features.Items.Data;
 
 namespace Features.Menu.Tooltip
 {
@@ -75,26 +77,39 @@ namespace Features.Menu.Tooltip
         // =========================================================================
         // ITEM TOOLTIP
         // =========================================================================
-        public void ShowForItem(Item item)
+        // =========================================================================
+        // ITEM INSTANCE TOOLTIP
+        // =========================================================================
+        public void ShowForItemInstance(ItemInstance inst)
         {
-            if (item == null) { Hide(); return; }
+            if (inst == null || inst.itemDefinition == null)
+            {
+                Hide();
+                return;
+            }
 
-            icon.sprite = item.icon;
-            title.text = item.itemName;
-            title.color = Color.white;
-            description.text = item.description;
+            Item def = inst.itemDefinition;
+
+            icon.sprite = def.icon;
+            title.text = def.itemName;
+            description.text = def.description;
 
             stats.text = "";
-            var cur = item.currentLevel;
 
-            if (cur > 0)
+            // ---- Level info ----
+            int level = inst.level;
+            if (level > 0 && def.upgrades != null && level <= def.upgrades.Length)
             {
-                stats.text += $"\n<color=#FFD700>Current Upgrade ({cur})</color>\n";
-                var up = item.upgrades[cur - 1];
+                stats.text += $"\n<color=#FFD700>Level {level}</color>\n";
 
+                var up = def.upgrades[level - 1];
                 foreach (var b in up.bonusStats)
                     stats.text += $"{b.stat}: +{b.value}\n";
             }
+
+            // ---- Stack info ----
+            if (def.isStackable)
+                stats.text += $"\nStack: {inst.quantity}/{def.maxStackAmount}";
 
             group.alpha = 1;
         }

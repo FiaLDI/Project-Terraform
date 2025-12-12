@@ -19,17 +19,27 @@ namespace Features.Interaction.Application
             this.ignoreMask = ignoreMask;
         }
 
-        public IInteractionRayProvider Provider => provider;
-
         public InteractionRayHit Raycast()
         {
-            Ray ray = provider.GetRay();
-            int mask = includeMask & ~ignoreMask;
+            try
+            {
+                Ray ray = provider.GetRay();
 
-            if (Physics.Raycast(ray, out var hit, provider.MaxDistance, mask))
-                return new InteractionRayHit(true, hit);
+                bool hit = Physics.Raycast(
+                    ray,
+                    out var hitInfo,
+                    provider.MaxDistance,
+                    includeMask,
+                    QueryTriggerInteraction.Ignore
+                );
 
-            return new InteractionRayHit(false, default);
+                return new InteractionRayHit(hit, hitInfo);
+            }
+            catch
+            {
+                return default;
+            }
         }
+
     }
 }

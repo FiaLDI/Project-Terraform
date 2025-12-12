@@ -1,7 +1,8 @@
+using Features.Interaction.Application;
+using Features.Interaction.Domain;
+using Features.Interaction.UnityIntegration;
 using UnityEngine;
 using UnityEngine.UI;
-using Features.Interaction.Application;
-using Features.Interaction.UnityIntegration;
 
 namespace Features.Player.UI
 {
@@ -14,34 +15,35 @@ namespace Features.Player.UI
         [SerializeField] private Color normalColor = Color.white;
         [SerializeField] private Color interactColor = Color.cyan;
 
-        private InteractionService interactionService = new InteractionService();
+        private InteractionService interactionService;
+        private InteractionRayService rayService;
+
+        private void Awake()
+        {
+            interactionService = new InteractionService();
+        }
+
+        private void Start()
+        {
+            rayService = InteractionServiceProvider.Ray;
+            if (rayService == null)
+            {
+                Debug.LogError("[CrosshairController] InteractionRayService NOT FOUND");
+                enabled = false;
+            }
+        }
 
         private void Update()
         {
-            if (crosshair == null) return;
-
-            var service = InteractionServiceProvider.Ray;
-            if (service == null)
-            {
-                crosshair.color = normalColor;
+            if (crosshair == null || rayService == null)
                 return;
-            }
 
-            var rayProvider = service.Provider;
-            if (!rayProvider.IsValid())
-            {
-                crosshair.color = normalColor;
-                return;
-            }
-
-            var hit = service.Raycast();
+            InteractionRayHit hit = rayService.Raycast();
 
             if (interactionService.TryGetInteractable(hit, out _))
                 crosshair.color = interactColor;
             else
                 crosshair.color = normalColor;
         }
-
-
     }
 }

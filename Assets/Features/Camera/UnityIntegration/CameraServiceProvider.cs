@@ -9,6 +9,7 @@ namespace Features.Camera.UnityIntegration
     /// - Control: логика yaw/pitch, fps/tps, blend.
     /// - Runtime: ссылка на активную Unity-камеру, FOV, shake.
     /// </summary>
+    [DefaultExecutionOrder(-1000)]
     public class CameraServiceProvider : MonoBehaviour
     {
         public static ICameraControlService Control { get; private set; }

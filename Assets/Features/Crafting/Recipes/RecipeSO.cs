@@ -1,3 +1,4 @@
+using Features.Items.Data;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Items/Recipe")]

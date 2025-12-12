@@ -1,12 +1,25 @@
+using UnityEngine;
+using Features.Inventory;
+using Features.Inventory.Application;
+
 public class MaterialProcessorUIController : BaseStationUI
 {
     private MaterialProcessor station;
     private CraftingProcessor processor;
+    private IInventoryContext inventory;
 
-    public void Init(MaterialProcessor station, CraftingProcessor processor)
+    // ======================================================
+    // INIT
+    // ======================================================
+
+    public void Init(
+        MaterialProcessor station,
+        CraftingProcessor processor,
+        IInventoryContext inventory)
     {
         this.station = station;
         this.processor = processor;
+        this.inventory = inventory;
 
         base.Init(station.GetRecipes());
 
@@ -15,13 +28,17 @@ public class MaterialProcessorUIController : BaseStationUI
         processor.OnComplete += HandleComplete;
     }
 
+    // ======================================================
+    // UI
+    // ======================================================
+
     public override void ShowRecipe(RecipeSO recipe)
     {
         recipePanel.ShowRecipe(recipe);
 
         recipePanel.SetAction(() =>
         {
-            if (!InventoryManager.instance.HasIngredients(recipe.inputs))
+            if (!inventory.Service.HasIngredients(recipe.inputs))
             {
                 recipePanel.ShowMissingIngredients(recipe);
                 return;
@@ -31,8 +48,19 @@ public class MaterialProcessorUIController : BaseStationUI
         });
     }
 
+    // ======================================================
+    // PROCESSOR EVENTS
+    // ======================================================
 
-    private void HandleStart(RecipeSO r) => recipePanel.StartProgress();
-    private void HandleProgress(float t) => recipePanel.UpdateProgress(t);
-    private void HandleComplete(RecipeSO r) => recipePanel.ProcessComplete();
+    private void HandleStart(RecipeSO r)
+        => recipePanel.StartProgress();
+
+    private void HandleProgress(float t)
+        => recipePanel.UpdateProgress(t);
+
+    private void HandleComplete(RecipeSO r)
+    {
+        recipePanel.ProcessComplete();
+        recipePanel.RefreshIngredients();
+    }
 }

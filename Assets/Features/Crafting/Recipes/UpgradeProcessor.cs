@@ -1,53 +1,69 @@
 using System;
 using UnityEngine;
+using Features.Items.Domain;
+using Features.Inventory;
+using Features.Inventory.Application;
 
 public class UpgradeProcessor : MonoBehaviour
 {
-    public event Action<Item> OnStart;
+    public event Action<ItemInstance> OnStart;
     public event Action<float> OnProgress;
-    public event Action<Item> OnComplete;
+    public event Action<ItemInstance> OnComplete;
 
-    private bool isProcessing = false;
+    private IInventoryContext inventory;
+
+    private bool isProcessing;
     private float startTime;
-    private RecipeSO activeRecipe;
-    private InventorySlot targetSlot;
 
-    public void BeginUpgrade(RecipeSO recipe, InventorySlot slot)
+    private UpgradeRecipeSO activeRecipe;
+    private ItemInstance targetInstance;
+
+    // ======================================================
+    // INIT
+    // ======================================================
+
+    public void Init(IInventoryContext inventory)
     {
-        if (recipe == null || slot == null || slot.ItemData == null)
+        this.inventory = inventory;
+    }
+
+    // ======================================================
+    // PUBLIC API
+    // ======================================================
+
+    public void BeginUpgrade(UpgradeRecipeSO recipe, ItemInstance inst)
+    {
+        if (recipe == null || inst == null || inventory == null)
         {
-            Debug.LogError("[UpgradeProcessor] Неверный рецепт или слот.");
+            Debug.LogError("[UpgradeProcessor] Invalid input or inventory");
             return;
         }
 
-        Item item = slot.ItemData;
-
-        if (item.upgrades == null || item.upgrades.Length == 0)
+        int maxLevels = inst.itemDefinition.upgrades?.Length ?? 0;
+        if (inst.level >= maxLevels)
         {
-            Debug.LogWarning($"[UpgradeProcessor] Предмет {item.itemName} не имеет апгрейдов.");
+            Debug.Log("[Upgrade] Already max level");
             return;
         }
 
-        // Авто-проверка максимального уровня
-        if (item.NextUpgrade == null)
+        if (!HasIngredients(recipe))
         {
-            Debug.LogWarning($"[UpgradeProcessor] {item.itemName} уже максимального уровня ({item.currentLevel}).");
-            return;
-        }
-
-        if (!InventoryManager.instance.HasIngredients(recipe.inputs))
-        {
-            Debug.LogWarning("[UpgradeProcessor] Недостаточно ресурсов для улучшения.");
+            Debug.LogWarning("[Upgrade] Not enough ingredients");
             return;
         }
 
         activeRecipe = recipe;
-        targetSlot = slot;
+        targetInstance = inst;
+
         startTime = Time.time;
         isProcessing = true;
 
-        OnStart?.Invoke(item);
+        OnStart?.Invoke(inst);
     }
+
+    // ======================================================
+    // UPDATE
+    // ======================================================
 
     private void Update()
     {
@@ -58,25 +74,39 @@ public class UpgradeProcessor : MonoBehaviour
         OnProgress?.Invoke(progress);
 
         if (progress >= 1f)
-        {
-            CompleteUpgrade();
-        }
+            Complete();
     }
 
-    private void CompleteUpgrade()
+    // ======================================================
+    // INTERNAL
+    // ======================================================
+
+    private bool HasIngredients(RecipeSO recipe)
+    {
+        var service = inventory.Service;
+
+        foreach (var ing in recipe.ingredients)
+        {
+            if (service.GetItemCount(ing.item) < ing.amount)
+                return false;
+        }
+
+        return true;
+    }
+
+    private void Complete()
     {
         isProcessing = false;
 
-        Item item = targetSlot.ItemData;
+        var service = inventory.Service;
 
-        Debug.Log($"[UpgradeProcessor] Улучшение завершено: {item.itemName}");
+        // REMOVE INGREDIENTS
+        foreach (var ing in activeRecipe.ingredients)
+            service.TryRemove(ing.item, ing.amount);
 
-        InventoryManager.instance.ConsumeIngredients(activeRecipe.inputs);
+        // APPLY UPGRADE
+        targetInstance.level++;
 
-        item.currentLevel++;
-
-        OnComplete?.Invoke(item);
-
-        InventoryManager.instance.UpdateAllUI();
+        OnComplete?.Invoke(targetInstance);
     }
 }

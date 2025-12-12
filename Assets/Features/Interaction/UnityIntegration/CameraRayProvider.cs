@@ -7,8 +7,8 @@ namespace Features.Interaction.UnityIntegration
     public class CameraRayProvider : MonoBehaviour, IInteractionRayProvider
     {
         private UnityEngine.Camera cam;
-        [SerializeField] private float maxDistance = 4f;
 
+        [SerializeField] private float maxDistance = 4f;
         public float MaxDistance => maxDistance;
 
         private void OnEnable()
@@ -30,22 +30,21 @@ namespace Features.Interaction.UnityIntegration
                 CameraRegistry.Instance.OnCameraChanged -= HandleCam;
         }
 
-        private void HandleCam(UnityEngine.Camera newCam) => cam = newCam;
+        private void HandleCam(UnityEngine.Camera newCam)
+        {
+            cam = newCam;
+        }
 
         public Ray GetRay()
         {
+            // ❗ Если камеры нет — НЕ ВОЗВРАЩАЕМ ФЕЙК
             if (cam == null)
-            {
-                // попробовать снова взять камеру из реестра
-                if (CameraRegistry.Instance != null && CameraRegistry.Instance.CurrentCamera != null)
-                    cam = CameraRegistry.Instance.CurrentCamera;
-                
-                // если всё ещё null — вернём fallback
-                if (cam == null)
-                    return new Ray(Vector3.zero, Vector3.forward);
-            }
+                throw new System.InvalidOperationException(
+                    "[CameraRayProvider] Camera is not registered yet"
+                );
 
-            return cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+            // Луч строго из центра экрана
+            return cam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
         }
     }
 }
