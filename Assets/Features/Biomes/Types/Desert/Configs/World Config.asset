@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7a99a1a9e74d4f4f975ace17cc78fa1, type: 3}
   m_Name: World Config
   m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.WorldConfig
+  seed: 12345
   chunkSize: 32
   biomes:
   - config: {fileID: 11400000, guid: 844d9e5668c460948bdea1add62460eb, type: 2}
@@ -72,3 +73,4 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
+  worldGroundMaterial: {fileID: 2100000, guid: c5d11e4df107c86428f9a302a3646098, type: 2}

@@ -22,6 +22,12 @@ MonoBehaviour:
   groundMaterial: {fileID: 2100000, guid: 692d2bd798c06364fb48e609ab56bc9a, type: 2}
   terrainScale: 1
   heightMultiplier: 10
+  groundColor: {r: 1, g: 0.5826384, b: 0.50377357, a: 1}
+  groundSmoothness: 0.2
+  groundMetallic: 0
+  textureTilingMultiplier: 2
+  biomeAlbedo: {fileID: 0}
+  biomeNormal: {fileID: 0}
   fractalOctaves: 3
   fractalPersistence: 1
   fractalLacunarity: 2.29

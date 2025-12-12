@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3364e546c1c200b4ca8b7d308f614943, type: 3}
+  m_Name: Tech
+  m_EditorClassIdentifier: Assembly-CSharp::RobotVisualPresetSO
+  id: 0
+  modelPrefab: {fileID: 8771091787928289351, guid: b4cb9ef667c1e654abc9b7455f28c2d2, type: 3}
+  animator: {fileID: 9100000, guid: 2155038c7032136419b86501395dfa42, type: 2}

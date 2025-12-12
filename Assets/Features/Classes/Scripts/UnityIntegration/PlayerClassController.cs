@@ -15,15 +15,19 @@ public class PlayerClassController : MonoBehaviour
     [Header("Classes Library")]
     public PlayerClassLibrarySO library;
 
-    [Header("Default Class ID")]
-    public string defaultClassId;
+    [Header("Default Class ID (fallback for tests)")]
+    public string defaultClassId = "engineer";
 
-    private PlayerClassService _service;
+    [Header("Visuals")]
+    public PlayerVisualController visualController;
+
+    private PlayerClassService _classService;
+    private PlayerClassConfigSO _pendingClassCfg;
 
     // DOMAIN facade
     private IStatsFacade _stats;
 
-    // ADAPTERS
+    // Adapters
     private HealthStatsAdapter _health;
     private EnergyStatsAdapter _energy;
     private CombatStatsAdapter _combat;
@@ -32,7 +36,6 @@ public class PlayerClassController : MonoBehaviour
 
     private PassiveSystem _passiveSystem;
     private AbilityCaster _abilityCaster;
-
     private PlayerBuffTarget _buffTarget;
 
     private void OnEnable()
@@ -50,13 +53,12 @@ public class PlayerClassController : MonoBehaviour
         CacheAdapters();
 
         _buffTarget = GetComponent<PlayerBuffTarget>();
-        if (_buffTarget == null)
-            Debug.LogError("[PlayerClassController] PlayerBuffTarget missing!");
-
         _passiveSystem = GetComponent<PassiveSystem>();
         _abilityCaster = GetComponent<AbilityCaster>();
 
-        _service = new PlayerClassService(library.classes, defaultClassId);
+        _classService = new PlayerClassService(library.classes, defaultClassId);
+
+        SelectInitialClass();
     }
 
     private void CacheAdapters()
@@ -68,32 +70,47 @@ public class PlayerClassController : MonoBehaviour
         _mining = GetComponent<MiningStatsAdapter>();
     }
 
+    private void SelectInitialClass()
+    {
+        var progress = PlayerProgressService.Instance;
+        var activeChar = progress != null ? progress.GetActiveCharacter() : null;
+
+        if (activeChar != null)
+        {
+            _pendingClassCfg = library.FindById(activeChar.classId);
+
+            if (_pendingClassCfg != null)
+            {
+                Debug.Log("[PlayerClass] Using character class: " + activeChar.classId);
+                return;
+            }
+        }
+
+        // fallback
+        _pendingClassCfg = library.FindById(defaultClassId);
+        Debug.Log("[PlayerClass] Using DEFAULT class: " + defaultClassId);
+    }
+
     private void HandleStatsReady(PlayerStats ps)
     {
-        Debug.Log($"[STATS READY] From: {ps.gameObject.name}");
-
         _stats = ps.Facade;
 
-        // Init Adapters
         _health?.Init(_stats.Health);
         _energy?.Init(_stats.Energy);
         _combat?.Init(_stats.Combat);
         _movement?.Init(_stats.Movement);
         _mining?.Init(_stats.Mining);
 
-        // BUFF TARGET
         _buffTarget?.SetStats(_stats);
 
-        // apply default class (but delayed)
-        if (_service.Current != null)
-            StartCoroutine(DelayedApplyClass(_service.Current));
+        if (_pendingClassCfg != null)
+            StartCoroutine(DelayedApplyClass(_pendingClassCfg));
     }
 
     private IEnumerator DelayedApplyClass(PlayerClassConfigSO cfg)
     {
         yield return null;
 
-        // Wait until AbilityCaster is fully initialized
         yield return new WaitUntil(() =>
             _abilityCaster != null &&
             _abilityCaster.Energy != null
@@ -102,26 +119,13 @@ public class PlayerClassController : MonoBehaviour
         ApplyClassInternal(cfg);
     }
 
-    public void ApplyClass(string id)
-    {
-        var cfg = _service.FindById(id);
-        if (cfg != null)
-            StartCoroutine(DelayedApplyClass(cfg));
-    }
-
-    public void ApplyClass(PlayerClassConfigSO cfg)
-    {
-        if (cfg != null)
-            StartCoroutine(DelayedApplyClass(cfg));
-    }
-
     private void ApplyClassInternal(PlayerClassConfigSO cfg)
     {
         if (cfg == null) return;
 
-        Debug.Log($"[Class] Applying class: {cfg.displayName}");
+        Debug.Log($"[PlayerClass] Applying: {cfg.displayName}");
 
-        _service.SelectClass(cfg);
+        _classService.SelectClass(cfg);
 
         var p = cfg.preset;
 
@@ -141,8 +145,13 @@ public class PlayerClassController : MonoBehaviour
         );
 
         _stats.Mining.ApplyBase(p.mining.baseMining);
-        
+
         _passiveSystem?.SetPassives(cfg.passives.ToArray());
         _abilityCaster?.SetAbilities(cfg.abilities.ToArray());
+
+        // 🎨 APPLY VISUAL PRESET HERE
+        var activeChar = PlayerProgressService.Instance.GetActiveCharacter();
+        if (activeChar != null)
+            visualController?.ApplyVisual(activeChar.visualPresetId);
     }
 }

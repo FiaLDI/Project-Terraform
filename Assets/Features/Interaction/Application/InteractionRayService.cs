@@ -19,6 +19,8 @@ namespace Features.Interaction.Application
             this.ignoreMask = ignoreMask;
         }
 
+        public IInteractionRayProvider Provider => provider;
+
         public InteractionRayHit Raycast()
         {
             Ray ray = provider.GetRay();

@@ -20,12 +20,28 @@ namespace Features.Player.UI
         {
             if (crosshair == null) return;
 
-            var hit = InteractionServiceProvider.Ray.Raycast();
+            var service = InteractionServiceProvider.Ray;
+            if (service == null)
+            {
+                crosshair.color = normalColor;
+                return;
+            }
+
+            var rayProvider = service.Provider;
+            if (!rayProvider.IsValid())
+            {
+                crosshair.color = normalColor;
+                return;
+            }
+
+            var hit = service.Raycast();
 
             if (interactionService.TryGetInteractable(hit, out _))
                 crosshair.color = interactColor;
             else
                 crosshair.color = normalColor;
         }
+
+
     }
 }

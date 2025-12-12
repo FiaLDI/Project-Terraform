@@ -536,4 +536,13 @@ public class InventoryManager : MonoBehaviour
         return count;
     }
 
+    // ======================================================================
+    //  RUNTIME STATS GENERATION
+    // ======================================================================
+    public ItemRuntimeStats GetRuntimeStats(Item item)
+    {
+        return ItemStatCalculator.Calculate(item);
+    }
+
+
 }

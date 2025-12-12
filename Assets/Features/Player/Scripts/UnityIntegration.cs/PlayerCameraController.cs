@@ -40,10 +40,30 @@ namespace Features.Player.UnityIntegration
             currentTpsDistance = 3f;
         }
 
-        // Called by PlayerController
         public void SetLookInput(Vector2 input)
         {
+            TryResolveCamera();
+
+            if (cameraTransform == null ||
+                cameraPivot == null ||
+                playerBody == null)
+            {
+                return;
+            }
+
             service.SetLookInput(input, mouseSensitivity, Time.deltaTime);
+        }
+
+        private void TryResolveCamera()
+        {
+            if (cameraTransform == null)
+            {
+                if (CameraRegistry.Instance != null &&
+                    CameraRegistry.Instance.CurrentCamera != null)
+                {
+                    cameraTransform = CameraRegistry.Instance.CurrentCamera.transform;
+                }
+            }
         }
 
         public void SwitchView()
@@ -53,6 +73,11 @@ namespace Features.Player.UnityIntegration
 
         private void LateUpdate()
         {
+            TryResolveCamera();
+            
+            if (cameraTransform == null || cameraPivot == null || playerBody == null)
+                return;
+
             if (service == null) return;
 
             service.UpdateTransition(Time.deltaTime);
@@ -65,12 +90,14 @@ namespace Features.Player.UnityIntegration
                 UpdateTPS();
         }
 
+
         // -----------------------------------------------------
         // FPS MODE
         // -----------------------------------------------------
         private void UpdateFPS()
         {
-            // yaw → тело
+            if (cameraTransform == null || fpsPoint == null || playerBody == null)
+                return;
             service.UpdateRotationFPS(playerBody);
 
             // pitch → камера
@@ -88,7 +115,8 @@ namespace Features.Player.UnityIntegration
         // -----------------------------------------------------
         private void UpdateTPS()
         {
-            // yaw + pitch
+            if (cameraTransform == null || cameraPivot == null || playerBody == null)
+                return;
             service.UpdateRotationTPS(cameraPivot, playerBody, bodyTurnLimit);
 
             // desired camera position (no tpsPoint!)

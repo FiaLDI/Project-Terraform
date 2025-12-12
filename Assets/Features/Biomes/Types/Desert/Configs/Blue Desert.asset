@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6dfcc09296954b418c8065bb3d566d7, type: 3}
   m_Name: Blue Desert
   m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
+  biomeID: default
   biomeName: Blue
   mapColor: {r: 0.94716984, g: 0.14118181, b: 0.14118181, a: 1}
   isGenerate: 1
@@ -21,6 +22,12 @@ MonoBehaviour:
   groundMaterial: {fileID: 2100000, guid: c4a4ec3a829cab84f8ca3330f6aac8e3, type: 2}
   terrainScale: 6
   heightMultiplier: 30
+  groundColor: {r: 0.6245283, g: 0.9455428, b: 1, a: 1}
+  groundSmoothness: 0.2
+  groundMetallic: 0
+  textureTilingMultiplier: 2
+  biomeAlbedo: {fileID: 0}
+  biomeNormal: {fileID: 0}
   fractalOctaves: 5
   fractalPersistence: 0.5
   fractalLacunarity: 2

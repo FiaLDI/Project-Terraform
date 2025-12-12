@@ -128,7 +128,7 @@ public class Chunk
 
         var mf = renderObj.AddComponent<MeshFilter>();
         var mr = renderObj.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = biome.groundMaterial;
+        BiomeMaterialUtility.ApplyBiomeMaterial(mr, biome, world);
 
         mf.sharedMesh = lod0;
 
@@ -170,7 +170,7 @@ public class Chunk
 
         var mf = go.AddComponent<MeshFilter>();
         var mr = go.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = biome.groundMaterial;
+        BiomeMaterialUtility.ApplyBiomeMaterial(mr, biome, world);
 
         mf.sharedMesh = m;
 

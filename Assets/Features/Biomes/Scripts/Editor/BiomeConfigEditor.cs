@@ -155,7 +155,7 @@ public class BiomeConfigEditor : Editor
                 DrawProps("fractalOctaves", "fractalPersistence", "fractalLacunarity");
             }
 
-            DrawProps("textureTiling", "blendStrength");
+            DrawProps("groundColor", "groundSmoothness", "textureTilingMultiplier", "biomeAlbedo", "biomeNormal", "blendStrength");
         });
 
         fEnvironment = DrawFold("Environment Objects", fEnvironment, () =>

@@ -39,21 +39,38 @@ namespace Features.Menu.Tooltip
             if (Mouse.current == null) return;
 
             Vector2 mousePos = Mouse.current.position.ReadValue();
-            Vector2 localPos;
 
             RectTransform canvasRect = canvas.transform as RectTransform;
 
+            // Конвертация позиции в локальные координаты Canvas
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvasRect,
                 mousePos,
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera,
-                out localPos
+                out Vector2 localPos
             );
 
+            // Отступ над мышкой
             float height = rect.rect.height;
-            Vector2 offset = new Vector2(0, height * 0.5f + 50);
-            rect.anchoredPosition = localPos + offset;
+            float width = rect.rect.width;
+
+            Vector2 offset = new Vector2(20, height * 0.5f + 20);
+            Vector2 targetPos = localPos + offset;
+
+            // === ОГРАНИЧЕНИЕ ВНУТРИ CANVAS ===
+            Vector2 canvasSize = canvasRect.rect.size;
+
+            float halfW = width * 0.5f;
+            float halfH = height * 0.5f;
+
+            // Левая граница
+            targetPos.x = Mathf.Clamp(targetPos.x, -canvasSize.x / 2 + halfW + 10, canvasSize.x / 2 - halfW - 10);
+            // Нижняя граница
+            targetPos.y = Mathf.Clamp(targetPos.y, -canvasSize.y / 2 + halfH + 10, canvasSize.y / 2 - halfH - 10);
+
+            rect.anchoredPosition = targetPos;
         }
+
 
         // =========================================================================
         // ITEM TOOLTIP

@@ -20,6 +20,11 @@ namespace Features.Biomes.Domain
         public float islandWidth;
         public float islandHeight;
 
+        public float4 biomeColor;           // цвет биома
+        public float textureTilingMult;     // множитель тила UV
+        public float materialParam1;        // любое спец. значение
+        public float materialParam2;
+
         // ===== Water =====
         public int useWater;
         public int waterType;

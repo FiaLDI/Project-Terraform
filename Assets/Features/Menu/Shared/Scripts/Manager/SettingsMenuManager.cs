@@ -55,6 +55,7 @@ public class SettingsMenuManager : MonoBehaviour
                 break;
 
             case SettingsCaller.MainMenu:
+                MainMenuFSM.Instance.Switch(MainMenuStateId.Play);
                 break;
         }
 
