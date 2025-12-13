@@ -2,14 +2,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.InputSystem;
-
-using Features.Abilities.Domain;
-using Features.Abilities.Application;
-using Features.Buffs.Application;
-using Features.Buffs.Domain;
-using Features.Player.UnityIntegration;
 using Features.Items.Domain;
 using Features.Items.Data;
+using Features.Abilities.Domain;
+using Features.Player.UnityIntegration;
+using Features.Buffs.Domain;
+using Features.Buffs.Application;
 
 namespace Features.Menu.Tooltip
 {
@@ -27,6 +25,12 @@ namespace Features.Menu.Tooltip
         private RectTransform rect;
         private Canvas canvas;
 
+        private bool isVisible;
+
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
+
         private void Awake()
         {
             Instance = this;
@@ -37,49 +41,59 @@ namespace Features.Menu.Tooltip
 
         private void Update()
         {
-            if (group.alpha <= 0) return;
-            if (Mouse.current == null) return;
+            if (!isVisible || Mouse.current == null)
+                return;
 
+            UpdatePosition();
+        }
+
+        // =====================================================
+        // POSITION
+        // =====================================================
+
+        private void UpdatePosition()
+        {
             Vector2 mousePos = Mouse.current.position.ReadValue();
-
             RectTransform canvasRect = canvas.transform as RectTransform;
 
-            // Конвертация позиции в локальные координаты Canvas
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvasRect,
                 mousePos,
-                canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera,
+                canvas.renderMode == RenderMode.ScreenSpaceOverlay
+                    ? null
+                    : canvas.worldCamera,
                 out Vector2 localPos
             );
 
-            // Отступ над мышкой
-            float height = rect.rect.height;
             float width = rect.rect.width;
+            float height = rect.rect.height;
 
             Vector2 offset = new Vector2(20, height * 0.5f + 20);
             Vector2 targetPos = localPos + offset;
 
-            // === ОГРАНИЧЕНИЕ ВНУТРИ CANVAS ===
             Vector2 canvasSize = canvasRect.rect.size;
-
             float halfW = width * 0.5f;
             float halfH = height * 0.5f;
 
-            // Левая граница
-            targetPos.x = Mathf.Clamp(targetPos.x, -canvasSize.x / 2 + halfW + 10, canvasSize.x / 2 - halfW - 10);
-            // Нижняя граница
-            targetPos.y = Mathf.Clamp(targetPos.y, -canvasSize.y / 2 + halfH + 10, canvasSize.y / 2 - halfH - 10);
+            targetPos.x = Mathf.Clamp(
+                targetPos.x,
+                -canvasSize.x / 2 + halfW + 10,
+                canvasSize.x / 2 - halfW - 10
+            );
+
+            targetPos.y = Mathf.Clamp(
+                targetPos.y,
+                -canvasSize.y / 2 + halfH + 10,
+                canvasSize.y / 2 - halfH - 10
+            );
 
             rect.anchoredPosition = targetPos;
         }
 
-
-        // =========================================================================
+        // =====================================================
         // ITEM TOOLTIP
-        // =========================================================================
-        // =========================================================================
-        // ITEM INSTANCE TOOLTIP
-        // =========================================================================
+        // =====================================================
+
         public void ShowForItemInstance(ItemInstance inst)
         {
             if (inst == null || inst.itemDefinition == null)
@@ -90,34 +104,38 @@ namespace Features.Menu.Tooltip
 
             Item def = inst.itemDefinition;
 
+            // ⚠️ НЕ храним ссылку, сразу читаем данные
             icon.sprite = def.icon;
             title.text = def.itemName;
             description.text = def.description;
-
             stats.text = "";
 
-            // ---- Level info ----
-            int level = inst.level;
-            if (level > 0 && def.upgrades != null && level <= def.upgrades.Length)
+            // Level
+            if (inst.level > 0 && def.upgrades != null &&
+                inst.level <= def.upgrades.Length)
             {
-                stats.text += $"\n<color=#FFD700>Level {level}</color>\n";
+                stats.text += $"<color=#FFD700>Level {inst.level}</color>\n";
 
-                var up = def.upgrades[level - 1];
-                foreach (var b in up.bonusStats)
-                    stats.text += $"{b.stat}: +{b.value}\n";
+                var up = def.upgrades[inst.level - 1];
+                if (up != null)
+                {
+                    foreach (var b in up.bonusStats)
+                        stats.text += $"{b.stat}: +{b.value}\n";
+                }
             }
 
-            // ---- Stack info ----
+            // Stack
             if (def.isStackable)
                 stats.text += $"\nStack: {inst.quantity}/{def.maxStackAmount}";
 
-            group.alpha = 1;
+            Show();
         }
 
-        // =========================================================================
-        // ABILITY TOOLTIP (адаптирована для PlayerRegistry)
-        // =========================================================================
-        public void ShowAbility(AbilitySO ability, AbilityCaster casterOverride = null)
+        // =====================================================
+        // ABILITY TOOLTIP
+        // =====================================================
+
+        public void ShowAbility(AbilitySO ability)
         {
             if (ability == null)
             {
@@ -125,72 +143,21 @@ namespace Features.Menu.Tooltip
                 return;
             }
 
-            var caster = casterOverride ?? PlayerRegistry.Instance.LocalAbilities;
-
             icon.sprite = ability.icon;
             title.text = ability.displayName;
-            title.color = Color.white;
             description.text = ability.description;
             stats.text = "";
 
-            // === Energy Cost ===
-            float baseCost = ability.energyCost;
-            float finalCost = caster != null
-                ? caster.GetFinalEnergyCost(ability)
-                : baseCost;
+            stats.text += $"Energy: {ability.energyCost}\n";
+            stats.text += $"Cooldown: {ability.cooldown:0.0}s\n";
 
-            if (Mathf.Approximately(baseCost, finalCost))
-                stats.text += $"<b>Energy:</b> {finalCost:0}\n";
-            else
-                stats.text += $"<b>Energy:</b> {finalCost:0} <color=#999>(was {baseCost:0})</color>\n";
-
-            // === Cooldown ===
-            stats.text += $"<b>Cooldown:</b> {ability.cooldown:0.0}s\n";
-
-            // === Channel Time ===
-            if (ability.castType == AbilityCastType.Channel)
-                stats.text += $"<b>Channel:</b> {ability.castTime:0.0}s\n";
-
-            // === Additional Ability Fields ===
-            var fields = ability.GetType().GetFields(
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
-            );
-
-            foreach (var f in fields)
-            {
-                if (f.Name is "displayName" or "description" or "icon" or
-                    "cooldown" or "energyCost" or "castTime" or "castType")
-                    continue;
-
-                var value = f.GetValue(ability);
-
-                if (value is float fVal)
-                    stats.text += $"{FormatFieldName(f.Name)}: {fVal:0.##}\n";
-                else if (value is int iVal)
-                    stats.text += $"{FormatFieldName(f.Name)}: {iVal}\n";
-            }
-
-            group.alpha = 1;
+            Show();
         }
 
-        private string FormatFieldName(string raw)
-        {
-            System.Text.StringBuilder sb = new();
-
-            foreach (char c in raw)
-            {
-                if (char.IsUpper(c))
-                    sb.Append(' ');
-
-                sb.Append(c);
-            }
-
-            return sb.ToString().Trim();
-        }
-
-        // =========================================================================
+        // =====================================================
         // BUFF TOOLTIP
-        // =========================================================================
+        // =====================================================
+
         public void ShowBuff(BuffInstance buff)
         {
             if (buff == null || buff.Config == null)
@@ -203,33 +170,31 @@ namespace Features.Menu.Tooltip
 
             icon.sprite = cfg.icon;
             title.text = cfg.displayName;
-            title.color = cfg.isDebuff ? Color.red : Color.white;
-
             description.text = cfg.description;
-            stats.text = "";
 
-            stats.text += $"<b>Effect:</b> {cfg.stat} ({cfg.modType} {cfg.value})\n";
+            stats.text =
+                $"{cfg.stat} {cfg.modType} {cfg.value}\n" +
+                (cfg.isDebuff ? "<color=red>Debuff</color>" : "");
 
-            if (cfg.isStackable && buff.StackCount > 1)
-                stats.text += $"Stacks: {buff.StackCount}\n";
-
-            if (!float.IsInfinity(cfg.duration))
-                stats.text += $"Duration: {cfg.duration:0.0}s\n";
-            else
-                stats.text += $"Duration: <i>Permanent</i>\n";
-
-            if (cfg.targetType == BuffTargetType.Global)
-                stats.text += "<color=#88F>GLOBAL Buff</color>\n";
-
-            group.alpha = 1;
+            Show();
         }
 
-        // =========================================================================
-        // HIDE TOOLTIP
-        // =========================================================================
+        // =====================================================
+        // VISIBILITY
+        // =====================================================
+
+        private void Show()
+        {
+            isVisible = true;
+            group.alpha = 1;
+            group.blocksRaycasts = false;
+        }
+
         public void Hide(bool instant = false)
         {
+            isVisible = false;
             group.alpha = 0;
+            group.blocksRaycasts = false;
         }
     }
 }

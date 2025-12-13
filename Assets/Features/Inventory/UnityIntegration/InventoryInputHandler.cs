@@ -3,6 +3,8 @@ using Features.Camera.Domain;
 using Features.Camera.UnityIntegration;
 using Features.Inventory;
 using Features.Inventory.UI;
+using Features.Items.Domain;
+using Features.Items.UnityIntegration;
 using Features.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -32,6 +34,8 @@ namespace Features.Inventory.UnityIntegration
             // === Hotbar direct ===
             input.UI.EquipFirst.performed += _ => SelectHotbar(0);
             input.UI.EquipSecond.performed += _ => SelectHotbar(1);
+
+            input.Player.Drop.performed += _ => DropCurrent();
 
             // === Scroll hotbar ===
             input.UI.ScrollWheel.performed += ctx =>
@@ -108,5 +112,41 @@ namespace Features.Inventory.UnityIntegration
             cameraControl?.SetInputBlocked(false);
             interactionController?.SetInteractionBlocked(false);
         }
+
+        private void DropCurrent()
+        {
+            if (inventory == null)
+                return;
+
+            int index = inventory.Model.selectedHotbarIndex;
+            var slot = inventory.Model.hotbar[index];
+
+            if (slot.item == null)
+                return;
+
+            var inst = slot.item;
+
+            // удалить из инвентаря
+            inventory.Service.TryRemove(inst.itemDefinition, 1);
+
+            // заспавнить в мире
+            var prefab = inst.itemDefinition.worldPrefab;
+            if (prefab == null)
+                return;
+
+            var worldObj = Instantiate(
+                prefab,
+                transform.position + transform.forward * 1.5f,
+                Quaternion.identity
+            );
+
+            var holder = worldObj.GetComponent<ItemRuntimeHolder>()
+                        ?? worldObj.AddComponent<ItemRuntimeHolder>();
+            holder.SetInstance(inst);
+
+            if (worldObj.TryGetComponent<IItemModeSwitch>(out var mode))
+                mode.SetWorldMode();
+        }
+
     }
 }

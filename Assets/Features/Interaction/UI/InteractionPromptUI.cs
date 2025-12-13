@@ -7,7 +7,6 @@ using UnityEngine;
 
 public class InteractionPromptUI : MonoBehaviour
 {
-    [Header("UI")]
     [SerializeField] private TextMeshProUGUI promptText;
 
     private InteractionService interactionService;
@@ -22,6 +21,7 @@ public class InteractionPromptUI : MonoBehaviour
     private void Start()
     {
         rayService = InteractionServiceProvider.Ray;
+
         if (rayService == null)
         {
             Debug.LogError("[InteractionPromptUI] InteractionRayService NOT FOUND");
@@ -30,8 +30,6 @@ public class InteractionPromptUI : MonoBehaviour
         }
 
         nearby = LocalPlayerContext.Get<NearbyInteractables>();
-        if (nearby == null)
-            Debug.LogWarning("[InteractionPromptUI] NearbyInteractables NOT FOUND");
 
         promptText.text = "";
         promptText.enabled = false;
@@ -39,9 +37,7 @@ public class InteractionPromptUI : MonoBehaviour
 
     private void Update()
     {
-        // ===============================
-        // 1) Nearby item
-        // ===============================
+        // 1) Nearby items
         if (nearby != null && Camera.main != null)
         {
             var best = nearby.GetBestItem(Camera.main);
@@ -58,11 +54,8 @@ public class InteractionPromptUI : MonoBehaviour
             }
         }
 
-        // ===============================
-        // 2) Interactable
-        // ===============================
-        InteractionRayHit hit = rayService.Raycast();
-
+        // 2) Ray interactable
+        var hit = rayService.Raycast();
         if (interactionService.TryGetInteractable(hit, out var interactable))
         {
             promptText.enabled = true;

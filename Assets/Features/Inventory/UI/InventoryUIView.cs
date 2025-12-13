@@ -125,11 +125,16 @@ namespace Features.Inventory.UI
             );
 
             // ==== Hotbar Selection ====
-            int idx = model.selectedHotbarIndex;
-            if (idx >= 0 && idx < hotbarSlots.Length)
+            if (hotbarSelection != null &&
+                hotbarSlots != null &&
+                hotbarSlots.Length > 0)
             {
-                hotbarSelection.position =
-                    hotbarSlots[idx].transform.position;
+                int idx = model.selectedHotbarIndex;
+                if (idx >= 0 && idx < hotbarSlots.Length)
+                {
+                    hotbarSelection.position =
+                        hotbarSlots[idx].transform.position;
+                }
             }
         }
     }

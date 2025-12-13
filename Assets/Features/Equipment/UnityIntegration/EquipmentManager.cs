@@ -1,17 +1,18 @@
 ﻿using Features.Equipment.Domain;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
-using Features.Weapons.UnityIntegration;
 using UnityEngine;
-using Features.Weapons.Data;
 using Features.Inventory;
 
 namespace Features.Equipment.UnityIntegration
 {
     public class EquipmentManager : MonoBehaviour
     {
+        [Header("Hands")]
         [SerializeField] private Transform rightHandTransform;
         [SerializeField] private Transform leftHandTransform;
+
+        [Header("Camera")]
         [SerializeField] private UnityEngine.Camera playerCamera;
 
         private GameObject currentRightHandObject;
@@ -30,7 +31,6 @@ namespace Features.Equipment.UnityIntegration
         public void Init(IInventoryContext inventory)
         {
             this.inventory = inventory;
-
             inventory.Service.OnChanged += EquipFromInventory;
         }
 
@@ -54,6 +54,9 @@ namespace Features.Equipment.UnityIntegration
 
         private void EquipFromInventory()
         {
+            if (inventory == null)
+                return;
+
             var model = inventory.Model;
 
             EquipRightHand(model.rightHand.item);
@@ -62,15 +65,11 @@ namespace Features.Equipment.UnityIntegration
                 model.rightHand.item?.itemDefinition?.isTwoHanded == true;
 
             if (isTwoHanded)
-            {
                 ClearLeftHand();
-            }
             else
-            {
                 EquipLeftHand(model.leftHand.item);
-            }
 
-            usage.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
+            usage?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
         }
 
         // ======================================================
@@ -80,10 +79,15 @@ namespace Features.Equipment.UnityIntegration
         private void EquipRightHand(ItemInstance inst)
         {
             ClearRightHand();
-            if (inst == null) return;
+            if (inst == null)
+                return;
 
-            InstantiateRuntimeItem(inst, rightHandTransform,
-                out currentRightHandObject, out rightHandUsable);
+            InstantiateRuntimeItem(
+                inst,
+                rightHandTransform,
+                out currentRightHandObject,
+                out rightHandUsable
+            );
         }
 
         private void ClearRightHand()
@@ -102,10 +106,15 @@ namespace Features.Equipment.UnityIntegration
         private void EquipLeftHand(ItemInstance inst)
         {
             ClearLeftHand();
-            if (inst == null) return;
+            if (inst == null)
+                return;
 
-            InstantiateRuntimeItem(inst, leftHandTransform,
-                out currentLeftHandObject, out leftHandUsable);
+            InstantiateRuntimeItem(
+                inst,
+                leftHandTransform,
+                out currentLeftHandObject,
+                out leftHandUsable
+            );
         }
 
         private void ClearLeftHand()
@@ -127,63 +136,60 @@ namespace Features.Equipment.UnityIntegration
             out GameObject obj,
             out IUsable usable)
         {
-            var prefab = inst.itemDefinition.worldPrefab;
+            obj = null;
+            usable = null;
 
+            // Guards
+            if (inst == null || inst.itemDefinition == null || parent == null)
+                return;
+
+            var prefab = inst.itemDefinition.worldPrefab;
+            if (prefab == null)
+            {
+                Debug.LogError($"[EquipmentManager] worldPrefab NULL for {inst.itemDefinition.name}");
+                return;
+            }
+
+            // Instantiate
             obj = Instantiate(prefab, parent);
             obj.transform.localPosition = Vector3.zero;
             obj.transform.localRotation = Quaternion.identity;
 
+            // Rigidbody safety
             if (obj.TryGetComponent<Rigidbody>(out var rb))
             {
                 rb.isKinematic = true;
                 rb.useGravity = false;
             }
 
+            // Runtime holder — ЕДИНЫЙ источник ItemInstance
             var holder = obj.GetComponent<ItemRuntimeHolder>()
-                         ?? obj.AddComponent<ItemRuntimeHolder>();
-
+                        ?? obj.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
 
-            usable = CreateController(obj, inst);
+            // 🔥 ПЕРЕКЛЮЧЕНИЕ В EQUIPPED MODE
+            if (obj.TryGetComponent<IItemModeSwitch>(out var mode))
+            {
+                mode.SetEquippedMode();
+            }
 
-            if (usable is WeaponController wc)
-                wc.Init(inventory);
+            // Берём IUsable С ПРЕФАБА (Presenter)
+            usable = obj.GetComponent<IUsable>();
+            if (usable == null)
+            {
+                Debug.LogWarning($"[EquipmentManager] No IUsable on {obj.name}");
+                return;
+            }
 
-            if (usable is ThrowableController tc)
-                tc.Init(inventory);
-
-            usable?.Initialize(playerCamera);
+            usable.Initialize(playerCamera);
         }
 
+
         // ======================================================
-        // CONTROLLER FACTORY
-        // ======================================================
-
-        private IUsable CreateController(GameObject obj, ItemInstance inst)
-        {
-            var def = inst.itemDefinition;
-
-            if (def.weaponConfig != null)
-                return obj.AddComponent<WeaponController>();
-
-            if (def.toolConfig != null)
-                return obj.AddComponent<ToolController>();
-
-            if (def.scannerConfig != null)
-                return obj.AddComponent<ScannerController>();
-
-            if (def.throwableConfig != null)
-                return obj.AddComponent<ThrowableController>();
-
-            if (def.category == ItemCategory.Melee)
-                return obj.AddComponent<MeleeController>();
-
-            return null;
-        }
-
+        // PUBLIC API
         // ======================================================
 
         public IUsable GetRightHandUsable() => rightHandUsable;
-        public IUsable GetLeftHandUsable() => leftHandUsable;
+        public IUsable GetLeftHandUsable()  => leftHandUsable;
     }
 }

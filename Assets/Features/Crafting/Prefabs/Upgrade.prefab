@@ -970,7 +970,7 @@ GameObject:
   - component: {fileID: 8001490605385884086}
   - component: {fileID: 8440398767427225177}
   - component: {fileID: 6604559620402985195}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Upgrade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2324,7 +2324,6 @@ MonoBehaviour:
   actionButton: {fileID: 739800694617992221}
   progressUI: {fileID: 4375922576964542711}
   cancelAction: {fileID: 4761638168674325383, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  parentStation: {fileID: 5763846552045652506}
 --- !u!222 &801959811050665222
 CanvasRenderer:
   m_ObjectHideFlags: 0

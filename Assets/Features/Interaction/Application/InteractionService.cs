@@ -1,4 +1,5 @@
 using Features.Interaction.Domain;
+using UnityEngine;
 
 namespace Features.Interaction.Application
 {
@@ -7,10 +8,16 @@ namespace Features.Interaction.Application
         public bool TryGetInteractable(InteractionRayHit hit, out IInteractable interactable)
         {
             interactable = null;
-            if (!hit.Hit) return false;
 
-            interactable = hit.HitInfo.collider.GetComponentInParent<IInteractable>();
+            if (!hit.Hit)
+                return false;
+
+            var col = hit.HitInfo.collider;
+
+            interactable = col.GetComponentInParent<IInteractable>();
+
             return interactable != null;
         }
+
     }
 }

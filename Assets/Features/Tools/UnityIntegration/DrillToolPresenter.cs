@@ -26,13 +26,19 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
     {
         cam = camera;
 
-        // Берём runtime-экземпляр предмета
         var inst = GetComponent<ItemRuntimeHolder>()?.Instance;
+        if (inst == null || inst.itemDefinition == null)
+        {
+            // НОРМАЛЬНОЕ состояние (предмет сняли / переключили)
+            enabled = false;
+            return;
+        }
 
         toolService = new ToolService();
         toolService.Initialize(inst);
 
         stats = toolService.stats;
+        enabled = true;
     }
 
     // ============================================================
@@ -64,7 +70,11 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
 
     private void DrillTick()
     {
-        if (!Physics.Raycast(cam.transform.position, cam.transform.forward, out var hit, stats[ToolStat.Range]))
+        if (!Physics.Raycast(
+                cam.transform.position,
+                cam.transform.forward,
+                out var hit,
+                stats[ToolStat.Range]))
         {
             fx?.Stop();
             return;
@@ -79,7 +89,6 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
         float mining = stats[ToolStat.MiningSpeed] * toolMultiplier * Time.deltaTime;
         float dmg    = stats[ToolStat.Damage]      * toolMultiplier * Time.deltaTime;
 
-        // Resource Node
         var node = FindComponentUpwards<ResourceNodePresenter>(hit.collider.transform);
         if (node != null)
         {
@@ -87,7 +96,6 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
             return;
         }
 
-        // Damage target
         var damageable = FindComponentUpwards<IDamageable>(hit.collider.transform);
         if (damageable != null)
         {

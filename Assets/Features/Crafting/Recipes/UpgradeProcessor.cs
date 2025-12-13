@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using Features.Items.Domain;
 using Features.Inventory;
@@ -13,10 +14,7 @@ public class UpgradeProcessor : MonoBehaviour
     private IInventoryContext inventory;
 
     private bool isProcessing;
-    private float startTime;
-
-    private UpgradeRecipeSO activeRecipe;
-    private ItemInstance targetInstance;
+    private Coroutine currentRoutine;
 
     // ======================================================
     // INIT
@@ -33,80 +31,88 @@ public class UpgradeProcessor : MonoBehaviour
 
     public void BeginUpgrade(UpgradeRecipeSO recipe, ItemInstance inst)
     {
-        if (recipe == null || inst == null || inventory == null)
-        {
-            Debug.LogError("[UpgradeProcessor] Invalid input or inventory");
+        if (isProcessing)
             return;
-        }
+
+        if (recipe == null || inst == null || inst.itemDefinition == null)
+            return;
+
+        if (inventory == null)
+            return;
 
         int maxLevels = inst.itemDefinition.upgrades?.Length ?? 0;
         if (inst.level >= maxLevels)
-        {
-            Debug.Log("[Upgrade] Already max level");
             return;
-        }
 
-        if (!HasIngredients(recipe))
-        {
-            Debug.LogWarning("[Upgrade] Not enough ingredients");
+        if (!inventory.Service.HasIngredients(recipe.ingredients))
             return;
-        }
 
-        activeRecipe = recipe;
-        targetInstance = inst;
+        currentRoutine = StartCoroutine(Process(recipe, inst));
+    }
 
-        startTime = Time.time;
+    // ======================================================
+    // PROCESS
+    // ======================================================
+
+    private IEnumerator Process(UpgradeRecipeSO recipe, ItemInstance inst)
+    {
         isProcessing = true;
 
         OnStart?.Invoke(inst);
-    }
 
-    // ======================================================
-    // UPDATE
-    // ======================================================
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, recipe.duration);
 
-    private void Update()
-    {
-        if (!isProcessing || activeRecipe == null)
-            return;
-
-        float progress = (Time.time - startTime) / activeRecipe.duration;
-        OnProgress?.Invoke(progress);
-
-        if (progress >= 1f)
-            Complete();
-    }
-
-    // ======================================================
-    // INTERNAL
-    // ======================================================
-
-    private bool HasIngredients(RecipeSO recipe)
-    {
-        var service = inventory.Service;
-
-        foreach (var ing in recipe.ingredients)
+        while (elapsed < duration)
         {
-            if (service.GetItemCount(ing.item) < ing.amount)
-                return false;
+            elapsed += Time.unscaledDeltaTime;
+            OnProgress?.Invoke(elapsed / duration);
+            yield return null;
         }
 
-        return true;
+        Finish(recipe, inst);
     }
 
-    private void Complete()
+    // ======================================================
+    // COMPLETE
+    // ======================================================
+
+    private void Finish(UpgradeRecipeSO recipe, ItemInstance inst)
     {
         isProcessing = false;
+        currentRoutine = null;
 
         var service = inventory.Service;
 
-        // REMOVE INGREDIENTS
-        foreach (var ing in activeRecipe.ingredients)
+        // 1️⃣ REMOVE INGREDIENTS
+        foreach (var ing in recipe.ingredients)
             service.TryRemove(ing.item, ing.amount);
 
-        // APPLY UPGRADE
-        targetInstance.level++;
+        // 2️⃣ APPLY UPGRADE
+        inst.level++;
 
-        OnComplete?.Invoke(targetInstance);
+        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
+        // Сообщаем всем UI, что модель изменилась
+        service.NotifyChanged();
+
+        OnComplete?.Invoke(inst);
+    }
+
+    // ======================================================
+    // OPTIONAL
+    // ======================================================
+
+    public bool IsProcessing => isProcessing;
+
+    public void Cancel()
+    {
+        if (!isProcessing)
+            return;
+
+        if (currentRoutine != null)
+            StopCoroutine(currentRoutine);
+
+        currentRoutine = null;
+        isProcessing = false;
     }
 }

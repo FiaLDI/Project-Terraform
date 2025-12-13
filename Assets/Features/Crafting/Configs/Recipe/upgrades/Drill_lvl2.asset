@@ -19,5 +19,5 @@ MonoBehaviour:
   duration: 2
   stationType: 3
   recipeType: 2
-  upgradeBaseItem: {fileID: 11400000, guid: 5d8b6d013c118bd43b6a7deaddfa301b, type: 2}
+  upgradeBaseItem: {fileID: 11400000, guid: 03872795b3c1d5c49a1a030d6642a8de, type: 2}
   targetLevel: 2

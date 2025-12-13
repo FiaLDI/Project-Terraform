@@ -34,11 +34,10 @@ namespace Features.Inventory.Domain
 
         public bool AddItem(ItemInstance inst)
         {
-            // 1. Попытка стакнуть в хотбар
+            // 1️⃣ СТАК — ТОЛЬКО В BAG
             if (inst.IsStackable)
             {
-                var stack = model.hotbar
-                    .Concat(model.main)
+                var stack = model.main
                     .FirstOrDefault(s =>
                         s.item != null &&
                         s.item.itemDefinition == inst.itemDefinition &&
@@ -61,18 +60,7 @@ namespace Features.Inventory.Domain
                 }
             }
 
-            // 2. Сначала пустые ячейки хотбара
-            foreach (var slot in model.hotbar)
-            {
-                if (slot.item == null)
-                {
-                    slot.item = inst;
-                    OnChanged?.Invoke();
-                    return true;
-                }
-            }
-
-            // 3. Потом сумка
+            // 2️⃣ ПУСТЫЕ СЛОТЫ BAG
             foreach (var slot in model.main)
             {
                 if (slot.item == null)
@@ -83,8 +71,10 @@ namespace Features.Inventory.Domain
                 }
             }
 
+            // 3️⃣ НИКАКОГО AUTO-ADD В HOTBAR
             return false;
         }
+
 
         // ===============================================================
         // REMOVE
@@ -315,6 +305,12 @@ namespace Features.Inventory.Domain
             model.selectedHotbarIndex = index;
             OnChanged?.Invoke();
         }
+
+        public void NotifyChanged()
+        {
+            OnChanged?.Invoke();
+        }
+
 
     }
 }

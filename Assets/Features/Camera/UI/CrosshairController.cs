@@ -23,14 +23,27 @@ namespace Features.Player.UI
             interactionService = new InteractionService();
         }
 
-        private void Start()
+        private void OnEnable()
         {
-            rayService = InteractionServiceProvider.Ray;
-            if (rayService == null)
+            if (InteractionServiceProvider.Ray != null)
             {
-                Debug.LogError("[CrosshairController] InteractionRayService NOT FOUND");
-                enabled = false;
+                OnRayReady(InteractionServiceProvider.Ray);
             }
+            else
+            {
+                InteractionServiceProvider.OnRayInitialized += OnRayReady;
+            }
+        }
+
+        private void OnDisable()
+        {
+            InteractionServiceProvider.OnRayInitialized -= OnRayReady;
+        }
+
+        private void OnRayReady(InteractionRayService ray)
+        {
+            rayService = ray;
+            Debug.Log("[CrosshairController] InteractionRayService READY");
         }
 
         private void Update()
@@ -40,10 +53,10 @@ namespace Features.Player.UI
 
             InteractionRayHit hit = rayService.Raycast();
 
-            if (interactionService.TryGetInteractable(hit, out _))
-                crosshair.color = interactColor;
-            else
-                crosshair.color = normalColor;
+            crosshair.color =
+                interactionService.TryGetInteractable(hit, out _)
+                    ? interactColor
+                    : normalColor;
         }
     }
 }

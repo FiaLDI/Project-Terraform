@@ -8,6 +8,10 @@ namespace Features.Tools.Application
     {
         public static ToolRuntimeStats Calculate(ItemInstance inst)
         {
+            if (inst == null || inst.itemDefinition == null)
+            {
+                return new ToolRuntimeStats();
+            }
             var stats = new ToolRuntimeStats();
             var def = inst.itemDefinition;
 
@@ -50,9 +54,9 @@ namespace Features.Tools.Application
             var upgrades = def.upgrades;
             if (upgrades != null)
             {
-                int level = Mathf.Clamp(inst.level, 0, upgrades.Length);
+                int level = Mathf.Clamp(inst.level, 0, upgrades.Length - 1);
 
-                for (int i = 0; i < level; i++)
+                for (int i = 0; i <= level; i++)
                 {
                     ApplyUpgrade(stats, upgrades[i]);
                 }

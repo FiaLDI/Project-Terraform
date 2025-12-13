@@ -5,7 +5,6 @@ using Features.Interaction.Domain;
 using Features.Interaction.UnityIntegration;
 using Features.Items.Domain;
 using Features.Player;
-using Features.Camera.UnityIntegration;
 
 public class PlayerInteractionController : MonoBehaviour
 {
@@ -17,15 +16,14 @@ public class PlayerInteractionController : MonoBehaviour
 
     private INearbyInteractables nearby;
 
-    private Camera cam;
-    private CameraRayProvider rayProvider;
-
     // ======================================================
     // LIFECYCLE
     // ======================================================
 
     private void Awake()
     {
+        interactionService = new InteractionService();
+
         input = new InputSystem_Actions();
         input.Player.Enable();
 
@@ -35,72 +33,17 @@ public class PlayerInteractionController : MonoBehaviour
 
     private void Start()
     {
-        interactionService = new InteractionService();
-        nearby = LocalPlayerContext.Get<NearbyInteractables>();
+        rayService = InteractionServiceProvider.Ray;
+        if (rayService == null)
+        {
+            Debug.LogError("[PlayerInteractionController] InteractionRayService NOT FOUND");
+            enabled = false;
+            return;
+        }
 
+        nearby = LocalPlayerContext.Get<NearbyInteractables>();
         if (nearby == null)
             Debug.LogWarning("[PlayerInteractionController] NearbyInteractables NOT FOUND");
-
-        InitFromCameraRegistry();
-    }
-
-    private void OnDestroy()
-    {
-        if (CameraRegistry.Instance != null)
-            CameraRegistry.Instance.OnCameraChanged -= OnCameraChanged;
-    }
-
-    // ======================================================
-    // CAMERA INIT
-    // ======================================================
-
-    private void InitFromCameraRegistry()
-    {
-        var registry = CameraRegistry.Instance;
-        if (registry == null)
-        {
-            Debug.LogError("[PlayerInteractionController] CameraRegistry NOT FOUND");
-            enabled = false;
-            return;
-        }
-
-        if (registry.CurrentCamera != null)
-        {
-            InitWithCamera(registry.CurrentCamera);
-        }
-        else
-        {
-            registry.OnCameraChanged += OnCameraChanged;
-        }
-    }
-
-    private void OnCameraChanged(Camera camera)
-    {
-        if (camera == null) return;
-
-        CameraRegistry.Instance.OnCameraChanged -= OnCameraChanged;
-        InitWithCamera(camera);
-    }
-
-    private void InitWithCamera(Camera camera)
-    {
-        cam = camera;
-
-        rayProvider = camera.GetComponentInParent<CameraRayProvider>();
-        if (rayProvider == null)
-        {
-            Debug.LogError("[PlayerInteractionController] CameraRayProvider NOT FOUND");
-            enabled = false;
-            return;
-        }
-
-        rayService = new InteractionRayService(
-            rayProvider,
-            LayerMask.GetMask("Default", "Interactable", "Item"),
-            LayerMask.GetMask("Player")
-        );
-
-        Debug.Log("[PlayerInteractionController] Initialized with camera");
     }
 
     // ======================================================
@@ -109,23 +52,26 @@ public class PlayerInteractionController : MonoBehaviour
 
     public void TryInteract()
     {
-        if (interactionBlocked || cam == null || rayService == null)
+        if (interactionBlocked || rayService == null)
             return;
 
         // 1️⃣ Pickup nearby item
-        var best = nearby?.GetBestItem(cam);
-        if (best != null)
+        if (nearby != null && Camera.main != null)
         {
-            PickupItem(best);
-            return;
+            var best = nearby.GetBestItem(Camera.main);
+            if (best != null)
+            {
+                PickupItem(best);
+                return;
+            }
         }
 
+        // 2️⃣ Ray interactable
         var hit = rayService.Raycast();
         if (interactionService.TryGetInteractable(hit, out var interactable))
         {
             interactable.Interact();
         }
-
     }
 
     // ======================================================
@@ -154,7 +100,7 @@ public class PlayerInteractionController : MonoBehaviour
     public void DropCurrentItem(bool dropFullStack)
     {
         var inventory = LocalPlayerContext.Inventory;
-        if (inventory == null || cam == null)
+        if (inventory == null || Camera.main == null)
             return;
 
         var model = inventory.Model;
@@ -166,7 +112,7 @@ public class PlayerInteractionController : MonoBehaviour
 
         var inst = slot.item;
 
-        Vector3 pos = cam.transform.position + cam.transform.forward * 1.2f;
+        Vector3 pos = Camera.main.transform.position + Camera.main.transform.forward * 1.2f;
         var prefab = inst.itemDefinition.worldPrefab;
 
         if (prefab != null)

@@ -382,7 +382,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7284224207844058202}
-  - component: {fileID: 6602256842272987795}
   - component: {fileID: 5722277783477791755}
   m_Layer: 0
   m_Name: SystemWorld
@@ -418,20 +417,9 @@ Transform:
   - {fileID: 5551819165624009912}
   - {fileID: 7353954422553962514}
   - {fileID: 6001962131677941499}
+  - {fileID: 902073003995196607}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6602256842272987795
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2830221871605978793}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 23966e1c2c64004418d8bb749bf4f8a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NearbyInteractables
 --- !u!114 &5722277783477791755
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -573,7 +561,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3891765186309791815}
-  - component: {fileID: 4413750289243258021}
+  - component: {fileID: 6746294428455428514}
   m_Layer: 0
   m_Name: StatManager
   m_TagString: Untagged
@@ -596,7 +584,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7284224207844058202}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4413750289243258021
+--- !u!114 &6746294428455428514
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -605,7 +593,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3272256485146023465}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0889f558c8a5d25478d07f05bac9c3ba, type: 3}
+  m_Script: {fileID: 11500000, guid: 45544b4066bfcc848bd10d8faf1cc965, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GlobalStatManager
 --- !u!1 &4073941186275971833
@@ -731,6 +719,50 @@ Transform:
   - {fileID: 5313157517704280009}
   m_Father: {fileID: 7284224207844058202}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5240608768472204142
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 902073003995196607}
+  - component: {fileID: 2249067116033137335}
+  m_Layer: 0
+  m_Name: Drag
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &902073003995196607
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5240608768472204142}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7284224207844058202}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2249067116033137335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5240608768472204142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25553f5b4e3201841bee4c33cfc9f2d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryDragController
 --- !u!1 &5546970576752519005
 GameObject:
   m_ObjectHideFlags: 0

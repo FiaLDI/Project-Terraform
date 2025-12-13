@@ -1,50 +1,32 @@
 using UnityEngine;
 using Features.Interaction.Domain;
-using Features.Camera.UnityIntegration;
+using Features.Interaction.UnityIntegration;
 
-namespace Features.Interaction.UnityIntegration
+[DefaultExecutionOrder(-500)]
+public class CameraRayProvider : MonoBehaviour, IInteractionRayProvider
 {
-    public class CameraRayProvider : MonoBehaviour, IInteractionRayProvider
+    [SerializeField] private float maxDistance = 3f;
+
+    public float MaxDistance => maxDistance;
+
+    private Camera cam;
+
+    private void Awake()
     {
-        private UnityEngine.Camera cam;
-
-        [SerializeField] private float maxDistance = 4f;
-        public float MaxDistance => maxDistance;
-
-        private void OnEnable()
+        cam = GetComponentInChildren<Camera>();
+        if (cam == null)
         {
-            if (CameraRegistry.Instance != null)
-            {
-                CameraRegistry.Instance.OnCameraChanged += HandleCam;
-
-                if (CameraRegistry.Instance.CurrentCamera != null)
-                    cam = CameraRegistry.Instance.CurrentCamera;
-            }
-
-            InteractionServiceProvider.Init(this);
+            Debug.LogError("[CameraRayProvider] Camera NOT FOUND");
+            enabled = false;
+            return;
         }
 
-        private void OnDisable()
-        {
-            if (CameraRegistry.Instance != null)
-                CameraRegistry.Instance.OnCameraChanged -= HandleCam;
-        }
+        InteractionServiceProvider.Init(this);
+        Debug.Log("[CameraRayProvider] InteractionRayService INITIALIZED");
+    }
 
-        private void HandleCam(UnityEngine.Camera newCam)
-        {
-            cam = newCam;
-        }
-
-        public Ray GetRay()
-        {
-            // ❗ Если камеры нет — НЕ ВОЗВРАЩАЕМ ФЕЙК
-            if (cam == null)
-                throw new System.InvalidOperationException(
-                    "[CameraRayProvider] Camera is not registered yet"
-                );
-
-            // Луч строго из центра экрана
-            return cam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
-        }
+    public Ray GetRay()
+    {
+        return cam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
     }
 }

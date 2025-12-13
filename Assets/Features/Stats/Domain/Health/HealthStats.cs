@@ -93,8 +93,6 @@ namespace Features.Stats.Domain
         public void ApplyBuff(BuffSO cfg, bool apply)
         {
             
-    Debug.Log($"[HealthStats] ApplyBuff: {cfg.stat}, {cfg.modType}, value={cfg.value}, apply={apply}");
-
             float sign = apply ? 1f : -1f;
 
             switch (cfg.stat)

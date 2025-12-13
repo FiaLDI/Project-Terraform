@@ -11118,8 +11118,22 @@ MonoBehaviour:
   bagWindow: {fileID: 6939433444312534943}
   leftHandWindow: {fileID: 3811031036918363800}
   rightHandWindow: {fileID: 175902019503816282}
-  bagSlots: []
-  hotbarSlots: []
+  bagSlots:
+  - {fileID: 1080250017829102992}
+  - {fileID: 1230129482190917301}
+  - {fileID: 7713946801474776378}
+  - {fileID: 2809122268945260382}
+  - {fileID: 5868388206799671032}
+  - {fileID: 1370314475264258483}
+  - {fileID: 6274652436723138474}
+  - {fileID: 5470299453330883542}
+  - {fileID: 1990883623257114013}
+  - {fileID: 5977266327558748028}
+  - {fileID: 3166461510355175984}
+  - {fileID: 7847286738440961230}
+  hotbarSlots:
+  - {fileID: 8377697557388497734}
+  - {fileID: 7713946801474776378}
   leftHandSlot: {fileID: 8377697557388497734}
   rightHandSlot: {fileID: 7713946801474776378}
   hotbarSelection: {fileID: 0}

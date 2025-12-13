@@ -5,11 +5,13 @@ using Features.Items.Domain;
 using Features.Items.Data;
 using System;
 using Features.Inventory;
+using Features.Equipment.UnityIntegration;
 
 namespace Features.Inventory.UnityIntegration
 {
     /// <summary>
     /// Player-scoped Inventory.
+    /// Владелец модели, сервиса и экипировки.
     /// Никаких singleton'ов.
     /// </summary>
     public class InventoryManager : MonoBehaviour, IInventoryContext
@@ -20,14 +22,32 @@ namespace Features.Inventory.UnityIntegration
         public event Action OnInventoryChanged;
         public event Action<ItemInstance> OnItemAddedInstance;
 
+        [Header("Config")]
         [SerializeField] private int bagSize = 12;
-        [SerializeField] private int hotbarSize = 2;
+        [SerializeField] private int hotbarSize = 2; // руки
+
+        private EquipmentManager equipment;
+
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
 
         private void Awake()
         {
             CreateModel();
             CreateService();
+            InitEquipment();
         }
+
+        private void OnDestroy()
+        {
+            if (Service != null)
+                Service.OnChanged -= HandleInventoryChanged;
+        }
+
+        // ======================================================
+        // INIT
+        // ======================================================
 
         private void CreateModel()
         {
@@ -43,7 +63,31 @@ namespace Features.Inventory.UnityIntegration
         private void CreateService()
         {
             Service = new InventoryService(Model);
-            Service.OnChanged += () => OnInventoryChanged?.Invoke();
+            Service.OnChanged += HandleInventoryChanged;
+        }
+
+        private void InitEquipment()
+        {
+            equipment = GetComponent<EquipmentManager>();
+            if (equipment != null)
+            {
+                equipment.Init(this);
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "[InventoryManager] EquipmentManager not found on Player"
+                );
+            }
+        }
+
+        // ======================================================
+        // EVENTS
+        // ======================================================
+
+        private void HandleInventoryChanged()
+        {
+            OnInventoryChanged?.Invoke();
         }
 
         // ======================================================
@@ -56,7 +100,15 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             var inst = new ItemInstance(definition, amount);
-            Service.AddItem(inst);
+
+            bool added = Service.AddItem(inst);
+            if (!added)
+            {
+                Debug.LogWarning(
+                    $"[InventoryManager] Failed to add item {definition.name}"
+                );
+                return;
+            }
 
             OnItemAddedInstance?.Invoke(inst);
         }

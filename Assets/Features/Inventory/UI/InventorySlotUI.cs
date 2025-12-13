@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.EventSystems;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
+using Features.Menu.Tooltip;
 
 namespace Features.Inventory.UI
 {
@@ -13,7 +14,8 @@ namespace Features.Inventory.UI
     /// НЕ содержит логики инвентаря.
     /// </summary>
     public class InventorySlotUI : MonoBehaviour,
-        IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler
+        IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler,
+        IPointerEnterHandler, IPointerExitHandler
     {
         [Header("UI")]
         [SerializeField] private Image icon;
@@ -52,28 +54,41 @@ namespace Features.Inventory.UI
         {
             if (boundSlot == null || boundSlot.item == null)
             {
-                icon.enabled = false;
-                amountText.text = "";
+                if (icon != null)
+                    icon.enabled = false;
+
+                if (amountText != null)
+                    amountText.text = "";
+
                 return;
             }
 
-            icon.enabled = true;
-            icon.sprite = boundSlot.item.itemDefinition.icon;
+            if (icon != null)
+            {
+                icon.enabled = true;
+                icon.sprite = boundSlot.item.itemDefinition.icon;
+            }
 
-            amountText.text =
-                boundSlot.item.quantity > 1
-                ? boundSlot.item.quantity.ToString()
-                : "";
+            if (amountText != null)
+            {
+                amountText.text =
+                    boundSlot.item.quantity > 1
+                        ? boundSlot.item.quantity.ToString()
+                        : "";
+            }
         }
 
         // ===========================================================
-        // DRAG & DROP EVENTS
+        // DRAG & DROP
         // ===========================================================
 
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (boundSlot == null || boundSlot.item == null)
                 return;
+
+            // при начале drag — скрываем tooltip
+            TooltipController.Instance?.Hide();
 
             InventoryDragController.Instance.BeginDrag(this, boundSlot);
         }
@@ -91,6 +106,23 @@ namespace Features.Inventory.UI
         public void OnDrop(PointerEventData eventData)
         {
             InventoryDragController.Instance.DropOnto(this, boundSlot);
+        }
+
+        // ===========================================================
+        // TOOLTIP
+        // ===========================================================
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (boundSlot?.item == null)
+                return;
+
+            TooltipController.Instance?.ShowForItemInstance(boundSlot.item);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            TooltipController.Instance?.Hide();
         }
     }
 }

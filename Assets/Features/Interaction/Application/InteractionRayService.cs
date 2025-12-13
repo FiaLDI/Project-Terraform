@@ -1,5 +1,6 @@
 using UnityEngine;
 using Features.Interaction.Domain;
+using System;
 
 namespace Features.Interaction.Application
 {
@@ -21,25 +22,25 @@ namespace Features.Interaction.Application
 
         public InteractionRayHit Raycast()
         {
-            try
-            {
-                Ray ray = provider.GetRay();
-
-                bool hit = Physics.Raycast(
-                    ray,
-                    out var hitInfo,
-                    provider.MaxDistance,
-                    includeMask,
-                    QueryTriggerInteraction.Ignore
-                );
-
-                return new InteractionRayHit(hit, hitInfo);
-            }
-            catch
+            if (provider == null)
             {
                 return default;
             }
+
+            Ray ray = provider.GetRay();
+
+            bool hit = Physics.Raycast(
+                ray,
+                out var hitInfo,
+                provider.MaxDistance,
+                includeMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+            return new InteractionRayHit(hit, hitInfo);
         }
+
+
 
     }
 }
