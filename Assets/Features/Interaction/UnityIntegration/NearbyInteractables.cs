@@ -34,26 +34,16 @@ public class NearbyInteractables : MonoBehaviour, INearbyInteractables
 
             float angle = Vector3.Angle(camForward, toItem);
 
-            // 🔍 ПОДРОБНЫЙ ЛОГ ПО КАЖДОМУ ПРЕДМЕТУ
-            Debug.Log(
-                $"[NearbyCheck] {item.name} | dist={distance:F2} | angle={angle:F1}",
-                item
-            );
-
-            // Фильтры
             if (distance > maxDistance)
             {
-                Debug.Log($"[NearbyCheck] {item.name} SKIP: distance > {maxDistance}");
                 continue;
             }
 
             if (angle > maxAngle)
             {
-                Debug.Log($"[NearbyCheck] {item.name} SKIP: angle > {maxAngle}");
                 continue;
             }
 
-            // Чем меньше score — тем лучше
             float score = distance + angle * 0.03f;
 
             if (score < bestScore)

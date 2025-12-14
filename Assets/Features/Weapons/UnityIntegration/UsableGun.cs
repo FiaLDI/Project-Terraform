@@ -3,9 +3,10 @@ using Features.Weapons.UnityIntegration;
 using UnityEngine;
 
 [RequireComponent(typeof(WeaponController))]
-public class UsableGun : MonoBehaviour, IUsable
+public class UsableGun : MonoBehaviour, IUsable, IReloadable
 {
     private WeaponController weapon;
+    public IAmmoProvider AmmoProvider => weapon;
 
     public void Initialize(Camera camera)
     {
@@ -24,4 +25,6 @@ public class UsableGun : MonoBehaviour, IUsable
     public void OnUseSecondary_Start() => weapon?.OnUseSecondary_Start();
     public void OnUseSecondary_Hold() => weapon?.OnUseSecondary_Hold();
     public void OnUseSecondary_Stop() => weapon?.OnUseSecondary_Stop();
+
+    public void OnReloadPressed() => weapon?.OnReloadPressed();
 }

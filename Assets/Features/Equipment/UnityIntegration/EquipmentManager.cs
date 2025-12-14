@@ -3,6 +3,7 @@ using Features.Items.Domain;
 using UnityEngine;
 using Features.Inventory;
 using Features.Items.UnityIntegration;
+using Features.Weapons.UnityIntegration;
 
 namespace Features.Equipment.UnityIntegration
 {
@@ -59,6 +60,8 @@ namespace Features.Equipment.UnityIntegration
 
             var model = inventory.Model;
 
+            Debug.Log($"[EquipFromInventory] rightHand.item = {model.rightHand.item}");
+
             EquipRightHand(model.rightHand.item);
 
             bool isTwoHanded =
@@ -70,6 +73,12 @@ namespace Features.Equipment.UnityIntegration
                 EquipLeftHand(model.leftHand.item);
 
             usage?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
+
+            EquipmentEvents.OnHandsUpdated?.Invoke(
+                leftHandUsable,
+                rightHandUsable,
+                isTwoHanded
+            );
         }
 
         // ======================================================
@@ -153,18 +162,22 @@ namespace Features.Equipment.UnityIntegration
             obj.transform.localPosition = Vector3.zero;
             obj.transform.localRotation = Quaternion.identity;
 
-            // ✅ ВАЖНО: equipped объект тоже должен знать ItemInstance
             var holder = obj.GetComponent<ItemRuntimeHolder>() ?? obj.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
 
             usable = obj.GetComponent<IUsable>();
-            if (usable == null)
+
+            var weapon = obj.GetComponent<WeaponController>();
+            if (weapon != null)
             {
-                Debug.LogWarning($"[EquipmentManager] No IUsable on equipped prefab {obj.name}");
-                return;
+                weapon.Setup(inst);
+                weapon.Init(inventory);
+                weapon.Initialize(playerCamera);
             }
 
+            // 🔹 Usable (обёртка)
             usable.Initialize(playerCamera);
+
         }
 
 

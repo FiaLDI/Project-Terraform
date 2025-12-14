@@ -1,16 +1,18 @@
 using UnityEngine;
-using Features.Weapons.Data;
+using Features.Weapons.Domain;
 
 namespace Features.Weapons.Application
 {
     public class AimService
     {
-        private WeaponConfig config;
+        private WeaponRuntimeStats stats;
         private bool aiming;
 
-        public void Initialize(WeaponConfig config)
+        public bool IsAiming => aiming;
+
+        public void Initialize(WeaponRuntimeStats stats)
         {
-            this.config = config;
+            this.stats = stats;
         }
 
         public void SetAiming(bool value)
@@ -23,15 +25,14 @@ namespace Features.Weapons.Application
         /// </summary>
         public Vector3 GetSpreadDirection(Transform camTransform)
         {
-            float spread = aiming ? config.adsSpread : config.hipfireSpread;
+            float spread = aiming ? stats.aimSpread : stats.spread;
 
             Vector3 dir = camTransform.forward;
 
             float yaw   = Random.Range(-spread, spread);
             float pitch = Random.Range(-spread, spread);
 
-            Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);
-            return rot * dir;
+            return Quaternion.Euler(pitch, yaw, 0f) * dir;
         }
     }
 }

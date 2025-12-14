@@ -44,6 +44,7 @@ namespace Features.Weapons.Data
         [Header("Magazine")]
         public int magazineSize = 30;
         public Item ammoType;
+        public int ammoPerItem = 30;
         public int startingAmmo = 30;
 
         [Header("Distances")]

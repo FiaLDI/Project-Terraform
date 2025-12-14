@@ -32,6 +32,13 @@ namespace Features.Equipment.UnityIntegration
             // === SECONDARY USE ===
             input.Player.SecondaryUse.performed += _ => StartSecondary();
             input.Player.SecondaryUse.canceled += _ => StopSecondary();
+
+            input.Player.Reload.performed += ctx =>
+            {
+                Debug.Log("RELOAD ACTION PERFORMED");
+                Reload();
+            };
+
         }
 
         private void OnEnable() => input.Enable();
@@ -90,6 +97,16 @@ namespace Features.Equipment.UnityIntegration
             rightHand?.OnUseSecondary_Stop();
         }
 
+        private void Reload()
+        {
+            if (InteractionLocked)
+                return;
+
+            if (rightHand is IReloadable reloadable)
+                reloadable.OnReloadPressed();
+        }
+
+
         // ====================================================================
         // UPDATE (HOLD)
         // ====================================================================
@@ -105,5 +122,6 @@ namespace Features.Equipment.UnityIntegration
             if (usingSecondary)
                 rightHand?.OnUseSecondary_Hold();
         }
+        
     }
 }

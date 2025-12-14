@@ -1,6 +1,7 @@
 using Features.Items.Domain;
 using Features.Weapons.Data;
 using Features.Weapons.Domain;
+using UnityEngine;
 
 namespace Features.Weapons.Application
 {
@@ -49,15 +50,22 @@ namespace Features.Weapons.Application
             }
 
             int taken = ammoService.ConsumeFromInventory(config.ammoType, 1);
+            if (taken <= 0)
+            {
+                ammo.isReloading = false;
+                return 0;
+            }
 
-            if (taken > 0)
-                ammo.ammoInMagazine++;
+            int toAdd = Mathf.Min(config.ammoPerItem, space);
+
+            ammo.ammoInMagazine += toAdd;
 
             if (ammo.ammoInMagazine >= config.magazineSize)
                 ammo.isReloading = false;
 
-            return taken;
+            return toAdd;
         }
+
 
         public void FinishReload()
         {
