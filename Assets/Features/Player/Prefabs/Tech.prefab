@@ -887,7 +887,7 @@ GameObject:
   - component: {fileID: 4463475622551393170}
   m_Layer: 0
   m_Name: CameraAnchor
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7860,6 +7860,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85040d66c8788a049875915e09b793cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NearbyInteractables
+  maxDistance: 3
+  maxAngle: 45
 --- !u!1 &3073243255481498858
 GameObject:
   m_ObjectHideFlags: 0
@@ -11121,7 +11123,7 @@ MonoBehaviour:
   bagSlots:
   - {fileID: 1080250017829102992}
   - {fileID: 1230129482190917301}
-  - {fileID: 7713946801474776378}
+  - {fileID: 303208141977663841}
   - {fileID: 2809122268945260382}
   - {fileID: 5868388206799671032}
   - {fileID: 1370314475264258483}

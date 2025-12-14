@@ -80,6 +80,7 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
             return;
         }
 
+
         fx?.Play(hit.point, hit.normal);
 
         heat += Time.deltaTime;
@@ -89,29 +90,25 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
         float mining = stats[ToolStat.MiningSpeed] * toolMultiplier * Time.deltaTime;
         float dmg    = stats[ToolStat.Damage]      * toolMultiplier * Time.deltaTime;
 
-        var node = FindComponentUpwards<ResourceNodePresenter>(hit.collider.transform);
+        // 1. СНАЧАЛА ресурсы
+        var node = hit.collider.GetComponent<ResourceNodePresenter>();
         if (node != null)
         {
             node.ApplyMining(mining);
             return;
         }
 
-        var damageable = FindComponentUpwards<IDamageable>(hit.collider.transform);
-        if (damageable != null)
+        // 2. ПОТОМ урон
+        var comps = hit.collider.GetComponentsInParent<Component>();
+        foreach (var c in comps)
         {
-            damageable.TakeDamage(dmg, DamageType.Mining);
-            return;
+            if (c is IDamageable damageable)
+            {
+                damageable.TakeDamage(dmg, DamageType.Mining);
+                return;
+            }
         }
+
     }
 
-    private T FindComponentUpwards<T>(Transform t) where T : class
-    {
-        while (t != null)
-        {
-            if (t.TryGetComponent(out T result))
-                return result;
-            t = t.parent;
-        }
-        return null;
-    }
 }

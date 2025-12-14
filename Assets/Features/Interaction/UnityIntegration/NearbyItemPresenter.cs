@@ -12,36 +12,57 @@ public class NearbyItemPresenter : MonoBehaviour
     private void Awake()
     {
         holder = GetComponent<ItemRuntimeHolder>();
+
+        Debug.Log(
+            $"[NearbyItemPresenter][Awake] {name} | holder={(holder ? "OK" : "NULL")}",
+            this
+        );
+
         if (holder == null)
-        {
-            Debug.LogError($"[NearbyItemPresenter] ItemRuntimeHolder missing on {name}", this);
-        }
+            Debug.LogError("[NearbyItemPresenter] ItemRuntimeHolder MISSING", this);
     }
 
     private void OnEnable()
     {
+        Debug.Log($"[NearbyItemPresenter][OnEnable] {name}", this);
+
         nearby = LocalPlayerContext.Get<NearbyInteractables>();
-         Debug.Log(
-            $"[NearbyItemPresenter] nearby={(nearby == null ? "NULL" : "OK")}",
+
+        Debug.Log(
+            $"[NearbyItemPresenter] NearbyInteractables = {(nearby == null ? "NULL" : "OK")}",
             this
-    );
+        );
+
         if (nearby == null)
         {
-            Debug.LogWarning("[NearbyItemPresenter] NearbyInteractables NOT FOUND");
+            Debug.LogWarning("[NearbyItemPresenter] Register FAILED — nearby is NULL", this);
             return;
         }
 
         nearby.Register(this);
+        Debug.Log("[NearbyItemPresenter] Registered");
     }
 
     private void OnDisable()
     {
-        nearby?.Unregister(this);
+        Debug.Log($"[NearbyItemPresenter][OnDisable] {name}", this);
+
+        if (nearby != null)
+        {
+            nearby.Unregister(this);
+            Debug.Log("[NearbyItemPresenter] Unregistered");
+        }
+
         nearby = null;
     }
 
     public ItemInstance GetInstance()
     {
-        return holder != null ? holder.Instance : null;
+        var inst = holder != null ? holder.Instance : null;
+
+        if (inst == null)
+            Debug.LogWarning("[NearbyItemPresenter] ItemInstance is NULL", this);
+
+        return inst;
     }
 }

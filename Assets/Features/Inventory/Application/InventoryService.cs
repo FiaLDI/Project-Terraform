@@ -3,6 +3,7 @@ using System.Linq;
 using Features.Inventory.Application;
 using Features.Items.Data;
 using Features.Items.Domain;
+using UnityEngine;
 
 namespace Features.Inventory.Domain
 {
@@ -142,21 +143,53 @@ namespace Features.Inventory.Domain
         // ===============================================================
 
         public bool MoveItem(int fromIndex, InventorySection fromSection,
-                             int toIndex, InventorySection toSection)
+                     int toIndex, InventorySection toSection)
         {
             var from = GetSlot(fromSection, fromIndex);
-            var to = GetSlot(toSection, toIndex);
+            var to   = GetSlot(toSection, toIndex);
 
-            if (from == null || to == null)
+            if (from == null || to == null || from.item == null)
                 return false;
 
-            var tmp = to.item;
-            to.item = from.item;
-            from.item = tmp;
+            // 🚫 нельзя класть в левую руку, если справа двуручный
+            if (toSection == InventorySection.LeftHand &&
+                model.rightHand.item?.itemDefinition?.isTwoHanded == true)
+                return false;
 
-            OnChanged?.Invoke();
-            return true;
+            // 🚫 если переносим двуручный в правую руку — левую очищаем
+            if (toSection == InventorySection.RightHand &&
+                from.item?.itemDefinition?.isTwoHanded == true)
+                model.leftHand.item = null;
+
+            // ✅ Hand slots: делаем нормальный swap hand <-> other
+            bool fromIsHand = fromSection is InventorySection.RightHand or InventorySection.LeftHand;
+            bool toIsHand   = toSection   is InventorySection.RightHand or InventorySection.LeftHand;
+
+            if (fromIsHand || toIsHand)
+            {
+                // swap между from и to
+                var tmp = to.item;
+                to.item = from.item;
+                from.item = tmp;
+
+                // после любых операций с правой рукой — применить двуручность
+                HandleTwoHandedIfNeeded();
+
+                OnChanged?.Invoke();
+                return true;
+            }
+
+            // ✅ обычные секции (bag/hotbar) — swap как раньше
+            {
+                var tmp = to.item;
+                to.item = from.item;
+                from.item = tmp;
+
+                OnChanged?.Invoke();
+                return true;
+            }
         }
+
 
         // ===============================================================
         // EQUIP
@@ -167,7 +200,15 @@ namespace Features.Inventory.Domain
             var s = GetSlot(section, slot);
             model.rightHand.item = s.item;
 
-            // двуручность
+            if (s.item.itemDefinition.equippedPrefab == null)
+            {
+                Debug.Log(
+                    $"[InventoryService] Item {s.item.itemDefinition.itemName} is NOT equippable"
+                );
+                return;
+            }
+
+            s.item = null;
             HandleTwoHandedIfNeeded();
 
             OnChanged?.Invoke();
@@ -175,11 +216,20 @@ namespace Features.Inventory.Domain
 
         public void EquipLeftHand(int slot, InventorySection section)
         {
+            if (model.rightHand.item?.itemDefinition?.isTwoHanded == true)
+            {
+                Debug.Log("[InventoryService] Cannot equip left hand: right hand is TWO-HANDED");
+                return;
+            }
+
             var s = GetSlot(section, slot);
             model.leftHand.item = s.item;
 
+            s.item = null;
+
             OnChanged?.Invoke();
         }
+
 
         public void UnequipRightHand()
         {

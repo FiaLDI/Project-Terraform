@@ -30,6 +30,9 @@ namespace Features.Items.Data
         [Header("World")]
         public GameObject worldPrefab;
 
+        [Header("Equipped")]
+        public GameObject equippedPrefab;
+
         [Header("Feature Configs - Optional Feature-specific configs (they may be null) ")]
         public WeaponConfig weaponConfig;
         public ToolConfig toolConfig;

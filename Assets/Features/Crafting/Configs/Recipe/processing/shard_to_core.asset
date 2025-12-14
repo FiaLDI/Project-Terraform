@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 845213ab7b10463408c8a527c8118fd3, type: 3}
   m_Name: shard_to_core
   m_EditorClassIdentifier: Assembly-CSharp::RecipeSO
-  recipeId: 2
+  recipeId: pr-1
   inputs:
-  - item: {fileID: 11400000, guid: 777a1965a76dac84d9636ed573f4bb34, type: 2}
-    amount: 1
+  - item: {fileID: 11400000, guid: 0bfba99ba2d28b740b2212d7beab1fab, type: 2}
+    amount: 3
   outputItem: {fileID: 11400000, guid: f4fc98f7595e99240a220251b4e7cbff, type: 2}
   outputAmount: 1
   duration: 2

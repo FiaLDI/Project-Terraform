@@ -9,15 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 845213ab7b10463408c8a527c8118fd3, type: 3}
+  m_Script: {fileID: 11500000, guid: a2eab089c05b616498caa6507ba0e6b8, type: 3}
   m_Name: crystal_to_shard
-  m_EditorClassIdentifier: Assembly-CSharp::RecipeSO
-  recipeId: 0
+  m_EditorClassIdentifier: Assembly-CSharp::ProcessingRecipeSO
+  recipeId: pr-0
   inputs:
-  - item: {fileID: 11400000, guid: 3b83970df4c0fac40a8c976c2ed8e1c2, type: 2}
-    amount: 3
-  outputItem: {fileID: 11400000, guid: 777a1965a76dac84d9636ed573f4bb34, type: 2}
-  outputAmount: 1
+  - item: {fileID: 11400000, guid: 858bdf25dbe42824ea18e2f40d4218c8, type: 2}
+    amount: 5
+  outputItem: {fileID: 11400000, guid: 0bfba99ba2d28b740b2212d7beab1fab, type: 2}
+  outputAmount: 3
   duration: 2
   stationType: 2
   recipeType: 0

@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 10408e8dc84845f4fb8b774b4f4b14fd, type: 3}
-  m_Name: Iron
+  m_Name: Crystall
   m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
-  id: 2
-  itemName: Iron
-  description: 'Iron can '
-  icon: {fileID: 21300000, guid: 4831291e7e2a4ad4882ac7da61d6a38a, type: 3}
+  id: 1
+  itemName: Crystall
+  description: 'Crystall can '
+  icon: {fileID: 21300000, guid: 0c3d25cd4f43bf04eb559ca7677f1ef5, type: 3}
   isTwoHanded: 0
   category: 0
   isStackable: 1
   maxStackAmount: 64
   baseStats: []
   upgrades: []
-  worldPrefab: {fileID: 7430191170602964640, guid: 1a264c8b09d311049b9443265c5077b5, type: 3}
+  worldPrefab: {fileID: 778727334413204419, guid: de2bd9ba3719fac48b8cfe90b3fb8aa1, type: 3}
   equippedPrefab: {fileID: 0}
   weaponConfig: {fileID: 0}
   toolConfig: {fileID: 0}

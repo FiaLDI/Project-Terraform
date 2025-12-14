@@ -31,6 +31,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 239c04098b298d747a7fd7bdd8ba7539, type: 2}
   - {fileID: 11400000, guid: ee6490e5359f5e1438a8d05b268cb222, type: 2}
   worldPrefab: {fileID: 3360301487101487544, guid: 5e252df5b72c86248974e61418379550, type: 3}
+  equippedPrefab: {fileID: 3360301487101487544, guid: b2617965e1877624eb4dd3bf965d9241, type: 3}
   weaponConfig: {fileID: 0}
   toolConfig: {fileID: 11400000, guid: e87f0838fda80df4397ac8878713e692, type: 2}
   scannerConfig: {fileID: 0}

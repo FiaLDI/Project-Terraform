@@ -24,7 +24,6 @@ public class InteractionPromptUI : MonoBehaviour
 
         if (rayService == null)
         {
-            Debug.LogError("[InteractionPromptUI] InteractionRayService NOT FOUND");
             enabled = false;
             return;
         }
@@ -37,10 +36,13 @@ public class InteractionPromptUI : MonoBehaviour
 
     private void Update()
     {
-        // 1) Nearby items
+        if (nearby == null)
+            nearby = LocalPlayerContext.Get<NearbyInteractables>();
         if (nearby != null && Camera.main != null)
         {
             var best = nearby.GetBestItem(Camera.main);
+
+
             if (best != null && best.GetInstance()?.itemDefinition != null)
             {
                 var def = best.GetInstance().itemDefinition;
@@ -50,11 +52,11 @@ public class InteractionPromptUI : MonoBehaviour
                 promptText.text = qty > 1
                     ? $"[E] Подобрать: {def.itemName} x{qty}"
                     : $"[E] Подобрать: {def.itemName}";
+
                 return;
             }
         }
 
-        // 2) Ray interactable
         var hit = rayService.Raycast();
         if (interactionService.TryGetInteractable(hit, out var interactable))
         {
@@ -65,4 +67,5 @@ public class InteractionPromptUI : MonoBehaviour
 
         promptText.enabled = false;
     }
+
 }

@@ -17,7 +17,7 @@ MonoBehaviour:
   bonusStats:
   - stat: 0
     value: 3
-  - stat: 0
+  - stat: 1
     value: 3
-  - stat: 0
+  - stat: 2
     value: 3

@@ -9,17 +9,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51c89048b910b184097d6640a5cc9904, type: 3}
+  m_Script: {fileID: 11500000, guid: 10408e8dc84845f4fb8b774b4f4b14fd, type: 3}
   m_Name: CoreCrystal
-  m_EditorClassIdentifier: Assembly-CSharp::Resource
-  worldPrefab: {fileID: 1046357907567521835, guid: 99586948cf4af0744a9c288f9724b22c, type: 3}
-  id: 12456
-  itemName: Core Crystal
-  description: Core Crystal
-  icon: {fileID: 21300000, guid: 3e07046fef0cbfc4aa0c4daf44a22d2d, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
+  id: 2
+  itemName: Core
+  description: CoreCoreCoreCoreCore
+  icon: {fileID: 21300000, guid: 6665f208403f4844d9ba46a1bae04f68, type: 3}
+  isTwoHanded: 0
+  category: 0
   isStackable: 1
-  maxStackAmount: 20
-  itemType: 5
-  isQuestItem: 0
-  questId: 
-  requiredAmount: 1
+  maxStackAmount: 5
+  baseStats: []
+  upgrades: []
+  worldPrefab: {fileID: 1046357907567521835, guid: 99586948cf4af0744a9c288f9724b22c, type: 3}
+  equippedPrefab: {fileID: 0}
+  weaponConfig: {fileID: 0}
+  toolConfig: {fileID: 0}
+  scannerConfig: {fileID: 0}
+  throwableConfig: {fileID: 0}

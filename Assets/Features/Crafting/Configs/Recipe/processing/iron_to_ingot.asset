@@ -12,11 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 845213ab7b10463408c8a527c8118fd3, type: 3}
   m_Name: iron_to_ingot
   m_EditorClassIdentifier: Assembly-CSharp::RecipeSO
-  recipeId: 1
-  inputs: []
-  outputItem: {fileID: 0}
-  outputAmount: 1
+  recipeId: pr-2
+  inputs:
+  - item: {fileID: 11400000, guid: 3ee27a3ff7e23964a86f39caecaa2910, type: 2}
+    amount: 2
+  outputItem: {fileID: 11400000, guid: 2ae9721e9020c474cb3a199e52800a0c, type: 2}
+  outputAmount: 4
   duration: 2
   stationType: 2
-  recipeType: 1
+  recipeType: 0
   upgradeBaseItem: {fileID: 0}

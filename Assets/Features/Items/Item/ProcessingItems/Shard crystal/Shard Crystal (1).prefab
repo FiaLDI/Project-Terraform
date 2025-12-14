@@ -71,7 +71,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 5849691808246445478, guid: 101ac031d428b7c4dbf5981e2981d93a, type: 3}
+  - {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -103,12 +103,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2195667181089959633}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 392c80c9a7e588949b1b96d29f525334, type: 3}
+  m_Script: {fileID: 11500000, guid: dcd804cce9b45e7488e0fa4b95db57d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemObject
-  itemData: {fileID: 11400000, guid: 777a1965a76dac84d9636ed573f4bb34, type: 2}
-  quantity: 1
-  isWorldObject: 1
 --- !u!114 &4324963436071289797
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118,9 +115,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 2195667181089959633}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00ce2d5d4e1f30746a08570cfecbfd8d, type: 3}
+  m_Script: {fileID: 11500000, guid: 85040d66c8788a049875915e09b793cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemAutoRegister
+  maxDistance: 3
+  maxAngle: 45
 --- !u!135 &4260386102137999229
 SphereCollider:
   m_ObjectHideFlags: 0

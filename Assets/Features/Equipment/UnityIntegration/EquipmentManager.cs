@@ -1,8 +1,8 @@
 ﻿using Features.Equipment.Domain;
 using Features.Items.Domain;
-using Features.Items.UnityIntegration;
 using UnityEngine;
 using Features.Inventory;
+using Features.Items.UnityIntegration;
 
 namespace Features.Equipment.UnityIntegration
 {
@@ -82,7 +82,7 @@ namespace Features.Equipment.UnityIntegration
             if (inst == null)
                 return;
 
-            InstantiateRuntimeItem(
+            InstantiateEquippedItem(
                 inst,
                 rightHandTransform,
                 out currentRightHandObject,
@@ -109,7 +109,7 @@ namespace Features.Equipment.UnityIntegration
             if (inst == null)
                 return;
 
-            InstantiateRuntimeItem(
+            InstantiateEquippedItem(
                 inst,
                 leftHandTransform,
                 out currentLeftHandObject,
@@ -127,10 +127,10 @@ namespace Features.Equipment.UnityIntegration
         }
 
         // ======================================================
-        // INSTANTIATION
+        // INSTANTIATION (EQUIPPED ONLY)
         // ======================================================
 
-        private void InstantiateRuntimeItem(
+        private void InstantiateEquippedItem(
             ItemInstance inst,
             Transform parent,
             out GameObject obj,
@@ -139,14 +139,13 @@ namespace Features.Equipment.UnityIntegration
             obj = null;
             usable = null;
 
-            // Guards
             if (inst == null || inst.itemDefinition == null || parent == null)
                 return;
 
-            var prefab = inst.itemDefinition.worldPrefab;
+            var prefab = inst.itemDefinition.equippedPrefab;
             if (prefab == null)
             {
-                Debug.LogError($"[EquipmentManager] worldPrefab NULL for {inst.itemDefinition.name}");
+                Debug.LogError($"[EquipmentManager] equippedPrefab NULL for {inst.itemDefinition.name}");
                 return;
             }
 
@@ -154,25 +153,14 @@ namespace Features.Equipment.UnityIntegration
             obj.transform.localPosition = Vector3.zero;
             obj.transform.localRotation = Quaternion.identity;
 
-            if (obj.TryGetComponent<Rigidbody>(out var rb))
-            {
-                rb.isKinematic = true;
-                rb.useGravity = false;
-            }
-
-            var holder = obj.GetComponent<ItemRuntimeHolder>()
-                        ?? obj.AddComponent<ItemRuntimeHolder>();
+            // ✅ ВАЖНО: equipped объект тоже должен знать ItemInstance
+            var holder = obj.GetComponent<ItemRuntimeHolder>() ?? obj.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
-
-            if (obj.TryGetComponent<IItemModeSwitch>(out var mode))
-            {
-                mode.SetEquippedMode();
-            }
 
             usable = obj.GetComponent<IUsable>();
             if (usable == null)
             {
-                Debug.LogWarning($"[EquipmentManager] No IUsable on {obj.name}");
+                Debug.LogWarning($"[EquipmentManager] No IUsable on equipped prefab {obj.name}");
                 return;
             }
 

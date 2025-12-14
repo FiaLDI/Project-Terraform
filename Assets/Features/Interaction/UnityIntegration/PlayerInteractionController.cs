@@ -43,8 +43,6 @@ public class PlayerInteractionController : MonoBehaviour
         }
 
         nearby = LocalPlayerContext.Get<NearbyInteractables>();
-        if (nearby == null)
-            Debug.LogWarning("[PlayerInteractionController] NearbyInteractables NOT FOUND");
     }
 
     // ======================================================
@@ -56,7 +54,7 @@ public class PlayerInteractionController : MonoBehaviour
         if (interactionBlocked || rayService == null)
             return;
 
-        // 1️⃣ Pickup nearby item
+        // 1️⃣ Pickup world item
         if (nearby != null && Camera.main != null)
         {
             var best = nearby.GetBestItem(Camera.main);
@@ -67,7 +65,7 @@ public class PlayerInteractionController : MonoBehaviour
             }
         }
 
-        // 2️⃣ Ray interactable (станки, двери и т.п.)
+        // 2️⃣ Ray interactable
         var hit = rayService.Raycast();
         if (interactionService.TryGetInteractable(hit, out var interactable))
         {
@@ -89,15 +87,14 @@ public class PlayerInteractionController : MonoBehaviour
         if (inventory == null)
             return;
 
-        // ✅ Переносим СУЩЕСТВУЮЩИЙ ItemInstance
         inventory.Service.AddItem(inst);
 
-        nearby?.Unregister(presenter);
+        // 🔥 ВАЖНО: просто уничтожаем world prefab
         Destroy(presenter.gameObject);
     }
 
     // ======================================================
-    // DROP
+    // DROP (быстрый дроп из хотбара)
     // ======================================================
 
     public void DropCurrentItem(bool dropFullStack)
@@ -114,7 +111,6 @@ public class PlayerInteractionController : MonoBehaviour
             return;
 
         var inst = slot.item;
-
         int dropAmount = dropFullStack ? inst.quantity : 1;
 
         var droppedInst = new ItemInstance(inst.itemDefinition, dropAmount);
@@ -122,21 +118,32 @@ public class PlayerInteractionController : MonoBehaviour
         Vector3 pos = Camera.main.transform.position
                     + Camera.main.transform.forward * 1.2f;
 
+        SpawnWorldItem(droppedInst, pos);
+
+        service.TryRemove(inst.itemDefinition, dropAmount);
+    }
+
+    // ======================================================
+    // WORLD SPAWN
+    // ======================================================
+
+    private void SpawnWorldItem(ItemInstance inst, Vector3 position)
+    {
         var prefab = inst.itemDefinition.worldPrefab;
         if (prefab == null)
             return;
 
-        var dropped = Instantiate(prefab, pos, Quaternion.identity);
+        var obj = Instantiate(prefab, position, Quaternion.identity);
 
-        var holder = dropped.GetComponent<ItemRuntimeHolder>()
-                     ?? dropped.AddComponent<ItemRuntimeHolder>();
+        var holder = obj.GetComponent<ItemRuntimeHolder>()
+                    ?? obj.AddComponent<ItemRuntimeHolder>();
+        holder.SetInstance(inst);
 
-        holder.SetInstance(droppedInst);
-
-        if (dropped.TryGetComponent<IItemModeSwitch>(out var mode))
-            mode.SetWorldMode();
-
-        service.TryRemove(inst.itemDefinition, dropAmount);
+        if (obj.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+        }
     }
 
     // ======================================================

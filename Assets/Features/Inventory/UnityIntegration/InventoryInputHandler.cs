@@ -144,11 +144,6 @@ namespace Features.Inventory.UnityIntegration
                         ?? obj.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
 
-            if (obj.TryGetComponent<IItemModeSwitch>(out var mode))
-            {
-                mode.SetWorldMode();
-            }
-
             if (obj.TryGetComponent<Rigidbody>(out var rb))
             {
                 rb.isKinematic = false;
@@ -156,5 +151,6 @@ namespace Features.Inventory.UnityIntegration
                 rb.AddForce(player.transform.forward * 2f, ForceMode.Impulse);
             }
         }
+
     }
 }

@@ -35,6 +35,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   Mining Interaction
         // -------------------------
+
         public void ApplyMining(float amount)
         {
             ApplyMining(amount, 1f);
@@ -43,7 +44,6 @@ namespace Features.Resources.UnityIntegration
         public void ApplyMining(float amount, float toolMultiplier)
         {
             bool depleted = _mining.Mine(_model, amount, toolMultiplier);
-
             if (depleted)
                 OnDepleted();
             else
@@ -53,6 +53,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   VFX
         // -------------------------
+
         private void PlayHitVFX()
         {
             if (config.hitEffect == null) return;
@@ -78,6 +79,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   On Depletion (Drops + VFX)
         // -------------------------
+
         private void OnDepleted()
         {
             PlayDestroyVFX();
@@ -95,6 +97,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   Spawning Dropped Items
         // -------------------------
+
         private void SpawnItem(Item item)
         {
             if (item == null || item.worldPrefab == null)
@@ -114,10 +117,6 @@ namespace Features.Resources.UnityIntegration
             var holder = go.GetComponent<ItemRuntimeHolder>()
                          ?? go.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
-
-            if (go.TryGetComponent<IItemModeSwitch>(out var mode))
-                mode.SetWorldMode();
         }
-
     }
 }

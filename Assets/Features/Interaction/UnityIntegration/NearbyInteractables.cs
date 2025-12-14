@@ -4,40 +4,91 @@ using UnityEngine;
 
 public class NearbyInteractables : MonoBehaviour, INearbyInteractables
 {
+    [Header("Tuning")]
+    [SerializeField] private float maxDistance = 3.0f;
+    [SerializeField] private float maxAngle = 45f;
+
     private readonly List<NearbyItemPresenter> items = new();
 
     public NearbyItemPresenter GetBestItem(Camera cam)
     {
+        if (cam == null)
+        {
+            Debug.LogWarning("[NearbyInteractables] Camera is NULL");
+            return null;
+        }
+
         NearbyItemPresenter best = null;
         float bestScore = float.MaxValue;
 
+        Vector3 camPos = cam.transform.position;
+        Vector3 camForward = cam.transform.forward;
+
         foreach (var item in items)
         {
-            if (item == null) continue;
+            if (item == null)
+                continue;
 
-            float dist = Vector3.Distance(
-                cam.transform.position,
-                item.transform.position
+            Vector3 toItem = item.transform.position - camPos;
+            float distance = toItem.magnitude;
+
+            float angle = Vector3.Angle(camForward, toItem);
+
+            // 🔍 ПОДРОБНЫЙ ЛОГ ПО КАЖДОМУ ПРЕДМЕТУ
+            Debug.Log(
+                $"[NearbyCheck] {item.name} | dist={distance:F2} | angle={angle:F1}",
+                item
             );
 
-            if (dist < bestScore)
+            // Фильтры
+            if (distance > maxDistance)
             {
-                bestScore = dist;
+                Debug.Log($"[NearbyCheck] {item.name} SKIP: distance > {maxDistance}");
+                continue;
+            }
+
+            if (angle > maxAngle)
+            {
+                Debug.Log($"[NearbyCheck] {item.name} SKIP: angle > {maxAngle}");
+                continue;
+            }
+
+            // Чем меньше score — тем лучше
+            float score = distance + angle * 0.03f;
+
+            if (score < bestScore)
+            {
+                bestScore = score;
                 best = item;
             }
         }
 
+
         return best;
     }
 
+    // ======================================================
+    // REGISTRATION
+    // ======================================================
+
     public void Register(NearbyItemPresenter presenter)
     {
+        if (presenter == null)
+            return;
+
         if (!items.Contains(presenter))
+        {
             items.Add(presenter);
+        }
     }
 
     public void Unregister(NearbyItemPresenter presenter)
     {
-        items.Remove(presenter);
+        if (presenter == null)
+            return;
+
+        if (items.Remove(presenter))
+        {
+        }
     }
 }
