@@ -4,6 +4,7 @@ using Features.Interaction.Application;
 using Features.Interaction.Domain;
 using Features.Interaction.UnityIntegration;
 using Features.Items.Domain;
+using Features.Items.UnityIntegration;
 using Features.Player;
 
 public class PlayerInteractionController : MonoBehaviour
@@ -28,7 +29,7 @@ public class PlayerInteractionController : MonoBehaviour
         input.Player.Enable();
 
         input.Player.Interact.performed += _ => TryInteract();
-        input.Player.Drop.performed += _ => DropCurrentItem(false);
+        input.Player.Drop.performed     += _ => DropCurrentItem(false);
     }
 
     private void Start()
@@ -66,7 +67,7 @@ public class PlayerInteractionController : MonoBehaviour
             }
         }
 
-        // 2️⃣ Ray interactable
+        // 2️⃣ Ray interactable (станки, двери и т.п.)
         var hit = rayService.Raycast();
         if (interactionService.TryGetInteractable(hit, out var interactable))
         {
@@ -80,14 +81,16 @@ public class PlayerInteractionController : MonoBehaviour
 
     private void PickupItem(NearbyItemPresenter presenter)
     {
-        var inst = presenter.instance;
+        var inst = presenter.GetInstance();
         if (inst == null || inst.itemDefinition == null)
             return;
 
         var inventory = LocalPlayerContext.Inventory;
-        inventory?.Service.AddItem(
-            new ItemInstance(inst.itemDefinition, inst.quantity)
-        );
+        if (inventory == null)
+            return;
+
+        // ✅ Переносим СУЩЕСТВУЮЩИЙ ItemInstance
+        inventory.Service.AddItem(inst);
 
         nearby?.Unregister(presenter);
         Destroy(presenter.gameObject);
@@ -103,7 +106,7 @@ public class PlayerInteractionController : MonoBehaviour
         if (inventory == null || Camera.main == null)
             return;
 
-        var model = inventory.Model;
+        var model   = inventory.Model;
         var service = inventory.Service;
 
         var slot = model.hotbar[model.selectedHotbarIndex];
@@ -112,25 +115,28 @@ public class PlayerInteractionController : MonoBehaviour
 
         var inst = slot.item;
 
-        Vector3 pos = Camera.main.transform.position + Camera.main.transform.forward * 1.2f;
+        int dropAmount = dropFullStack ? inst.quantity : 1;
+
+        var droppedInst = new ItemInstance(inst.itemDefinition, dropAmount);
+
+        Vector3 pos = Camera.main.transform.position
+                    + Camera.main.transform.forward * 1.2f;
+
         var prefab = inst.itemDefinition.worldPrefab;
+        if (prefab == null)
+            return;
 
-        if (prefab != null)
-        {
-            var dropped = Instantiate(prefab, pos, Quaternion.identity);
-            if (dropped.TryGetComponent<NearbyItemPresenter>(out var presenter))
-            {
-                presenter.Initialize(
-                    inst.itemDefinition,
-                    dropFullStack ? inst.quantity : 1
-                );
-            }
-        }
+        var dropped = Instantiate(prefab, pos, Quaternion.identity);
 
-        service.TryRemove(
-            inst.itemDefinition,
-            dropFullStack ? inst.quantity : 1
-        );
+        var holder = dropped.GetComponent<ItemRuntimeHolder>()
+                     ?? dropped.AddComponent<ItemRuntimeHolder>();
+
+        holder.SetInstance(droppedInst);
+
+        if (dropped.TryGetComponent<IItemModeSwitch>(out var mode))
+            mode.SetWorldMode();
+
+        service.TryRemove(inst.itemDefinition, dropAmount);
     }
 
     // ======================================================

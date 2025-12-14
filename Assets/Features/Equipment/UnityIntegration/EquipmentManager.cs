@@ -150,30 +150,25 @@ namespace Features.Equipment.UnityIntegration
                 return;
             }
 
-            // Instantiate
             obj = Instantiate(prefab, parent);
             obj.transform.localPosition = Vector3.zero;
             obj.transform.localRotation = Quaternion.identity;
 
-            // Rigidbody safety
             if (obj.TryGetComponent<Rigidbody>(out var rb))
             {
                 rb.isKinematic = true;
                 rb.useGravity = false;
             }
 
-            // Runtime holder — ЕДИНЫЙ источник ItemInstance
             var holder = obj.GetComponent<ItemRuntimeHolder>()
                         ?? obj.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
 
-            // 🔥 ПЕРЕКЛЮЧЕНИЕ В EQUIPPED MODE
             if (obj.TryGetComponent<IItemModeSwitch>(out var mode))
             {
                 mode.SetEquippedMode();
             }
 
-            // Берём IUsable С ПРЕФАБА (Presenter)
             usable = obj.GetComponent<IUsable>();
             if (usable == null)
             {

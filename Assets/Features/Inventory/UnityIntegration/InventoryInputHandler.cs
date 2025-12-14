@@ -35,7 +35,7 @@ namespace Features.Inventory.UnityIntegration
             input.UI.EquipFirst.performed += _ => SelectHotbar(0);
             input.UI.EquipSecond.performed += _ => SelectHotbar(1);
 
-            input.Player.Drop.performed += _ => DropCurrent();
+            input.Player.Drop.performed += _ => DropItem();
 
             // === Scroll hotbar ===
             input.UI.ScrollWheel.performed += ctx =>
@@ -113,40 +113,48 @@ namespace Features.Inventory.UnityIntegration
             interactionController?.SetInteractionBlocked(false);
         }
 
-        private void DropCurrent()
+        private void DropItem()
         {
             if (inventory == null)
                 return;
 
-            int index = inventory.Model.selectedHotbarIndex;
-            var slot = inventory.Model.hotbar[index];
-
-            if (slot.item == null)
+            var dropped = inventory.Service.DropFromHands();
+            if (dropped == null)
                 return;
 
-            var inst = slot.item;
+            SpawnDroppedItem(dropped);
+        }
 
-            // удалить из инвентаря
-            inventory.Service.TryRemove(inst.itemDefinition, 1);
-
-            // заспавнить в мире
+        private void SpawnDroppedItem(ItemInstance inst)
+        {
             var prefab = inst.itemDefinition.worldPrefab;
             if (prefab == null)
                 return;
 
-            var worldObj = Instantiate(
-                prefab,
-                transform.position + transform.forward * 1.5f,
-                Quaternion.identity
-            );
+            var player = LocalPlayerContext.Player;
+            if (player == null)
+                return;
 
-            var holder = worldObj.GetComponent<ItemRuntimeHolder>()
-                        ?? worldObj.AddComponent<ItemRuntimeHolder>();
+            Vector3 pos = player.transform.position + player.transform.forward * 1.2f;
+            Quaternion rot = Quaternion.identity;
+
+            var obj = Instantiate(prefab, pos, rot);
+
+            var holder = obj.GetComponent<ItemRuntimeHolder>()
+                        ?? obj.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
 
-            if (worldObj.TryGetComponent<IItemModeSwitch>(out var mode))
+            if (obj.TryGetComponent<IItemModeSwitch>(out var mode))
+            {
                 mode.SetWorldMode();
-        }
+            }
 
+            if (obj.TryGetComponent<Rigidbody>(out var rb))
+            {
+                rb.isKinematic = false;
+                rb.useGravity = true;
+                rb.AddForce(player.transform.forward * 2f, ForceMode.Impulse);
+            }
+        }
     }
 }

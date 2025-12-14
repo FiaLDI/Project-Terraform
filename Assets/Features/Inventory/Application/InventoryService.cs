@@ -311,6 +311,34 @@ namespace Features.Inventory.Domain
             OnChanged?.Invoke();
         }
 
+        public ItemInstance DropFromHands()
+        {
+            if (model.rightHand.item != null)
+            {
+                var dropped = model.rightHand.item;
+                model.rightHand.item = null;
+
+                if (model.leftHand.item != null)
+                {
+                    model.rightHand.item = model.leftHand.item;
+                    model.leftHand.item = null;
+                }
+
+                OnChanged?.Invoke();
+                return dropped;
+            }
+
+            if (model.leftHand.item != null)
+            {
+                var dropped = model.leftHand.item;
+                model.leftHand.item = null;
+
+                OnChanged?.Invoke();
+                return dropped;
+            }
+
+            return null;
+        }
 
     }
 }

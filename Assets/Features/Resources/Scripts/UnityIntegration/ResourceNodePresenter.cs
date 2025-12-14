@@ -1,8 +1,10 @@
-using UnityEngine;
-using Features.Resources.Domain;
+using Features.Items.Data;
+using Features.Items.Domain;
+using Features.Items.UnityIntegration;
 using Features.Resources.Application;
 using Features.Resources.Data;
-using Features.Items.Data;
+using Features.Resources.Domain;
+using UnityEngine;
 
 namespace Features.Resources.UnityIntegration
 {
@@ -107,10 +109,14 @@ namespace Features.Resources.UnityIntegration
                 Random.rotation
             );
 
-            if (go.TryGetComponent<NearbyItemPresenter>(out var presenter))
-            {
-                presenter.Initialize(item, 1);
-            }
+            var inst = new ItemInstance(item, 1);
+
+            var holder = go.GetComponent<ItemRuntimeHolder>()
+                         ?? go.AddComponent<ItemRuntimeHolder>();
+            holder.SetInstance(inst);
+
+            if (go.TryGetComponent<IItemModeSwitch>(out var mode))
+                mode.SetWorldMode();
         }
 
     }

@@ -1,28 +1,33 @@
 using UnityEngine;
 using Features.Player;
-using Features.Items.Domain;
-using Features.Items.Data;
 using Features.Interaction.Domain;
+using Features.Items.UnityIntegration;
+using Features.Items.Domain;
 
 public class NearbyItemPresenter : MonoBehaviour
 {
-    public ItemInstance instance;
-
     private INearbyInteractables nearby;
+    private ItemRuntimeHolder holder;
 
-    // ======================================================
-    // LIFECYCLE
-    // ======================================================
+    private void Awake()
+    {
+        holder = GetComponent<ItemRuntimeHolder>();
+        if (holder == null)
+        {
+            Debug.LogError($"[NearbyItemPresenter] ItemRuntimeHolder missing on {name}", this);
+        }
+    }
 
     private void OnEnable()
     {
         nearby = LocalPlayerContext.Get<NearbyInteractables>();
-
+         Debug.Log(
+            $"[NearbyItemPresenter] nearby={(nearby == null ? "NULL" : "OK")}",
+            this
+    );
         if (nearby == null)
         {
-            Debug.LogWarning(
-                $"[NearbyItemPresenter] NearbyInteractables not found for {name}"
-            );
+            Debug.LogWarning("[NearbyItemPresenter] NearbyInteractables NOT FOUND");
             return;
         }
 
@@ -35,12 +40,8 @@ public class NearbyItemPresenter : MonoBehaviour
         nearby = null;
     }
 
-    // ======================================================
-    // INIT
-    // ======================================================
-
-    public void Initialize(Item item, int quantity)
+    public ItemInstance GetInstance()
     {
-        instance = new ItemInstance(item, quantity);
+        return holder != null ? holder.Instance : null;
     }
 }

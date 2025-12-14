@@ -104,6 +104,7 @@ GameObject:
   - component: {fileID: 7246742927298510142}
   - component: {fileID: 6505930194385691807}
   - component: {fileID: -1048776089543306656}
+  - component: {fileID: 932284091774850149}
   m_Layer: 0
   m_Name: TestDrill (1) 1
   m_TagString: Untagged
@@ -292,8 +293,20 @@ MonoBehaviour:
   rb: {fileID: 8426488278509790473}
   physicalCollider: {fileID: 8681443684667531380}
   pickupTrigger: {fileID: 2744031165468463533}
-  nearbyItemPresenter: {fileID: 7246742927298510142}
+  nearbyItemPresenter: {fileID: 932284091774850149}
   equippedOnlyBehaviours: []
+--- !u!114 &932284091774850149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3360301487101487544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77705f14a058cd14a9894afdb4d07f3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NearbyItemPresenter
 --- !u!1 &3579673380293029900
 GameObject:
   m_ObjectHideFlags: 0

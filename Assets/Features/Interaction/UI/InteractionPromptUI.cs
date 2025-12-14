@@ -41,10 +41,10 @@ public class InteractionPromptUI : MonoBehaviour
         if (nearby != null && Camera.main != null)
         {
             var best = nearby.GetBestItem(Camera.main);
-            if (best != null && best.instance?.itemDefinition != null)
+            if (best != null && best.GetInstance()?.itemDefinition != null)
             {
-                var def = best.instance.itemDefinition;
-                int qty = best.instance.quantity;
+                var def = best.GetInstance().itemDefinition;
+                int qty = best.GetInstance().quantity;
 
                 promptText.enabled = true;
                 promptText.text = qty > 1

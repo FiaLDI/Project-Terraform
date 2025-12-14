@@ -12,20 +12,33 @@ public class ItemModeSwitch : MonoBehaviour, IItemModeSwitch
     [Header("Equipped Mode")]
     [SerializeField] private MonoBehaviour[] equippedOnlyBehaviours;
 
+    private bool isWorldMode;
+
     private void Reset()
     {
         rb = GetComponent<Rigidbody>();
+
         var colliders = GetComponents<Collider>();
-        if (colliders.Length > 0)
-            physicalCollider = colliders[0];
+        foreach (var c in colliders)
+        {
+            if (!c.isTrigger)
+                physicalCollider = c;
+            else
+                pickupTrigger = c;
+        }
     }
 
     // ===============================
-    // WORLD
+    // WORLD MODE
     // ===============================
 
     public void SetWorldMode()
     {
+        if (isWorldMode)
+            return;
+
+        isWorldMode = true;
+
         if (rb != null)
         {
             rb.isKinematic = false;
@@ -45,11 +58,16 @@ public class ItemModeSwitch : MonoBehaviour, IItemModeSwitch
     }
 
     // ===============================
-    // EQUIPPED
+    // EQUIPPED MODE
     // ===============================
 
     public void SetEquippedMode()
     {
+        if (!isWorldMode)
+            return;
+
+        isWorldMode = false;
+
         if (rb != null)
         {
             rb.isKinematic = true;
