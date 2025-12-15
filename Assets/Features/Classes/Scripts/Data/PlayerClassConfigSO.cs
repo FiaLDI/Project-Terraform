@@ -17,6 +17,9 @@ namespace Features.Classes.Data
         [Header("Preset (Base Stats)")]
         public StatsPresetSO preset;
 
+        [Header("Visual")]
+        public RobotVisualPresetSO visualPreset;        
+
         [Header("Content")]
         public List<PassiveSO> passives;
         public List<AbilitySO> abilities;
