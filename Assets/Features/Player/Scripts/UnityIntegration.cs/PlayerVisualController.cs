@@ -23,8 +23,6 @@ public class PlayerVisualController : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[PlayerVisual] Spawning model {preset.modelPrefab.name}");
-
         if (_spawnedModel != null)
             Destroy(_spawnedModel);
 
@@ -49,10 +47,15 @@ public class PlayerVisualController : MonoBehaviour
 
         _animator.runtimeAnimatorController = preset.animator;
 
-        var movement = GetComponent<PlayerMovement>();
-        movement?.SetAnimator(_animator);
+        var animController = GetComponent<PlayerAnimationController>();
+        if (animController == null)
+        {
+            Debug.LogError("[PlayerVisual] PlayerAnimationController NOT FOUND on Player root!");
+            return;
+        }
+
+        animController.SetAnimator(_animator);
 
         Debug.Log("[PlayerVisual] Visual applied successfully");
     }
-
 }

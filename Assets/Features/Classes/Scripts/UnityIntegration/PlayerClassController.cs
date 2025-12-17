@@ -10,6 +10,7 @@ using Features.Stats.Adapter;
 using Features.Buffs.UnityIntegration;
 
 [DefaultExecutionOrder(-100)]
+[RequireComponent(typeof(PlayerVisualController))]
 public class PlayerClassController : MonoBehaviour
 {
     [Header("Classes Library")]
@@ -155,9 +156,7 @@ public class PlayerClassController : MonoBehaviour
 
         if (cfg.visualPreset != null)
         {
-            Debug.Log("SKIN");
-            Debug.Log(cfg.visualPreset.id);
-            visualController?.ApplyVisual(cfg.visualPreset.id);
+            visualController.ApplyVisual(cfg.visualPreset.id);
         }
         else
         {

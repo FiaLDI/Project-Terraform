@@ -4,6 +4,7 @@ using UnityEngine;
 using Features.Inventory;
 using Features.Items.UnityIntegration;
 using Features.Weapons.UnityIntegration;
+using Features.Player.UnityIntegration;
 
 namespace Features.Equipment.UnityIntegration
 {
@@ -15,6 +16,9 @@ namespace Features.Equipment.UnityIntegration
 
         [Header("Camera")]
         [SerializeField] private UnityEngine.Camera playerCamera;
+
+        private PlayerAnimationController anim;
+
 
         private GameObject currentRightHandObject;
         private GameObject currentLeftHandObject;
@@ -41,6 +45,7 @@ namespace Features.Equipment.UnityIntegration
                 playerCamera = UnityEngine.Camera.main;
 
             usage = GetComponent<PlayerUsageController>();
+            anim = GetComponent<PlayerAnimationController>();
         }
 
         private void OnDestroy()
@@ -60,8 +65,6 @@ namespace Features.Equipment.UnityIntegration
 
             var model = inventory.Model;
 
-            Debug.Log($"[EquipFromInventory] rightHand.item = {model.rightHand.item}");
-
             EquipRightHand(model.rightHand.item);
 
             bool isTwoHanded =
@@ -72,6 +75,8 @@ namespace Features.Equipment.UnityIntegration
             else
                 EquipLeftHand(model.leftHand.item);
 
+            UpdateWeaponPose(model.rightHand.item);
+
             usage?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
 
             EquipmentEvents.OnHandsUpdated?.Invoke(
@@ -80,6 +85,7 @@ namespace Features.Equipment.UnityIntegration
                 isTwoHanded
             );
         }
+
 
         // ======================================================
         // RIGHT HAND
@@ -134,6 +140,28 @@ namespace Features.Equipment.UnityIntegration
             currentLeftHandObject = null;
             leftHandUsable = null;
         }
+
+        private void UpdateWeaponPose(ItemInstance rightHandItem)
+        {
+            if (anim == null)
+                return;
+
+            if (rightHandItem == null)
+            {
+                anim.SetWeaponPose(0); // no weapon
+                return;
+            }
+
+            if (rightHandItem.itemDefinition.isTwoHanded)
+            {
+                anim.SetWeaponPose(2); // two-handed
+            }
+            else
+            {
+                anim.SetWeaponPose(1); // one-handed
+            }
+        }
+
 
         // ======================================================
         // INSTANTIATION (EQUIPPED ONLY)
