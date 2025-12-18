@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.Items.Data;
 using Features.Resources.Domain;
 
 namespace Features.Resources.Application

@@ -26,15 +26,12 @@ namespace Features.Player.UnityIntegration
         [Header("TPS Body Turn Limit")]
         [SerializeField] private float bodyTurnLimit = 40f;
 
-        private ICameraControlService service;
+        // ⚠️ НЕ кешируем сервис — берём лениво
+        private ICameraControlService Service
+            => CameraServiceProvider.Control;
 
         private float currentTpsDistance = 3f;
-        private bool isReady = false;
-
-        private void Awake()
-        {
-            service = CameraServiceProvider.Control;
-        }
+        private bool isReady;
 
         private void Start()
         {
@@ -42,9 +39,14 @@ namespace Features.Player.UnityIntegration
             isReady = true;
         }
 
+        // ======================================================
+        // INPUT
+        // ======================================================
+
         public void SetLookInput(Vector2 input)
         {
-            if (!isReady) return;
+            if (!isReady)
+                return;
 
             TryResolveCamera();
 
@@ -53,71 +55,87 @@ namespace Features.Player.UnityIntegration
                 playerBody == null)
                 return;
 
-            service?.SetLookInput(input, mouseSensitivity, Time.deltaTime);
-        }
-
-        private void TryResolveCamera()
-        {
-            if (cameraTransform != null) return;
-
-            if (CameraRegistry.Instance != null &&
-                CameraRegistry.Instance.CurrentCamera != null)
-            {
-                cameraTransform = CameraRegistry.Instance.CurrentCamera.transform;
-            }
+            Service?.SetLookInput(input, mouseSensitivity, Time.deltaTime);
         }
 
         public void SwitchView()
         {
-            if (!isReady) return;
-            service?.SwitchView();
+            if (!isReady)
+                return;
+
+            Service?.SwitchView();
         }
+
+        // ======================================================
+        // UPDATE
+        // ======================================================
 
         private void LateUpdate()
         {
-            if (!isReady) return;
+            if (!isReady)
+                return;
 
             TryResolveCamera();
 
-            if (cameraTransform == null || cameraPivot == null || playerBody == null)
+            if (cameraTransform == null ||
+                cameraPivot == null ||
+                playerBody == null)
                 return;
 
-            if (service == null) return;
+            var svc = Service;
+            if (svc == null)
+                return;
 
-            service.UpdateTransition(Time.deltaTime);
+            svc.UpdateTransition(Time.deltaTime);
 
-            float blend = service.State.Blend;
+            float blend = svc.State.Blend;
 
             if (blend < 0.5f)
-                UpdateFPS();
+                UpdateFPS(svc);
             else
-                UpdateTPS();
+                UpdateTPS(svc);
         }
 
-        private void UpdateFPS()
+        // ======================================================
+        // FPS
+        // ======================================================
+
+        private void UpdateFPS(ICameraControlService svc)
         {
-            if (cameraTransform == null || fpsPoint == null) return;
+            if (cameraTransform == null || fpsPoint == null)
+                return;
 
-            service.UpdateRotationFPS(playerBody);
+            svc.UpdateRotationFPS(playerBody);
 
-            Vector3 camEuler = new Vector3(service.State.Pitch, service.State.Yaw, 0f);
+            Vector3 camEuler = new Vector3(
+                svc.State.Pitch,
+                svc.State.Yaw,
+                0f
+            );
 
             cameraTransform.position = fpsPoint.position;
             cameraTransform.rotation = Quaternion.Euler(camEuler);
 
             if (headTransform != null)
-                headTransform.localRotation = Quaternion.Euler(service.State.Pitch, 0, 0);
+                headTransform.localRotation =
+                    Quaternion.Euler(svc.State.Pitch, 0f, 0f);
         }
 
-        private void UpdateTPS()
+        // ======================================================
+        // TPS
+        // ======================================================
+
+        private void UpdateTPS(ICameraControlService svc)
         {
-            if (cameraTransform == null || cameraPivot == null) return;
+            if (cameraTransform == null || cameraPivot == null)
+                return;
 
-            service.UpdateRotationTPS(cameraPivot, playerBody, bodyTurnLimit);
+            svc.UpdateRotationTPS(cameraPivot, playerBody, bodyTurnLimit);
 
-            Vector3 desired = cameraPivot.position - cameraPivot.forward * currentTpsDistance;
+            Vector3 desired =
+                cameraPivot.position - cameraPivot.forward * currentTpsDistance;
 
-            float targetDistance = service.ComputeTpsDistance(
+            float targetDistance = svc.ComputeTpsDistance(
                 cameraPivot.position,
                 desired,
                 collisionMask,
@@ -138,6 +156,23 @@ namespace Features.Player.UnityIntegration
 
             if (headTransform != null)
                 headTransform.rotation = cameraPivot.rotation;
+        }
+
+        // ======================================================
+        // CAMERA RESOLVE
+        // ======================================================
+
+        private void TryResolveCamera()
+        {
+            if (cameraTransform != null)
+                return;
+
+            if (CameraRegistry.Instance != null &&
+                CameraRegistry.Instance.CurrentCamera != null)
+            {
+                cameraTransform =
+                    CameraRegistry.Instance.CurrentCamera.transform;
+            }
         }
     }
 }

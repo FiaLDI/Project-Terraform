@@ -16,21 +16,23 @@ public class RecipeButtonUI : MonoBehaviour
         this.recipe = recipe;
         this.ui = ui;
 
-        if (recipe.outputItem != null)
+        if (recipe.recipeType == RecipeType.Upgrade)
         {
+            // Рецепт улучшения
+            if (icon != null)
+                icon.sprite = recipe.upgradeBaseItem.icon;
+
+            if (title != null)
+                title.text = $"{recipe.upgradeBaseItem.itemName}  (Upgrade)";
+        }
+        else
+        {
+            // Обычный крафт
             if (icon != null)
                 icon.sprite = recipe.outputItem.icon;
 
             if (title != null)
                 title.text = recipe.outputItem.itemName;
-        }
-        else if (recipe.upgradeBaseItem != null)
-        {
-            if (icon != null)
-                icon.sprite = recipe.upgradeBaseItem.icon;
-
-            if (title != null)
-                title.text = $"{recipe.upgradeBaseItem.itemName} (Upgrade)";
         }
 
         button.onClick.RemoveAllListeners();

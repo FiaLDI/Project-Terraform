@@ -10,6 +10,9 @@ namespace Features.Combat.Actors
         public float maxHp = 100f;
         public float currentHp;
 
+        [Header("Resistances (optional)")]
+        public ResistProfile resistances;
+
         public System.Action<float, float> OnHealthChanged;
         public System.Action OnDeath;
 
@@ -19,11 +22,26 @@ namespace Features.Combat.Actors
             OnHealthChanged?.Invoke(currentHp, maxHp);
         }
 
+        // ========= NEW SYSTEM =========
+
+        public ResistProfile GetResistProfile() => resistances;
+
+        public void ApplyDamage(float amount, DamageType type, HitInfo info)
+        {
+            TakeDamage(amount, type);
+        }
+
+        public void ApplyDot(DoTEffectData dot)
+        {
+            // можно повесить UI-эффект
+            CombatServiceProvider.Service.ApplyDot(this, dot);
+        }
+
+        // ========= OLD SYSTEM (compat) =========
+
         public void TakeDamage(float damageAmount, DamageType damageType)
         {
             if (damageAmount <= 0f) return;
-
-            damageAmount = DamageSystem.ApplyDamageModifiers(this, damageAmount, damageType);
 
             currentHp -= damageAmount;
             OnHealthChanged?.Invoke(currentHp, maxHp);

@@ -1,51 +1,32 @@
 using UnityEngine;
 using Features.Interaction.Domain;
-using Features.Camera.UnityIntegration;
+using Features.Interaction.UnityIntegration;
 
-namespace Features.Interaction.UnityIntegration
+[DefaultExecutionOrder(-500)]
+public class CameraRayProvider : MonoBehaviour, IInteractionRayProvider
 {
-    public class CameraRayProvider : MonoBehaviour, IInteractionRayProvider
+    [SerializeField] private float maxDistance = 3f;
+
+    public float MaxDistance => maxDistance;
+
+    private Camera cam;
+
+    private void Awake()
     {
-        private UnityEngine.Camera cam;
-        [SerializeField] private float maxDistance = 4f;
-
-        public float MaxDistance => maxDistance;
-
-        private void OnEnable()
+        cam = GetComponentInChildren<Camera>();
+        if (cam == null)
         {
-            if (CameraRegistry.Instance != null)
-            {
-                CameraRegistry.Instance.OnCameraChanged += HandleCam;
-
-                if (CameraRegistry.Instance.CurrentCamera != null)
-                    cam = CameraRegistry.Instance.CurrentCamera;
-            }
-
-            InteractionServiceProvider.Init(this);
+            Debug.LogError("[CameraRayProvider] Camera NOT FOUND");
+            enabled = false;
+            return;
         }
 
-        private void OnDisable()
-        {
-            if (CameraRegistry.Instance != null)
-                CameraRegistry.Instance.OnCameraChanged -= HandleCam;
-        }
+        InteractionServiceProvider.Init(this);
+        Debug.Log("[CameraRayProvider] InteractionRayService INITIALIZED");
+    }
 
-        private void HandleCam(UnityEngine.Camera newCam) => cam = newCam;
-
-        public Ray GetRay()
-        {
-            if (cam == null)
-            {
-                // попробовать снова взять камеру из реестра
-                if (CameraRegistry.Instance != null && CameraRegistry.Instance.CurrentCamera != null)
-                    cam = CameraRegistry.Instance.CurrentCamera;
-                
-                // если всё ещё null — вернём fallback
-                if (cam == null)
-                    return new Ray(Vector3.zero, Vector3.forward);
-            }
-
-            return cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-        }
+    public Ray GetRay()
+    {
+        return cam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
     }
 }

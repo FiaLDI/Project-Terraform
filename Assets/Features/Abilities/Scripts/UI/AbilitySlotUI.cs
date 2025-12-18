@@ -12,13 +12,13 @@ namespace Features.Abilities.UI
         IPointerEnterHandler, IPointerExitHandler
     {
         [Header("UI")]
-        public Image icon;
-        public Slider cooldownSlider;
-        public TextMeshProUGUI keyLabel;
+        [SerializeField] private Image icon;
+        [SerializeField] private Slider cooldownSlider;
+        [SerializeField] private TextMeshProUGUI keyLabel;
 
         [Header("Channel Highlight")]
-        public GameObject channelHighlight;
-        public Image channelProgressFill;
+        [SerializeField] private GameObject channelHighlight;
+        [SerializeField] private Image channelProgressFill;
 
         [HideInInspector] public AbilitySO boundAbility;
 
@@ -26,24 +26,17 @@ namespace Features.Abilities.UI
         private int index;
 
         private Sprite defaultIcon;
-
         private bool warnedMissingRefs = false;
 
-        private void WarnMissing(string field)
-        {
-            if (warnedMissingRefs) return;
-            warnedMissingRefs = true;
-
-            Debug.LogWarning($"[AbilitySlotUI] Missing reference: {field} on {name}. UI will still work safely.");
-        }
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
 
         private void Awake()
         {
-            // Icon
             if (icon != null)
                 defaultIcon = icon.sprite;
 
-            // Channel UI
             if (channelHighlight != null)
                 channelHighlight.SetActive(false);
             else
@@ -54,6 +47,15 @@ namespace Features.Abilities.UI
             else
                 WarnMissing(nameof(channelProgressFill));
         }
+
+        private void OnDestroy()
+        {
+            Unsubscribe();
+        }
+
+        // ======================================================
+        // BINDING
+        // ======================================================
 
         public void Bind(AbilitySO ability, AbilityCaster caster, int index)
         {
@@ -73,9 +75,12 @@ namespace Features.Abilities.UI
 
             SetupIcon(ability);
             SetupCooldown(ability);
-
             Subscribe();
         }
+
+        // ======================================================
+        // VISUAL SETUP
+        // ======================================================
 
         private void SetEmptySlotState()
         {
@@ -124,6 +129,10 @@ namespace Features.Abilities.UI
             cooldownSlider.value = ability.cooldown;
         }
 
+        // ======================================================
+        // EVENTS
+        // ======================================================
+
         private void Subscribe()
         {
             if (caster == null) return;
@@ -150,39 +159,35 @@ namespace Features.Abilities.UI
             caster.OnChannelInterrupted -= HandleChannelEnd;
         }
 
-        private void OnDestroy()
-        {
-            Unsubscribe();
-        }
-
-        // ===============================
+        // ======================================================
         // COOLDOWN
-        // ===============================
+        // ======================================================
+
         private void HandleCastReset(AbilitySO usedAbility)
         {
             if (usedAbility != boundAbility) return;
-
             cooldownSlider?.SetValueWithoutNotify(0);
         }
 
         private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
         {
             if (updated != boundAbility) return;
-
             if (cooldownSlider != null)
                 cooldownSlider.value = max - remaining;
         }
 
-        // ===============================
-        // CHANNEL UI
-        // ===============================
+        // ======================================================
+        // CHANNEL
+        // ======================================================
+
         private void HandleChannelStart(AbilitySO ability)
         {
             if (ability != boundAbility) return;
 
             if (channelHighlight != null)
+            {
                 channelHighlight.SetActive(true);
-
+            }
             if (channelProgressFill != null)
                 channelProgressFill.fillAmount = 0f;
         }
@@ -200,24 +205,42 @@ namespace Features.Abilities.UI
             if (ability != boundAbility) return;
 
             if (channelHighlight != null)
+            {
                 channelHighlight.SetActive(false);
-
+            }
             if (channelProgressFill != null)
                 channelProgressFill.fillAmount = 0f;
         }
 
-        // ===============================
+        // ======================================================
         // TOOLTIP
-        // ===============================
+        // ======================================================
+
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (boundAbility != null)
-                TooltipController.Instance?.ShowAbility(boundAbility, caster);
+            if (boundAbility == null)
+                return;
+
+            TooltipController.Instance?.ShowAbility(boundAbility);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             TooltipController.Instance?.Hide();
+        }
+
+        // ======================================================
+        // UTILS
+        // ======================================================
+
+        private void WarnMissing(string field)
+        {
+            if (warnedMissingRefs) return;
+            warnedMissingRefs = true;
+
+            Debug.LogWarning(
+                $"[AbilitySlotUI] Missing reference: {field} on {name}. UI will still work safely."
+            );
         }
     }
 }

@@ -1,4 +1,3 @@
-// Assets/Features/Player/Scripts/UnityIntegration/PlayerMovement.cs
 using UnityEngine;
 using Features.Stats.Adapter;
 
@@ -10,7 +9,7 @@ namespace Features.Player.UnityIntegration
         [Header("References")]
         [SerializeField] private Transform movementReference; 
         [SerializeField] private Transform cameraReference;
-        private Animator animator;
+        private PlayerAnimationController anim;
 
         [Header("Editor Fallback Speeds (Used if Stats not yet initialized)")]
         [SerializeField] private float fallbackBaseSpeed = 5f;
@@ -45,6 +44,7 @@ namespace Features.Player.UnityIntegration
         {
             controller = GetComponent<CharacterController>();
             stats = GetComponent<MovementStatsAdapter>();
+            anim = GetComponent<PlayerAnimationController>();
         }
 
         // Input API
@@ -57,8 +57,15 @@ namespace Features.Player.UnityIntegration
             if (controller.isGrounded && !IsCrouching)
             {
                 velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
-                if (animator != null)
-                    animator.SetTrigger("jump");
+                anim?.TriggerJump();
+                return;
+            }
+
+            if (controller.isGrounded && IsCrouching)
+            {
+                ToggleCrouch();
+                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+                anim?.TriggerJump();
             }
         }
 
@@ -142,29 +149,28 @@ namespace Features.Player.UnityIntegration
         // Animation
         private void HandleAnimation()
         {
-            if (animator == null)
+            if (anim == null)
                 return;
 
             float planarSpeed = new Vector2(velocity.x, velocity.z).magnitude;
-            bool isMoving = planarSpeed > 0.1f && controller.isGrounded;
+            bool grounded = controller.isGrounded;
 
-            animator.SetBool("walk", isMoving);
-            animator.SetBool("run", isMoving && isSprinting);
-            animator.SetBool("crouch", IsCrouching);
-            animator.SetBool("sit_walk", IsCrouching && isMoving);
+            float animSpeed = 0f;
 
-            bool movingForwardBackward = Mathf.Abs(moveInput.y) > 0.1f;
-            bool turning = !movingForwardBackward && Mathf.Abs(moveInput.x) > 0.1f;
+            if (grounded && planarSpeed > 0.1f)
+            {
+                if (IsCrouching)
+                    animSpeed = 2f;        // Sit_Walk
+                else if (isSprinting)
+                    animSpeed = 2f;        // Running
+                else
+                    animSpeed = 1f;        // Walking
+            }
 
-            animator.SetBool("turn", turning);
-        }
-
-        public void SetAnimator(Animator anim)
-        {
-            animator = anim;
+            anim.SetSpeed(animSpeed);
+            anim.SetGrounded(grounded);
+            anim.SetCrouch(IsCrouching);
         }
 
     }
-
-    
 }

@@ -1,28 +1,34 @@
-using UnityEngine;
-using TMPro;
 using Features.Interaction.Application;
 using Features.Interaction.Domain;
 using Features.Interaction.UnityIntegration;
+using Features.Player;
+using TMPro;
+using UnityEngine;
 
 public class InteractionPromptUI : MonoBehaviour
 {
-    [Header("UI")]
     [SerializeField] private TextMeshProUGUI promptText;
 
-    private InteractionRayService rayService;
     private InteractionService interactionService;
+    private InteractionRayService rayService;
+    private INearbyInteractables nearby;
+
+    private void Awake()
+    {
+        interactionService = new InteractionService();
+    }
 
     private void Start()
     {
-        var provider = FindObjectOfType<CameraRayProvider>();
+        rayService = InteractionServiceProvider.Ray;
 
-        rayService = new InteractionRayService(
-            provider,
-            LayerMask.GetMask("Default", "Interactable", "Item"),
-            LayerMask.GetMask("Player")
-        );
+        if (rayService == null)
+        {
+            enabled = false;
+            return;
+        }
 
-        interactionService = new InteractionService();
+        nearby = LocalPlayerContext.Get<NearbyInteractables>();
 
         promptText.text = "";
         promptText.enabled = false;
@@ -30,20 +36,28 @@ public class InteractionPromptUI : MonoBehaviour
 
     private void Update()
     {
-        // --- FIRST: nearest item via NearbyInteractables ---
-        var cam = providerCam;
-        var bestItem = NearbyInteractables.instance.GetBestItem(cam);
-
-        if (bestItem != null)
+        if (nearby == null)
+            nearby = LocalPlayerContext.Get<NearbyInteractables>();
+        if (nearby != null && Camera.main != null)
         {
-            promptText.enabled = true;
-            promptText.text = $"[E] Подобрать: {bestItem.itemData.itemName}";
-            return;
+            var best = nearby.GetBestItem(Camera.main);
+
+
+            if (best != null && best.GetInstance()?.itemDefinition != null)
+            {
+                var def = best.GetInstance().itemDefinition;
+                int qty = best.GetInstance().quantity;
+
+                promptText.enabled = true;
+                promptText.text = qty > 1
+                    ? $"[E] Подобрать: {def.itemName} x{qty}"
+                    : $"[E] Подобрать: {def.itemName}";
+
+                return;
+            }
         }
 
-        // --- SECOND: IInteractable via InteractionRayService ---
         var hit = rayService.Raycast();
-
         if (interactionService.TryGetInteractable(hit, out var interactable))
         {
             promptText.enabled = true;
@@ -51,9 +65,7 @@ public class InteractionPromptUI : MonoBehaviour
             return;
         }
 
-        // --- NOTHING FOUND ---
         promptText.enabled = false;
     }
 
-    private Camera providerCam => FindObjectOfType<CameraRayProvider>().GetComponentInChildren<Camera>();
 }

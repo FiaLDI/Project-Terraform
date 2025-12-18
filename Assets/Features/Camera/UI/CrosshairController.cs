@@ -1,7 +1,8 @@
+using Features.Interaction.Application;
+using Features.Interaction.Domain;
+using Features.Interaction.UnityIntegration;
 using UnityEngine;
 using UnityEngine.UI;
-using Features.Interaction.Application;
-using Features.Interaction.UnityIntegration;
 
 namespace Features.Player.UI
 {
@@ -14,34 +15,48 @@ namespace Features.Player.UI
         [SerializeField] private Color normalColor = Color.white;
         [SerializeField] private Color interactColor = Color.cyan;
 
-        private InteractionService interactionService = new InteractionService();
+        private InteractionService interactionService;
+        private InteractionRayService rayService;
+
+        private void Awake()
+        {
+            interactionService = new InteractionService();
+        }
+
+        private void OnEnable()
+        {
+            if (InteractionServiceProvider.Ray != null)
+            {
+                OnRayReady(InteractionServiceProvider.Ray);
+            }
+            else
+            {
+                InteractionServiceProvider.OnRayInitialized += OnRayReady;
+            }
+        }
+
+        private void OnDisable()
+        {
+            InteractionServiceProvider.OnRayInitialized -= OnRayReady;
+        }
+
+        private void OnRayReady(InteractionRayService ray)
+        {
+            rayService = ray;
+            Debug.Log("[CrosshairController] InteractionRayService READY");
+        }
 
         private void Update()
         {
-            if (crosshair == null) return;
-
-            var service = InteractionServiceProvider.Ray;
-            if (service == null)
-            {
-                crosshair.color = normalColor;
+            if (crosshair == null || rayService == null)
                 return;
-            }
 
-            var rayProvider = service.Provider;
-            if (!rayProvider.IsValid())
-            {
-                crosshair.color = normalColor;
-                return;
-            }
+            InteractionRayHit hit = rayService.Raycast();
 
-            var hit = service.Raycast();
-
-            if (interactionService.TryGetInteractable(hit, out _))
-                crosshair.color = interactColor;
-            else
-                crosshair.color = normalColor;
+            crosshair.color =
+                interactionService.TryGetInteractable(hit, out _)
+                    ? interactColor
+                    : normalColor;
         }
-
-
     }
 }

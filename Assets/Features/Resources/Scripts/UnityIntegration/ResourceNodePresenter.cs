@@ -1,7 +1,10 @@
-using UnityEngine;
-using Features.Resources.Domain;
+using Features.Items.Data;
+using Features.Items.Domain;
+using Features.Items.UnityIntegration;
 using Features.Resources.Application;
 using Features.Resources.Data;
+using Features.Resources.Domain;
+using UnityEngine;
 
 namespace Features.Resources.UnityIntegration
 {
@@ -32,6 +35,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   Mining Interaction
         // -------------------------
+
         public void ApplyMining(float amount)
         {
             ApplyMining(amount, 1f);
@@ -40,7 +44,6 @@ namespace Features.Resources.UnityIntegration
         public void ApplyMining(float amount, float toolMultiplier)
         {
             bool depleted = _mining.Mine(_model, amount, toolMultiplier);
-
             if (depleted)
                 OnDepleted();
             else
@@ -50,6 +53,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   VFX
         // -------------------------
+
         private void PlayHitVFX()
         {
             if (config.hitEffect == null) return;
@@ -75,6 +79,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   On Depletion (Drops + VFX)
         // -------------------------
+
         private void OnDepleted()
         {
             PlayDestroyVFX();
@@ -92,6 +97,7 @@ namespace Features.Resources.UnityIntegration
         // -------------------------
         //   Spawning Dropped Items
         // -------------------------
+
         private void SpawnItem(Item item)
         {
             if (item == null || item.worldPrefab == null)
@@ -100,11 +106,17 @@ namespace Features.Resources.UnityIntegration
                 return;
             }
 
-            Instantiate(
+            var go = Instantiate(
                 item.worldPrefab,
                 transform.position + Vector3.up,
                 Random.rotation
             );
+
+            var inst = new ItemInstance(item, 1);
+
+            var holder = go.GetComponent<ItemRuntimeHolder>()
+                         ?? go.AddComponent<ItemRuntimeHolder>();
+            holder.SetInstance(inst);
         }
     }
 }

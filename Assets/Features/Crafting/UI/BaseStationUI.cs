@@ -60,8 +60,6 @@ public abstract class BaseStationUI : MonoBehaviour
         if (isOpen) return;
         isOpen = true;
 
-        Debug.Log("Station UI OPEN");
-
         canvas.gameObject.SetActive(true);
 
         Cursor.visible = true;
@@ -69,15 +67,13 @@ public abstract class BaseStationUI : MonoBehaviour
 
         cameraControl?.SetInputBlocked(true);
 
-        UIStationManager.I.OpenStation(this);
+        UIStationManager.Instance.OpenStation(this);
     }
 
     private void Close()
     {
         if (!isOpen) return;
         isOpen = false;
-
-        Debug.Log("Station UI CLOSE");
 
         canvas.gameObject.SetActive(false);
 
@@ -86,7 +82,7 @@ public abstract class BaseStationUI : MonoBehaviour
 
         cameraControl?.SetInputBlocked(false);
 
-        UIStationManager.I.CloseStation(this);
+        UIStationManager.Instance.CloseStation(this);
     }
 
     public virtual void ShowRecipe(RecipeSO recipe)

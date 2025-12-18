@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
 using UnityEngine;
+using Features.Items.Domain;
+using Features.Inventory;
+using Features.Inventory.Application;
 
 public class CraftingProcessor : MonoBehaviour
 {
@@ -7,69 +11,121 @@ public class CraftingProcessor : MonoBehaviour
     public event Action<float> OnProgress;
     public event Action<RecipeSO> OnComplete;
 
-    private RecipeSO activeRecipe;
-    private float startTime;
+    private IInventoryContext inventory;
+
     private bool isProcessing;
+    private Coroutine currentRoutine;
 
-    public void StartRecipe(RecipeSO recipe)
+    // ======================================================
+    // INIT
+    // ======================================================
+
+    public void Init(IInventoryContext inventory)
     {
-        if (recipe == null) return;
-
-        activeRecipe = recipe;
-        startTime = Time.time;
-        isProcessing = true;
-
-        OnStart?.Invoke(recipe);
+        this.inventory = inventory;
+        Debug.Log("[Crafting] Init called");
     }
 
-    private void Update()
-    {
-        if (!isProcessing || activeRecipe == null) return;
-
-        float progress = (Time.time - startTime) / activeRecipe.duration;
-        OnProgress?.Invoke(progress);
-
-        if (progress >= 1f)
-        {
-            FinishRecipe();
-        }
-    }
-
-    private void FinishRecipe()
-    {
-        isProcessing = false;
-
-        Item template = activeRecipe.outputItem;
-
-        if (template == null)
-        {
-            Debug.LogWarning("[CraftingProcessor] Recipe has no outputItem.");
-            return;
-        }
-
-        // Нестакаемые → клонируем в рантайме
-        if (!template.isStackable)
-        {
-            for (int i = 0; i < activeRecipe.outputAmount; i++)
-            {
-                Item runtimeItem = ItemFactory.CreateRuntimeItem(template);
-                InventoryManager.instance.AddItem(runtimeItem, 1);
-            }
-        }
-        else
-        {
-            // Стакуем по обычной схеме
-            InventoryManager.instance.AddItem(template, activeRecipe.outputAmount);
-        }
-
-        InventoryManager.instance.ConsumeIngredients(activeRecipe.ingredients);
-
-        OnComplete?.Invoke(activeRecipe);
-    }
+    // ======================================================
+    // PUBLIC API
+    // ======================================================
 
     public void Begin(RecipeSO recipe)
     {
-        Debug.Log($"[PROCESSOR] Begin called for recipe {recipe.recipeId}");
-        StartRecipe(recipe);
+        if (isProcessing)
+        {
+            Debug.LogWarning("[Crafting] Already processing");
+            return;
+        }
+
+        if (recipe == null)
+        {
+            Debug.LogError("[Crafting] Recipe is null");
+            return;
+        }
+
+        if (inventory == null)
+        {
+            Debug.LogError("[Crafting] Inventory is null");
+            return;
+        }
+
+        Debug.Log($"[Crafting] Start recipe '{recipe.name}', duration = {recipe.duration}");
+
+        currentRoutine = StartCoroutine(Process(recipe));
     }
+
+    // ======================================================
+    // PROCESS
+    // ======================================================
+
+    private IEnumerator Process(RecipeSO recipe)
+    {
+        isProcessing = true;
+
+        OnStart?.Invoke(recipe);
+
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, recipe.duration); // защита от 0
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+
+            OnProgress?.Invoke(progress);
+
+            yield return null;
+        }
+
+        FinishRecipe(recipe);
+    }
+
+    // ======================================================
+    // COMPLETE
+    // ======================================================
+
+    private void FinishRecipe(RecipeSO recipe)
+    {
+        isProcessing = false;
+
+        var service = inventory.Service;
+
+        // 1️⃣ REMOVE INGREDIENTS
+        foreach (var ing in recipe.ingredients)
+        {
+            bool removed = service.TryRemove(ing.item, ing.amount);
+            if (!removed)
+            {
+                Debug.LogError($"[Crafting] Failed to remove ingredient: {ing.item.name}");
+                return;
+            }
+        }
+
+        // 2️⃣ ADD OUTPUT
+        var output = recipe.outputItem;
+        if (output == null)
+        {
+            Debug.LogWarning("[Crafting] Recipe has no output item");
+            return;
+        }
+
+        if (output.isStackable)
+        {
+            service.AddItem(new ItemInstance(output, recipe.outputAmount));
+        }
+        else
+        {
+            for (int i = 0; i < recipe.outputAmount; i++)
+                service.AddItem(new ItemInstance(output, 1));
+        }
+
+        OnComplete?.Invoke(recipe);
+    }
+
+    // ======================================================
+    // OPTIONAL API
+    // ======================================================
+
+    public bool IsProcessing => isProcessing;
 }

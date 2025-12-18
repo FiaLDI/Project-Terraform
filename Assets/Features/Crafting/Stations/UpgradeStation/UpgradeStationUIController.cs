@@ -1,146 +1,147 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Features.Inventory;
+using Features.Items.Domain;
+using Features.Inventory.Domain;
+using Features.Items.Data;
 
 public class UpgradeStationUIController : BaseStationUI
 {
     private UpgradeStation station;
     private UpgradeProcessor processor;
+    private IInventoryContext inventory;
 
     [Header("Upgrade UI")]
     [SerializeField] private UpgradeGlowButtonUI upgradeGlowButtonPrefab;
 
-    private readonly List<(Item item, UpgradeRecipeSO recipe)> candidates = new();
+    private ItemInstance selectedInstance;
+    private UpgradeRecipeSO selectedRecipe;
 
-    public void Init(UpgradeStation station, UpgradeProcessor processor)
+    // ======================================================
+    // INIT
+    // ======================================================
+
+    public void Init(
+        UpgradeStation station,
+        UpgradeProcessor processor,
+        IInventoryContext inventory)
     {
         this.station = station;
         this.processor = processor;
+        this.inventory = inventory;
 
-        BuildUpgradeList();
+        recipePanel.Init(inventory);
 
         processor.OnStart += HandleStart;
         processor.OnProgress += HandleProgress;
         processor.OnComplete += HandleComplete;
     }
 
-
-    private void BuildUpgradeList()
-    {
-        Debug.Log("<color=cyan>[UPGRADE] BUILD LIST</color>");
-
-        foreach (Transform t in recipeListContainer)
-            Destroy(t.gameObject);
-
-        candidates.Clear();
-
-        // ---- 1) Берём рецепты только для upgrade station ----
-        var upgradeRecipes = station.GetRecipes()
-            .Where(r => r.recipeType == RecipeType.Upgrade)
-            .OfType<UpgradeRecipeSO>()
-            .ToArray();
-
-        // ---- 2) Сканируем предметы игрока ----
-        var allSlots = InventoryManager.Instance.GetAllSlots();
-        var seenItems = new HashSet<Item>();
-
-        foreach (var slot in allSlots)
-        {
-            Item item = slot.ItemData;
-            if (item == null) continue;
-
-            if (!seenItems.Add(item))
-                continue;
-
-            if (item.upgrades == null || item.upgrades.Length == 0)
-                continue;
-
-            int nextLevel = item.currentLevel + 1;
-
-            if (nextLevel > item.upgrades.Length)
-            {
-                Debug.Log($"[UPGRADE] {item.itemName} MAX LEVEL");
-                continue;
-            }
-
-            // ---- 3) Автоматический поиск рецепта ----
-            UpgradeRecipeSO recipe = upgradeRecipes.FirstOrDefault(r =>
-                r.upgradeBaseItem != null &&
-                r.upgradeBaseItem.id == item.id
-            );
-
-            if (recipe == null)
-            {
-                Debug.Log($"[UPGRADE] No recipe found for {item.itemName}");
-                continue;
-            }
-
-            candidates.Add((item, recipe));
-
-            // ---- UI button ----
-            var btn = Instantiate(upgradeGlowButtonPrefab, recipeListContainer);
-            btn.Init(item, recipe, this);
-        }
-
-        Debug.Log($"<color=yellow>[UPGRADE] Visible = {candidates.Count}</color>");
-    }
-
-
-    public void OnUpgradeItemSelected(Item item, RecipeSO recipeBase)
-    {
-        var recipe = recipeBase as UpgradeRecipeSO;
-        if (recipe == null) return;
-
-        ShowUpgradePanel(item, recipe);
-    }
-
-    private void ShowUpgradePanel(Item item, UpgradeRecipeSO recipe)
-    {
-        recipePanel.ShowUpgradeRecipe(item, recipe);
-        recipePanel.ShowMissingIngredients(recipe);
-
-        recipePanel.SetAction(() =>
-        {
-            var slot = InventoryManager.Instance.FindFirstSlotWithItem(item);
-            if (slot != null)
-                processor.BeginUpgrade(recipe, slot);
-        });
-    }
-
-
-    private void HandleStart(Item item)
-    {
-        recipePanel.StartProgress();
-    }
-
-    private void HandleProgress(float t)
-    {
-        recipePanel.UpdateProgress(t);
-    }
-
-    private void HandleComplete(Item item)
-    {
-        recipePanel.ProcessComplete();
-
-        BuildUpgradeList();
-
-        var recipe = station.GetRecipes()
-            .Where(r => r.recipeType == RecipeType.Upgrade)
-            .OfType<UpgradeRecipeSO>()
-            .FirstOrDefault(r =>
-                r.upgradeBaseItem != null &&
-                r.upgradeBaseItem.id == item.id
-            );
-
-        if (recipe != null)
-            ShowUpgradePanel(item, recipe);
-        else
-            recipePanel.ClosePanel();
-    }
-
+    // ======================================================
+    // UI OPEN
+    // ======================================================
 
     public void OnOpenUI()
     {
         BuildUpgradeList();
     }
+
+    // ======================================================
+    // BUILD LIST
+    // ======================================================
+
+    private void BuildUpgradeList()
+    {
+        foreach (Transform t in recipeListContainer)
+            Destroy(t.gameObject);
+
+        var upgradeRecipes = station.GetRecipes()
+            .Where(r => r.recipeType == RecipeType.Upgrade)
+            .OfType<UpgradeRecipeSO>()
+            .ToArray();
+
+        var allSlots = inventory.Model.GetAllSlots();
+        var seen = new HashSet<string>();
+
+        foreach (var slot in allSlots)
+        {
+            var inst = slot.item;
+            if (inst == null) continue;
+
+            var def = inst.itemDefinition;
+            if (def == null) continue;
+
+            if (!seen.Add(def.id)) continue;
+            if (def.upgrades == null)
+                continue;
+
+            var recipe = upgradeRecipes.FirstOrDefault(r =>
+                r.upgradeBaseItem != null &&
+                r.upgradeBaseItem.id == def.id);
+
+            if (recipe == null) continue;
+
+            var btn = Instantiate(upgradeGlowButtonPrefab, recipeListContainer);
+            btn.Init(inst, recipe, this);
+        }
+    }
+
+    // ======================================================
+    // UI CALLBACKS
+    // ======================================================
+
+    public void OnUpgradeItemSelected(ItemInstance inst, RecipeSO recipeBase)
+    {
+        var recipe = recipeBase as UpgradeRecipeSO;
+        if (recipe == null)
+            return;
+
+        selectedInstance = inst;
+        selectedRecipe = recipe;
+
+        recipePanel.ShowUpgradeRecipe(inst, recipe);
+
+        recipePanel.SetAction(() =>
+        {
+            if (selectedInstance == null || selectedRecipe == null)
+                return;
+
+            var def = selectedInstance.itemDefinition;
+            if (def == null || def.upgrades == null)
+                return;
+
+            if (selectedInstance.level >= def.upgrades.Length)
+                return;
+
+            if (!processor.IsProcessing)
+                processor.BeginUpgrade(selectedRecipe, selectedInstance);
+        });
+    }
+
+    private void HandleComplete(ItemInstance inst)
+    {
+        recipePanel.ProcessComplete();
+        recipePanel.RefreshIngredients();
+        recipePanel.RefreshUpgradeInfo();
+        BuildUpgradeList();
+    }
+
+    private void ClearSelection()
+    {
+        selectedInstance = null;
+        selectedRecipe = null;
+
+        recipePanel.Clear();
+    }
+
+    // ======================================================
+    // PROCESSOR EVENTS
+    // ======================================================
+
+    private void HandleStart(ItemInstance inst)
+        => recipePanel.StartProgress();
+
+    private void HandleProgress(float t)
+        => recipePanel.UpdateProgress(t);
 }

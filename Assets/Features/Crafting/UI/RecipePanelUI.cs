@@ -1,7 +1,11 @@
-using TMPro;
+using System;
 using UnityEngine;
+using TMPro;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Features.Items.Domain;
+using Features.Items.Data;
+using Features.Inventory;
 
 public class RecipePanelUI : MonoBehaviour
 {
@@ -22,27 +26,42 @@ public class RecipePanelUI : MonoBehaviour
 
     [SerializeField] private InputActionReference cancelAction;
 
-    [SerializeField] private BaseStationUI parentStation;
+    private IInventoryContext inventory;
 
     private RecipeSO currentRecipe;
-    private Item currentItem;
+    private ItemInstance currentInstance;
+    private Action currentAction;
 
-    private void Awake()
+    // ========================================================
+    // INIT
+    // ========================================================
+
+    public void Init(IInventoryContext inventory)
     {
-        parentStation = GetComponentInParent<BaseStationUI>();
+        this.inventory = inventory;
     }
+
+    // ========================================================
+    // LIFECYCLE
+    // ========================================================
 
     private void OnEnable()
     {
         if (cancelAction != null)
         {
-            cancelAction.action.performed += OnCancel;
             cancelAction.action.Enable();
+            cancelAction.action.performed += OnCancel;
         }
+
+        if (inventory != null)
+            inventory.Service.OnChanged += RefreshIngredients;
     }
 
     private void OnDisable()
     {
+        if (inventory != null)
+            inventory.Service.OnChanged -= RefreshIngredients;
+
         if (cancelAction != null)
         {
             cancelAction.action.performed -= OnCancel;
@@ -50,139 +69,102 @@ public class RecipePanelUI : MonoBehaviour
         }
     }
 
-    // -----------------------------
-    //  Обычный крафт
-    // -----------------------------
+    // ========================================================
+    // ACTION BUTTON
+    // ========================================================
+
+    public void SetAction(Action action)
+    {
+        currentAction = action;
+
+        actionButton.onClick.RemoveAllListeners();
+        actionButton.onClick.AddListener(() => currentAction?.Invoke());
+    }
+
+    // ========================================================
+    // CRAFT VIEW
+    // ========================================================
+
     public void ShowRecipe(RecipeSO recipe)
     {
         currentRecipe = recipe;
-        currentItem = null;
-
-        if (recipe.recipeType == RecipeType.Upgrade)
-        {
-            // Для Upgrade станция сама вызывает ShowUpgradeRecipe
-            var slot = InventoryManager.Instance.GetSelectedSlot();
-            if (slot != null && slot.ItemData != null)
-            {
-                ShowUpgradeRecipe(slot.ItemData, recipe);
-                return;
-            }
-
-            if (title) title.text = "Select item to upgrade";
-            if (ingredientsText) ingredientsText.text = "";
-            return;
-        }
-
-        enabled = true;
-        gameObject.SetActive(true);
-
-        if (icon && recipe.outputItem != null) icon.sprite = recipe.outputItem.icon;
-        if (title && recipe.outputItem != null) title.text = recipe.outputItem.itemName;
-
-        if (ingredientsText)
-        {
-            ingredientsText.text = "";
-
-            foreach (var ing in recipe.inputs)
-            {
-                int required = ing.amount;
-                int have = InventoryManager.instance.GetTotalItemCount(ing.item);
-
-                bool enough = have >= required;
-                string color = enough ? "#FFFFFF" : "#FF4444";
-
-                ingredientsText.text += 
-                    $"<color={color}>{ing.item.itemName}: {have}/{required}</color>\n";
-            }
-        }
-
-
-        progressUI.SetVisible(false);
-        progressUI.UpdateProgress(0f);
-        actionButton.onClick.RemoveAllListeners();
-    }
-
-    // -----------------------------
-    //  Upgrade режим
-    // -----------------------------
-    public void ShowUpgradeRecipe(Item item, RecipeSO recipe)
-    {
-        currentRecipe = recipe;
-        currentItem = item;
+        currentInstance = null;
 
         gameObject.SetActive(true);
 
-        if (icon != null)
-            icon.sprite = item.icon;
+        if (icon != null && recipe.outputItem != null)
+            icon.sprite = recipe.outputItem.icon;
 
         if (title != null)
-            title.text = $"{item.itemName} — Upgrade";
+            title.text = recipe.outputItem.itemName;
 
-        int currentLevel = item.currentLevel;
-        int maxLevel = (item.upgrades != null) ? item.upgrades.Length : 0;
-
-        var next = item.NextUpgrade;
-
-        if (next != null)
-        {
-            string statsText = "";
-            if (next.bonusStats != null)
-            {
-                foreach (var stat in next.bonusStats)
-                    statsText += $"{stat.stat}: +{stat.value}\n";
-            }
-
-            if (upgradeInfoText != null)
-            {
-                upgradeInfoText.text =
-                    $"Current Level: {currentLevel}\n" +
-                    $"Next Level: {currentLevel + 1}\n\n" +
-                    statsText;
-            }
-
-            if (upgradePreviewIcon != null)
-            {
-                Sprite preview = next.UpgradedIcon != null ? next.UpgradedIcon : item.icon;
-                upgradePreviewIcon.sprite = preview;
-            }
-        }
-        else
-        {
-            if (upgradeInfoText != null)
-                upgradeInfoText.text = $"MAX LEVEL ({currentLevel}/{maxLevel})";
-
-            if (upgradePreviewIcon != null)
-                upgradePreviewIcon.sprite = item.icon;
-        }
-
-        if (ingredientsText)
-        {
-            ingredientsText.text = "";
-
-            foreach (var ing in recipe.inputs)
-            {
-                int required = ing.amount;
-                int have = InventoryManager.instance.GetTotalItemCount(ing.item);
-
-                bool enough = have >= required;
-                string color = enough ? "#FFFFFF" : "#FF4444";
-
-                ingredientsText.text += 
-                    $"<color={color}>{ing.item.itemName}: {have}/{required}</color>\n";
-            }
-        }
-
+        RefreshIngredients();
 
         progressUI.SetVisible(false);
-        progressUI.UpdateProgress(0f);
         actionButton.onClick.RemoveAllListeners();
     }
 
-    public void SetAction(System.Action callback)
+    // ========================================================
+    // UPGRADE VIEW
+    // ========================================================
+
+    public void ShowUpgradeRecipe(ItemInstance inst, RecipeSO recipe)
     {
-        actionButton.onClick.RemoveAllListeners();
-        actionButton.onClick.AddListener(() => callback?.Invoke());
+        currentRecipe = recipe;
+        currentInstance = inst;
+
+        gameObject.SetActive(true);
+
+        var def = inst.itemDefinition;
+
+        icon.sprite = def.icon;
+        title.text = def.itemName + " — Upgrade";
+
+        var next = def.upgrades[inst.level];
+
+        upgradeInfoText.text =
+            $"Current: Lv {inst.level}\n" +
+            $"Next: Lv {inst.level + 1}\n" +
+            next.ToStatsText();
+
+        upgradePreviewIcon.sprite =
+            next.UpgradedIcon != null ? next.UpgradedIcon : def.icon;
+
+        RefreshIngredients();
+        progressUI.SetVisible(false);
     }
+
+    // ========================================================
+    // INGREDIENTS
+    // ========================================================
+
+    public void RefreshIngredients()
+    {
+        if (currentRecipe == null || ingredientsText == null || inventory == null)
+            return;
+
+        ingredientsText.text = "";
+
+        foreach (var ing in currentRecipe.ingredients)
+        {
+            int have = inventory.Service.GetItemCount(ing.item);
+            bool enough = have >= ing.amount;
+            string color = enough ? "#FFFFFF" : "#FF4444";
+
+            ingredientsText.text +=
+                $"<color={color}>{ing.item.itemName}: {have}/{ing.amount}</color>\n";
+        }
+    }
+
+    public void ShowMissingIngredients(RecipeSO recipe)
+    {
+        RefreshIngredients();
+        Debug.Log($"Not enough ingredients for recipe: {recipe.name}");
+    }
+
+    // ========================================================
+    // PROGRESS
+    // ========================================================
 
     public void StartProgress()
     {
@@ -198,42 +180,64 @@ public class RecipePanelUI : MonoBehaviour
     public void ProcessComplete()
     {
         progressUI.UpdateProgress(1f);
+        Invoke(nameof(HideProgress), 0.2f);
     }
 
-    public void ShowMissingIngredients(RecipeSO recipe)
+    private void HideProgress()
     {
-        if (ingredientsText == null) return;
-
-        ingredientsText.text = "";
-
-        foreach (var ing in recipe.inputs)
-        {
-            bool hasEnough = InventoryManager.Instance.HasItemCount(ing.item, ing.amount);
-            string color = hasEnough ? "#FFFFFF" : "#FF4444";
-            ingredientsText.text += $"<color={color}>{ing.item.itemName} x {ing.amount}</color>\n";
-        }
+        progressUI.SetVisible(false);
     }
+
+    // ========================================================
+    // INPUT
+    // ========================================================
 
     private void OnCancel(InputAction.CallbackContext ctx)
     {
-        if (gameObject.activeSelf)
-        {
-            ClosePanel();
-        }
-        else
-        {
-            parentStation.Toggle();
-        }
-    }
-
-    public void ClosePanel()
-    {
-        currentRecipe = null;
-        currentItem = null;
-
-        progressUI.SetVisible(false);
-        actionButton.onClick.RemoveAllListeners();
-
+        ResetProgress();
         gameObject.SetActive(false);
     }
+
+    public void ResetProgress()
+    {
+        progressUI.SetVisible(false);
+        progressUI.UpdateProgress(0f);
+    }
+
+    public void Clear()
+    {
+        currentRecipe = null;
+        currentInstance = null;
+        currentAction = null;
+
+        gameObject.SetActive(false);
+        ResetProgress();
+    }
+
+    public void RefreshUpgradeInfo()
+    {
+        if (currentInstance == null || currentRecipe == null)
+            return;
+
+        var def = currentInstance.itemDefinition;
+        if (def == null || def.upgrades == null)
+            return;
+
+        if (currentInstance.level >= def.upgrades.Length)
+        {
+            Clear();
+            return;
+        }
+
+        var next = def.upgrades[currentInstance.level];
+
+        upgradeInfoText.text =
+            $"Current: Lv {currentInstance.level}\n" +
+            $"Next: Lv {currentInstance.level + 1}\n" +
+            next.ToStatsText();
+
+        upgradePreviewIcon.sprite =
+            next.UpgradedIcon != null ? next.UpgradedIcon : def.icon;
+    }
+
 }

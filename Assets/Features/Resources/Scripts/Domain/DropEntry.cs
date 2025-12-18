@@ -1,3 +1,5 @@
+using Features.Items.Data;
+
 namespace Features.Resources.Domain
 {
     [System.Serializable]

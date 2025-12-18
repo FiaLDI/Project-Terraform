@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Tech
   description: 
   preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
+  visualPreset: {fileID: 11400000, guid: ffc13c66519696d408de5657c3919e32, type: 2}
   passives:
   - {fileID: 11400000, guid: e497cbe8c9ed9ab42a224730970ee31f, type: 2}
   - {fileID: 11400000, guid: 46d2df12eb2d6e745aa306b4d2a19b6a, type: 2}

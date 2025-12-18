@@ -7,15 +7,22 @@ namespace Features.Interaction.UnityIntegration
     public static class InteractionServiceProvider
     {
         public static InteractionRayService Ray { get; private set; }
+        public static event System.Action<InteractionRayService> OnRayInitialized;
 
         public static void Init(IInteractionRayProvider provider)
         {
-            // Один единый луч для ВСЕХ систем
+            if (Ray != null)
+                return;
+
             Ray = new InteractionRayService(
                 provider,
-                ~LayerMask.GetMask("Player"), // всё, кроме игрока
+                ~LayerMask.GetMask("Player"),
                 LayerMask.GetMask("Player")
             );
+
+            Debug.Log("[InteractionServiceProvider] Ray INITIALIZED");
+            OnRayInitialized?.Invoke(Ray);
         }
     }
+
 }

@@ -10,6 +10,7 @@ using Features.Stats.Adapter;
 using Features.Buffs.UnityIntegration;
 
 [DefaultExecutionOrder(-100)]
+[RequireComponent(typeof(PlayerVisualController))]
 public class PlayerClassController : MonoBehaviour
 {
     [Header("Classes Library")]
@@ -19,7 +20,7 @@ public class PlayerClassController : MonoBehaviour
     public string defaultClassId = "engineer";
 
     [Header("Visuals")]
-    public PlayerVisualController visualController;
+    private PlayerVisualController visualController;
 
     private PlayerClassService _classService;
     private PlayerClassConfigSO _pendingClassCfg;
@@ -55,6 +56,9 @@ public class PlayerClassController : MonoBehaviour
         _buffTarget = GetComponent<PlayerBuffTarget>();
         _passiveSystem = GetComponent<PassiveSystem>();
         _abilityCaster = GetComponent<AbilityCaster>();
+
+        if (visualController == null)
+            visualController = GetComponent<PlayerVisualController>();
 
         _classService = new PlayerClassService(library.classes, defaultClassId);
 
@@ -149,9 +153,14 @@ public class PlayerClassController : MonoBehaviour
         _passiveSystem?.SetPassives(cfg.passives.ToArray());
         _abilityCaster?.SetAbilities(cfg.abilities.ToArray());
 
-        // 🎨 APPLY VISUAL PRESET HERE
-        var activeChar = PlayerProgressService.Instance.GetActiveCharacter();
-        if (activeChar != null)
-            visualController?.ApplyVisual(activeChar.visualPresetId);
+
+        if (cfg.visualPreset != null)
+        {
+            visualController.ApplyVisual(cfg.visualPreset.id);
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerClass] Class {cfg.displayName} has no visual preset");
+        }
     }
 }

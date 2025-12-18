@@ -1,3 +1,5 @@
+using Features.Inventory;
+using Features.Player;
 using UnityEngine;
 
 public class UpgradeStation : MonoBehaviour, IInteractable
@@ -8,17 +10,37 @@ public class UpgradeStation : MonoBehaviour, IInteractable
 
     public string InteractionPrompt => "Улучшить предмет";
 
-    private void Start()
-    {
-        ui.Init(this, processor);
-    }
+    private bool initialized;
 
-    public RecipeSO[] GetRecipes() => recipeDB.GetForUpgrade();
+    public RecipeSO[] GetRecipes()
+        => recipeDB.GetForUpgrade();
 
     public bool Interact()
     {
+        if (!initialized)
+            InitForLocalPlayer();
+
         ui.Toggle();
         ui.OnOpenUI();
         return true;
+    }
+
+    // ======================================================
+    // INIT (lazy, player-scoped)
+    // ======================================================
+
+    private void InitForLocalPlayer()
+    {
+        IInventoryContext inventory = LocalPlayerContext.Inventory;
+        if (inventory == null)
+        {
+            Debug.LogError("[UpgradeStation] Local inventory not available");
+            return;
+        }
+
+        processor.Init(inventory);
+        ui.Init(this, processor, inventory);
+
+        initialized = true;
     }
 }

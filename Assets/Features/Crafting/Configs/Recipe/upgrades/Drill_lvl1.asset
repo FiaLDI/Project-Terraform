@@ -13,13 +13,11 @@ MonoBehaviour:
   m_Name: Drill_lvl1
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeRecipeSO
   recipeId: 7
-  inputs:
-  - item: {fileID: 11400000, guid: f4fc98f7595e99240a220251b4e7cbff, type: 2}
-    amount: 1
+  inputs: []
   outputItem: {fileID: 0}
   outputAmount: 1
   duration: 2
   stationType: 3
   recipeType: 2
-  upgradeBaseItem: {fileID: 11400000, guid: 5d8b6d013c118bd43b6a7deaddfa301b, type: 2}
+  upgradeBaseItem: {fileID: 11400000, guid: 03872795b3c1d5c49a1a030d6642a8de, type: 2}
   targetLevel: 1

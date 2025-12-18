@@ -176,6 +176,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "05b3a1ec-3c0a-4d0e-9c94-546a190f25af",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -682,6 +691,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleQuests",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8d80c535-c108-4d1f-932d-eada80cee2bd",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Reload",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -1300,6 +1320,76 @@
                     "action": "Cancel1",
                     "isComposite": false,
                     "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Inventory",
+            "id": "dda228b7-117b-4d37-978e-c7fb684dff3f",
+            "actions": [
+                {
+                    "name": "DropOne",
+                    "type": "Button",
+                    "id": "99c0f63f-ab79-4a1a-855b-754705b59643",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DropAll",
+                    "type": "Button",
+                    "id": "84b429f4-a79d-44d9-9333-8acf243996c7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "044114b0-bcb4-4464-bcbc-d0de2ce70796",
+                    "path": "<Keyboard>/g",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropOne",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "One Modifier",
+                    "id": "cf8253b3-bf19-4ad9-b002-53ea284b6ce1",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropAll",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "c8a5f21b-30f3-4613-a7ad-a42c6f5b4cbe",
+                    "path": "<Keyboard>/leftCtrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropAll",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "f451786a-9a0c-41af-828e-9395351f5278",
+                    "path": "<Keyboard>/g",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropAll",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         }

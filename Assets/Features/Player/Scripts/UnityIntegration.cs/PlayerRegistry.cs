@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Features.Stats.Adapter;
 using Features.Abilities.Application;
+using Features.Inventory.UnityIntegration;
 
 namespace Features.Player.UnityIntegration
 {
@@ -33,6 +34,9 @@ namespace Features.Player.UnityIntegration
         public readonly Dictionary<GameObject, List<GameObject>> PlayerOwnedTurrets
             = new();
 
+        public InventoryManager LocalInventory { get; private set; }
+
+
         private void Awake()
         {
             if (Instance != null)
@@ -61,7 +65,8 @@ namespace Features.Player.UnityIntegration
 
             if (LocalPlayer == null)
                 LocalPlayer = player;
-
+                
+            LocalInventory = player.GetComponent<InventoryManager>();
             LocalStats = statsAdapter;
             LocalAbilities = player.GetComponent<AbilityCaster>();
         }

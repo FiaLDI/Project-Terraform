@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10408e8dc84845f4fb8b774b4f4b14fd, type: 3}
+  m_Name: Drill
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
+  id: 0
+  itemName: Drill
+  description: Can
+  icon: {fileID: 21300000, guid: 336c44d818d49bc4ea6bfd730ccf9d8a, type: 3}
+  isTwoHanded: 1
+  category: 0
+  isStackable: 0
+  maxStackAmount: 1
+  baseStats:
+  - stat: 0
+    value: 0
+  - stat: 1
+    value: 0
+  - stat: 2
+    value: 0
+  upgrades:
+  - {fileID: 11400000, guid: 239c04098b298d747a7fd7bdd8ba7539, type: 2}
+  - {fileID: 11400000, guid: ee6490e5359f5e1438a8d05b268cb222, type: 2}
+  worldPrefab: {fileID: 3952411509711560424, guid: bd56aab88089e964fb272206af7a97db, type: 3}
+  equippedPrefab: {fileID: 2901227947270850009, guid: 69243a768c69957449be67fb8157f0ff, type: 3}
+  weaponConfig: {fileID: 0}
+  toolConfig: {fileID: 11400000, guid: e87f0838fda80df4397ac8878713e692, type: 2}
+  scannerConfig: {fileID: 0}
+  throwableConfig: {fileID: 0}

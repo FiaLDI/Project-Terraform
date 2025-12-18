@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10408e8dc84845f4fb8b774b4f4b14fd, type: 3}
+  m_Name: ShardCrystal
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
+  id: 3
+  itemName: Shard
+  description: ShardShardShard
+  icon: {fileID: 21300000, guid: 16561574ed2d90141b6a04e01aa9dd89, type: 3}
+  isTwoHanded: 0
+  category: 0
+  isStackable: 1
+  maxStackAmount: 5
+  baseStats: []
+  upgrades: []
+  worldPrefab: {fileID: 8596236932979515810, guid: 80d99ea04c1546e49816ec52b08a4d27, type: 3}
+  equippedPrefab: {fileID: 1414216610901251367, guid: dd57154b9ba378342ad17cc9418dfba7, type: 3}
+  weaponConfig: {fileID: 0}
+  toolConfig: {fileID: 0}
+  scannerConfig: {fileID: 0}
+  throwableConfig: {fileID: 0}
