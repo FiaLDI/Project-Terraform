@@ -1,13 +1,13 @@
-﻿using Features.Camera.Application;
+﻿using UnityEngine;
+using UnityEngine.InputSystem;
+using Features.Camera.Application;
 using Features.Camera.Domain;
-using Features.Camera.UnityIntegration;
 using Features.Inventory;
 using Features.Inventory.UI;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player;
-using UnityEngine;
-using UnityEngine.InputSystem;
+using Features.Camera.UnityIntegration;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -17,55 +17,111 @@ namespace Features.Inventory.UnityIntegration
         [SerializeField] private InventoryUIView inventoryUI;
         [SerializeField] private PlayerInteractionController interactionController;
 
-        private InputSystem_Actions input;
+        private PlayerInputContext input;
         private ICameraControlService cameraControl;
         private IInventoryContext inventory;
 
-        private void Awake()
-        {
-            input = new InputSystem_Actions();
-            input.Enable();
+        private bool subscribed;
 
-            cameraControl = CameraServiceProvider.Control;
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
+
+        private void OnEnable()
+        {
+            // PlayerInputContext
+            if (input == null)
+                input = GetComponentInParent<PlayerInputContext>();
+
+            if (input == null)
+            {
+                Debug.LogError(
+                    $"{nameof(InventoryInputHandler)}: PlayerInputContext not found",
+                    this);
+                return;
+            }
+
+            // Camera service
+            cameraControl ??= CameraServiceProvider.Control;
+
+            // Inventory (может быть не готов сразу)
+            inventory ??= LocalPlayerContext.Inventory;
+
+            var ui = input.Actions.UI;
+            var p  = input.Actions.Player;
 
             // === Inventory ===
-            input.UI.OpenInventory.performed += _ => ToggleInventory();
+            ui.OpenInventory.performed += OnToggleInventory;
+            ui.Cancel1.performed        += OnCancel;
 
-            // === Hotbar direct ===
-            input.UI.EquipFirst.performed += _ => SelectHotbar(0);
-            input.UI.EquipSecond.performed += _ => SelectHotbar(1);
+            // === Hotbar ===
+            ui.EquipFirst.performed  += OnEquipFirst;
+            ui.EquipSecond.performed += OnEquipSecond;
+            ui.ScrollWheel.performed += OnScroll;
 
-            input.Player.Drop.performed += _ => DropItem();
+            // === Drop (из рук) ===
+            p.Drop.performed += OnDrop;
 
-            // === Scroll hotbar ===
-            input.UI.ScrollWheel.performed += ctx =>
-            {
-                float scroll = ctx.ReadValue<Vector2>().y;
-                if (scroll > 0) CycleHotbar(+1);
-                else if (scroll < 0) CycleHotbar(-1);
-            };
-
-            input.UI.Cancel.performed += _ =>
-            {
-                if (inventoryUI.IsOpen)
-                    ToggleInventory();
-            };
+            subscribed = true;
         }
 
-        private void Start()
+        private void OnDisable()
         {
-            inventory = LocalPlayerContext.Inventory;
+            if (!subscribed || input == null)
+                return;
+
+            var ui = input.Actions.UI;
+            var p  = input.Actions.Player;
+
+            ui.OpenInventory.performed -= OnToggleInventory;
+            ui.Cancel1.performed        -= OnCancel;
+
+            ui.EquipFirst.performed  -= OnEquipFirst;
+            ui.EquipSecond.performed -= OnEquipSecond;
+            ui.ScrollWheel.performed -= OnScroll;
+
+            p.Drop.performed -= OnDrop;
+
+            subscribed = false;
         }
 
-        private void OnEnable() => input.Enable();
-        private void OnDisable() => input.Disable();
+        // ======================================================
+        // INPUT HANDLERS
+        // ======================================================
 
-        // ========================================================
+        private void OnToggleInventory(InputAction.CallbackContext _)
+        {
+            ToggleInventory();
+        }
+
+        private void OnCancel(InputAction.CallbackContext _)
+        {
+            if (inventoryUI != null && inventoryUI.IsOpen)
+                ToggleInventory();
+        }
+
+        private void OnEquipFirst(InputAction.CallbackContext _) => SelectHotbar(0);
+        private void OnEquipSecond(InputAction.CallbackContext _) => SelectHotbar(1);
+
+        private void OnScroll(InputAction.CallbackContext ctx)
+        {
+            float scroll = ctx.ReadValue<Vector2>().y;
+            if (scroll > 0) CycleHotbar(+1);
+            else if (scroll < 0) CycleHotbar(-1);
+        }
+
+        private void OnDrop(InputAction.CallbackContext _)
+        {
+            DropItem();
+        }
+
+        // ======================================================
         // HOTBAR
-        // ========================================================
+        // ======================================================
 
         private void SelectHotbar(int index)
         {
+            inventory ??= LocalPlayerContext.Inventory;
             if (inventory == null)
                 return;
 
@@ -74,27 +130,23 @@ namespace Features.Inventory.UnityIntegration
 
         private void CycleHotbar(int direction)
         {
+            inventory ??= LocalPlayerContext.Inventory;
             if (inventory == null)
                 return;
 
             int max = inventory.Model.hotbar.Count;
-            int current = inventory.Model.selectedHotbarIndex;
+            if (max <= 0)
+                return;
 
+            int current = inventory.Model.selectedHotbarIndex;
             int next = (current + direction + max) % max;
+
             SelectHotbar(next);
         }
 
-
-        // ========================================================
+        // ======================================================
         // INVENTORY UI
-        // ========================================================
-
-        public void CloseInventory()
-        {
-            if (inventoryUI.IsOpen == false)
-                return;
-            ToggleInventory();
-        }
+        // ======================================================
 
         private void ToggleInventory()
         {
@@ -104,8 +156,10 @@ namespace Features.Inventory.UnityIntegration
             bool open = !inventoryUI.IsOpen;
             inventoryUI.SetOpen(open);
 
-            if (open) ApplyInventoryOpenEffects();
-            else ApplyInventoryCloseEffects();
+            if (open)
+                ApplyInventoryOpenEffects();
+            else
+                ApplyInventoryCloseEffects();
         }
 
         private void ApplyInventoryOpenEffects()
@@ -126,8 +180,13 @@ namespace Features.Inventory.UnityIntegration
             interactionController?.SetInteractionBlocked(false);
         }
 
+        // ======================================================
+        // DROP
+        // ======================================================
+
         private void DropItem()
         {
+            inventory ??= LocalPlayerContext.Inventory;
             if (inventory == null)
                 return;
 
@@ -136,6 +195,14 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             SpawnDroppedItem(dropped);
+        }
+
+        public void CloseInventory()
+        {
+            if (inventoryUI == null || !inventoryUI.IsOpen)
+                return;
+
+            ToggleInventory();
         }
 
         private void SpawnDroppedItem(ItemInstance inst)
@@ -149,12 +216,10 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             Vector3 pos = player.transform.position + player.transform.forward * 1.2f;
-            Quaternion rot = Quaternion.identity;
-
-            var obj = Instantiate(prefab, pos, rot);
+            var obj = Instantiate(prefab, pos, Quaternion.identity);
 
             var holder = obj.GetComponent<ItemRuntimeHolder>()
-                        ?? obj.AddComponent<ItemRuntimeHolder>();
+                         ?? obj.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
 
             if (obj.TryGetComponent<Rigidbody>(out var rb))
@@ -164,6 +229,5 @@ namespace Features.Inventory.UnityIntegration
                 rb.AddForce(player.transform.forward * 2f, ForceMode.Impulse);
             }
         }
-
     }
 }

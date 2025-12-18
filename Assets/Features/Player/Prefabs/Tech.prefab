@@ -3873,6 +3873,7 @@ GameObject:
   - component: {fileID: 987342586588975180}
   - component: {fileID: 7861473150342794278}
   - component: {fileID: 5386461598782120886}
+  - component: {fileID: 6823440778882124389}
   m_Layer: 8
   m_Name: Tech
   m_TagString: Player
@@ -4453,6 +4454,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d094ad011ce476041a4d72b0696edf13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerAnimationController
+--- !u!114 &6823440778882124389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3004063548674256600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e49d481e8e615746a03780c1f5f6ac2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputContext
 --- !u!1 &3094679885519717256
 GameObject:
   m_ObjectHideFlags: 0

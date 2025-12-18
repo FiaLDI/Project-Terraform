@@ -13,9 +13,11 @@ public class PlayerInteractionController : MonoBehaviour
 
     private InteractionRayService rayService;
     private InteractionService interactionService;
-    private InputSystem_Actions input;
 
+    private PlayerInputContext input;
     private INearbyInteractables nearby;
+
+    private bool subscribed;
 
     // ======================================================
     // LIFECYCLE
@@ -24,12 +26,40 @@ public class PlayerInteractionController : MonoBehaviour
     private void Awake()
     {
         interactionService = new InteractionService();
+    }
 
-        input = new InputSystem_Actions();
-        input.Player.Enable();
+    private void OnEnable()
+    {
+        if (input == null)
+            input = GetComponent<PlayerInputContext>();
 
-        input.Player.Interact.performed += _ => TryInteract();
-        input.Player.Drop.performed     += _ => DropCurrentItem(false);
+        if (input == null)
+        {
+            Debug.LogError(
+                $"{nameof(PlayerInteractionController)}: PlayerInputContext not found",
+                this);
+            return;
+        }
+
+        var p = input.Actions.Player;
+
+        p.Interact.performed += OnInteract;
+        p.Drop.performed     += OnDrop;
+
+        subscribed = true;
+    }
+
+    private void OnDisable()
+    {
+        if (!subscribed || input == null)
+            return;
+
+        var p = input.Actions.Player;
+
+        p.Interact.performed -= OnInteract;
+        p.Drop.performed     -= OnDrop;
+
+        subscribed = false;
     }
 
     private void Start()
@@ -48,6 +78,11 @@ public class PlayerInteractionController : MonoBehaviour
     // ======================================================
     // INTERACTION
     // ======================================================
+
+    private void OnInteract(InputAction.CallbackContext _)
+    {
+        TryInteract();
+    }
 
     public void TryInteract()
     {
@@ -74,28 +109,13 @@ public class PlayerInteractionController : MonoBehaviour
     }
 
     // ======================================================
-    // PICKUP
+    // DROP
     // ======================================================
 
-    private void PickupItem(NearbyItemPresenter presenter)
+    private void OnDrop(InputAction.CallbackContext _)
     {
-        var inst = presenter.GetInstance();
-        if (inst == null || inst.itemDefinition == null)
-            return;
-
-        var inventory = LocalPlayerContext.Inventory;
-        if (inventory == null)
-            return;
-
-        inventory.Service.AddItem(inst);
-
-        // 🔥 ВАЖНО: просто уничтожаем world prefab
-        Destroy(presenter.gameObject);
+        DropCurrentItem(false);
     }
-
-    // ======================================================
-    // DROP (быстрый дроп из хотбара)
-    // ======================================================
 
     public void DropCurrentItem(bool dropFullStack)
     {
@@ -105,6 +125,9 @@ public class PlayerInteractionController : MonoBehaviour
 
         var model   = inventory.Model;
         var service = inventory.Service;
+
+        if (model.hotbar.Count == 0)
+            return;
 
         var slot = model.hotbar[model.selectedHotbarIndex];
         if (slot.item == null)
@@ -144,6 +167,24 @@ public class PlayerInteractionController : MonoBehaviour
             rb.isKinematic = false;
             rb.useGravity = true;
         }
+    }
+
+    private void PickupItem(NearbyItemPresenter presenter)
+    {
+        if (presenter == null)
+            return;
+
+        var inst = presenter.GetInstance();
+        if (inst == null || inst.itemDefinition == null)
+            return;
+
+        var inventory = LocalPlayerContext.Inventory;
+        if (inventory == null)
+            return;
+
+        inventory.Service.AddItem(inst);
+
+        Destroy(presenter.gameObject);
     }
 
     // ======================================================

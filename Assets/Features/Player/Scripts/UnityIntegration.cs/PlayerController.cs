@@ -12,27 +12,61 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private PlayerCameraController playerCameraController;
         [SerializeField] private AbilityCaster abilityCaster;
 
-        private InputSystem_Actions inputActions;
+        private PlayerInputContext input;
+        private bool subscribed;
 
-        private void Awake()
-        {
-            inputActions = new InputSystem_Actions();
-        }
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
 
-        private void Start()
+        private void OnEnable()
         {
-            SetupMovement();
-            SetupCamera();
-            SetupAbilities();
+            // Безопасно получаем PlayerInputContext
+            if (input == null)
+                input = GetComponent<PlayerInputContext>();
+
+            Debug.Log(
+                    $"[TEST] input={(input != null)} " +
+                    $"actions={(input?.Actions != null)} " +
+                    $"playerMap={(input?.Actions?.Player != null)} " +
+                    $"uiMap={(input?.Actions?.UI != null)}",
+                    this
+                );
+
+            if (input == null)
+            {
+                Debug.LogError(
+                    $"{nameof(PlayerController)}: {nameof(PlayerInputContext)} not found",
+                    this);
+                return;
+            }
+
+            if (abilityCaster == null)
+                abilityCaster = GetComponent<AbilityCaster>();
+
+            BindMovement();
+            BindCamera();
+            BindAbilities();
             SetupCursor();
 
-            inputActions.Enable();
+            subscribed = true;
         }
 
         private void OnDisable()
         {
-            inputActions.Disable();
+            if (!subscribed || input == null)
+                return;
+
+            UnbindMovement();
+            UnbindCamera();
+            UnbindAbilities();
+
+            subscribed = false;
         }
+
+        // ======================================================
+        // CURSOR
+        // ======================================================
 
         private void SetupCursor()
         {
@@ -40,44 +74,151 @@ namespace Features.Player.UnityIntegration
             Cursor.visible = false;
         }
 
-        private void SetupMovement()
+        // ======================================================
+        // MOVEMENT
+        // ======================================================
+
+        private void BindMovement()
         {
-            inputActions.Player.Move.performed +=
-                ctx => playerMovement.SetMoveInput(ctx.ReadValue<Vector2>());
+            var p = input.Actions.Player;
 
-            inputActions.Player.Move.canceled +=
-                _ => playerMovement.SetMoveInput(Vector2.zero);
+            p.Move.performed += OnMove;
+            p.Move.canceled  += OnMoveCanceled;
 
-            inputActions.Player.Jump.performed += _ => playerMovement.TryJump();
-            inputActions.Player.Sprint.performed += _ => playerMovement.SetSprint(true);
-            inputActions.Player.Sprint.canceled += _ => playerMovement.SetSprint(false);
-            inputActions.Player.Walk.performed += _ => playerMovement.SetWalk(true);
-            inputActions.Player.Walk.canceled += _ => playerMovement.SetWalk(false);
-            inputActions.Player.Crouch.performed += _ => playerMovement.ToggleCrouch();
+            p.Jump.performed   += OnJump;
+            p.Sprint.performed += OnSprintStart;
+            p.Sprint.canceled  += OnSprintStop;
+
+            p.Walk.performed += OnWalkStart;
+            p.Walk.canceled  += OnWalkStop;
+
+            p.Crouch.performed += OnCrouch;
         }
 
-        private void SetupCamera()
+        private void UnbindMovement()
         {
-            inputActions.Player.Look.performed +=
-                ctx => playerCameraController.SetLookInput(ctx.ReadValue<Vector2>());
+            var p = input.Actions.Player;
 
-            inputActions.Player.Look.canceled +=
-                _ => playerCameraController.SetLookInput(Vector2.zero);
+            p.Move.performed -= OnMove;
+            p.Move.canceled  -= OnMoveCanceled;
 
-            inputActions.Player.SwitchView.performed +=
-                _ => playerCameraController.SwitchView();
+            p.Jump.performed   -= OnJump;
+            p.Sprint.performed -= OnSprintStart;
+            p.Sprint.canceled  -= OnSprintStop;
+
+            p.Walk.performed -= OnWalkStart;
+            p.Walk.canceled  -= OnWalkStop;
+
+            p.Crouch.performed -= OnCrouch;
         }
 
-        private void SetupAbilities()
+        private void OnMove(InputAction.CallbackContext ctx)
         {
-            if (abilityCaster == null)
-                abilityCaster = GetComponent<AbilityCaster>();
-
-            inputActions.Player.Ability1.performed += _ => abilityCaster.TryCast(0);
-            inputActions.Player.Ability2.performed += _ => abilityCaster.TryCast(1);
-            inputActions.Player.Ability3.performed += _ => abilityCaster.TryCast(2);
-            inputActions.Player.Ability4.performed += _ => abilityCaster.TryCast(3);
-            inputActions.Player.Ability5.performed += _ => abilityCaster.TryCast(4);
+            playerMovement.SetMoveInput(ctx.ReadValue<Vector2>());
         }
+
+        private void OnMoveCanceled(InputAction.CallbackContext _)
+        {
+            playerMovement.SetMoveInput(Vector2.zero);
+        }
+
+        private void OnJump(InputAction.CallbackContext _)
+        {
+            playerMovement.TryJump();
+        }
+
+        private void OnSprintStart(InputAction.CallbackContext _)
+        {
+            playerMovement.SetSprint(true);
+        }
+
+        private void OnSprintStop(InputAction.CallbackContext _)
+        {
+            playerMovement.SetSprint(false);
+        }
+
+        private void OnWalkStart(InputAction.CallbackContext _)
+        {
+            playerMovement.SetWalk(true);
+        }
+
+        private void OnWalkStop(InputAction.CallbackContext _)
+        {
+            playerMovement.SetWalk(false);
+        }
+
+        private void OnCrouch(InputAction.CallbackContext _)
+        {
+            playerMovement.ToggleCrouch();
+        }
+
+        // ======================================================
+        // CAMERA
+        // ======================================================
+
+        private void BindCamera()
+        {
+            var p = input.Actions.Player;
+
+            p.Look.performed += OnLook;
+            p.Look.canceled  += OnLookCanceled;
+            p.SwitchView.performed += OnSwitchView;
+        }
+
+        private void UnbindCamera()
+        {
+            var p = input.Actions.Player;
+
+            p.Look.performed -= OnLook;
+            p.Look.canceled  -= OnLookCanceled;
+            p.SwitchView.performed -= OnSwitchView;
+        }
+
+        private void OnLook(InputAction.CallbackContext ctx)
+        {
+            playerCameraController.SetLookInput(ctx.ReadValue<Vector2>());
+        }
+
+        private void OnLookCanceled(InputAction.CallbackContext _)
+        {
+            playerCameraController.SetLookInput(Vector2.zero);
+        }
+
+        private void OnSwitchView(InputAction.CallbackContext _)
+        {
+            playerCameraController.SwitchView();
+        }
+
+        // ======================================================
+        // ABILITIES
+        // ======================================================
+
+        private void BindAbilities()
+        {
+            var p = input.Actions.Player;
+
+            p.Ability1.performed += OnAbility1;
+            p.Ability2.performed += OnAbility2;
+            p.Ability3.performed += OnAbility3;
+            p.Ability4.performed += OnAbility4;
+            p.Ability5.performed += OnAbility5;
+        }
+
+        private void UnbindAbilities()
+        {
+            var p = input.Actions.Player;
+
+            p.Ability1.performed -= OnAbility1;
+            p.Ability2.performed -= OnAbility2;
+            p.Ability3.performed -= OnAbility3;
+            p.Ability4.performed -= OnAbility4;
+            p.Ability5.performed -= OnAbility5;
+        }
+
+        private void OnAbility1(InputAction.CallbackContext _) => abilityCaster.TryCast(0);
+        private void OnAbility2(InputAction.CallbackContext _) => abilityCaster.TryCast(1);
+        private void OnAbility3(InputAction.CallbackContext _) => abilityCaster.TryCast(2);
+        private void OnAbility4(InputAction.CallbackContext _) => abilityCaster.TryCast(3);
+        private void OnAbility5(InputAction.CallbackContext _) => abilityCaster.TryCast(4);
     }
 }

@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using Features.Quests.Domain;
 using System.Collections;
 using System.Linq;
+using Features.Player;
 
 namespace Features.Quests.UnityIntegration
 {
@@ -38,7 +39,8 @@ namespace Features.Quests.UnityIntegration
         private readonly Dictionary<QuestId, GameObject> hudEntries = new();
         private readonly Dictionary<QuestId, GameObject> journalEntries = new();
 
-        private InputSystem_Actions input;
+        private PlayerInputContext input;
+        private bool subscribed;
 
         private enum QuestFilter { All, Active, Completed }
         private QuestFilter currentFilter = QuestFilter.All;
@@ -49,30 +51,55 @@ namespace Features.Quests.UnityIntegration
 
         private void Awake()
         {
-            input = new InputSystem_Actions();
-            input.Player.ToggleQuests.performed += _ => ToggleJournal();
-
             journalPanel?.SetActive(false);
             notificationPanel?.SetActive(false);
 
-            // Bind filter buttons
             btnAll.onClick.AddListener(() => SetFilter(QuestFilter.All));
             btnActive.onClick.AddListener(() => SetFilter(QuestFilter.Active));
             btnCompleted.onClick.AddListener(() => SetFilter(QuestFilter.Completed));
         }
 
-        private void OnEnable() => input.Enable();
-        private void OnDisable() => input.Disable();
+        private void OnEnable()
+        {
+            if (input == null)
+                input = LocalPlayerContext.Get<PlayerInputContext>();
+
+            if (input == null)
+            {
+                Debug.LogError(
+                    $"{nameof(QuestUIRuntime)}: PlayerInputContext not found");
+                return;
+            }
+
+            input.Actions.UI.ToggleQuests.performed += OnToggleJournal;
+            subscribed = true;
+        }
+
+        private void OnDisable()
+        {
+            if (!subscribed || input == null)
+                return;
+
+            input.Actions.UI.ToggleQuests.performed -= OnToggleJournal;
+            subscribed = false;
+        }
 
         private void Start()
         {
             StartCoroutine(ConnectWhenReady());
         }
 
+        // ============================================================
+        // QUEST SERVICE
+        // ============================================================
+
         private IEnumerator ConnectWhenReady()
         {
-            while (QuestManagerMB.Instance == null) yield return null;
-            while (QuestManagerMB.Instance.Service == null) yield return null;
+            while (QuestManagerMB.Instance == null)
+                yield return null;
+
+            while (QuestManagerMB.Instance.Service == null)
+                yield return null;
 
             service = QuestManagerMB.Instance.Service;
 
@@ -80,7 +107,6 @@ namespace Features.Quests.UnityIntegration
             service.OnQuestUpdated += OnQuestUpdated;
             service.OnQuestRemoved += OnQuestRemoved;
 
-            // restore
             foreach (var quest in service.ActiveQuests)
                 RestoreExistingQuest(quest);
 
@@ -102,20 +128,23 @@ namespace Features.Quests.UnityIntegration
 
         private void RefreshFilter()
         {
+            if (service == null)
+                return;
+
             foreach (var entry in journalEntries)
             {
-                var quest = service.ActiveQuests.FirstOrDefault(q => q.Definition.Id.Equals(entry.Key))
-                            ?? service.CompletedQuests.FirstOrDefault(q => q.Definition.Id.Equals(entry.Key));
+                var quest =
+                    service.ActiveQuests.FirstOrDefault(q => q.Definition.Id.Equals(entry.Key)) ??
+                    service.CompletedQuests.FirstOrDefault(q => q.Definition.Id.Equals(entry.Key));
 
                 if (quest == null)
                     continue;
 
-                bool visible = filterMatch(quest);
-                entry.Value.SetActive(visible);
+                entry.Value.SetActive(FilterMatch(quest));
             }
         }
 
-        private bool filterMatch(QuestRuntime q)
+        private bool FilterMatch(QuestRuntime q)
         {
             return currentFilter switch
             {
@@ -127,12 +156,11 @@ namespace Features.Quests.UnityIntegration
         }
 
         // ============================================================
-        // RESTORE
+        // RESTORE / EVENTS
         // ============================================================
 
         private void RestoreExistingQuest(QuestRuntime quest)
         {
-            // HUD
             if (quest.State != QuestState.Completed && hudEntries.Count < maxHudQuests)
             {
                 var go = Instantiate(hudEntryTemplate, hudContainer);
@@ -140,19 +168,13 @@ namespace Features.Quests.UnityIntegration
                 UpdateEntry(go, quest);
             }
 
-            // JOURNAL
             var entry = Instantiate(journalEntryTemplate, listParent);
             journalEntries[quest.Definition.Id] = entry;
             UpdateEntry(entry, quest);
         }
 
-        // ============================================================
-        // QUEST EVENTS
-        // ============================================================
-
         private void OnQuestAdded(QuestRuntime quest)
         {
-            // HUD
             if (hudEntries.Count < maxHudQuests)
             {
                 var go = Instantiate(hudEntryTemplate, hudContainer);
@@ -160,7 +182,6 @@ namespace Features.Quests.UnityIntegration
                 UpdateEntry(go, quest);
             }
 
-            // JOURNAL
             var j = Instantiate(journalEntryTemplate, listParent);
             journalEntries[quest.Definition.Id] = j;
             UpdateEntry(j, quest);
@@ -192,7 +213,7 @@ namespace Features.Quests.UnityIntegration
         }
 
         // ============================================================
-        // UI ENTRY UPDATE
+        // UI ENTRY
         // ============================================================
 
         private void UpdateEntry(GameObject entry, QuestRuntime quest)
@@ -204,24 +225,43 @@ namespace Features.Quests.UnityIntegration
             text.color = quest.State == QuestState.Completed ? Color.green : Color.white;
 
             if (slider != null)
+            {
                 slider.value = quest.TargetProgress > 0
                     ? (float)quest.CurrentProgress / quest.TargetProgress
                     : 0f;
+            }
         }
 
         // ============================================================
-        // PANEL TOGGLE
+        // JOURNAL TOGGLE
         // ============================================================
+
+        private void OnToggleJournal(InputAction.CallbackContext _)
+        {
+            ToggleJournal();
+        }
 
         private void ToggleJournal()
         {
-            bool newState = !journalPanel.activeSelf;
-            journalPanel.SetActive(newState);
+            bool open = !journalPanel.activeSelf;
+            journalPanel.SetActive(open);
 
-            if (journalPanel.activeSelf)
-                EnableCursor();
+            if (open)
+                ApplyOpenEffects();
             else
-                DisableCursor();
+                ApplyCloseEffects();
+        }
+
+        private void ApplyOpenEffects()
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+
+        private void ApplyCloseEffects()
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
         }
 
         // ============================================================
@@ -241,19 +281,5 @@ namespace Features.Quests.UnityIntegration
         {
             notificationPanel.SetActive(false);
         }
-
-        private void EnableCursor()
-        {
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-        }
-
-        private void DisableCursor()
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-
-        }
-
     }
 }

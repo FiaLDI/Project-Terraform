@@ -3,49 +3,79 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+using Features.Player;
 
 namespace Features.Inventory.UnityIntegration
 {
     public class InventoryUIInputController : MonoBehaviour
     {
-        private InputSystem_Actions input;
+        private PlayerInputContext input;
+        private bool subscribed;
 
-        private void Awake()
-        {
-            input = new InputSystem_Actions();
-        }
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
 
         private void OnEnable()
         {
-            input.Inventory.Enable();
+            // Получаем контекст ввода безопасно
+            if (input == null)
+                input = GetComponentInParent<PlayerInputContext>();
 
-            input.Inventory.DropOne.performed += OnDropOne;
-            input.Inventory.DropAll.performed += OnDropAll;
+            if (input == null)
+            {
+                Debug.LogError(
+                    $"{nameof(InventoryUIInputController)}: " +
+                    $"{nameof(PlayerInputContext)} not found in parents",
+                    this);
+                return;
+            }
+
+            var inv = input.Actions.Inventory;
+
+            inv.DropOne.performed += OnDropOne;
+            inv.DropAll.performed += OnDropAll;
+
+            subscribed = true;
         }
 
         private void OnDisable()
         {
-            input.Inventory.DropOne.performed -= OnDropOne;
-            input.Inventory.DropAll.performed -= OnDropAll;
+            if (!subscribed || input == null)
+                return;
 
-            input.Inventory.Disable();
+            var inv = input.Actions.Inventory;
+
+            inv.DropOne.performed -= OnDropOne;
+            inv.DropAll.performed -= OnDropAll;
+
+            subscribed = false;
         }
 
-        private void OnDropOne(InputAction.CallbackContext ctx)
+        // ======================================================
+        // INPUT
+        // ======================================================
+
+        private void OnDropOne(InputAction.CallbackContext _)
         {
-            TryDrop(false);
+            TryDrop(dropAll: false);
         }
 
-        private void OnDropAll(InputAction.CallbackContext ctx)
+        private void OnDropAll(InputAction.CallbackContext _)
         {
-            TryDrop(true);
+            TryDrop(dropAll: true);
         }
+
+        // ======================================================
+        // DROP LOGIC
+        // ======================================================
 
         private void TryDrop(bool dropAll)
         {
             InventorySlotUI slotUI = InventorySlotUI.HoveredSlot;
 
-            if (slotUI == null)
+            // Fallback через EventSystem (если hover не сработал)
+            if (slotUI == null && EventSystem.current != null && Mouse.current != null)
             {
                 var results = new List<RaycastResult>();
 
@@ -70,6 +100,5 @@ namespace Features.Inventory.UnityIntegration
             InventoryDragController.Instance
                 ?.DropFromSlotToWorld(slotUI, dropAll);
         }
-
     }
 }

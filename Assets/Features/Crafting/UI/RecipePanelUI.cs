@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using TMPro;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Features.Items.Domain;
 using Features.Items.Data;
@@ -24,8 +23,6 @@ public class RecipePanelUI : MonoBehaviour
     [Header("Progress UI")]
     [SerializeField] private CraftingProgressUI progressUI;
 
-    [SerializeField] private InputActionReference cancelAction;
-
     private IInventoryContext inventory;
 
     private RecipeSO currentRecipe;
@@ -39,19 +36,6 @@ public class RecipePanelUI : MonoBehaviour
     public void Init(IInventoryContext inventory)
     {
         this.inventory = inventory;
-    }
-
-    // ========================================================
-    // LIFECYCLE
-    // ========================================================
-
-    private void OnEnable()
-    {
-        if (cancelAction != null)
-        {
-            cancelAction.action.Enable();
-            cancelAction.action.performed += OnCancel;
-        }
 
         if (inventory != null)
             inventory.Service.OnChanged += RefreshIngredients;
@@ -61,12 +45,6 @@ public class RecipePanelUI : MonoBehaviour
     {
         if (inventory != null)
             inventory.Service.OnChanged -= RefreshIngredients;
-
-        if (cancelAction != null)
-        {
-            cancelAction.action.performed -= OnCancel;
-            cancelAction.action.Disable();
-        }
     }
 
     // ========================================================
@@ -116,11 +94,10 @@ public class RecipePanelUI : MonoBehaviour
         gameObject.SetActive(true);
 
         var def = inst.itemDefinition;
+        var next = def.upgrades[inst.level];
 
         icon.sprite = def.icon;
         title.text = def.itemName + " — Upgrade";
-
-        var next = def.upgrades[inst.level];
 
         upgradeInfoText.text =
             $"Current: Lv {inst.level}\n" +
@@ -156,12 +133,6 @@ public class RecipePanelUI : MonoBehaviour
         }
     }
 
-    public void ShowMissingIngredients(RecipeSO recipe)
-    {
-        RefreshIngredients();
-        Debug.Log($"Not enough ingredients for recipe: {recipe.name}");
-    }
-
     // ========================================================
     // PROGRESS
     // ========================================================
@@ -189,10 +160,10 @@ public class RecipePanelUI : MonoBehaviour
     }
 
     // ========================================================
-    // INPUT
+    // CONTROL
     // ========================================================
 
-    private void OnCancel(InputAction.CallbackContext ctx)
+    public void Close()
     {
         ResetProgress();
         gameObject.SetActive(false);
@@ -210,8 +181,7 @@ public class RecipePanelUI : MonoBehaviour
         currentInstance = null;
         currentAction = null;
 
-        gameObject.SetActive(false);
-        ResetProgress();
+        Close();
     }
 
     public void RefreshUpgradeInfo()
@@ -238,6 +208,15 @@ public class RecipePanelUI : MonoBehaviour
 
         upgradePreviewIcon.sprite =
             next.UpgradedIcon != null ? next.UpgradedIcon : def.icon;
+    }
+
+    public void ShowMissingIngredients(RecipeSO recipe)
+    {
+        currentRecipe = recipe;
+
+        RefreshIngredients();
+
+        Debug.Log($"[RecipePanelUI] Not enough ingredients for recipe: {recipe.name}");
     }
 
 }

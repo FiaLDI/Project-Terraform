@@ -30,6 +30,17 @@ public class MaterialProcessorUIController : BaseStationUI
         processor.OnComplete += HandleComplete;
     }
 
+    private void OnDisable()
+    {
+        if (processor == null)
+            return;
+
+        processor.OnStart -= HandleStart;
+        processor.OnProgress -= HandleProgress;
+        processor.OnComplete -= HandleComplete;
+    }
+
+
     // ======================================================
     // UI
     // ======================================================

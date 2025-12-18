@@ -1,18 +1,13 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Features.Equipment.Domain;
+using Features.Player;
 
 namespace Features.Equipment.UnityIntegration
 {
-    /// <summary>
-    /// Управляет использованием предметов в руках.
-    /// Use          — primary (правая рука / двуручное)
-    /// SecondaryUse — secondary (ADS / alt)
-    /// </summary>
     public class PlayerUsageController : MonoBehaviour
     {
-        public static bool InteractionLocked = false;
-
-        private InputSystem_Actions input;
+        private PlayerInputContext input;
 
         private IUsable rightHand;
         private IUsable leftHand;
@@ -21,32 +16,59 @@ namespace Features.Equipment.UnityIntegration
         private bool usingPrimary;
         private bool usingSecondary;
 
-        private void Awake()
+        private bool subscribed;
+
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
+
+        private void OnEnable()
         {
-            input = new InputSystem_Actions();
+            if (input == null)
+                input = GetComponent<PlayerInputContext>();
 
-            // === PRIMARY USE ===
-            input.Player.Use.performed += _ => StartPrimary();
-            input.Player.Use.canceled += _ => StopPrimary();
-
-            // === SECONDARY USE ===
-            input.Player.SecondaryUse.performed += _ => StartSecondary();
-            input.Player.SecondaryUse.canceled += _ => StopSecondary();
-
-            input.Player.Reload.performed += ctx =>
+            if (input == null)
             {
-                Debug.Log("RELOAD ACTION PERFORMED");
-                Reload();
-            };
+                Debug.LogError(
+                    $"{nameof(PlayerUsageController)}: PlayerInputContext not found",
+                    this);
+                return;
+            }
 
+            var p = input.Actions.Player;
+
+            p.Use.performed += OnPrimaryStart;
+            p.Use.canceled  += OnPrimaryStop;
+
+            p.SecondaryUse.performed += OnSecondaryStart;
+            p.SecondaryUse.canceled  += OnSecondaryStop;
+
+            p.Reload.performed += OnReload;
+
+            subscribed = true;
         }
 
-        private void OnEnable() => input.Enable();
-        private void OnDisable() => input.Disable();
+        private void OnDisable()
+        {
+            if (!subscribed || input == null)
+                return;
 
-        // ====================================================================
+            var p = input.Actions.Player;
+
+            p.Use.performed -= OnPrimaryStart;
+            p.Use.canceled  -= OnPrimaryStop;
+
+            p.SecondaryUse.performed -= OnSecondaryStart;
+            p.SecondaryUse.canceled  -= OnSecondaryStop;
+
+            p.Reload.performed -= OnReload;
+
+            subscribed = false;
+        }
+
+        // ======================================================
         // CALLED BY EquipmentManager
-        // ====================================================================
+        // ======================================================
 
         public void OnHandsUpdated(IUsable left, IUsable right, bool twoHanded)
         {
@@ -55,73 +77,59 @@ namespace Features.Equipment.UnityIntegration
             isTwoHanded = twoHanded;
         }
 
-        // ====================================================================
+        // ======================================================
         // PRIMARY
-        // ====================================================================
+        // ======================================================
 
-        private void StartPrimary()
+        private void OnPrimaryStart(InputAction.CallbackContext _)
         {
-            if (InteractionLocked)
-                return;
-
             usingPrimary = true;
-
-            // Primary всегда относится к правой руке
             rightHand?.OnUsePrimary_Start();
-
-            // Если не двуручное — левая рука может быть свободной
         }
 
-        private void StopPrimary()
+        private void OnPrimaryStop(InputAction.CallbackContext _)
         {
             usingPrimary = false;
             rightHand?.OnUsePrimary_Stop();
         }
 
-        // ====================================================================
+        // ======================================================
         // SECONDARY
-        // ====================================================================
+        // ======================================================
 
-        private void StartSecondary()
+        private void OnSecondaryStart(InputAction.CallbackContext _)
         {
-            if (InteractionLocked)
-                return;
-
             usingSecondary = true;
             rightHand?.OnUseSecondary_Start();
         }
 
-        private void StopSecondary()
+        private void OnSecondaryStop(InputAction.CallbackContext _)
         {
             usingSecondary = false;
             rightHand?.OnUseSecondary_Stop();
         }
 
-        private void Reload()
-        {
-            if (InteractionLocked)
-                return;
+        // ======================================================
+        // RELOAD
+        // ======================================================
 
+        private void OnReload(InputAction.CallbackContext _)
+        {
             if (rightHand is IReloadable reloadable)
                 reloadable.OnReloadPressed();
         }
 
-
-        // ====================================================================
+        // ======================================================
         // UPDATE (HOLD)
-        // ====================================================================
+        // ======================================================
 
         private void Update()
         {
-            if (InteractionLocked)
-                return;
-
             if (usingPrimary)
                 rightHand?.OnUsePrimary_Hold();
 
             if (usingSecondary)
                 rightHand?.OnUseSecondary_Hold();
         }
-        
     }
 }

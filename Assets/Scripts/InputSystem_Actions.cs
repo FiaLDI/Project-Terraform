@@ -255,15 +255,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""ToggleQuests"",
-                    ""type"": ""Button"",
-                    ""id"": ""a69db79b-621b-4395-8f9c-94d8c797c612"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""Reload"",
                     ""type"": ""Button"",
                     ""id"": ""05b3a1ec-3c0a-4d0e-9c94-546a190f25af"",
@@ -771,17 +762,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""0ffc1930-68cc-4527-a540-8bddf70fb9e8"",
-                    ""path"": ""<Keyboard>/u"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ToggleQuests"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""8d80c535-c108-4d1f-932d-eada80cee2bd"",
                     ""path"": ""<Keyboard>/r"",
                     ""interactions"": """",
@@ -811,15 +791,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""type"": ""Button"",
                     ""id"": ""7607c7b6-cd76-4816-beef-bd0341cfe950"",
                     ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Cancel"",
-                    ""type"": ""Button"",
-                    ""id"": ""15cef263-9014-4fd5-94d9-4e4a6234a6ef"",
-                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -1211,17 +1182,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""82627dcc-3b13-4ba9-841d-e4b746d6553e"",
-                    ""path"": ""*/{Cancel}"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard&Mouse;Gamepad;Touch;Joystick;XR"",
-                    ""action"": ""Cancel"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""c52c8e0b-8179-41d3-b8a1-d149033bbe86"",
                     ""path"": ""<Mouse>/position"",
                     ""interactions"": """",
@@ -1355,7 +1315,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""c2040aaa-5ece-4f38-9a05-700d94fe1fda"",
-                    ""path"": ""<Keyboard>/tab"",
+                    ""path"": ""<Keyboard>/u"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -1563,13 +1523,11 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_Ability4 = m_Player.FindAction("Ability4", throwIfNotFound: true);
         m_Player_Ability5 = m_Player.FindAction("Ability5", throwIfNotFound: true);
         m_Player_SecondaryUse = m_Player.FindAction("SecondaryUse", throwIfNotFound: true);
-        m_Player_ToggleQuests = m_Player.FindAction("ToggleQuests", throwIfNotFound: true);
         m_Player_Reload = m_Player.FindAction("Reload", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
         m_UI_Submit = m_UI.FindAction("Submit", throwIfNotFound: true);
-        m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
         m_UI_Point = m_UI.FindAction("Point", throwIfNotFound: true);
         m_UI_Click = m_UI.FindAction("Click", throwIfNotFound: true);
         m_UI_RightClick = m_UI.FindAction("RightClick", throwIfNotFound: true);
@@ -1686,7 +1644,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Ability4;
     private readonly InputAction m_Player_Ability5;
     private readonly InputAction m_Player_SecondaryUse;
-    private readonly InputAction m_Player_ToggleQuests;
     private readonly InputAction m_Player_Reload;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
@@ -1772,10 +1729,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @SecondaryUse => m_Wrapper.m_Player_SecondaryUse;
         /// <summary>
-        /// Provides access to the underlying input action "Player/ToggleQuests".
-        /// </summary>
-        public InputAction @ToggleQuests => m_Wrapper.m_Player_ToggleQuests;
-        /// <summary>
         /// Provides access to the underlying input action "Player/Reload".
         /// </summary>
         public InputAction @Reload => m_Wrapper.m_Player_Reload;
@@ -1859,9 +1812,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @SecondaryUse.started += instance.OnSecondaryUse;
             @SecondaryUse.performed += instance.OnSecondaryUse;
             @SecondaryUse.canceled += instance.OnSecondaryUse;
-            @ToggleQuests.started += instance.OnToggleQuests;
-            @ToggleQuests.performed += instance.OnToggleQuests;
-            @ToggleQuests.canceled += instance.OnToggleQuests;
             @Reload.started += instance.OnReload;
             @Reload.performed += instance.OnReload;
             @Reload.canceled += instance.OnReload;
@@ -1930,9 +1880,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @SecondaryUse.started -= instance.OnSecondaryUse;
             @SecondaryUse.performed -= instance.OnSecondaryUse;
             @SecondaryUse.canceled -= instance.OnSecondaryUse;
-            @ToggleQuests.started -= instance.OnToggleQuests;
-            @ToggleQuests.performed -= instance.OnToggleQuests;
-            @ToggleQuests.canceled -= instance.OnToggleQuests;
             @Reload.started -= instance.OnReload;
             @Reload.performed -= instance.OnReload;
             @Reload.canceled -= instance.OnReload;
@@ -1975,7 +1922,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private List<IUIActions> m_UIActionsCallbackInterfaces = new List<IUIActions>();
     private readonly InputAction m_UI_Navigate;
     private readonly InputAction m_UI_Submit;
-    private readonly InputAction m_UI_Cancel;
     private readonly InputAction m_UI_Point;
     private readonly InputAction m_UI_Click;
     private readonly InputAction m_UI_RightClick;
@@ -2007,10 +1953,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "UI/Submit".
         /// </summary>
         public InputAction @Submit => m_Wrapper.m_UI_Submit;
-        /// <summary>
-        /// Provides access to the underlying input action "UI/Cancel".
-        /// </summary>
-        public InputAction @Cancel => m_Wrapper.m_UI_Cancel;
         /// <summary>
         /// Provides access to the underlying input action "UI/Point".
         /// </summary>
@@ -2091,9 +2033,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Submit.started += instance.OnSubmit;
             @Submit.performed += instance.OnSubmit;
             @Submit.canceled += instance.OnSubmit;
-            @Cancel.started += instance.OnCancel;
-            @Cancel.performed += instance.OnCancel;
-            @Cancel.canceled += instance.OnCancel;
             @Point.started += instance.OnPoint;
             @Point.performed += instance.OnPoint;
             @Point.canceled += instance.OnPoint;
@@ -2147,9 +2086,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Submit.started -= instance.OnSubmit;
             @Submit.performed -= instance.OnSubmit;
             @Submit.canceled -= instance.OnSubmit;
-            @Cancel.started -= instance.OnCancel;
-            @Cancel.performed -= instance.OnCancel;
-            @Cancel.canceled -= instance.OnCancel;
             @Point.started -= instance.OnPoint;
             @Point.performed -= instance.OnPoint;
             @Point.canceled -= instance.OnPoint;
@@ -2525,13 +2461,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSecondaryUse(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "ToggleQuests" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnToggleQuests(InputAction.CallbackContext context);
-        /// <summary>
         /// Method invoked when associated input action "Reload" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -2560,13 +2489,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSubmit(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Cancel" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnCancel(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Point" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

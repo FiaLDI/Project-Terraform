@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
+using Features.Player;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -12,10 +13,13 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitButton;
 
-    [Header("Input")]
-    [SerializeField] private InputActionReference pauseAction;
+    private bool isOpen;
+    private PlayerInputContext input;
+    private bool subscribed;
 
-    private bool isOpen = false;
+    // ======================================================
+    // LIFECYCLE
+    // ======================================================
 
     private void Awake()
     {
@@ -27,54 +31,66 @@ public class PauseMenu : MonoBehaviour
 
         I = this;
 
-        // Меню по умолчанию скрыто
+        BindButtons();
+
+        // Стартуем выключенными
         gameObject.SetActive(false);
-
-        // ===== ПРОВЕРЯЕМ КНОПКИ И ВЕШАЕМ ЛИСТЕНЕРЫ =====
-        if (resumeButton == null)
-            Debug.LogError("[PauseMenu] resumeButton is NULL — назначь кнопку в инспекторе!", this);
-        else
-            resumeButton.onClick.AddListener(OnResumeClicked);
-
-        if (settingsButton == null)
-            Debug.LogError("[PauseMenu] settingsButton is NULL — назначь кнопку в инспекторе!", this);
-        else
-            settingsButton.onClick.AddListener(OnSettingsClicked);
-
-        if (exitButton == null)
-            Debug.LogError("[PauseMenu] exitButton is NULL — назначь кнопку в инспекторе!", this);
-        else
-            exitButton.onClick.AddListener(OnExitClicked);
     }
 
     private void OnEnable()
     {
-        if (pauseAction != null && pauseAction.action != null)
+        if (input == null)
+            input = LocalPlayerContext.Get<PlayerInputContext>();
+
+        if (input == null)
         {
-            pauseAction.action.performed += OnPausePressed;
-            pauseAction.action.Enable();
+            Debug.LogError("[PauseMenu] PlayerInputContext not found");
+            return;
         }
-        else
-        {
-            Debug.LogWarning("[PauseMenu] pauseAction не присвоен или action == null");
-        }
+
+        input.Actions.UI.Cancel1.performed += OnCancelPressed;
+        subscribed = true;
     }
 
     private void OnDisable()
     {
-        if (pauseAction != null && pauseAction.action != null)
-        {
-            pauseAction.action.performed -= OnPausePressed;
-            pauseAction.action.Disable();
-        }
+        if (!subscribed || input == null)
+            return;
+
+        input.Actions.UI.Cancel1.performed -= OnCancelPressed;
+        subscribed = false;
     }
 
-    // ================= INPUT =================
+    private void BindButtons()
+    {
+        if (resumeButton != null)
+            resumeButton.onClick.AddListener(Resume);
+        else
+            Debug.LogError("[PauseMenu] resumeButton is NULL", this);
 
-    private void OnPausePressed(InputAction.CallbackContext ctx)
+        if (settingsButton != null)
+            settingsButton.onClick.AddListener(OnSettingsClicked);
+        else
+            Debug.LogError("[PauseMenu] settingsButton is NULL", this);
+
+        if (exitButton != null)
+            exitButton.onClick.AddListener(OnExitClicked);
+        else
+            Debug.LogError("[PauseMenu] exitButton is NULL", this);
+    }
+
+    // ======================================================
+    // INPUT
+    // ======================================================
+
+    private void OnCancelPressed(InputAction.CallbackContext _)
     {
         Toggle();
     }
+
+    // ======================================================
+    // PUBLIC API
+    // ======================================================
 
     public void Toggle()
     {
@@ -84,70 +100,64 @@ public class PauseMenu : MonoBehaviour
 
     public void Open()
     {
-        Debug.Log("[PauseMenu] Open()");
+        if (isOpen)
+            return;
+
         isOpen = true;
         gameObject.SetActive(true);
 
         Time.timeScale = 0f;
+
+        input?.Actions.Player.Disable();
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
     public void Resume()
     {
-        Debug.Log("[PauseMenu] Resume()");
+        if (!isOpen)
+            return;
+
         isOpen = false;
         gameObject.SetActive(false);
 
         Time.timeScale = 1f;
+
+        input?.Actions.Player.Enable();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    // ================= BUTTON HANDLERS =================
-
-    private void OnResumeClicked()
-    {
-        Debug.Log("[PauseMenu] Resume button CLICK");
-        Resume();
-    }
+    // ======================================================
+    // BUTTON HANDLERS
+    // ======================================================
 
     private void OnSettingsClicked()
     {
-        Debug.Log("[PauseMenu] Settings button CLICK");
+        Debug.Log("[PauseMenu] Settings");
 
         if (SettingsMenuManager.I != null)
         {
-            // открываем настройки как вызванные из паузы
             SettingsMenuManager.I.OpenSettings(SettingsCaller.PauseMenu);
-            // прячем само pause-меню, но не меняем Time.timeScale — этим займётся SettingsMenu
+
+            // PauseMenu прячем, но состояние времени не трогаем
             gameObject.SetActive(false);
             isOpen = false;
-        }
-        else
-        {
-            Debug.LogWarning("[PauseMenu] SettingsMenuManager.I == null");
         }
     }
 
     private void OnExitClicked()
     {
-        Debug.Log("[PauseMenu] Exit button CLICK");
+        Debug.Log("[PauseMenu] Exit");
 
         Time.timeScale = 1f;
 
-        string mainMenuScene = "MainMenu";
+        const string mainMenuScene = "MainMenu";
         if (Application.CanStreamedLevelBeLoaded(mainMenuScene))
-        {
             SceneManager.LoadScene(mainMenuScene);
-        }
         else
-        {
-#if UNITY_EDITOR
-            Debug.LogWarning($"[PauseMenu] Scene '{mainMenuScene}' не в Build Settings. В редакторе просто ничего не делаю.");
-#else
             Application.Quit();
-#endif
-        }
     }
 }

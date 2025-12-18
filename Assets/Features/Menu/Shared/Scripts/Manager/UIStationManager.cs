@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class UIStationManager : MonoBehaviour
 {
@@ -7,36 +6,22 @@ public class UIStationManager : MonoBehaviour
 
     public BaseStationUI ActiveStation { get; private set; }
 
-    [Header("Inputs")]
-    [SerializeField] private InputActionReference escAction;
-
     private void Awake()
     {
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
         Instance = this;
-
-        if (escAction != null)
-        {
-            escAction.action.performed += OnEsc;
-            escAction.action.Enable();
-        }
     }
 
-    private void OnDestroy()
-    {
-        if (escAction != null)
-        {
-            escAction.action.performed -= OnEsc;
-            escAction.action.Disable();
-        }
-    }
+    // ======================================================
+    // CANCEL HANDLING (вызывается извне)
+    // ======================================================
 
-    private void OnEsc(InputAction.CallbackContext ctx)
+    public void HandleCancel()
     {
         // 1. Settings
         if (SettingsMenuManager.I != null &&
@@ -46,7 +31,7 @@ public class UIStationManager : MonoBehaviour
             return;
         }
 
-        // 2. Station
+        // 2. Station UI
         if (ActiveStation != null)
         {
             ActiveStation.Toggle();
@@ -57,6 +42,10 @@ public class UIStationManager : MonoBehaviour
         // 3. Pause
         PauseMenu.I?.Toggle();
     }
+
+    // ======================================================
+    // STATIONS
+    // ======================================================
 
     public void OpenStation(BaseStationUI station)
     {
