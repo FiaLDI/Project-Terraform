@@ -1,14 +1,21 @@
-using UnityEngine;
 using Features.Inventory.Domain;
 using Features.Inventory.UI;
+using Features.Items.Domain;
+using Features.Items.UnityIntegration;
 using Features.Player;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class InventoryDragController : MonoBehaviour
 {
+    [SerializeField]
+    private float dropSnapRadius = 50f;
+
     public static InventoryDragController Instance { get; private set; }
 
     private InventorySlotUI draggedUI;
     private InventorySlot draggedSlot;
+    private InventorySlotUI highlightedSlot;
 
     private void Awake()
     {
@@ -25,127 +32,328 @@ public class InventoryDragController : MonoBehaviour
     // DRAG
     // =====================================================
 
-    public void BeginDrag(InventorySlotUI ui, InventorySlot slot)
+    public void BeginDrag(
+        InventorySlotUI ui,
+        InventorySlot slot,
+        PointerEventData eventData)
     {
-        if (ui == null || slot == null || slot.item == null)
+        if (ui == null || slot?.item == null)
             return;
 
         draggedUI = ui;
         draggedSlot = slot;
 
-        if (DraggableItemUI.Instance != null)
-        {
-            DraggableItemUI.Instance.StartDrag(
-                slot.item.itemDefinition.icon
-            );
-        }
-        else
-        {
-            Debug.LogWarning("[InventoryDragController] DraggableItemUI not found");
-        }
+        DraggableItemUI.Instance?.StartDrag(
+            slot.item.itemDefinition.icon,
+            eventData
+        );
     }
 
-    public void EndDrag()
+    public void UpdateDrag(PointerEventData eventData)
     {
+        UpdateHighlight(eventData);
+        DraggableItemUI.Instance?.UpdateDrag(eventData);
+    }
+
+    public void EndDrag(PointerEventData eventData)
+    {
+        if (draggedUI != null && draggedSlot != null)
+        {
+            bool snapped = TrySnapDrop(eventData);
+            if (!snapped)
+                DropDraggedToWorld();
+        }
+
+        ClearDrag();
+    }
+
+    private void ClearDrag()
+    {
+        if (highlightedSlot != null)
+        {
+            highlightedSlot.SetHighlight(false);
+            highlightedSlot = null;
+        }
+
         draggedUI = null;
         draggedSlot = null;
 
-        if (DraggableItemUI.Instance != null)
-            DraggableItemUI.Instance.StopDrag();
+        DraggableItemUI.Instance?.StopDrag();
     }
 
     // =====================================================
-    // DROP
+    // HIGHLIGHT + SNAP
+    // =====================================================
+
+    private void UpdateHighlight(PointerEventData eventData)
+    {
+        var slots = Object.FindObjectsByType<InventorySlotUI>(
+            FindObjectsSortMode.None
+        );
+
+        InventorySlotUI closest = null;
+        float bestDist = dropSnapRadius;
+
+        foreach (var slot in slots)
+        {
+            if (slot.Section == InventorySection.LeftHand &&
+                draggedSlot.item?.itemDefinition?.isTwoHanded == true)
+                continue;
+
+            if (slot.transform is not RectTransform rt)
+                continue;
+
+            Vector2 pos = RectTransformUtility.WorldToScreenPoint(
+                eventData.pressEventCamera,
+                rt.position
+            );
+
+            float dist = Vector2.Distance(pos, eventData.position);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                closest = slot;
+            }
+        }
+
+        if (highlightedSlot == closest)
+            return;
+
+        highlightedSlot?.SetHighlight(false);
+        highlightedSlot = closest;
+        highlightedSlot?.SetHighlight(true);
+    }
+
+    private bool TrySnapDrop(PointerEventData eventData)
+    {
+        var slots = Object.FindObjectsByType<InventorySlotUI>(
+            FindObjectsSortMode.None
+        );
+
+        InventorySlotUI closest = null;
+        float bestDist = dropSnapRadius;
+
+        foreach (var slot in slots)
+        {
+            if (slot.Section == InventorySection.LeftHand &&
+                draggedSlot.item?.itemDefinition?.isTwoHanded == true)
+                continue;
+
+            if (slot.transform is not RectTransform rt)
+                continue;
+
+            Vector2 pos = RectTransformUtility.WorldToScreenPoint(
+                eventData.pressEventCamera,
+                rt.position
+            );
+
+            float dist = Vector2.Distance(pos, eventData.position);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                closest = slot;
+            }
+        }
+
+        if (closest == null)
+            return false;
+
+        DropOnto(closest, GetBoundSlot(closest));
+        return true;
+    }
+
+    // =====================================================
+    // DROP TO WORLD (DRAG)
+    // =====================================================
+
+    private void DropDraggedToWorld()
+    {
+        var inventory = LocalPlayerContext.Inventory;
+        if (inventory == null || draggedSlot == null)
+            return;
+
+        ItemInstance inst;
+
+        if (draggedUI.Section is InventorySection.RightHand or InventorySection.LeftHand)
+        {
+            inst = inventory.Service.DropFromHands();
+        }
+        else
+        {
+            inst = draggedSlot.item;
+            draggedSlot.item = null;
+            inventory.Service.NotifyChanged();
+        }
+
+        if (inst != null)
+            SpawnWorldItem(inst);
+    }
+
+    // =====================================================
+    // DROP TO WORLD (HOTKEY G / CTRL+G)
+    // =====================================================
+
+    public void DropFromSlotToWorld(InventorySlotUI slotUI, bool dropAll)
+    {
+        if (slotUI == null)
+            return;
+
+        var inventory = LocalPlayerContext.Inventory;
+        if (inventory == null)
+            return;
+
+        var slot = slotUI.BoundSlot;
+        if (slot?.item == null)
+            return;
+
+        ItemInstance inst;
+
+        // Если это руки — дропаем из рук целиком
+        if (slotUI.Section is InventorySection.RightHand or InventorySection.LeftHand)
+        {
+            inst = inventory.Service.DropFromHands();
+            if (inst == null)
+                return;
+        }
+        else
+        {
+            // Bag/Hotbar — учитываем стаки
+            if (dropAll || !slot.item.IsStackable || slot.item.quantity <= 1)
+            {
+                inst = slot.item;
+                slot.item = null;
+            }
+            else
+            {
+                inst = slot.item.CloneWithQuantity(1);
+                slot.item.quantity -= 1;
+            }
+
+            inventory.Service.NotifyChanged();
+        }
+
+        SpawnWorldItem(inst);
+    }
+
+
+    // =====================================================
+    // SPAWN
+    // =====================================================
+
+    private void SpawnWorldItem(ItemInstance inst)
+    {
+        var player = LocalPlayerContext.Player;
+        if (player == null)
+            return;
+
+        var prefab = inst.itemDefinition.worldPrefab;
+        if (prefab == null)
+            return;
+
+        Vector3 pos =
+            player.transform.position +
+            player.transform.forward * 1.2f +
+            Vector3.up * 0.5f;
+
+        var obj = Instantiate(prefab, pos, Quaternion.identity);
+
+        var holder = obj.GetComponent<ItemRuntimeHolder>()
+                     ?? obj.AddComponent<ItemRuntimeHolder>();
+        holder.SetInstance(inst);
+
+        if (obj.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+        }
+    }
+
+    // =====================================================
+    // HELPERS
+    // =====================================================
+
+    private InventorySlot GetBoundSlot(InventorySlotUI ui)
+    {
+        var inventory = LocalPlayerContext.Inventory;
+        if (inventory == null)
+            return null;
+
+        return ui.Section switch
+        {
+            InventorySection.Bag => inventory.Model.main[ui.Index],
+            InventorySection.Hotbar => inventory.Model.hotbar[ui.Index],
+            InventorySection.LeftHand => inventory.Model.leftHand,
+            InventorySection.RightHand => inventory.Model.rightHand,
+            _ => null
+        };
+    }
+
+    // =====================================================
+    // DROP ON SLOT
     // =====================================================
 
     public void DropOnto(InventorySlotUI targetUI, InventorySlot targetSlot)
     {
-        if (draggedUI == null || draggedSlot == null)
+        if (draggedUI == null || draggedSlot == null ||
+            targetUI == null || targetSlot == null ||
+            draggedUI == targetUI)
         {
-            EndDrag();
-            return;
-        }
-
-        if (targetUI == null || targetSlot == null)
-        {
-            EndDrag();
-            return;
-        }
-
-        // Drop на тот же слот
-        if (draggedUI == targetUI)
-        {
-            EndDrag();
+            ClearDrag();
             return;
         }
 
         var inventory = LocalPlayerContext.Inventory;
         if (inventory == null)
         {
-            EndDrag();
+            ClearDrag();
             return;
         }
 
         var from = draggedUI.Section;
         var to = targetUI.Section;
 
-        // ===============================
-        // BAG → HAND = EQUIP
-        // ===============================
-        if (from == InventorySection.Bag &&
-            to == InventorySection.RightHand)
+        if (from == InventorySection.Bag && to == InventorySection.RightHand)
         {
-            inventory.Service.EquipRightHand(
-                draggedUI.Index,
-                InventorySection.Bag
-            );
-
-            EndDrag();
+            inventory.Service.EquipRightHand(draggedUI.Index, InventorySection.Bag);
+            ClearDrag();
             return;
         }
 
-        if (from == InventorySection.Bag &&
-            to == InventorySection.LeftHand)
+        if (from == InventorySection.Bag && to == InventorySection.LeftHand)
         {
-            inventory.Service.EquipLeftHand(
-                draggedUI.Index,
-                InventorySection.Bag
-            );
-
-            EndDrag();
+            inventory.Service.EquipLeftHand(draggedUI.Index, InventorySection.Bag);
+            ClearDrag();
             return;
         }
 
-        // ===============================
-        // HAND → BAG = UNEQUIP
-        // ===============================
-        if (from == InventorySection.RightHand &&
-            to == InventorySection.Bag)
+        if (to == InventorySection.LeftHand &&
+            draggedSlot.item?.itemDefinition?.isTwoHanded == true)
         {
-            inventory.Service.UnequipRightHand();
-            EndDrag();
+            ClearDrag();
             return;
         }
 
-        if (from == InventorySection.LeftHand &&
-            to == InventorySection.Bag)
+        if (from == InventorySection.RightHand && to == InventorySection.Bag)
         {
-            inventory.Service.UnequipLeftHand();
-            EndDrag();
+            inventory.Service.MoveItem(0, InventorySection.RightHand,
+                targetUI.Index, InventorySection.Bag);
+            ClearDrag();
             return;
         }
 
-        // ===============================
-        // BAG ↔ BAG or HAND ↔ HAND = SWAP
-        // ===============================
+        if (from == InventorySection.LeftHand && to == InventorySection.Bag)
+        {
+            inventory.Service.MoveItem(0, InventorySection.LeftHand,
+                targetUI.Index, InventorySection.Bag);
+            ClearDrag();
+            return;
+        }
+
         inventory.Service.MoveItem(
-            draggedUI.Index,
-            from,
-            targetUI.Index,
-            to
+            draggedUI.Index, from,
+            targetUI.Index, to
         );
 
-        EndDrag();
+        ClearDrag();
     }
-
 }

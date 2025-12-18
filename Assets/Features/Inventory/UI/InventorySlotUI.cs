@@ -8,11 +8,6 @@ using Features.Menu.Tooltip;
 
 namespace Features.Inventory.UI
 {
-    /// <summary>
-    /// UI-элемент ячейки инвентаря. 
-    /// Показывает иконку/количество и прокидывает drag-n-drop события.
-    /// НЕ содержит логики инвентаря.
-    /// </summary>
     public class InventorySlotUI : MonoBehaviour,
         IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler,
         IPointerEnterHandler, IPointerExitHandler
@@ -20,24 +15,21 @@ namespace Features.Inventory.UI
         [Header("UI")]
         [SerializeField] private Image icon;
         [SerializeField] private TextMeshProUGUI amountText;
+        [SerializeField] private GameObject highlight;
 
-        // Секция инвентаря (Hotbar, Bag, LeftHand, RightHand)
+        public static InventorySlotUI HoveredSlot { get; private set; }
+
+        public InventorySlot BoundSlot => boundSlot;
+
         public InventorySection Section { get; private set; }
-
-        // Индекс внутри секции (0..N)
         public int Index { get; private set; }
 
-        // Привязанный слот модели
         private InventorySlot boundSlot;
 
         // ===========================================================
         // BINDING
         // ===========================================================
 
-        /// <summary>
-        /// Привязать слот данных к UI.
-        /// UI ничего не меняет в данных, только читает.
-        /// </summary>
         public void Bind(InventorySlot slot, InventorySection section, int index)
         {
             boundSlot = slot;
@@ -47,35 +39,28 @@ namespace Features.Inventory.UI
             Refresh();
         }
 
-        /// <summary>
-        /// Обновить отображение.
-        /// </summary>
         private void Refresh()
         {
-            if (boundSlot == null || boundSlot.item == null)
+            if (boundSlot?.item == null)
             {
-                if (icon != null)
-                    icon.enabled = false;
-
-                if (amountText != null)
-                    amountText.text = "";
-
+                icon.enabled = false;
+                amountText.text = "";
                 return;
             }
 
-            if (icon != null)
-            {
-                icon.enabled = true;
-                icon.sprite = boundSlot.item.itemDefinition.icon;
-            }
+            icon.enabled = true;
+            icon.sprite = boundSlot.item.itemDefinition.icon;
 
-            if (amountText != null)
-            {
-                amountText.text =
-                    boundSlot.item.quantity > 1
-                        ? boundSlot.item.quantity.ToString()
-                        : "";
-            }
+            amountText.text =
+                boundSlot.item.quantity > 1
+                    ? boundSlot.item.quantity.ToString()
+                    : "";
+        }
+
+        public void SetHighlight(bool value)
+        {
+            if (highlight != null)
+                highlight.SetActive(value);
         }
 
         // ===========================================================
@@ -84,23 +69,26 @@ namespace Features.Inventory.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (boundSlot == null || boundSlot.item == null)
+            if (boundSlot?.item == null)
                 return;
 
-            // при начале drag — скрываем tooltip
             TooltipController.Instance?.Hide();
 
-            InventoryDragController.Instance.BeginDrag(this, boundSlot);
+            InventoryDragController.Instance.BeginDrag(
+                this,
+                boundSlot,
+                eventData
+            );
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            // визуальное перемещение иконки делает DraggableItemUI
+            InventoryDragController.Instance.UpdateDrag(eventData);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            InventoryDragController.Instance.EndDrag();
+            InventoryDragController.Instance.EndDrag(eventData);
         }
 
         public void OnDrop(PointerEventData eventData)
@@ -109,7 +97,7 @@ namespace Features.Inventory.UI
         }
 
         // ===========================================================
-        // TOOLTIP
+        // TOOLTIP / HOVER
         // ===========================================================
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -117,11 +105,15 @@ namespace Features.Inventory.UI
             if (boundSlot?.item == null)
                 return;
 
+            HoveredSlot = this;
             TooltipController.Instance?.ShowForItemInstance(boundSlot.item);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (HoveredSlot == this)
+                HoveredSlot = null;
+
             TooltipController.Instance?.Hide();
         }
     }

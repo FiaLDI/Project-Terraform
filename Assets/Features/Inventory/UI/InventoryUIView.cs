@@ -2,6 +2,7 @@ using UnityEngine;
 using Features.Inventory;
 using Features.Inventory.Domain;
 using Features.Player;
+using Features.Inventory.UnityIntegration;
 
 namespace Features.Inventory.UI
 {
@@ -25,20 +26,16 @@ namespace Features.Inventory.UI
         [Header("Hotbar")]
         [SerializeField] private RectTransform hotbarSelection;
 
-        /// <summary>
-        /// UI сама знает, открыта она или закрыта.
-        /// </summary>
+        [SerializeField]
+        private InventoryUIInputController inventoryInput;
+
         public bool IsOpen => bagWindow.activeSelf;
 
         private IInventoryContext inventory;
 
-        // ================================================================
-        // INITIALIZATION
-        // ================================================================
 
         private void Start()
         {
-            // Берём инвентарь локального игрока
             inventory = LocalPlayerContext.Inventory;
 
             if (inventory == null)
@@ -48,10 +45,8 @@ namespace Features.Inventory.UI
                 return;
             }
 
-            // Подписка на изменения модели
             inventory.Service.OnChanged += Refresh;
 
-            // Скрываем сумку на старте
             bagWindow.SetActive(false);
 
             Refresh();
@@ -63,26 +58,19 @@ namespace Features.Inventory.UI
                 inventory.Service.OnChanged -= Refresh;
         }
 
-        // ================================================================
-        // OPEN / CLOSE UI
-        // ================================================================
-
-        /// <summary>
-        /// Открыть или закрыть сумку (по I).
-        /// </summary>
         public void SetOpen(bool open)
         {
-            bagWindow.SetActive(open);
+            if (bagWindow != null)
+                bagWindow.SetActive(open);
 
             Cursor.visible = open;
             Cursor.lockState = open
                 ? CursorLockMode.None
                 : CursorLockMode.Locked;
-        }
 
-        // ================================================================
-        // UI UPDATE
-        // ================================================================
+            if (inventoryInput != null)
+                inventoryInput.enabled = open;
+        }
 
         public void Refresh()
         {

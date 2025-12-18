@@ -134,7 +134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1156,6 +1156,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 2766544878698450702}
   amountText: {fileID: 2514552275945196331}
+  highlight: {fileID: 0}
 --- !u!1 &791902557073007182
 GameObject:
   m_ObjectHideFlags: 0
@@ -2515,7 +2516,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -2945,6 +2946,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 5953012990190369490}
   amountText: {fileID: 6028102581830100198}
+  highlight: {fileID: 0}
 --- !u!1 &2347920673515813348
 GameObject:
   m_ObjectHideFlags: 0
@@ -3163,6 +3165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 2590437507505700182}
   amountText: {fileID: 2452971377009294466}
+  highlight: {fileID: 0}
 --- !u!1 &2444933014323492518
 GameObject:
   m_ObjectHideFlags: 0
@@ -3531,6 +3534,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 7996581674672166321}
   amountText: {fileID: 9089176341649460593}
+  highlight: {fileID: 0}
 --- !u!1 &2793031747410685286
 GameObject:
   m_ObjectHideFlags: 0
@@ -4790,6 +4794,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 7395080000433910497}
   amountText: {fileID: 6969727828683817026}
+  highlight: {fileID: 0}
 --- !u!1 &3293691902067029247
 GameObject:
   m_ObjectHideFlags: 0
@@ -4882,6 +4887,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 7948424093771817861}
   amountText: {fileID: 7939827452151161496}
+  highlight: {fileID: 0}
 --- !u!1 &3511837281495007750
 GameObject:
   m_ObjectHideFlags: 0
@@ -4974,6 +4980,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 3461108569795105817}
   amountText: {fileID: 8703333648282020674}
+  highlight: {fileID: 0}
 --- !u!1 &3522645769729229737
 GameObject:
   m_ObjectHideFlags: 0
@@ -6297,6 +6304,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 8708534777860103012}
   amountText: {fileID: 1336330893269535343}
+  highlight: {fileID: 0}
 --- !u!1 &4115778589343195195
 GameObject:
   m_ObjectHideFlags: 0
@@ -6424,6 +6432,7 @@ GameObject:
   - component: {fileID: 9125333941150004715}
   - component: {fileID: 5143891437804264260}
   - component: {fileID: 9194716939975963026}
+  - component: {fileID: 7560635871104042792}
   m_Layer: 0
   m_Name: Hub UI
   m_TagString: Untagged
@@ -6444,7 +6453,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7491515035795209605}
-  - {fileID: 3344191304935070281}
   - {fileID: 1383748812965390303}
   - {fileID: 6846771400369860506}
   - {fileID: 6227182502687305211}
@@ -6454,6 +6462,7 @@ RectTransform:
   - {fileID: 2596781713557761011}
   - {fileID: 7671717770982927662}
   - {fileID: 3737711187585854465}
+  - {fileID: 3344191304935070281}
   m_Father: {fileID: 1702549458446813520}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -6590,6 +6599,7 @@ MonoBehaviour:
   leftHandSlot: {fileID: 8377697557388497734}
   rightHandSlot: {fileID: 7713946801474776378}
   hotbarSelection: {fileID: 0}
+  inventoryInput: {fileID: 7560635871104042792}
 --- !u!114 &9194716939975963026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6604,6 +6614,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AmmoCounterUI
   root: {fileID: 548593114363508727}
   ammoText: {fileID: 6755971039662886846}
+--- !u!114 &7560635871104042792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4155662116752406293}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 372c92c3b2a4ba946aa194349b3ec3fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryUIInputController
 --- !u!1 &4200665777793136914
 GameObject:
   m_ObjectHideFlags: 0
@@ -7148,6 +7170,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 8788524137216397318}
   amountText: {fileID: 4576997681697225687}
+  highlight: {fileID: 0}
 --- !u!1 &4590937693989257562
 GameObject:
   m_ObjectHideFlags: 0
@@ -9737,8 +9760,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.19215687}
-  m_RaycastTarget: 0
+  m_Color: {r: 0, g: 0, b: 0, a: 0.15686275}
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 0
   m_OnCullStateChanged:
@@ -9768,6 +9791,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 8608132747871971362}
   amountText: {fileID: 5838390121388861710}
+  highlight: {fileID: 0}
 --- !u!1 &6809530704878803275
 GameObject:
   m_ObjectHideFlags: 0
@@ -10056,7 +10080,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -10181,7 +10205,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3344191304935070281
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10264,6 +10288,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.DraggableItemUI
   icon: {fileID: 5092359585003737365}
+  canvas: {fileID: 8833356659105978572}
 --- !u!1 &7326760061381604109
 GameObject:
   m_ObjectHideFlags: 0
@@ -11178,6 +11203,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 2171176359301294346}
   amountText: {fileID: 5710627573566713442}
+  highlight: {fileID: 0}
 --- !u!1 &8020324701508415609
 GameObject:
   m_ObjectHideFlags: 0
@@ -11978,6 +12004,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 1906541920946385072}
   amountText: {fileID: 8955719768249153938}
+  highlight: {fileID: 0}
 --- !u!1 &8575564803341184936
 GameObject:
   m_ObjectHideFlags: 0
@@ -12241,6 +12268,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 4274274821421540687}
   amountText: {fileID: 7089733949187388643}
+  highlight: {fileID: 0}
 --- !u!1 &8789931259851264426
 GameObject:
   m_ObjectHideFlags: 0
@@ -12981,6 +13009,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
   icon: {fileID: 1609278074987765657}
   amountText: {fileID: 2140690470285146271}
+  highlight: {fileID: 0}
 --- !u!1 &9045799511877879847
 GameObject:
   m_ObjectHideFlags: 0

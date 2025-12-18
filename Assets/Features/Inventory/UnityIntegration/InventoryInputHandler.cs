@@ -44,6 +44,12 @@ namespace Features.Inventory.UnityIntegration
                 if (scroll > 0) CycleHotbar(+1);
                 else if (scroll < 0) CycleHotbar(-1);
             };
+
+            input.UI.Cancel.performed += _ =>
+            {
+                if (inventoryUI.IsOpen)
+                    ToggleInventory();
+            };
         }
 
         private void Start()

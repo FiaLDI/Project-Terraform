@@ -25,5 +25,34 @@ namespace Features.Items.Domain
 
         public int MaxStack =>
             itemDefinition.maxStackAmount;
+
+        // =====================================================
+        // CLONE
+        // =====================================================
+
+        /// <summary>
+        /// Полная копия предмета (со всем количеством).
+        /// </summary>
+        public ItemInstance Clone()
+        {
+            return new ItemInstance(
+                itemDefinition,
+                quantity,
+                level
+            );
+        }
+
+        /// <summary>
+        /// Копия предмета с указанным количеством.
+        /// Используется для split stack / drop 1.
+        /// </summary>
+        public ItemInstance CloneWithQuantity(int newQuantity)
+        {
+            return new ItemInstance(
+                itemDefinition,
+                newQuantity,
+                level
+            );
+        }
     }
 }
