@@ -89,6 +89,13 @@ namespace Features.Inventory.UnityIntegration
         // INVENTORY UI
         // ========================================================
 
+        public void CloseInventory()
+        {
+            if (inventoryUI.IsOpen == false)
+                return;
+            ToggleInventory();
+        }
+
         private void ToggleInventory()
         {
             if (inventoryUI == null)
