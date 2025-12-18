@@ -158,6 +158,33 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "SecondaryUse",
+                    "type": "Button",
+                    "id": "56e715b8-c30d-489d-8ddd-cdf78167b9dc",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleQuests",
+                    "type": "Button",
+                    "id": "a69db79b-621b-4395-8f9c-94d8c797c612",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "05b3a1ec-3c0a-4d0e-9c94-546a190f25af",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -644,6 +671,39 @@
                     "action": "Ability5",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "346def8e-6e36-4654-9223-62bd9f45bb7d",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Gamepad;Keyboard&Mouse",
+                    "action": "SecondaryUse",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0ffc1930-68cc-4527-a540-8bddf70fb9e8",
+                    "path": "<Keyboard>/u",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleQuests",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8d80c535-c108-4d1f-932d-eada80cee2bd",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Reload",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -772,6 +832,15 @@
                     "name": "EquipSecond",
                     "type": "Button",
                     "id": "478199be-332c-4833-bd4c-3b18425a7546",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Cancel1",
+                    "type": "Button",
+                    "id": "c6f8cd2c-294e-4678-9469-5c974fcec8da",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -1240,6 +1309,87 @@
                     "action": "EquipSecond",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5dd01499-dfb0-43b3-ac84-955268fe3f76",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Cancel1",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Inventory",
+            "id": "dda228b7-117b-4d37-978e-c7fb684dff3f",
+            "actions": [
+                {
+                    "name": "DropOne",
+                    "type": "Button",
+                    "id": "99c0f63f-ab79-4a1a-855b-754705b59643",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DropAll",
+                    "type": "Button",
+                    "id": "84b429f4-a79d-44d9-9333-8acf243996c7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "044114b0-bcb4-4464-bcbc-d0de2ce70796",
+                    "path": "<Keyboard>/g",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropOne",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "One Modifier",
+                    "id": "cf8253b3-bf19-4ad9-b002-53ea284b6ce1",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropAll",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "c8a5f21b-30f3-4613-a7ad-a42c6f5b4cbe",
+                    "path": "<Keyboard>/leftCtrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropAll",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "f451786a-9a0c-41af-828e-9395351f5278",
+                    "path": "<Keyboard>/g",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DropAll",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         }

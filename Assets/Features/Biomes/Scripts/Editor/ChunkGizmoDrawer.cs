@@ -13,7 +13,9 @@ public static class ChunkGizmoDrawer
     {
         Handles.color = new Color(0f, 0.8f, 1f, 0.5f);
 
-        foreach (var chunk in GameObject.FindObjectsOfType<ChunkRootMarker>())
+        var chunks = Object.FindObjectsByType<ChunkRootMarker>(FindObjectsSortMode.None);
+
+        foreach (var chunk in chunks)
         {
             Vector3 pos = chunk.transform.position;
             Vector3 size = new Vector3(32, 0, 32);

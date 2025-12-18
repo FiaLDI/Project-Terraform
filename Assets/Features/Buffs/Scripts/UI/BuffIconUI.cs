@@ -1,50 +1,45 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine.UI;
+using Features.Buffs.Application;
 
-public class BuffIconUI : MonoBehaviour
+namespace Features.Buffs.UI
 {
-    [Header("UI")]
-    public Image icon;
-    public Image radialFill;      
-    public TextMeshProUGUI timerLabel;
-
-    private BuffInstance buff;
-
-    public void Bind(BuffInstance buff)
+    public class BuffIconUI : MonoBehaviour
     {
-        this.buff = buff;
+        public Image icon;
+        public Image radialFill;
+        public TextMeshProUGUI timer;
 
-        if (buff.Config.icon != null)
-            icon.sprite = buff.Config.icon;
+        private BuffInstance inst;
 
-        UpdateUI();
-    }
-
-    private void Update()
-    {
-        if (buff == null)
-            return;
-
-        UpdateUI();
-    }
-
-    private void UpdateUI()
-    {
-        float remain = buff.Remaining;
-
-        radialFill.fillAmount = buff.Progress01;
-
-        if (float.IsInfinity(remain))
+        public void Bind(BuffInstance inst)
         {
-            timerLabel.text = "";
-            radialFill.fillAmount = 1f;
-            return;
+            this.inst = inst;
+
+            if (inst == null || inst.Config == null)
+                return;
+
+            icon.sprite = inst.Config.icon;
         }
 
-        timerLabel.text = remain < 1f
-            ? $"{remain:0.0}"
-            : $"{remain:0}";
-    }
+        private void Update()
+        {
+            if (inst == null || inst.Config == null)
+                return;
 
+            // Бесконечные баффы
+            if (float.IsInfinity(inst.Config.duration))
+            {
+                timer.text = "";
+                radialFill.fillAmount = 0f;
+                return;
+            }
+
+            radialFill.fillAmount = inst.Progress01;
+
+            float t = inst.Remaining;
+            timer.text = t < 1f ? $"{t:0.0}" : $"{t:0}";
+        }
+    }
 }

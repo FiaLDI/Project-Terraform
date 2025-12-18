@@ -1,0 +1,126 @@
+using UnityEngine;
+using Features.Biomes.Domain;
+using Features.Biomes.UnityIntegration;
+
+namespace Features.Biomes.Runtime.Visual
+{
+    [DefaultExecutionOrder(50)]
+    public class BiomeFog : MonoBehaviour
+    {
+        [Range(0.0f, 2.0f)]
+        public float blendSpeed = 0.25f;
+
+        private Color fogColor;
+        private float fogDensity;
+        private float fogStart;
+        private float fogEnd;
+
+        private bool initialized = false;
+
+        private void Start()
+        {
+            if (RuntimeWorldGenerator.World == null)
+            {
+                Debug.LogWarning("[BiomeFog] No world config");
+                enabled = false;
+                return;
+            }
+
+            RenderSettings.fog = true;
+
+            fogColor   = RenderSettings.fogColor;
+            fogDensity = RenderSettings.fogDensity;
+            fogStart   = RenderSettings.fogStartDistance;
+            fogEnd     = RenderSettings.fogEndDistance;
+
+            initialized = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (!initialized) return;
+            if (RuntimeWorldGenerator.PlayerInstance == null) return;
+
+            Vector3 pos = RuntimeWorldGenerator.PlayerInstance.transform.position;
+            var blends = RuntimeWorldGenerator.World.GetBiomeBlend(new Vector3(pos.x, 0, pos.z));
+
+            if (blends == null || blends.Length == 0)
+                return;
+
+            // ------------------------
+            // 1) ВЫБИРАЕМ ГЛАВНЫЙ БИОМ
+            // ------------------------
+            BiomeConfig mainBiome = null;
+            float mainWeight = 0f;
+
+            foreach (var b in blends)
+            {
+                if (b.biome == null) continue;
+                if (b.weight > mainWeight)
+                {
+                    mainBiome = b.biome;
+                    mainWeight = b.weight;
+                }
+            }
+
+            if (mainBiome == null)
+                return;
+
+            RenderSettings.fogMode = mainBiome.fogMode;
+
+            // ------------------------
+            // 2) BLEND ВСЕХ БИОМОВ
+            // ------------------------
+            Color  blendedColor   = Color.black;
+            float  blendedDensity = 0f;
+            float  blendedStart   = 0f;
+            float  blendedEnd     = 0f;
+            float  totalW         = 0f;
+
+            foreach (var b in blends)
+            {
+                if (b.biome == null || !b.biome.enableFog) 
+                    continue;
+
+                blendedColor   += b.biome.fogColor        * b.weight;
+                blendedDensity += b.biome.fogDensity      * b.weight;
+                blendedStart   += b.biome.fogLinearStart  * b.weight;
+                blendedEnd     += b.biome.fogLinearEnd    * b.weight;
+
+                totalW += b.weight;
+            }
+
+            if (totalW > 0f)
+            {
+                blendedColor   /= totalW;
+                blendedDensity /= totalW;
+                blendedStart   /= totalW;
+                blendedEnd     /= totalW;
+            }
+
+            // ------------------------
+            // 3) ПЛАВНОЕ ПЕРЕЛИВАНИЕ
+            // ------------------------
+            float t = Time.deltaTime * blendSpeed * 60f;
+
+            fogColor   = Color.Lerp(fogColor, blendedColor, t);
+            fogDensity = Mathf.Lerp(fogDensity, blendedDensity, t);
+            fogStart   = Mathf.Lerp(fogStart, blendedStart, t);
+            fogEnd     = Mathf.Lerp(fogEnd, blendedEnd, t);
+
+            // ------------------------
+            // 4) ПРИМЕНЕНИЕ FOG
+            // ------------------------
+            RenderSettings.fog = true;
+            RenderSettings.fogColor         = fogColor;
+            RenderSettings.fogDensity       = fogDensity;
+            RenderSettings.fogStartDistance = fogStart;
+            RenderSettings.fogEndDistance   = fogEnd;
+        }
+
+        public float GetFogFactor()
+        {
+            return fogDensity;
+        }
+    }
+}

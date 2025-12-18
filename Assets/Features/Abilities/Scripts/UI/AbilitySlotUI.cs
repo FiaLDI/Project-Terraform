@@ -1,132 +1,246 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
+using Features.Abilities.Domain;
+using Features.Abilities.Application;
+using Features.Menu.Tooltip;
 
-public class AbilitySlotUI : MonoBehaviour
+namespace Features.Abilities.UI
 {
-    [Header("UI")]
-    public Image icon;
-    public Slider cooldownSlider;
-    public TextMeshProUGUI keyLabel;
-
-    private AbilitySO ability;
-    private AbilityCaster caster;
-    private int index;
-    
-    private Sprite defaultIcon;
-
-    private void Awake()
+    public class AbilitySlotUI : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler
     {
-        if (icon != null)
-            defaultIcon = icon.sprite;
-        
-        Debug.Log($"AbilitySlotUI Awake: icon={icon}, cooldownSlider={cooldownSlider}, keyLabel={keyLabel}");
-    }
+        [Header("UI")]
+        [SerializeField] private Image icon;
+        [SerializeField] private Slider cooldownSlider;
+        [SerializeField] private TextMeshProUGUI keyLabel;
 
-    public void Bind(AbilitySO ability, AbilityCaster caster, int index)
-    {
-        Debug.Log($"AbilitySlotUI.Bind: slot {index}, ability={ability?.name ?? "NULL"}, icon={(ability != null ? ability.icon : "NULL")}");
+        [Header("Channel Highlight")]
+        [SerializeField] private GameObject channelHighlight;
+        [SerializeField] private Image channelProgressFill;
 
-        Unsubscribe();
+        [HideInInspector] public AbilitySO boundAbility;
 
-        this.ability = ability;
-        this.caster = caster;
-        this.index = index;
+        private AbilityCaster caster;
+        private int index;
 
-        if (keyLabel != null)
+        private Sprite defaultIcon;
+        private bool warnedMissingRefs = false;
+
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
+
+        private void Awake()
         {
-            keyLabel.text = (index + 1).ToString();
-            Debug.Log($"Set keyLabel to: {keyLabel.text}");
+            if (icon != null)
+                defaultIcon = icon.sprite;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+            else
+                WarnMissing(nameof(channelHighlight));
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+            else
+                WarnMissing(nameof(channelProgressFill));
         }
 
-        if (ability == null)
+        private void OnDestroy()
         {
-            Debug.Log($"Ability is null, setting default icon");
+            Unsubscribe();
+        }
+
+        // ======================================================
+        // BINDING
+        // ======================================================
+
+        public void Bind(AbilitySO ability, AbilityCaster caster, int index)
+        {
+            Unsubscribe();
+
+            boundAbility = ability;
+            this.caster = caster;
+            this.index = index;
+
+            keyLabel?.SetText((index + 1).ToString());
+
+            if (ability == null)
+            {
+                SetEmptySlotState();
+                return;
+            }
+
+            SetupIcon(ability);
+            SetupCooldown(ability);
+            Subscribe();
+        }
+
+        // ======================================================
+        // VISUAL SETUP
+        // ======================================================
+
+        private void SetEmptySlotState()
+        {
             if (icon != null)
             {
                 icon.sprite = defaultIcon;
-                icon.color = Color.gray; // Делаем серым для пустого слота
+                icon.color = Color.gray;
             }
 
             if (cooldownSlider != null)
             {
                 cooldownSlider.minValue = 0;
-                cooldownSlider.maxValue = 1;  
+                cooldownSlider.maxValue = 1;
                 cooldownSlider.value = 1;
             }
-            return;
+
+            if (channelHighlight != null)
+                channelHighlight.SetActive(false);
+
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
         }
 
-        // Ability не null
-        Debug.Log($"Setting ability: {ability.name}, icon={ability.icon}");
-
-        if (icon != null)
+        private void SetupIcon(AbilitySO ability)
         {
+            if (icon == null) return;
+
             if (ability.icon != null)
             {
                 icon.sprite = ability.icon;
-                icon.color = Color.white; // Нормальный цвет
-                Debug.Log($"Icon sprite set to: {ability.icon.name}");
+                icon.color = Color.white;
             }
             else
             {
-                Debug.LogWarning($"Ability {ability.name} has no icon assigned!");
                 icon.sprite = defaultIcon;
-                icon.color = Color.yellow; // Желтый для отсутствующей иконки
+                icon.color = Color.yellow;
             }
         }
-        else
-        {
-            Debug.LogError("Icon Image component is null!");
-        }
 
-        if (cooldownSlider != null)
+        private void SetupCooldown(AbilitySO ability)
         {
+            if (cooldownSlider == null) return;
+
             cooldownSlider.minValue = 0;
             cooldownSlider.maxValue = ability.cooldown;
             cooldownSlider.value = ability.cooldown;
         }
 
-        // Подписываемся на события только если caster существует
-        if (caster != null)
+        // ======================================================
+        // EVENTS
+        // ======================================================
+
+        private void Subscribe()
         {
+            if (caster == null) return;
+
             caster.OnAbilityCast += HandleCastReset;
             caster.OnCooldownChanged += HandleCooldownUpdate;
-            Debug.Log($"Subscribed to caster events");
-        }
-        else
-        {
-            Debug.LogError("Caster is null!");
-        }
-    }
 
-    private void Unsubscribe()
-    {
-        if (caster != null)
+            caster.OnChannelStarted += HandleChannelStart;
+            caster.OnChannelProgress += HandleChannelProgress;
+            caster.OnChannelCompleted += HandleChannelEnd;
+            caster.OnChannelInterrupted += HandleChannelEnd;
+        }
+
+        private void Unsubscribe()
         {
+            if (caster == null) return;
+
             caster.OnAbilityCast -= HandleCastReset;
             caster.OnCooldownChanged -= HandleCooldownUpdate;
+
+            caster.OnChannelStarted -= HandleChannelStart;
+            caster.OnChannelProgress -= HandleChannelProgress;
+            caster.OnChannelCompleted -= HandleChannelEnd;
+            caster.OnChannelInterrupted -= HandleChannelEnd;
         }
-    }
 
-    private void OnDestroy()
-    {
-        Unsubscribe();
-    }
+        // ======================================================
+        // COOLDOWN
+        // ======================================================
 
-    private void HandleCastReset(AbilitySO usedAbility)
-    {
-        if (usedAbility != ability) return;
+        private void HandleCastReset(AbilitySO usedAbility)
+        {
+            if (usedAbility != boundAbility) return;
+            cooldownSlider?.SetValueWithoutNotify(0);
+        }
 
-        if (cooldownSlider != null)
-            cooldownSlider.value = 0;
-    }
+        private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
+        {
+            if (updated != boundAbility) return;
+            if (cooldownSlider != null)
+                cooldownSlider.value = max - remaining;
+        }
 
-    private void HandleCooldownUpdate(AbilitySO updated, float remaining, float max)
-    {
-        if (updated != ability) return;
+        // ======================================================
+        // CHANNEL
+        // ======================================================
 
-        if (cooldownSlider != null)
-            cooldownSlider.value = max - remaining;
+        private void HandleChannelStart(AbilitySO ability)
+        {
+            if (ability != boundAbility) return;
+
+            if (channelHighlight != null)
+            {
+                channelHighlight.SetActive(true);
+            }
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
+        private void HandleChannelProgress(AbilitySO ability, float time, float duration)
+        {
+            if (ability != boundAbility) return;
+
+            if (duration > 0f && channelProgressFill != null)
+                channelProgressFill.fillAmount = time / duration;
+        }
+
+        private void HandleChannelEnd(AbilitySO ability)
+        {
+            if (ability != boundAbility) return;
+
+            if (channelHighlight != null)
+            {
+                channelHighlight.SetActive(false);
+            }
+            if (channelProgressFill != null)
+                channelProgressFill.fillAmount = 0f;
+        }
+
+        // ======================================================
+        // TOOLTIP
+        // ======================================================
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (boundAbility == null)
+                return;
+
+            TooltipController.Instance?.ShowAbility(boundAbility);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            TooltipController.Instance?.Hide();
+        }
+
+        // ======================================================
+        // UTILS
+        // ======================================================
+
+        private void WarnMissing(string field)
+        {
+            if (warnedMissingRefs) return;
+            warnedMissingRefs = true;
+
+            Debug.LogWarning(
+                $"[AbilitySlotUI] Missing reference: {field} on {name}. UI will still work safely."
+            );
+        }
     }
 }

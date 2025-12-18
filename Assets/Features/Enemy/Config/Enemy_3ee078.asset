@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29ed096e197e5814cba5858be4386b03, type: 3}
+  m_Name: Enemy_3ee078
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Data.EnemyConfigSO
+  enemyId: enemy_3ee078
+  displayName: Enemy 3ee078
+  icon: {fileID: 21300000, guid: 2eb7bd7e09bb9e348b61acced7a9dfaf, type: 3}
+  prefab: {fileID: 4823896413690452315, guid: ba79223540d0017488c0e42578c10964, type: 3}
+  worldCanvasPrefab: {fileID: 786559596788043606, guid: 96933ac920e73034a96f96e7debd3c8f, type: 3}
+  hitboxes: []
+  baseMaxHealth: 10000
+  lod0Distance: 2
+  lod1Distance: 5
+  lod2Distance: 9
+  canvasHideDistance: 30
+  useGPUInstancing: 1
+  instancingDistance: 120
+  disableAnimatorInInstancing: 1
+  makeRigidbodyKinematicInInstancing: 1

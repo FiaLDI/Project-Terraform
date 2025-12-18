@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10408e8dc84845f4fb8b774b4f4b14fd, type: 3}
+  m_Name: Iron
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
+  id: 2
+  itemName: Iron
+  description: 'Iron can '
+  icon: {fileID: 21300000, guid: 4831291e7e2a4ad4882ac7da61d6a38a, type: 3}
+  isTwoHanded: 0
+  category: 0
+  isStackable: 1
+  maxStackAmount: 64
+  baseStats: []
+  upgrades: []
+  worldPrefab: {fileID: 7430191170602964640, guid: 1a264c8b09d311049b9443265c5077b5, type: 3}
+  equippedPrefab: {fileID: 0}
+  weaponConfig: {fileID: 0}
+  toolConfig: {fileID: 0}
+  scannerConfig: {fileID: 0}
+  throwableConfig: {fileID: 0}

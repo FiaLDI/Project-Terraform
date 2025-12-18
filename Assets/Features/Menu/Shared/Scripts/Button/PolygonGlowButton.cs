@@ -9,8 +9,8 @@ public class PolygonGlowButton : MonoBehaviour,
     IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [Header("Images")]
-    public Image baseImage;       // главный спрайт (разный для каждой кнопки)
-    public Image glowImage;       // спрайт с ShaderGraph
+    public Image baseImage;
+    public Image glowImage;
 
     [Header("Colors")]
     public Color idleColor = Color.white;
@@ -28,6 +28,9 @@ public class PolygonGlowButton : MonoBehaviour,
     [Header("State")]
     public bool startLocked = false;
 
+    // 🔹 НОВОЕ
+    [SerializeField] private bool interactable = true;
+
     private Material mat;
     private float currentHighlight;
     private float targetHighlight;
@@ -39,23 +42,22 @@ public class PolygonGlowButton : MonoBehaviour,
     private static readonly int MainSpriteID = Shader.PropertyToID("_MainSprite");
 
     public bool IsLocked => state == ButtonState.Locked;
+    public bool Interactable => interactable && state != ButtonState.Locked;
 
     private void Awake()
     {
-        // Клонируем материал для этой кнопки
         if (glowImage != null && glowImage.material != null)
         {
             mat = Instantiate(glowImage.material);
             glowImage.material = mat;
         }
 
-        // Устанавливаем текущий спрайт в шейдер
         ApplySpriteToShader();
-
-        ApplyStateVisual();
 
         if (startLocked)
             SetState(ButtonState.Locked);
+        else
+            ApplyStateVisual();
     }
 
     private void Update()
@@ -65,7 +67,7 @@ public class PolygonGlowButton : MonoBehaviour,
         currentHighlight = Mathf.MoveTowards(
             currentHighlight,
             targetHighlight,
-            fadeSpeed * Time.deltaTime
+            fadeSpeed * Time.unscaledDeltaTime
         );
 
         mat.SetFloat(HighlightID, currentHighlight);
@@ -76,54 +78,14 @@ public class PolygonGlowButton : MonoBehaviour,
         group = g;
     }
 
-    private void ApplySpriteToShader()
+    public void SetInteractable(bool value)
     {
-        if (mat == null || baseImage == null) return;
+        interactable = value;
 
-        Texture2D tex = baseImage.sprite != null ? baseImage.sprite.texture : null;
-        mat.SetTexture(MainSpriteID, tex);
-    }
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (state == ButtonState.Locked) return;
-        if (state != ButtonState.Selected)
-            SetState(ButtonState.Hover);
-
-        CursorSystem.SetPointer();
-    }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (!baseImage) return;
-
-        ApplySpriteToShader();
-
-        if (startLocked)
-            SetState(ButtonState.Locked);
-        else if (state == ButtonState.Locked)
-            SetState(ButtonState.Idle);
-    }
-#endif
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        if (state == ButtonState.Locked) return;
-        if (state != ButtonState.Selected)
+        if (!interactable && state != ButtonState.Locked)
             SetState(ButtonState.Idle);
 
-        CursorSystem.SetDefault();
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if (state == ButtonState.Locked) return;
-
-        group?.OnButtonClicked(this);
-        onClick?.Invoke();
-
-        CursorSystem.SetDefault();
+        ApplyStateVisual();
     }
 
     public void SetLocked(bool locked)
@@ -137,12 +99,52 @@ public class PolygonGlowButton : MonoBehaviour,
         ApplyStateVisual();
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (!Interactable) return;
+
+        if (state != ButtonState.Selected)
+            SetState(ButtonState.Hover);
+
+        CursorSystem.SetPointer();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (!Interactable) return;
+
+        if (state != ButtonState.Selected)
+            SetState(ButtonState.Idle);
+
+        CursorSystem.SetDefault();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (!Interactable) return;
+
+        group?.OnButtonClicked(this);
+        onClick?.Invoke();
+
+        CursorSystem.SetDefault();
+    }
+
+    private void ApplySpriteToShader()
+    {
+        if (mat == null || baseImage == null) return;
+
+        Texture2D tex = baseImage.sprite != null ? baseImage.sprite.texture : null;
+        mat.SetTexture(MainSpriteID, tex);
+    }
+
     private void ApplyStateVisual()
     {
+        if (baseImage == null) return;
+
         switch (state)
         {
             case ButtonState.Idle:
-                baseImage.color = idleColor;
+                baseImage.color = interactable ? idleColor : lockedColor;
                 targetHighlight = 0f;
                 break;
 

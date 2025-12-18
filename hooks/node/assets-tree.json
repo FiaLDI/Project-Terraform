@@ -1,6 +1,17 @@
 [
   {
     "type": "folder",
+    "name": "Editor",
+    "path": "Assets\\Editor",
+    "children": []
+  },
+  {
+    "type": "file",
+    "name": "Editor.meta",
+    "path": "Assets\\Editor.meta"
+  },
+  {
+    "type": "folder",
     "name": "Features",
     "path": "Assets\\Features",
     "children": [
@@ -77,6 +88,228 @@
             "path": "Assets\\Features\\Abilities\\Materials",
             "children": [
               {
+                "type": "folder",
+                "name": "AbilityIcons",
+                "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons",
+                "children": [
+                  {
+                    "type": "folder",
+                    "name": "Charge Device",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Charge Device 1.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device\\Charge Device 1.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Charge Device 1.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device\\Charge Device 1.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Charge Device 2.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device\\Charge Device 2.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Charge Device 2.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device\\Charge Device 2.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Charge Device 3.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device\\Charge Device 3.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Charge Device 3.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device\\Charge Device 3.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Charge Device.meta",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Charge Device.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Deploy Turret",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Deploy Turret 1.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret\\Deploy Turret 1.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Deploy Turret 1.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret\\Deploy Turret 1.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Deploy Turret 2.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret\\Deploy Turret 2.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Deploy Turret 2.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret\\Deploy Turret 2.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Deploy Turret 3.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret\\Deploy Turret 3.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Deploy Turret 3.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret\\Deploy Turret 3.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Deploy Turret.meta",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Deploy Turret.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Overload Pulse",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Overload Pulse",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Overload Pulse 1.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Overload Pulse\\Overload Pulse 1.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Overload Pulse 1.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Overload Pulse\\Overload Pulse 1.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Overload Pulse 2.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Overload Pulse\\Overload Pulse 2.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Overload Pulse 2.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Overload Pulse\\Overload Pulse 2.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Overload Pulse.meta",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Overload Pulse.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Repair Drone",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Repair Drone",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Repair Drone 1.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Repair Drone\\Repair Drone 1.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Repair Drone 1.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Repair Drone\\Repair Drone 1.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Repair Drone.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Repair Drone\\Repair Drone.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Repair Drone.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Repair Drone\\Repair Drone.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Repair Drone.meta",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Repair Drone.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Shield Grid",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 1.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 1.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 1.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 1.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 2.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 2.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 2.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 2.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 3.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 3.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 3.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 3.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 4.png",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 4.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shield Grid 4.png.meta",
+                        "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid\\Shield Grid 4.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Shield Grid.meta",
+                    "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons\\Shield Grid.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "AbilityIcons.meta",
+                "path": "Assets\\Features\\Abilities\\Materials\\AbilityIcons.meta"
+              },
+              {
+                "type": "file",
+                "name": "Electro.vfx",
+                "path": "Assets\\Features\\Abilities\\Materials\\Electro.vfx"
+              },
+              {
+                "type": "file",
+                "name": "Electro.vfx.meta",
+                "path": "Assets\\Features\\Abilities\\Materials\\Electro.vfx.meta"
+              },
+              {
                 "type": "file",
                 "name": "ElectroShock.shadergraph",
                 "path": "Assets\\Features\\Abilities\\Materials\\ElectroShock.shadergraph"
@@ -85,6 +318,16 @@
                 "type": "file",
                 "name": "ElectroShock.shadergraph.meta",
                 "path": "Assets\\Features\\Abilities\\Materials\\ElectroShock.shadergraph.meta"
+              },
+              {
+                "type": "file",
+                "name": "ManyLaser.vfx",
+                "path": "Assets\\Features\\Abilities\\Materials\\ManyLaser.vfx"
+              },
+              {
+                "type": "file",
+                "name": "ManyLaser.vfx.meta",
+                "path": "Assets\\Features\\Abilities\\Materials\\ManyLaser.vfx.meta"
               },
               {
                 "type": "file",
@@ -625,16 +868,6 @@
                     "type": "file",
                     "name": "AbilityUIRoot.cs.meta",
                     "path": "Assets\\Features\\Abilities\\Scripts\\UI\\AbilityUIRoot.cs.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "EnergyBarUI.cs",
-                    "path": "Assets\\Features\\Abilities\\Scripts\\UI\\EnergyBarUI.cs"
-                  },
-                  {
-                    "type": "file",
-                    "name": "EnergyBarUI.cs.meta",
-                    "path": "Assets\\Features\\Abilities\\Scripts\\UI\\EnergyBarUI.cs.meta"
                   }
                 ]
               },
@@ -649,28 +882,6 @@
             "type": "file",
             "name": "Scripts.meta",
             "path": "Assets\\Features\\Abilities\\Scripts.meta"
-          },
-          {
-            "type": "folder",
-            "name": "Shared",
-            "path": "Assets\\Features\\Abilities\\Shared",
-            "children": [
-              {
-                "type": "file",
-                "name": "Empty.cs",
-                "path": "Assets\\Features\\Abilities\\Shared\\Empty.cs"
-              },
-              {
-                "type": "file",
-                "name": "Empty.cs.meta",
-                "path": "Assets\\Features\\Abilities\\Shared\\Empty.cs.meta"
-              }
-            ]
-          },
-          {
-            "type": "file",
-            "name": "Shared.meta",
-            "path": "Assets\\Features\\Abilities\\Shared.meta"
           }
         ]
       },
@@ -686,60 +897,374 @@
         "children": [
           {
             "type": "folder",
-            "name": "Editor",
-            "path": "Assets\\Features\\Biomes\\Editor",
-            "children": [
-              {
-                "type": "file",
-                "name": "BiomeConfigEditor.cs",
-                "path": "Assets\\Features\\Biomes\\Editor\\BiomeConfigEditor.cs"
-              },
-              {
-                "type": "file",
-                "name": "BiomeConfigEditor.cs.meta",
-                "path": "Assets\\Features\\Biomes\\Editor\\BiomeConfigEditor.cs.meta"
-              }
-            ]
-          },
-          {
-            "type": "file",
-            "name": "Editor.meta",
-            "path": "Assets\\Features\\Biomes\\Editor.meta"
-          },
-          {
-            "type": "folder",
             "name": "Scripts",
             "path": "Assets\\Features\\Biomes\\Scripts",
             "children": [
               {
-                "type": "file",
-                "name": "BiomeConfig.cs",
-                "path": "Assets\\Features\\Biomes\\Scripts\\BiomeConfig.cs"
+                "type": "folder",
+                "name": "Controllers",
+                "path": "Assets\\Features\\Biomes\\Scripts\\Controllers",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "BiomeController.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Controllers\\BiomeController.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeController.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Controllers\\BiomeController.cs.meta"
+                  }
+                ]
               },
               {
                 "type": "file",
-                "name": "BiomeConfig.cs.meta",
-                "path": "Assets\\Features\\Biomes\\Scripts\\BiomeConfig.cs.meta"
+                "name": "Controllers.meta",
+                "path": "Assets\\Features\\Biomes\\Scripts\\Controllers.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Editor",
+                "path": "Assets\\Features\\Biomes\\Scripts\\Editor",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "BiomeConfigEditor.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Editor\\BiomeConfigEditor.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeConfigEditor.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Editor\\BiomeConfigEditor.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeWorldWindow.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Editor\\BiomeWorldWindow.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeWorldWindow.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Editor\\BiomeWorldWindow.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ChunkGizmoDrawer.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Editor\\ChunkGizmoDrawer.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ChunkGizmoDrawer.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Editor\\ChunkGizmoDrawer.cs.meta"
+                  }
+                ]
               },
               {
                 "type": "file",
-                "name": "BiomeFog.cs",
-                "path": "Assets\\Features\\Biomes\\Scripts\\BiomeFog.cs"
+                "name": "Editor.meta",
+                "path": "Assets\\Features\\Biomes\\Scripts\\Editor.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Runtime",
+                "path": "Assets\\Features\\Biomes\\Scripts\\Runtime",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "BiomeConfig.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\BiomeConfig.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeConfig.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\BiomeConfig.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeHeightUtility.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\BiomeHeightUtility.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeHeightUtility.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\BiomeHeightUtility.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Chunk.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Chunk.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Chunk.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Chunk.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ChunkManager.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\ChunkManager.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ChunkManager.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\ChunkManager.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ChunkRootMarker.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\ChunkRootMarker.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ChunkRootMarker.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\ChunkRootMarker.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnvironmentSpawner.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\EnvironmentSpawner.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnvironmentSpawner.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\EnvironmentSpawner.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Generators",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Generators",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "TerrainMeshGenerator.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Generators\\TerrainMeshGenerator.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "TerrainMeshGenerator.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Generators\\TerrainMeshGenerator.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorldGenerator.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Generators\\WorldGenerator.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorldGenerator.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Generators\\WorldGenerator.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Generators.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Generators.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RuntimeWorldGenerator.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\RuntimeWorldGenerator.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RuntimeWorldGenerator.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\RuntimeWorldGenerator.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Spawner",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "EnemyChunkSpawner.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\EnemyChunkSpawner.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "EnemyChunkSpawner.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\EnemyChunkSpawner.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "EnvironmentChunkSpawner.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\EnvironmentChunkSpawner.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "EnvironmentChunkSpawner.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\EnvironmentChunkSpawner.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "QuestChunkSpawner.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\QuestChunkSpawner.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "QuestChunkSpawner.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\QuestChunkSpawner.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorldResourceSpawner.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\WorldResourceSpawner.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorldResourceSpawner.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner\\WorldResourceSpawner.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Spawner.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Spawner.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TerrainChunk.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\TerrainChunk.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TerrainChunk.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\TerrainChunk.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TerrainLOD.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\TerrainLOD.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TerrainLOD.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\TerrainLOD.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "UI",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\UI",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "BiomeUIController.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\UI\\BiomeUIController.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BiomeUIController.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\UI\\BiomeUIController.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "UI.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\UI.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Utils",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Utils",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Blocker.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Utils\\Blocker.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Blocker.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Utils\\Blocker.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "GroundSnapUtility.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Utils\\GroundSnapUtility.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "GroundSnapUtility.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Utils\\GroundSnapUtility.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Utils.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Utils.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Visual",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "AdvancedWaterPlane.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\AdvancedWaterPlane.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "AdvancedWaterPlane.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\AdvancedWaterPlane.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BiomeFog.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\BiomeFog.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BiomeFog.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\BiomeFog.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BiomeWorldVisualController.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\BiomeWorldVisualController.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BiomeWorldVisualController.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\BiomeWorldVisualController.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ResourceVisualizer.cs",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\ResourceVisualizer.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ResourceVisualizer.cs.meta",
+                        "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual\\ResourceVisualizer.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Visual.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\Visual.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "WorldConfig.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\WorldConfig.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "WorldConfig.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\Runtime\\WorldConfig.cs.meta"
+                  }
+                ]
               },
               {
                 "type": "file",
-                "name": "BiomeFog.cs.meta",
-                "path": "Assets\\Features\\Biomes\\Scripts\\BiomeFog.cs.meta"
-              },
-              {
-                "type": "file",
-                "name": "BiomeGenerator.cs",
-                "path": "Assets\\Features\\Biomes\\Scripts\\BiomeGenerator.cs"
-              },
-              {
-                "type": "file",
-                "name": "BiomeGenerator.cs.meta",
-                "path": "Assets\\Features\\Biomes\\Scripts\\BiomeGenerator.cs.meta"
+                "name": "Runtime.meta",
+                "path": "Assets\\Features\\Biomes\\Scripts\\Runtime.meta"
               }
             ]
           },
@@ -765,13 +1290,33 @@
                     "children": [
                       {
                         "type": "file",
-                        "name": "DesrtRed.asset",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\DesrtRed.asset"
+                        "name": "Desert blue 1.asset",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\Desert blue 1.asset"
                       },
                       {
                         "type": "file",
-                        "name": "DesrtRed.asset.meta",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\DesrtRed.asset.meta"
+                        "name": "Desert blue 1.asset.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\Desert blue 1.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Desert Red.asset",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\Desert Red.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Desert Red.asset.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\Desert Red.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorldConfig.asset",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\WorldConfig.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorldConfig.asset.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Configs\\WorldConfig.asset.meta"
                       }
                     ]
                   },
@@ -787,23 +1332,75 @@
                     "children": [
                       {
                         "type": "file",
-                        "name": "DesertSkybox.mat",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\DesertSkybox.mat"
+                        "name": "Canyon of the Blazing Sun.mat",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Canyon of the Blazing Sun.mat"
                       },
                       {
                         "type": "file",
-                        "name": "DesertSkybox.mat.meta",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\DesertSkybox.mat.meta"
+                        "name": "Canyon of the Blazing Sun.mat.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Canyon of the Blazing Sun.mat.meta"
                       },
                       {
                         "type": "file",
-                        "name": "RedSand_Mat.mat",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\RedSand_Mat.mat"
+                        "name": "Crossroads of Worlds.mat",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Crossroads of Worlds.mat"
                       },
                       {
                         "type": "file",
-                        "name": "RedSand_Mat.mat.meta",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\RedSand_Mat.mat.meta"
+                        "name": "Crossroads of Worlds.mat.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Crossroads of Worlds.mat.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Land of Silence.mat",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Land of Silence.mat"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Land of Silence.mat.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Land of Silence.mat.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Red Ridge Mesa.mat",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Red Ridge Mesa.mat"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Red Ridge Mesa.mat.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Red Ridge Mesa.mat.meta"
+                      },
+                      {
+                        "type": "folder",
+                        "name": "Skybox",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Skybox",
+                        "children": [
+                          {
+                            "type": "file",
+                            "name": "DesertSkybox.mat",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Skybox\\DesertSkybox.mat"
+                          },
+                          {
+                            "type": "file",
+                            "name": "DesertSkybox.mat.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Skybox\\DesertSkybox.mat.meta"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "file",
+                        "name": "Skybox.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\Skybox.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "The Great Barchans.mat",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\The Great Barchans.mat"
+                      },
+                      {
+                        "type": "file",
+                        "name": "The Great Barchans.mat.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Materials\\The Great Barchans.mat.meta"
                       }
                     ]
                   },
@@ -1864,75 +2461,283 @@
                     "children": [
                       {
                         "type": "folder",
-                        "name": "RedSand",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand",
+                        "name": "Canyon of the Blazing Sun",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun",
                         "children": [
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_ao_1k.jpg",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_ao_1k.jpg"
+                            "name": "sandstone_cracks_diff_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_diff_1k.jpg"
                           },
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_ao_1k.jpg.meta",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_ao_1k.jpg.meta"
+                            "name": "sandstone_cracks_diff_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_diff_1k.jpg.meta"
                           },
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_arm_1k.jpg",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_arm_1k.jpg"
+                            "name": "sandstone_cracks_disp_1k.png",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_disp_1k.png"
                           },
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_arm_1k.jpg.meta",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_arm_1k.jpg.meta"
+                            "name": "sandstone_cracks_disp_1k.png.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_disp_1k.png.meta"
                           },
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_diff_1k.jpg",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_diff_1k.jpg"
+                            "name": "sandstone_cracks_nor_gl_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_nor_gl_1k.exr"
                           },
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_diff_1k.jpg.meta",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_diff_1k.jpg.meta"
+                            "name": "sandstone_cracks_nor_gl_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_nor_gl_1k.exr.meta"
                           },
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_disp_1k.jpg",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_disp_1k.jpg"
+                            "name": "sandstone_cracks_rough_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_rough_1k.jpg"
                           },
                           {
                             "type": "file",
-                            "name": "sandy_gravel_02_disp_1k.jpg.meta",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_disp_1k.jpg.meta"
-                          },
-                          {
-                            "type": "file",
-                            "name": "sandy_gravel_02_nor_gl_1k.exr",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_nor_gl_1k.exr"
-                          },
-                          {
-                            "type": "file",
-                            "name": "sandy_gravel_02_nor_gl_1k.exr.meta",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_nor_gl_1k.exr.meta"
-                          },
-                          {
-                            "type": "file",
-                            "name": "sandy_gravel_02_rough_1k.jpg",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_rough_1k.jpg"
-                          },
-                          {
-                            "type": "file",
-                            "name": "sandy_gravel_02_rough_1k.jpg.meta",
-                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand\\sandy_gravel_02_rough_1k.jpg.meta"
+                            "name": "sandstone_cracks_rough_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun\\sandstone_cracks_rough_1k.jpg.meta"
                           }
                         ]
                       },
                       {
                         "type": "file",
-                        "name": "RedSand.meta",
-                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\RedSand.meta"
+                        "name": "Canyon of the Blazing Sun.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Canyon of the Blazing Sun.meta"
+                      },
+                      {
+                        "type": "folder",
+                        "name": "Crossroads of Worlds",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds",
+                        "children": [
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_diff_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_diff_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_diff_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_diff_1k.jpg.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_disp_1k.png",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_disp_1k.png"
+                          },
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_disp_1k.png.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_disp_1k.png.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_nor_gl_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_nor_gl_1k.exr"
+                          },
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_nor_gl_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_nor_gl_1k.exr.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_rough_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_rough_1k.exr"
+                          },
+                          {
+                            "type": "file",
+                            "name": "cracked_red_ground_rough_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds\\cracked_red_ground_rough_1k.exr.meta"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "file",
+                        "name": "Crossroads of Worlds.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Crossroads of Worlds.meta"
+                      },
+                      {
+                        "type": "folder",
+                        "name": "Land of Silence",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence",
+                        "children": [
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_diff_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_diff_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_diff_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_diff_1k.jpg.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_disp_1k.png",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_disp_1k.png"
+                          },
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_disp_1k.png.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_disp_1k.png.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_nor_gl_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_nor_gl_1k.exr"
+                          },
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_nor_gl_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_nor_gl_1k.exr.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_rough_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_rough_1k.exr"
+                          },
+                          {
+                            "type": "file",
+                            "name": "rock_face_03_rough_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence\\rock_face_03_rough_1k.exr.meta"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "file",
+                        "name": "Land of Silence.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Land of Silence.meta"
+                      },
+                      {
+                        "type": "folder",
+                        "name": "Red Ridge Mesa",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa",
+                        "children": [
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_ao_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_ao_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_ao_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_ao_1k.jpg.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_arm_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_arm_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_arm_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_arm_1k.jpg.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_diff_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_diff_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_diff_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_diff_1k.jpg.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_disp_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_disp_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_disp_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_disp_1k.jpg.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_nor_gl_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_nor_gl_1k.exr"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_nor_gl_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_nor_gl_1k.exr.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_rough_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_rough_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_02_rough_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa\\sandy_gravel_02_rough_1k.jpg.meta"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "file",
+                        "name": "Red Ridge Mesa.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\Red Ridge Mesa.meta"
+                      },
+                      {
+                        "type": "folder",
+                        "name": "The Great Barchans",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans",
+                        "children": [
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_diff_1k.jpg",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_diff_1k.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_diff_1k.jpg.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_diff_1k.jpg.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_disp_1k.png",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_disp_1k.png"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_disp_1k.png.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_disp_1k.png.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_nor_gl_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_nor_gl_1k.exr"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_nor_gl_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_nor_gl_1k.exr.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_rough_1k.exr",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_rough_1k.exr"
+                          },
+                          {
+                            "type": "file",
+                            "name": "sandy_gravel_rough_1k.exr.meta",
+                            "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans\\sandy_gravel_rough_1k.exr.meta"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "file",
+                        "name": "The Great Barchans.meta",
+                        "path": "Assets\\Features\\Biomes\\Types\\Desert\\Textures\\The Great Barchans.meta"
                       }
                     ]
                   },
@@ -1988,6 +2793,29 @@
             "type": "file",
             "name": "Types.meta",
             "path": "Assets\\Features\\Biomes\\Types.meta"
+          },
+          {
+            "type": "folder",
+            "name": "World",
+            "path": "Assets\\Features\\Biomes\\World",
+            "children": [
+              {
+                "type": "folder",
+                "name": "Configs",
+                "path": "Assets\\Features\\Biomes\\World\\Configs",
+                "children": []
+              },
+              {
+                "type": "file",
+                "name": "Configs.meta",
+                "path": "Assets\\Features\\Biomes\\World\\Configs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "World.meta",
+            "path": "Assets\\Features\\Biomes\\World.meta"
           }
         ]
       },
@@ -2171,6 +2999,16 @@
                 "type": "file",
                 "name": "BuffIconUI.prefab.meta",
                 "path": "Assets\\Features\\Buffs\\Prefabs\\BuffIconUI.prefab.meta"
+              },
+              {
+                "type": "file",
+                "name": "GlobalBuffSystem.prefab",
+                "path": "Assets\\Features\\Buffs\\Prefabs\\GlobalBuffSystem.prefab"
+              },
+              {
+                "type": "file",
+                "name": "GlobalBuffSystem.prefab.meta",
+                "path": "Assets\\Features\\Buffs\\Prefabs\\GlobalBuffSystem.prefab.meta"
               }
             ]
           },
@@ -2387,6 +3225,28 @@
                     "path": "Assets\\Features\\Buffs\\Scripts\\Types\\HealPerSecondBuffSO.cs.meta"
                   },
                   {
+                    "type": "folder",
+                    "name": "Items",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Items",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "MiningSpeedBoostBuffSO.cs",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Items\\MiningSpeedBoostBuffSO.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "MiningSpeedBoostBuffSO.cs.meta",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Items\\MiningSpeedBoostBuffSO.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Items.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Types\\Items.meta"
+                  },
+                  {
                     "type": "file",
                     "name": "MaxEnergyBuffSO.cs",
                     "path": "Assets\\Features\\Buffs\\Scripts\\Types\\MaxEnergyBuffSO.cs"
@@ -2497,6 +3357,16 @@
                     "type": "file",
                     "name": "BuffIconUI.cs.meta",
                     "path": "Assets\\Features\\Buffs\\Scripts\\UI\\BuffIconUI.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffTooltipTrigger.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UI\\BuffTooltipTrigger.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffTooltipTrigger.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UI\\BuffTooltipTrigger.cs.meta"
                   }
                 ]
               },
@@ -2548,6 +3418,16 @@
                 "type": "file",
                 "name": "DamageType.cs.meta",
                 "path": "Assets\\Features\\Combat\\DamageSystem\\DamageType.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "DamageZone.cs",
+                "path": "Assets\\Features\\Combat\\DamageSystem\\DamageZone.cs"
+              },
+              {
+                "type": "file",
+                "name": "DamageZone.cs.meta",
+                "path": "Assets\\Features\\Combat\\DamageSystem\\DamageZone.cs.meta"
               },
               {
                 "type": "file",
@@ -2661,6 +3541,28 @@
             "type": "file",
             "name": "Health.meta",
             "path": "Assets\\Features\\Combat\\Health.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Prefab",
+            "path": "Assets\\Features\\Combat\\Prefab",
+            "children": [
+              {
+                "type": "file",
+                "name": "DamageZone.prefab",
+                "path": "Assets\\Features\\Combat\\Prefab\\DamageZone.prefab"
+              },
+              {
+                "type": "file",
+                "name": "DamageZone.prefab.meta",
+                "path": "Assets\\Features\\Combat\\Prefab\\DamageZone.prefab.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Prefab.meta",
+            "path": "Assets\\Features\\Combat\\Prefab.meta"
           },
           {
             "type": "folder",
@@ -2781,13 +3683,13 @@
             "children": [
               {
                 "type": "file",
-                "name": "Empty.cs",
-                "path": "Assets\\Features\\Enemy\\Model\\Empty.cs"
+                "name": "Enemy_Dinozavr_Test2.glb",
+                "path": "Assets\\Features\\Enemy\\Model\\Enemy_Dinozavr_Test2.glb"
               },
               {
                 "type": "file",
-                "name": "Empty.cs.meta",
-                "path": "Assets\\Features\\Enemy\\Model\\Empty.cs.meta"
+                "name": "Enemy_Dinozavr_Test2.glb.meta",
+                "path": "Assets\\Features\\Enemy\\Model\\Enemy_Dinozavr_Test2.glb.meta"
               }
             ]
           },
@@ -2890,16 +3792,6 @@
                 "path": "Assets\\Features\\Enemy\\Scripts\\Combat.meta"
               },
               {
-                "type": "file",
-                "name": "SimpleEnemy.cs",
-                "path": "Assets\\Features\\Enemy\\Scripts\\SimpleEnemy.cs"
-              },
-              {
-                "type": "file",
-                "name": "SimpleEnemy.cs.meta",
-                "path": "Assets\\Features\\Enemy\\Scripts\\SimpleEnemy.cs.meta"
-              },
-              {
                 "type": "folder",
                 "name": "Spawner",
                 "path": "Assets\\Features\\Enemy\\Scripts\\Spawner",
@@ -2979,13 +3871,23 @@
             "children": [
               {
                 "type": "file",
-                "name": "Empty.cs",
-                "path": "Assets\\Features\\Enemy\\UI\\Empty.cs"
+                "name": "EnemyFill.png",
+                "path": "Assets\\Features\\Enemy\\UI\\EnemyFill.png"
               },
               {
                 "type": "file",
-                "name": "Empty.cs.meta",
-                "path": "Assets\\Features\\Enemy\\UI\\Empty.cs.meta"
+                "name": "EnemyFill.png.meta",
+                "path": "Assets\\Features\\Enemy\\UI\\EnemyFill.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "EnemyFrame.png",
+                "path": "Assets\\Features\\Enemy\\UI\\EnemyFrame.png"
+              },
+              {
+                "type": "file",
+                "name": "EnemyFrame.png.meta",
+                "path": "Assets\\Features\\Enemy\\UI\\EnemyFrame.png.meta"
               }
             ]
           },
@@ -3008,271 +3910,390 @@
         "children": [
           {
             "type": "folder",
-            "name": "Configs",
-            "path": "Assets\\Features\\Items\\Configs",
+            "name": "Item",
+            "path": "Assets\\Features\\Items\\Item",
             "children": [
               {
-                "type": "file",
-                "name": "Empty.cs",
-                "path": "Assets\\Features\\Items\\Configs\\Empty.cs"
+                "type": "folder",
+                "name": "MiningItems",
+                "path": "Assets\\Features\\Items\\Item\\MiningItems",
+                "children": [
+                  {
+                    "type": "folder",
+                    "name": "Crystal",
+                    "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Crystal (1).prefab",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal\\Crystal (1).prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Crystal (1).prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal\\Crystal (1).prefab.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Crystal.asset",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal\\Crystal.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Crystal.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal\\Crystal.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "crystal_icon.png",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal\\crystal_icon.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "crystal_icon.png.meta",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal\\crystal_icon.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Crystal.meta",
+                    "path": "Assets\\Features\\Items\\Item\\MiningItems\\Crystal.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Iron",
+                    "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Iron (1).prefab",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron\\Iron (1).prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Iron (1).prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron\\Iron (1).prefab.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Iron.asset",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron\\Iron.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Iron.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron\\Iron.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "iron_icon.png",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron\\iron_icon.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "iron_icon.png.meta",
+                        "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron\\iron_icon.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Iron.meta",
+                    "path": "Assets\\Features\\Items\\Item\\MiningItems\\Iron.meta"
+                  }
+                ]
               },
               {
                 "type": "file",
-                "name": "Empty.cs.meta",
-                "path": "Assets\\Features\\Items\\Configs\\Empty.cs.meta"
+                "name": "MiningItems.meta",
+                "path": "Assets\\Features\\Items\\Item\\MiningItems.meta"
+              },
+              {
+                "type": "folder",
+                "name": "ProcessingItems",
+                "path": "Assets\\Features\\Items\\Item\\ProcessingItems",
+                "children": [
+                  {
+                    "type": "folder",
+                    "name": "Core",
+                    "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "CoreCrystal.asset",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core\\CoreCrystal.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CoreCrystal.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core\\CoreCrystal.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CoreCrystal.prefab",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core\\CoreCrystal.prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CoreCrystal.prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core\\CoreCrystal.prefab.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CoreShard.png",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core\\CoreShard.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CoreShard.png.meta",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core\\CoreShard.png.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Core.meta",
+                    "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Core.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Ingot",
+                    "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Ingot",
+                    "children": []
+                  },
+                  {
+                    "type": "file",
+                    "name": "Ingot.meta",
+                    "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Ingot.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Shard crystal",
+                    "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "IconShard.png",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal\\IconShard.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "IconShard.png.meta",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal\\IconShard.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shard Crystal (1).prefab",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal\\Shard Crystal (1).prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shard Crystal (1).prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal\\Shard Crystal (1).prefab.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shard Crystal.asset",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal\\Shard Crystal.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Shard Crystal.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal\\Shard Crystal.asset.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Shard crystal.meta",
+                    "path": "Assets\\Features\\Items\\Item\\ProcessingItems\\Shard crystal.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "ProcessingItems.meta",
+                "path": "Assets\\Features\\Items\\Item\\ProcessingItems.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UtilityItems",
+                "path": "Assets\\Features\\Items\\Item\\UtilityItems",
+                "children": [
+                  {
+                    "type": "folder",
+                    "name": "TestBrick",
+                    "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Brick (0).prefab",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\Brick (0).prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Brick (0).prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\Brick (0).prefab.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Brick.asset",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\Brick.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Brick.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\Brick.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Brick.mat",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\Brick.mat"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Brick.mat.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\Brick.mat.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "brick.png",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\brick.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "brick.png.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\brick.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "brick_texture.jpg",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\brick_texture.jpg"
+                      },
+                      {
+                        "type": "file",
+                        "name": "brick_texture.jpg.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\brick_texture.jpg.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ThrowableBrick.asset",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\ThrowableBrick.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ThrowableBrick.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick\\ThrowableBrick.asset.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "TestBrick.meta",
+                    "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestBrick.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "TestDrill",
+                    "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Drill 2.asset",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\Drill 2.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Drill 2.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\Drill 2.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "drill.png",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\drill.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "drill.png.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\drill.png.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "drill_test.glb",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\drill_test.glb"
+                      },
+                      {
+                        "type": "file",
+                        "name": "drill_test.glb.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\drill_test.glb.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "TestDrill (1) 1.prefab",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\TestDrill (1) 1.prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "TestDrill (1) 1.prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\TestDrill (1) 1.prefab.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "TestDrill (1).prefab",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\TestDrill (1).prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "TestDrill (1).prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\TestDrill (1).prefab.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "TestDrill.asset",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\TestDrill.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "TestDrill.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\TestDrill.asset.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Upgardes.asset",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\Upgardes.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Upgardes.asset.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill\\Upgardes.asset.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "TestDrill.meta",
+                    "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestDrill.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UtilityItems.meta",
+                "path": "Assets\\Features\\Items\\Item\\UtilityItems.meta"
               }
             ]
           },
           {
             "type": "file",
-            "name": "Configs.meta",
-            "path": "Assets\\Features\\Items\\Configs.meta"
-          },
-          {
-            "type": "folder",
-            "name": "Models",
-            "path": "Assets\\Features\\Items\\Models",
-            "children": [
-              {
-                "type": "folder",
-                "name": "Crystal",
-                "path": "Assets\\Features\\Items\\Models\\Crystal",
-                "children": [
-                  {
-                    "type": "file",
-                    "name": "Crystal (1).prefab",
-                    "path": "Assets\\Features\\Items\\Models\\Crystal\\Crystal (1).prefab"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Crystal (1).prefab.meta",
-                    "path": "Assets\\Features\\Items\\Models\\Crystal\\Crystal (1).prefab.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Crystal.asset",
-                    "path": "Assets\\Features\\Items\\Models\\Crystal\\Crystal.asset"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Crystal.asset.meta",
-                    "path": "Assets\\Features\\Items\\Models\\Crystal\\Crystal.asset.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "crystal_icon.png",
-                    "path": "Assets\\Features\\Items\\Models\\Crystal\\crystal_icon.png"
-                  },
-                  {
-                    "type": "file",
-                    "name": "crystal_icon.png.meta",
-                    "path": "Assets\\Features\\Items\\Models\\Crystal\\crystal_icon.png.meta"
-                  }
-                ]
-              },
-              {
-                "type": "file",
-                "name": "Crystal.meta",
-                "path": "Assets\\Features\\Items\\Models\\Crystal.meta"
-              },
-              {
-                "type": "folder",
-                "name": "Iron",
-                "path": "Assets\\Features\\Items\\Models\\Iron",
-                "children": [
-                  {
-                    "type": "file",
-                    "name": "Iron (1).prefab",
-                    "path": "Assets\\Features\\Items\\Models\\Iron\\Iron (1).prefab"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Iron (1).prefab.meta",
-                    "path": "Assets\\Features\\Items\\Models\\Iron\\Iron (1).prefab.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Iron.asset",
-                    "path": "Assets\\Features\\Items\\Models\\Iron\\Iron.asset"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Iron.asset.meta",
-                    "path": "Assets\\Features\\Items\\Models\\Iron\\Iron.asset.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "iron_icon.png",
-                    "path": "Assets\\Features\\Items\\Models\\Iron\\iron_icon.png"
-                  },
-                  {
-                    "type": "file",
-                    "name": "iron_icon.png.meta",
-                    "path": "Assets\\Features\\Items\\Models\\Iron\\iron_icon.png.meta"
-                  }
-                ]
-              },
-              {
-                "type": "file",
-                "name": "Iron.meta",
-                "path": "Assets\\Features\\Items\\Models\\Iron.meta"
-              },
-              {
-                "type": "folder",
-                "name": "TestBrick",
-                "path": "Assets\\Features\\Items\\Models\\TestBrick",
-                "children": [
-                  {
-                    "type": "file",
-                    "name": "Brick (0).prefab",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\Brick (0).prefab"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Brick (0).prefab.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\Brick (0).prefab.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Brick.asset",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\Brick.asset"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Brick.asset.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\Brick.asset.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Brick.mat",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\Brick.mat"
-                  },
-                  {
-                    "type": "file",
-                    "name": "Brick.mat.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\Brick.mat.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "brick.png",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\brick.png"
-                  },
-                  {
-                    "type": "file",
-                    "name": "brick.png.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\brick.png.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "brick_texture.jpg",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\brick_texture.jpg"
-                  },
-                  {
-                    "type": "file",
-                    "name": "brick_texture.jpg.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\brick_texture.jpg.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "ThrowableBrick.asset",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\ThrowableBrick.asset"
-                  },
-                  {
-                    "type": "file",
-                    "name": "ThrowableBrick.asset.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestBrick\\ThrowableBrick.asset.meta"
-                  }
-                ]
-              },
-              {
-                "type": "file",
-                "name": "TestBrick.meta",
-                "path": "Assets\\Features\\Items\\Models\\TestBrick.meta"
-              },
-              {
-                "type": "folder",
-                "name": "TestDrill",
-                "path": "Assets\\Features\\Items\\Models\\TestDrill",
-                "children": [
-                  {
-                    "type": "file",
-                    "name": "drill.png",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\drill.png"
-                  },
-                  {
-                    "type": "file",
-                    "name": "drill.png.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\drill.png.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "drill_test.glb",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\drill_test.glb"
-                  },
-                  {
-                    "type": "file",
-                    "name": "drill_test.glb.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\drill_test.glb.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "TestDrill (1) 1.prefab",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\TestDrill (1) 1.prefab"
-                  },
-                  {
-                    "type": "file",
-                    "name": "TestDrill (1) 1.prefab.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\TestDrill (1) 1.prefab.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "TestDrill (1).prefab",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\TestDrill (1).prefab"
-                  },
-                  {
-                    "type": "file",
-                    "name": "TestDrill (1).prefab.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\TestDrill (1).prefab.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "TestDrill.asset",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\TestDrill.asset"
-                  },
-                  {
-                    "type": "file",
-                    "name": "TestDrill.asset.meta",
-                    "path": "Assets\\Features\\Items\\Models\\TestDrill\\TestDrill.asset.meta"
-                  }
-                ]
-              },
-              {
-                "type": "file",
-                "name": "TestDrill.meta",
-                "path": "Assets\\Features\\Items\\Models\\TestDrill.meta"
-              }
-            ]
-          },
-          {
-            "type": "file",
-            "name": "Models.meta",
-            "path": "Assets\\Features\\Items\\Models.meta"
+            "name": "Item.meta",
+            "path": "Assets\\Features\\Items\\Item.meta"
           },
           {
             "type": "folder",
             "name": "Prefabs",
             "path": "Assets\\Features\\Items\\Prefabs",
             "children": [
-              {
-                "type": "file",
-                "name": "Empty.cs",
-                "path": "Assets\\Features\\Items\\Prefabs\\Empty.cs"
-              },
-              {
-                "type": "file",
-                "name": "Empty.cs.meta",
-                "path": "Assets\\Features\\Items\\Prefabs\\Empty.cs.meta"
-              },
               {
                 "type": "folder",
                 "name": "Inventory",
@@ -3296,15 +4317,64 @@
                 "path": "Assets\\Features\\Items\\Prefabs\\Inventory.meta"
               },
               {
-                "type": "folder",
-                "name": "items",
-                "path": "Assets\\Features\\Items\\Prefabs\\items",
-                "children": []
+                "type": "file",
+                "name": "MaterialPreprocessor.prefab",
+                "path": "Assets\\Features\\Items\\Prefabs\\MaterialPreprocessor.prefab"
               },
               {
                 "type": "file",
-                "name": "items.meta",
-                "path": "Assets\\Features\\Items\\Prefabs\\items.meta"
+                "name": "MaterialPreprocessor.prefab.meta",
+                "path": "Assets\\Features\\Items\\Prefabs\\MaterialPreprocessor.prefab.meta"
+              },
+              {
+                "type": "file",
+                "name": "RecipeButtonUI.prefab",
+                "path": "Assets\\Features\\Items\\Prefabs\\RecipeButtonUI.prefab"
+              },
+              {
+                "type": "file",
+                "name": "RecipeButtonUI.prefab.meta",
+                "path": "Assets\\Features\\Items\\Prefabs\\RecipeButtonUI.prefab.meta"
+              },
+              {
+                "type": "file",
+                "name": "update.prefab",
+                "path": "Assets\\Features\\Items\\Prefabs\\update.prefab"
+              },
+              {
+                "type": "file",
+                "name": "update.prefab.meta",
+                "path": "Assets\\Features\\Items\\Prefabs\\update.prefab.meta"
+              },
+              {
+                "type": "file",
+                "name": "UpdateButtonUI.prefab",
+                "path": "Assets\\Features\\Items\\Prefabs\\UpdateButtonUI.prefab"
+              },
+              {
+                "type": "file",
+                "name": "UpdateButtonUI.prefab.meta",
+                "path": "Assets\\Features\\Items\\Prefabs\\UpdateButtonUI.prefab.meta"
+              },
+              {
+                "type": "file",
+                "name": "Upgrade.prefab",
+                "path": "Assets\\Features\\Items\\Prefabs\\Upgrade.prefab"
+              },
+              {
+                "type": "file",
+                "name": "Upgrade.prefab.meta",
+                "path": "Assets\\Features\\Items\\Prefabs\\Upgrade.prefab.meta"
+              },
+              {
+                "type": "file",
+                "name": "Workbench.prefab",
+                "path": "Assets\\Features\\Items\\Prefabs\\Workbench.prefab"
+              },
+              {
+                "type": "file",
+                "name": "Workbench.prefab.meta",
+                "path": "Assets\\Features\\Items\\Prefabs\\Workbench.prefab.meta"
               }
             ]
           },
@@ -3312,6 +4382,124 @@
             "type": "file",
             "name": "Prefabs.meta",
             "path": "Assets\\Features\\Items\\Prefabs.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Recipe",
+            "path": "Assets\\Features\\Items\\Recipe",
+            "children": [
+              {
+                "type": "folder",
+                "name": "crafting",
+                "path": "Assets\\Features\\Items\\Recipe\\crafting",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "Drill.asset",
+                    "path": "Assets\\Features\\Items\\Recipe\\crafting\\Drill.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Drill.asset.meta",
+                    "path": "Assets\\Features\\Items\\Recipe\\crafting\\Drill.asset.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "crafting.meta",
+                "path": "Assets\\Features\\Items\\Recipe\\crafting.meta"
+              },
+              {
+                "type": "folder",
+                "name": "processing",
+                "path": "Assets\\Features\\Items\\Recipe\\processing",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "crystal_to_shard.asset",
+                    "path": "Assets\\Features\\Items\\Recipe\\processing\\crystal_to_shard.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "crystal_to_shard.asset.meta",
+                    "path": "Assets\\Features\\Items\\Recipe\\processing\\crystal_to_shard.asset.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "iron_to_ingot.asset",
+                    "path": "Assets\\Features\\Items\\Recipe\\processing\\iron_to_ingot.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "iron_to_ingot.asset.meta",
+                    "path": "Assets\\Features\\Items\\Recipe\\processing\\iron_to_ingot.asset.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "shard_to_core.asset",
+                    "path": "Assets\\Features\\Items\\Recipe\\processing\\shard_to_core.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "shard_to_core.asset.meta",
+                    "path": "Assets\\Features\\Items\\Recipe\\processing\\shard_to_core.asset.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "processing.meta",
+                "path": "Assets\\Features\\Items\\Recipe\\processing.meta"
+              },
+              {
+                "type": "file",
+                "name": "RecipeDatabase.asset",
+                "path": "Assets\\Features\\Items\\Recipe\\RecipeDatabase.asset"
+              },
+              {
+                "type": "file",
+                "name": "RecipeDatabase.asset.meta",
+                "path": "Assets\\Features\\Items\\Recipe\\RecipeDatabase.asset.meta"
+              },
+              {
+                "type": "folder",
+                "name": "upgrades",
+                "path": "Assets\\Features\\Items\\Recipe\\upgrades",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "Drill_lvl1.asset",
+                    "path": "Assets\\Features\\Items\\Recipe\\upgrades\\Drill_lvl1.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Drill_lvl1.asset.meta",
+                    "path": "Assets\\Features\\Items\\Recipe\\upgrades\\Drill_lvl1.asset.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Drill_lvl2.asset",
+                    "path": "Assets\\Features\\Items\\Recipe\\upgrades\\Drill_lvl2.asset"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Drill_lvl2.asset.meta",
+                    "path": "Assets\\Features\\Items\\Recipe\\upgrades\\Drill_lvl2.asset.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "upgrades.meta",
+                "path": "Assets\\Features\\Items\\Recipe\\upgrades.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Recipe.meta",
+            "path": "Assets\\Features\\Items\\Recipe.meta"
           },
           {
             "type": "folder",
@@ -3325,6 +4513,16 @@
                 "children": [
                   {
                     "type": "file",
+                    "name": "AimRay.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\AimRay.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AimRay.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\AimRay.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "Ammo.cs",
                     "path": "Assets\\Features\\Items\\Scripts\\Core\\Ammo.cs"
                   },
@@ -3332,16 +4530,6 @@
                     "type": "file",
                     "name": "Ammo.cs.meta",
                     "path": "Assets\\Features\\Items\\Scripts\\Core\\Ammo.cs.meta"
-                  },
-                  {
-                    "type": "file",
-                    "name": "HarvestableObject.cs",
-                    "path": "Assets\\Features\\Items\\Scripts\\Core\\HarvestableObject.cs"
-                  },
-                  {
-                    "type": "file",
-                    "name": "HarvestableObject.cs.meta",
-                    "path": "Assets\\Features\\Items\\Scripts\\Core\\HarvestableObject.cs.meta"
                   },
                   {
                     "type": "file",
@@ -3365,6 +4553,16 @@
                   },
                   {
                     "type": "file",
+                    "name": "ItemFactory.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\ItemFactory.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ItemFactory.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\ItemFactory.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "ItemObject.cs",
                     "path": "Assets\\Features\\Items\\Scripts\\Core\\ItemObject.cs"
                   },
@@ -3375,6 +4573,27 @@
                   },
                   {
                     "type": "file",
+                    "name": "ItemUpgradeData.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\ItemUpgradeData.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ItemUpgradeData.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\ItemUpgradeData.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "level",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\level",
+                    "children": []
+                  },
+                  {
+                    "type": "file",
+                    "name": "level.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\level.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "Resource.cs",
                     "path": "Assets\\Features\\Items\\Scripts\\Core\\Resource.cs"
                   },
@@ -3382,6 +4601,110 @@
                     "type": "file",
                     "name": "Resource.cs.meta",
                     "path": "Assets\\Features\\Items\\Scripts\\Core\\Resource.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Stats",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats",
+                    "children": [
+                      {
+                        "type": "folder",
+                        "name": "Global",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\Global",
+                        "children": [
+                          {
+                            "type": "file",
+                            "name": "GlobalStatManager.cs",
+                            "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\Global\\GlobalStatManager.cs"
+                          },
+                          {
+                            "type": "file",
+                            "name": "GlobalStatManager.cs.meta",
+                            "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\Global\\GlobalStatManager.cs.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "GlobalStatModifier.cs",
+                            "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\Global\\GlobalStatModifier.cs"
+                          },
+                          {
+                            "type": "file",
+                            "name": "GlobalStatModifier.cs.meta",
+                            "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\Global\\GlobalStatModifier.cs.meta"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "file",
+                        "name": "Global.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\Global.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "IScannable.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\IScannable.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "IScannable.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\IScannable.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "IStatItem.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\IStatItem.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "IStatItem.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\IStatItem.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemRuntimeStats.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemRuntimeStats.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemRuntimeStats.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemRuntimeStats.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemStat.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemStat.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemStat.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemStat.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemStatCalculator.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemStatCalculator.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemStatCalculator.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemStatCalculator.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemStatType.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemStatType.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ItemStatType.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats\\ItemStatType.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Stats.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Core\\Stats.meta"
                   },
                   {
                     "type": "file",
@@ -3409,6 +4732,28 @@
                 "type": "file",
                 "name": "Core.meta",
                 "path": "Assets\\Features\\Items\\Scripts\\Core.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Editor",
+                "path": "Assets\\Features\\Items\\Scripts\\Editor",
+                "children": []
+              },
+              {
+                "type": "file",
+                "name": "Editor.meta",
+                "path": "Assets\\Features\\Items\\Scripts\\Editor.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Harvest",
+                "path": "Assets\\Features\\Items\\Scripts\\Harvest",
+                "children": []
+              },
+              {
+                "type": "file",
+                "name": "Harvest.meta",
+                "path": "Assets\\Features\\Items\\Scripts\\Harvest.meta"
               },
               {
                 "type": "folder",
@@ -3499,6 +4844,16 @@
                 "children": [
                   {
                     "type": "file",
+                    "name": "CrosshairController.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\CrosshairController.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "CrosshairController.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\CrosshairController.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "HandFollower.cs",
                     "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\HandFollower.cs"
                   },
@@ -3516,6 +4871,16 @@
                     "type": "file",
                     "name": "IInteractable.cs.meta",
                     "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\IInteractable.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "InteractableUIObject.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\InteractableUIObject.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "InteractableUIObject.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\InteractableUIObject.cs.meta"
                   },
                   {
                     "type": "file",
@@ -3558,6 +4923,48 @@
                     "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\IUsable.cs.meta"
                   },
                   {
+                    "type": "folder",
+                    "name": "MaterialProcessor",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\MaterialProcessor",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "MaterialProcessor.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\MaterialProcessor\\MaterialProcessor.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "MaterialProcessor.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\MaterialProcessor\\MaterialProcessor.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "MaterialProcessorUIController.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\MaterialProcessor\\MaterialProcessorUIController.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "MaterialProcessorUIController.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\MaterialProcessor\\MaterialProcessorUIController.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "MaterialProcessor.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\MaterialProcessor.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerInteractionController.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\PlayerInteractionController.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerInteractionController.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\PlayerInteractionController.cs.meta"
+                  },
+                  {
                     "type": "file",
                     "name": "PlayerNearbyItemsManager.cs",
                     "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\PlayerNearbyItemsManager.cs"
@@ -3576,6 +4983,152 @@
                     "type": "file",
                     "name": "PlayerUsageController.cs.meta",
                     "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\PlayerUsageController.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "UI",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "BaseStationUI.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\BaseStationUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BaseStationUI.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\BaseStationUI.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CraftingProgressUI.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\CraftingProgressUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CraftingProgressUI.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\CraftingProgressUI.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ICraftingStationUI.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\ICraftingStationUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "ICraftingStationUI.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\ICraftingStationUI.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "RecipeButtonUI.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\RecipeButtonUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "RecipeButtonUI.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\RecipeButtonUI.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "RecipePanelUI.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\RecipePanelUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "RecipePanelUI.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\RecipePanelUI.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UpgradeItemButtonUI.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\UpgradeItemButtonUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UpgradeItemButtonUI.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI\\UpgradeItemButtonUI.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "UI.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UI.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "UpgradeStation",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "UpgradeGlowButtonUI.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation\\UpgradeGlowButtonUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UpgradeGlowButtonUI.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation\\UpgradeGlowButtonUI.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UpgradeStation.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation\\UpgradeStation.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UpgradeStation.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation\\UpgradeStation.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UpgradeStationUIController.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation\\UpgradeStationUIController.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UpgradeStationUIController.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation\\UpgradeStationUIController.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "UpgradeStation.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\UpgradeStation.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Workbench",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\Workbench",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Workbench.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\Workbench\\Workbench.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Workbench.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\Workbench\\Workbench.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorkbenchUIController.cs",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\Workbench\\WorkbenchUIController.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "WorkbenchUIController.cs.meta",
+                        "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\Workbench\\WorkbenchUIController.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Workbench.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Iteraction\\Workbench.meta"
                   }
                 ]
               },
@@ -3586,9 +5139,101 @@
               },
               {
                 "type": "folder",
+                "name": "Recipe",
+                "path": "Assets\\Features\\Items\\Scripts\\Recipe",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "CraftingProcessor.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\CraftingProcessor.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "CraftingProcessor.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\CraftingProcessor.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "CraftingRecipeSO.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\CraftingRecipeSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "CraftingRecipeSO.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\CraftingRecipeSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "CraftingStationType.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\CraftingStationType.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "CraftingStationType.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\CraftingStationType.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RecipeDatabase.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\RecipeDatabase.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RecipeDatabase.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\RecipeDatabase.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RecipeSO.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\RecipeSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RecipeSO.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\RecipeSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UpgradeProcessor.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\UpgradeProcessor.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UpgradeProcessor.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\UpgradeProcessor.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UpgradeRecipeSO.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\UpgradeRecipeSO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UpgradeRecipeSO.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\Recipe\\UpgradeRecipeSO.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Recipe.meta",
+                "path": "Assets\\Features\\Items\\Scripts\\Recipe.meta"
+              },
+              {
+                "type": "folder",
                 "name": "UsableScripts",
                 "path": "Assets\\Features\\Items\\Scripts\\UsableScripts",
                 "children": [
+                  {
+                    "type": "file",
+                    "name": "ScannerTool.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\UsableScripts\\ScannerTool.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ScannerTool.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\UsableScripts\\ScannerTool.cs.meta"
+                  },
                   {
                     "type": "file",
                     "name": "ThrowableAsser.cs",
@@ -3598,6 +5243,16 @@
                     "type": "file",
                     "name": "ThrowableAsser.cs.meta",
                     "path": "Assets\\Features\\Items\\Scripts\\UsableScripts\\ThrowableAsser.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UsableGun.cs",
+                    "path": "Assets\\Features\\Items\\Scripts\\UsableScripts\\UsableGun.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UsableGun.cs.meta",
+                    "path": "Assets\\Features\\Items\\Scripts\\UsableScripts\\UsableGun.cs.meta"
                   },
                   {
                     "type": "file",
@@ -3640,13 +5295,103 @@
             "children": [
               {
                 "type": "file",
-                "name": "Empty.cs",
-                "path": "Assets\\Features\\Items\\UI\\Empty.cs"
+                "name": "bg_second_stantions.png",
+                "path": "Assets\\Features\\Items\\UI\\bg_second_stantions.png"
               },
               {
                 "type": "file",
-                "name": "Empty.cs.meta",
-                "path": "Assets\\Features\\Items\\UI\\Empty.cs.meta"
+                "name": "bg_second_stantions.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\bg_second_stantions.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "bg_stantions.png",
+                "path": "Assets\\Features\\Items\\UI\\bg_stantions.png"
+              },
+              {
+                "type": "file",
+                "name": "bg_stantions.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\bg_stantions.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "bg_upgrade.png",
+                "path": "Assets\\Features\\Items\\UI\\bg_upgrade.png"
+              },
+              {
+                "type": "file",
+                "name": "bg_upgrade.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\bg_upgrade.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "border_progres.png",
+                "path": "Assets\\Features\\Items\\UI\\border_progres.png"
+              },
+              {
+                "type": "file",
+                "name": "border_progres.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\border_progres.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "btn.png",
+                "path": "Assets\\Features\\Items\\UI\\btn.png"
+              },
+              {
+                "type": "file",
+                "name": "btn.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\btn.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "btn_item.png",
+                "path": "Assets\\Features\\Items\\UI\\btn_item.png"
+              },
+              {
+                "type": "file",
+                "name": "btn_item.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\btn_item.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "closebtn.png",
+                "path": "Assets\\Features\\Items\\UI\\closebtn.png"
+              },
+              {
+                "type": "file",
+                "name": "closebtn.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\closebtn.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "fill_progress.png",
+                "path": "Assets\\Features\\Items\\UI\\fill_progress.png"
+              },
+              {
+                "type": "file",
+                "name": "fill_progress.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\fill_progress.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "recipe_list.png",
+                "path": "Assets\\Features\\Items\\UI\\recipe_list.png"
+              },
+              {
+                "type": "file",
+                "name": "recipe_list.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\recipe_list.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "scroll.png",
+                "path": "Assets\\Features\\Items\\UI\\scroll.png"
+              },
+              {
+                "type": "file",
+                "name": "scroll.png.meta",
+                "path": "Assets\\Features\\Items\\UI\\scroll.png.meta"
               }
             ]
           },
@@ -3661,6 +5406,528 @@
         "type": "file",
         "name": "Items.meta",
         "path": "Assets\\Features\\Items.meta"
+      },
+      {
+        "type": "folder",
+        "name": "Menu",
+        "path": "Assets\\Features\\Menu",
+        "children": [
+          {
+            "type": "folder",
+            "name": "Pause",
+            "path": "Assets\\Features\\Menu\\Pause",
+            "children": [
+              {
+                "type": "folder",
+                "name": "Prefabs",
+                "path": "Assets\\Features\\Menu\\Pause\\Prefabs",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "PauseMenu.prefab",
+                    "path": "Assets\\Features\\Menu\\Pause\\Prefabs\\PauseMenu.prefab"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PauseMenu.prefab.meta",
+                    "path": "Assets\\Features\\Menu\\Pause\\Prefabs\\PauseMenu.prefab.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Prefabs.meta",
+                "path": "Assets\\Features\\Menu\\Pause\\Prefabs.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Scripts",
+                "path": "Assets\\Features\\Menu\\Pause\\Scripts",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "PauseMenu.cs",
+                    "path": "Assets\\Features\\Menu\\Pause\\Scripts\\PauseMenu.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PauseMenu.cs.meta",
+                    "path": "Assets\\Features\\Menu\\Pause\\Scripts\\PauseMenu.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Scripts.meta",
+                "path": "Assets\\Features\\Menu\\Pause\\Scripts.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UI",
+                "path": "Assets\\Features\\Menu\\Pause\\UI",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "bg_btn_pause.png",
+                    "path": "Assets\\Features\\Menu\\Pause\\UI\\bg_btn_pause.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "bg_btn_pause.png.meta",
+                    "path": "Assets\\Features\\Menu\\Pause\\UI\\bg_btn_pause.png.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "bg_pause.png",
+                    "path": "Assets\\Features\\Menu\\Pause\\UI\\bg_pause.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "bg_pause.png.meta",
+                    "path": "Assets\\Features\\Menu\\Pause\\UI\\bg_pause.png.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UI.meta",
+                "path": "Assets\\Features\\Menu\\Pause\\UI.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Pause.meta",
+            "path": "Assets\\Features\\Menu\\Pause.meta"
+          },
+          {
+            "type": "folder",
+            "name": "QuestMenu",
+            "path": "Assets\\Features\\Menu\\QuestMenu",
+            "children": []
+          },
+          {
+            "type": "file",
+            "name": "QuestMenu.meta",
+            "path": "Assets\\Features\\Menu\\QuestMenu.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Settings",
+            "path": "Assets\\Features\\Menu\\Settings",
+            "children": [
+              {
+                "type": "folder",
+                "name": "Prefabs",
+                "path": "Assets\\Features\\Menu\\Settings\\Prefabs",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "SettingsMenu.prefab",
+                    "path": "Assets\\Features\\Menu\\Settings\\Prefabs\\SettingsMenu.prefab"
+                  },
+                  {
+                    "type": "file",
+                    "name": "SettingsMenu.prefab.meta",
+                    "path": "Assets\\Features\\Menu\\Settings\\Prefabs\\SettingsMenu.prefab.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Prefabs.meta",
+                "path": "Assets\\Features\\Menu\\Settings\\Prefabs.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Scripts",
+                "path": "Assets\\Features\\Menu\\Settings\\Scripts",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "SettingsMenu.cs",
+                    "path": "Assets\\Features\\Menu\\Settings\\Scripts\\SettingsMenu.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "SettingsMenu.cs.meta",
+                    "path": "Assets\\Features\\Menu\\Settings\\Scripts\\SettingsMenu.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "SettingsTabbedUI.cs",
+                    "path": "Assets\\Features\\Menu\\Settings\\Scripts\\SettingsTabbedUI.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "SettingsTabbedUI.cs.meta",
+                    "path": "Assets\\Features\\Menu\\Settings\\Scripts\\SettingsTabbedUI.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Scripts.meta",
+                "path": "Assets\\Features\\Menu\\Settings\\Scripts.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UI",
+                "path": "Assets\\Features\\Menu\\Settings\\UI",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "bg_settings.png",
+                    "path": "Assets\\Features\\Menu\\Settings\\UI\\bg_settings.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "bg_settings.png.meta",
+                    "path": "Assets\\Features\\Menu\\Settings\\UI\\bg_settings.png.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UI.meta",
+                "path": "Assets\\Features\\Menu\\Settings\\UI.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Settings.meta",
+            "path": "Assets\\Features\\Menu\\Settings.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Shared",
+            "path": "Assets\\Features\\Menu\\Shared",
+            "children": [
+              {
+                "type": "folder",
+                "name": "Scripts",
+                "path": "Assets\\Features\\Menu\\Shared\\Scripts",
+                "children": [
+                  {
+                    "type": "folder",
+                    "name": "Button",
+                    "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "CursorSystem.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\CursorSystem.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "CursorSystem.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\CursorSystem.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "HoverTester.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\HoverTester.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "HoverTester.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\HoverTester.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PolygonGlowButton.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\PolygonGlowButton.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PolygonGlowButton.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\PolygonGlowButton.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PolygonGlowButtonGroup.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\PolygonGlowButtonGroup.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PolygonGlowButtonGroup.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button\\PolygonGlowButtonGroup.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Button.meta",
+                    "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Button.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Controller",
+                    "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Controller",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "SettingsMenuController.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Controller\\SettingsMenuController.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "SettingsMenuController.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Controller\\SettingsMenuController.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Controller.meta",
+                    "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Controller.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Manager",
+                    "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "SettingsMenuManager.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager\\SettingsMenuManager.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "SettingsMenuManager.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager\\SettingsMenuManager.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "SettingsStorage.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager\\SettingsStorage.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "SettingsStorage.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager\\SettingsStorage.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UIStationManager.cs",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager\\UIStationManager.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "UIStationManager.cs.meta",
+                        "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager\\UIStationManager.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Manager.meta",
+                    "path": "Assets\\Features\\Menu\\Shared\\Scripts\\Manager.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Scripts.meta",
+                "path": "Assets\\Features\\Menu\\Shared\\Scripts.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Shared.meta",
+            "path": "Assets\\Features\\Menu\\Shared.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Tooltip",
+            "path": "Assets\\Features\\Menu\\Tooltip",
+            "children": [
+              {
+                "type": "file",
+                "name": "TooltipController.cs",
+                "path": "Assets\\Features\\Menu\\Tooltip\\TooltipController.cs"
+              },
+              {
+                "type": "file",
+                "name": "TooltipController.cs.meta",
+                "path": "Assets\\Features\\Menu\\Tooltip\\TooltipController.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Tooltip.meta",
+            "path": "Assets\\Features\\Menu\\Tooltip.meta"
+          },
+          {
+            "type": "folder",
+            "name": "WorldMap",
+            "path": "Assets\\Features\\Menu\\WorldMap",
+            "children": [
+              {
+                "type": "folder",
+                "name": "Materials",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Materials",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "UIOutlineGlow_Mat.mat",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Materials\\UIOutlineGlow_Mat.mat"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UIOutlineGlow_Mat.mat.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Materials\\UIOutlineGlow_Mat.mat.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Materials.meta",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Materials.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Prefabs",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Prefabs",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "Canvas.prefab",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Prefabs\\Canvas.prefab"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Canvas.prefab.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Prefabs\\Canvas.prefab.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Desert.prefab",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Prefabs\\Desert.prefab"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Desert.prefab.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Prefabs\\Desert.prefab.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Prefabs.meta",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Prefabs.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Scripts",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Scripts",
+                "children": []
+              },
+              {
+                "type": "file",
+                "name": "Scripts.meta",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Scripts.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Shaders",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Shaders",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "HoverWorldMap.shadergraph",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Shaders\\HoverWorldMap.shadergraph"
+                  },
+                  {
+                    "type": "file",
+                    "name": "HoverWorldMap.shadergraph.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Shaders\\HoverWorldMap.shadergraph.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UIOutlineGlow.shader",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Shaders\\UIOutlineGlow.shader"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UIOutlineGlow.shader.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\Shaders\\UIOutlineGlow.shader.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Shaders.meta",
+                "path": "Assets\\Features\\Menu\\WorldMap\\Shaders.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UI",
+                "path": "Assets\\Features\\Menu\\WorldMap\\UI",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "Backgorund.png",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Backgorund.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Backgorund.png.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Backgorund.png.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Cave.png",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Cave.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Cave.png.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Cave.png.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Desert.png",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Desert.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Desert.png.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Desert.png.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Mountains.png",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Mountains.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Mountains.png.meta",
+                    "path": "Assets\\Features\\Menu\\WorldMap\\UI\\Mountains.png.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UI.meta",
+                "path": "Assets\\Features\\Menu\\WorldMap\\UI.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "WorldMap.meta",
+            "path": "Assets\\Features\\Menu\\WorldMap.meta"
+          }
+        ]
+      },
+      {
+        "type": "file",
+        "name": "Menu.meta",
+        "path": "Assets\\Features\\Menu.meta"
       },
       {
         "type": "folder",
@@ -3737,6 +6004,16 @@
                 "type": "file",
                 "name": "Move.controller.meta",
                 "path": "Assets\\Features\\Player\\Animate\\Move.controller.meta"
+              },
+              {
+                "type": "file",
+                "name": "Movest.controller",
+                "path": "Assets\\Features\\Player\\Animate\\Movest.controller"
+              },
+              {
+                "type": "file",
+                "name": "Movest.controller.meta",
+                "path": "Assets\\Features\\Player\\Animate\\Movest.controller.meta"
               }
             ]
           },
@@ -3828,13 +6105,23 @@
             "children": [
               {
                 "type": "file",
-                "name": "InputSystem_Actions.cs",
-                "path": "Assets\\Features\\Player\\Input\\InputSystem_Actions.cs"
+                "name": "CameraAnchor.cs",
+                "path": "Assets\\Features\\Player\\Input\\CameraAnchor.cs"
               },
               {
                 "type": "file",
-                "name": "InputSystem_Actions.cs.meta",
-                "path": "Assets\\Features\\Player\\Input\\InputSystem_Actions.cs.meta"
+                "name": "CameraAnchor.cs.meta",
+                "path": "Assets\\Features\\Player\\Input\\CameraAnchor.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "CameraRegistry.cs",
+                "path": "Assets\\Features\\Player\\Input\\CameraRegistry.cs"
+              },
+              {
+                "type": "file",
+                "name": "CameraRegistry.cs.meta",
+                "path": "Assets\\Features\\Player\\Input\\CameraRegistry.cs.meta"
               }
             ]
           },
@@ -3848,6 +6135,16 @@
             "name": "Models",
             "path": "Assets\\Features\\Player\\Models",
             "children": [
+              {
+                "type": "file",
+                "name": "New Animation.anim",
+                "path": "Assets\\Features\\Player\\Models\\New Animation.anim"
+              },
+              {
+                "type": "file",
+                "name": "New Animation.anim.meta",
+                "path": "Assets\\Features\\Player\\Models\\New Animation.anim.meta"
+              },
               {
                 "type": "file",
                 "name": "New_Sit.anim",
@@ -3912,6 +6209,17 @@
             "name": "Scripts",
             "path": "Assets\\Features\\Player\\Scripts",
             "children": [
+              {
+                "type": "folder",
+                "name": "Core",
+                "path": "Assets\\Features\\Player\\Scripts\\Core",
+                "children": []
+              },
+              {
+                "type": "file",
+                "name": "Core.meta",
+                "path": "Assets\\Features\\Player\\Scripts\\Core.meta"
+              },
               {
                 "type": "folder",
                 "name": "Movement",
@@ -4025,6 +6333,38 @@
                 "type": "file",
                 "name": "Stats.meta",
                 "path": "Assets\\Features\\Player\\Scripts\\Stats.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UI",
+                "path": "Assets\\Features\\Player\\Scripts\\UI",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "EnergyBarUI.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\UI\\EnergyBarUI.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnergyBarUI.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\UI\\EnergyBarUI.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "HPBarUI.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\UI\\HPBarUI.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "HPBarUI.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\UI\\HPBarUI.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UI.meta",
+                "path": "Assets\\Features\\Player\\Scripts\\UI.meta"
               }
             ]
           },
@@ -4032,6 +6372,168 @@
             "type": "file",
             "name": "Scripts.meta",
             "path": "Assets\\Features\\Player\\Scripts.meta"
+          },
+          {
+            "type": "folder",
+            "name": "UI",
+            "path": "Assets\\Features\\Player\\UI",
+            "children": [
+              {
+                "type": "file",
+                "name": "AbilityBorder.png",
+                "path": "Assets\\Features\\Player\\UI\\AbilityBorder.png"
+              },
+              {
+                "type": "file",
+                "name": "AbilityBorder.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\AbilityBorder.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "AbilityHolder.png",
+                "path": "Assets\\Features\\Player\\UI\\AbilityHolder.png"
+              },
+              {
+                "type": "file",
+                "name": "AbilityHolder.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\AbilityHolder.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "Bordered.png",
+                "path": "Assets\\Features\\Player\\UI\\Bordered.png"
+              },
+              {
+                "type": "file",
+                "name": "Bordered.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\Bordered.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "Buff_border.png",
+                "path": "Assets\\Features\\Player\\UI\\Buff_border.png"
+              },
+              {
+                "type": "file",
+                "name": "Buff_border.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\Buff_border.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "Crosshair.png",
+                "path": "Assets\\Features\\Player\\UI\\Crosshair.png"
+              },
+              {
+                "type": "file",
+                "name": "Crosshair.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\Crosshair.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "Current_biome.png",
+                "path": "Assets\\Features\\Player\\UI\\Current_biome.png"
+              },
+              {
+                "type": "file",
+                "name": "Current_biome.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\Current_biome.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "EmptyItem.png",
+                "path": "Assets\\Features\\Player\\UI\\EmptyItem.png"
+              },
+              {
+                "type": "file",
+                "name": "EmptyItem.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\EmptyItem.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "energy_fill2.png",
+                "path": "Assets\\Features\\Player\\UI\\energy_fill2.png"
+              },
+              {
+                "type": "file",
+                "name": "energy_fill2.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\energy_fill2.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "energy_frame2.png",
+                "path": "Assets\\Features\\Player\\UI\\energy_frame2.png"
+              },
+              {
+                "type": "file",
+                "name": "energy_frame2.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\energy_frame2.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "energy_icon2.png",
+                "path": "Assets\\Features\\Player\\UI\\energy_icon2.png"
+              },
+              {
+                "type": "file",
+                "name": "energy_icon2.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\energy_icon2.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "hp_fill2.png",
+                "path": "Assets\\Features\\Player\\UI\\hp_fill2.png"
+              },
+              {
+                "type": "file",
+                "name": "hp_fill2.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\hp_fill2.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "hp_fill3.png",
+                "path": "Assets\\Features\\Player\\UI\\hp_fill3.png"
+              },
+              {
+                "type": "file",
+                "name": "hp_fill3.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\hp_fill3.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "hp_frame2.png",
+                "path": "Assets\\Features\\Player\\UI\\hp_frame2.png"
+              },
+              {
+                "type": "file",
+                "name": "hp_frame2.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\hp_frame2.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "hp_icon_heart.png",
+                "path": "Assets\\Features\\Player\\UI\\hp_icon_heart.png"
+              },
+              {
+                "type": "file",
+                "name": "hp_icon_heart.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\hp_icon_heart.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "Inventory_bg.png",
+                "path": "Assets\\Features\\Player\\UI\\Inventory_bg.png"
+              },
+              {
+                "type": "file",
+                "name": "Inventory_bg.png.meta",
+                "path": "Assets\\Features\\Player\\UI\\Inventory_bg.png.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "UI.meta",
+            "path": "Assets\\Features\\Player\\UI.meta"
           }
         ]
       },
@@ -4128,6 +6630,26 @@
                     "type": "file",
                     "name": "Head.png.meta",
                     "path": "Assets\\Features\\Quests\\Resources\\UI\\Head.png.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Open.png",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Open.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Open.png.meta",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Open.png.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Rectangle 2.png",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Rectangle 2.png"
+                  },
+                  {
+                    "type": "file",
+                    "name": "Rectangle 2.png.meta",
+                    "path": "Assets\\Features\\Quests\\Resources\\UI\\Rectangle 2.png.meta"
                   }
                 ]
               },
@@ -4153,6 +6675,26 @@
                 "name": "Core",
                 "path": "Assets\\Features\\Quests\\Scripts\\Core",
                 "children": [
+                  {
+                    "type": "file",
+                    "name": "BiomeQuestGiver.cs",
+                    "path": "Assets\\Features\\Quests\\Scripts\\Core\\BiomeQuestGiver.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeQuestGiver.cs.meta",
+                    "path": "Assets\\Features\\Quests\\Scripts\\Core\\BiomeQuestGiver.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ProceduralPointsQuestBehaviour.cs",
+                    "path": "Assets\\Features\\Quests\\Scripts\\Core\\ProceduralPointsQuestBehaviour.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ProceduralPointsQuestBehaviour.cs.meta",
+                    "path": "Assets\\Features\\Quests\\Scripts\\Core\\ProceduralPointsQuestBehaviour.cs.meta"
+                  },
                   {
                     "type": "file",
                     "name": "QuestAsset.cs",
@@ -4212,6 +6754,16 @@
                     "type": "file",
                     "name": "QuestPoint.cs.meta",
                     "path": "Assets\\Features\\Quests\\Scripts\\Core\\QuestPoint.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "SceneQuestAutoGiver.cs",
+                    "path": "Assets\\Features\\Quests\\Scripts\\Core\\SceneQuestAutoGiver.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "SceneQuestAutoGiver.cs.meta",
+                    "path": "Assets\\Features\\Quests\\Scripts\\Core\\SceneQuestAutoGiver.cs.meta"
                   }
                 ]
               },
@@ -4225,6 +6777,26 @@
                 "name": "UI",
                 "path": "Assets\\Features\\Quests\\Scripts\\UI",
                 "children": [
+                  {
+                    "type": "file",
+                    "name": "BiomeButton.cs",
+                    "path": "Assets\\Features\\Quests\\Scripts\\UI\\BiomeButton.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BiomeButton.cs.meta",
+                    "path": "Assets\\Features\\Quests\\Scripts\\UI\\BiomeButton.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "QuestHudButton.cs",
+                    "path": "Assets\\Features\\Quests\\Scripts\\UI\\QuestHudButton.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "QuestHudButton.cs.meta",
+                    "path": "Assets\\Features\\Quests\\Scripts\\UI\\QuestHudButton.cs.meta"
+                  },
                   {
                     "type": "file",
                     "name": "QuestInputHandler.cs",
@@ -4538,6 +7110,28 @@
                 "children": [
                   {
                     "type": "folder",
+                    "name": "Config",
+                    "path": "Assets\\Features\\Quests\\Types\\KillEnemies\\Config",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "Kill.asset",
+                        "path": "Assets\\Features\\Quests\\Types\\KillEnemies\\Config\\Kill.asset"
+                      },
+                      {
+                        "type": "file",
+                        "name": "Kill.asset.meta",
+                        "path": "Assets\\Features\\Quests\\Types\\KillEnemies\\Config\\Kill.asset.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Config.meta",
+                    "path": "Assets\\Features\\Quests\\Types\\KillEnemies\\Config.meta"
+                  },
+                  {
+                    "type": "folder",
                     "name": "Scripts",
                     "path": "Assets\\Features\\Quests\\Types\\KillEnemies\\Scripts",
                     "children": [
@@ -4672,9 +7266,41 @@
                   },
                   {
                     "type": "folder",
+                    "name": "Resources",
+                    "path": "Assets\\Features\\Quests\\Types\\Stand Zone\\Resources",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "StandOnPointProgressUI.prefab",
+                        "path": "Assets\\Features\\Quests\\Types\\Stand Zone\\Resources\\StandOnPointProgressUI.prefab"
+                      },
+                      {
+                        "type": "file",
+                        "name": "StandOnPointProgressUI.prefab.meta",
+                        "path": "Assets\\Features\\Quests\\Types\\Stand Zone\\Resources\\StandOnPointProgressUI.prefab.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Resources.meta",
+                    "path": "Assets\\Features\\Quests\\Types\\Stand Zone\\Resources.meta"
+                  },
+                  {
+                    "type": "folder",
                     "name": "Scripts",
                     "path": "Assets\\Features\\Quests\\Types\\Stand Zone\\Scripts",
                     "children": [
+                      {
+                        "type": "file",
+                        "name": "StandOnPointProgressUI.cs",
+                        "path": "Assets\\Features\\Quests\\Types\\Stand Zone\\Scripts\\StandOnPointProgressUI.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "StandOnPointProgressUI.cs.meta",
+                        "path": "Assets\\Features\\Quests\\Types\\Stand Zone\\Scripts\\StandOnPointProgressUI.cs.meta"
+                      },
                       {
                         "type": "file",
                         "name": "StandOnPointQuestBehaviour.cs",
@@ -4832,18 +7458,7 @@
             "type": "folder",
             "name": "Nodes",
             "path": "Assets\\Features\\Resources\\Nodes",
-            "children": [
-              {
-                "type": "file",
-                "name": "DestructibleResourceNode.cs",
-                "path": "Assets\\Features\\Resources\\Nodes\\DestructibleResourceNode.cs"
-              },
-              {
-                "type": "file",
-                "name": "DestructibleResourceNode.cs.meta",
-                "path": "Assets\\Features\\Resources\\Nodes\\DestructibleResourceNode.cs.meta"
-              }
-            ]
+            "children": []
           },
           {
             "type": "file",
@@ -4924,6 +7539,16 @@
                   },
                   {
                     "type": "file",
+                    "name": "ResourceEntry.cs",
+                    "path": "Assets\\Features\\Resources\\Scripts\\Core\\ResourceEntry.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ResourceEntry.cs.meta",
+                    "path": "Assets\\Features\\Resources\\Scripts\\Core\\ResourceEntry.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "ResourceNode.cs",
                     "path": "Assets\\Features\\Resources\\Scripts\\Core\\ResourceNode.cs"
                   },
@@ -4968,6 +7593,38 @@
                 "type": "file",
                 "name": "Core.meta",
                 "path": "Assets\\Features\\Resources\\Scripts\\Core.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Harvest",
+                "path": "Assets\\Features\\Resources\\Scripts\\Harvest",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "GlobalMiningSpeed.cs",
+                    "path": "Assets\\Features\\Resources\\Scripts\\Harvest\\GlobalMiningSpeed.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "GlobalMiningSpeed.cs.meta",
+                    "path": "Assets\\Features\\Resources\\Scripts\\Harvest\\GlobalMiningSpeed.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "IMineable.cs",
+                    "path": "Assets\\Features\\Resources\\Scripts\\Harvest\\IMineable.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "IMineable.cs.meta",
+                    "path": "Assets\\Features\\Resources\\Scripts\\Harvest\\IMineable.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Harvest.meta",
+                "path": "Assets\\Features\\Resources\\Scripts\\Harvest.meta"
               }
             ]
           },
@@ -5436,9 +8093,71 @@
   },
   {
     "type": "folder",
+    "name": "Prefab",
+    "path": "Assets\\Prefab",
+    "children": [
+      {
+        "type": "file",
+        "name": "CustomPrefab.prefab",
+        "path": "Assets\\Prefab\\CustomPrefab.prefab"
+      },
+      {
+        "type": "file",
+        "name": "CustomPrefab.prefab.meta",
+        "path": "Assets\\Prefab\\CustomPrefab.prefab.meta"
+      },
+      {
+        "type": "file",
+        "name": "Generator.prefab",
+        "path": "Assets\\Prefab\\Generator.prefab"
+      },
+      {
+        "type": "file",
+        "name": "Generator.prefab.meta",
+        "path": "Assets\\Prefab\\Generator.prefab.meta"
+      },
+      {
+        "type": "file",
+        "name": "SystemWorld.prefab",
+        "path": "Assets\\Prefab\\SystemWorld.prefab"
+      },
+      {
+        "type": "file",
+        "name": "SystemWorld.prefab.meta",
+        "path": "Assets\\Prefab\\SystemWorld.prefab.meta"
+      }
+    ]
+  },
+  {
+    "type": "file",
+    "name": "Prefab.meta",
+    "path": "Assets\\Prefab.meta"
+  },
+  {
+    "type": "folder",
     "name": "Scenes",
     "path": "Assets\\Scenes",
     "children": [
+      {
+        "type": "file",
+        "name": "HubScene.unity",
+        "path": "Assets\\Scenes\\HubScene.unity"
+      },
+      {
+        "type": "file",
+        "name": "HubScene.unity.meta",
+        "path": "Assets\\Scenes\\HubScene.unity.meta"
+      },
+      {
+        "type": "file",
+        "name": "MainMenu.unity",
+        "path": "Assets\\Scenes\\MainMenu.unity"
+      },
+      {
+        "type": "file",
+        "name": "MainMenu.unity.meta",
+        "path": "Assets\\Scenes\\MainMenu.unity.meta"
+      },
       {
         "type": "file",
         "name": "TestScene.unity",
@@ -5455,6 +8174,23 @@
     "type": "file",
     "name": "Scenes.meta",
     "path": "Assets\\Scenes.meta"
+  },
+  {
+    "type": "folder",
+    "name": "Scripts",
+    "path": "Assets\\Scripts",
+    "children": [
+      {
+        "type": "file",
+        "name": "InputSystem_Actions.cs",
+        "path": "Assets\\Scripts\\InputSystem_Actions.cs"
+      },
+      {
+        "type": "file",
+        "name": "InputSystem_Actions.cs.meta",
+        "path": "Assets\\Scripts\\InputSystem_Actions.cs.meta"
+      }
+    ]
   },
   {
     "type": "file",

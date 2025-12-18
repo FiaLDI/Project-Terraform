@@ -1,83 +1,133 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
-using Quests;
-using System;
-using System.Linq;
+using Features.Quests.Data;
+using Features.Enemy.Data;
 
-[CustomEditor(typeof(QuestAsset))]
-public class QuestAssetEditor : Editor
+namespace Features.Quests.Editor
 {
-    private QuestAsset questAsset;
-    private string[] behaviourTypes;
-    private Type[] behaviourClasses;
-    private int selectedIndex;
-
-    private void OnEnable()
+    [CustomEditor(typeof(QuestAsset))]
+    public class QuestAssetEditor : UnityEditor.Editor
     {
-        questAsset = (QuestAsset)target;
-
-        behaviourClasses = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(a => a.GetTypes())
-            .Where(t => t.IsSubclassOf(typeof(QuestBehaviour)) && !t.IsAbstract)
-            .ToArray();
-
-        behaviourTypes = behaviourClasses.Select(t => t.Name).ToArray();
-
-        if (questAsset.behaviour != null)
+        public override void OnInspectorGUI()
         {
-            var currentType = questAsset.behaviour.GetType();
-            selectedIndex = Array.FindIndex(behaviourClasses, t => t == currentType);
-            if (selectedIndex < 0) selectedIndex = 0;
-        }
-        else
-        {
-            selectedIndex = 0;
-        }
-    }
+            serializedObject.Update();
 
-    public override void OnInspectorGUI()
-    {
-        serializedObject.Update();
+            var quest = (QuestAsset)target;
 
-        EditorGUILayout.LabelField("⚔️ Quest Asset", EditorStyles.boldLabel);
+            // --------------------------
+            // QUEST ID BLOCK
+            // --------------------------
+            EditorGUILayout.LabelField("Quest ID", EditorStyles.boldLabel);
 
-        questAsset.questName = EditorGUILayout.TextField("Name", questAsset.questName);
-        EditorGUILayout.LabelField("Description");
-        questAsset.description = EditorGUILayout.TextArea(questAsset.description, GUILayout.Height(40));
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.TextField(quest.questId);
+            EditorGUI.EndDisabledGroup();
 
-        EditorGUILayout.Space();
-
-        EditorGUILayout.LabelField("Quest Behaviour", EditorStyles.boldLabel);
-        int newIndex = EditorGUILayout.Popup("Type", selectedIndex, behaviourTypes);
-        if (newIndex != selectedIndex || questAsset.behaviour == null)
-        {
-            selectedIndex = newIndex;
-            questAsset.behaviour = (QuestBehaviour)Activator.CreateInstance(behaviourClasses[selectedIndex]);
-            EditorUtility.SetDirty(questAsset);
-        }
-
-        if (questAsset.behaviour != null)
-        {
-            SerializedObject so = new SerializedObject(questAsset);
-            SerializedProperty behaviourProp = so.FindProperty("behaviour");
-
-            if (behaviourProp != null && behaviourProp.hasVisibleChildren)
+            if (string.IsNullOrWhiteSpace(quest.questId))
             {
-                EditorGUILayout.LabelField("Тип поведения квеста", EditorStyles.boldLabel);
-
-                var copy = behaviourProp.Copy();
-                var end = copy.GetEndProperty();
-
-                while (copy.NextVisible(true) && !SerializedProperty.EqualContents(copy, end))
+                if (GUILayout.Button("Generate Quest ID"))
                 {
-                    EditorGUILayout.PropertyField(copy, true);
+                    Undo.RecordObject(quest, "Generate Quest ID");
+                    quest.questId = GenerateQuestId(quest);
+                    EditorUtility.SetDirty(quest);
+                }
+            }
+            else
+            {
+                if (GUILayout.Button("Regenerate Quest ID"))
+                {
+                    Undo.RecordObject(quest, "Regenerate Quest ID");
+                    quest.questId = GenerateQuestId(quest);
+                    EditorUtility.SetDirty(quest);
                 }
             }
 
-            so.ApplyModifiedProperties();
+            EditorGUILayout.Space(15);
+
+            // --------------------------
+            // DRAW DEFAULT INSPECTOR
+            // --------------------------
+            DrawDefaultInspector();
+
+            EditorGUILayout.Space(10);
+
+            // --------------------------
+            // CUSTOM UI FOR KillEnemies
+            // --------------------------
+            if (quest.behaviourType == QuestBehaviourType.KillEnemies)
+            {
+                DrawKillEnemiesSection(quest);
+            }
+
+            serializedObject.ApplyModifiedProperties();
         }
 
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Progress", $"{questAsset.currentProgress}/{questAsset.targetProgress}");
+        private void DrawKillEnemiesSection(QuestAsset quest)
+        {
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Kill Enemies Parameters", EditorStyles.boldLabel);
+
+            // Database selector
+            quest.enemyDatabase = (EnemyDatabaseSO)EditorGUILayout.ObjectField(
+                "Enemy Database", quest.enemyDatabase,
+                typeof(EnemyDatabaseSO), false
+            );
+
+            if (quest.enemyDatabase == null)
+            {
+                EditorGUILayout.HelpBox("Assign EnemyDatabaseSO to choose enemy types.", MessageType.Info);
+                return;
+            }
+
+            var ids = quest.enemyDatabase.GetAllIds();
+            if (ids == null || ids.Length == 0)
+            {
+                EditorGUILayout.HelpBox("EnemyDatabase is empty.", MessageType.Warning);
+                return;
+            }
+
+            // Auto-generate enemyId if empty
+            if (string.IsNullOrWhiteSpace(quest.enemyId))
+            {
+                Undo.RecordObject(quest, "Auto-generate EnemyId");
+                quest.enemyId = ids[0];      // первое значение из базы
+                EditorUtility.SetDirty(quest);
+            }
+
+            int currentIndex = Mathf.Max(0, System.Array.IndexOf(ids, quest.enemyId));
+            int newIndex = EditorGUILayout.Popup("Enemy ID", currentIndex, ids);
+
+            if (newIndex != currentIndex && newIndex >= 0 && newIndex < ids.Length)
+            {
+                Undo.RecordObject(quest, "Select EnemyID");
+                quest.enemyId = ids[newIndex];
+                EditorUtility.SetDirty(quest);
+            }
+
+            quest.requiredKills = EditorGUILayout.IntField("Required Kills", quest.requiredKills);
+        }
+
+
+        // ===============================
+        // UTILS
+        // ===============================
+
+        private string GenerateQuestId(QuestAsset quest)
+        {
+            string name = string.IsNullOrWhiteSpace(quest.questName)
+                ? "quest"
+                : quest.questName;
+
+            string safe = name
+                .ToLower()
+                .Replace(" ", "_")
+                .Replace("-", "_");
+
+            string guid = System.Guid.NewGuid().ToString("N").Substring(0, 6);
+
+            return $"quest_{safe}_{guid}";
+        }
     }
 }
+#endif

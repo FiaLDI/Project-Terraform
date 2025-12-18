@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10408e8dc84845f4fb8b774b4f4b14fd, type: 3}
+  m_Name: Crystall
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
+  id: 1
+  itemName: Crystall
+  description: 'Crystall can '
+  icon: {fileID: 21300000, guid: 0c3d25cd4f43bf04eb559ca7677f1ef5, type: 3}
+  isTwoHanded: 0
+  category: 0
+  isStackable: 1
+  maxStackAmount: 64
+  baseStats: []
+  upgrades: []
+  worldPrefab: {fileID: 778727334413204419, guid: de2bd9ba3719fac48b8cfe90b3fb8aa1, type: 3}
+  equippedPrefab: {fileID: 4914763540001440454, guid: 17b024b8700d35842a7045620e7e3202, type: 3}
+  weaponConfig: {fileID: 0}
+  toolConfig: {fileID: 0}
+  scannerConfig: {fileID: 0}
+  throwableConfig: {fileID: 0}

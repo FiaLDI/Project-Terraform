@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11fab29bd5a267145b55f2ecb4decf29, type: 3}
+  m_Name: WeaponConfig
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Weapons.Data.WeaponConfig
+  weaponId: 0
+  icon: {fileID: 21300000, guid: 4b99686319a216f4bac083dfaf5a6a72, type: 3}
+  isMelee: 0
+  isProjectile: 1
+  fireMode: 0
+  burstCount: 3
+  damage: 20
+  damageType: 1
+  headMultiplier: 2
+  limbMultiplier: 0.75
+  armorPenetration: 0.2
+  verticalRecoil: 1.5
+  horizontalRecoil: 0.5
+  recoilPattern:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  hipfireSpread: 2
+  adsSpread: 0.5
+  swayIntensity: 0.2
+  fireRate: 8
+  reloadTime: 1.4
+  magazineSize: 30
+  ammoType: {fileID: 11400000, guid: 858bdf25dbe42824ea18e2f40d4218c8, type: 2}
+  ammoPerItem: 30
+  startingAmmo: 30
+  maxDistance: 100
+  projectileConfig: {fileID: 11400000, guid: 2ceb90afb49dc0044b3e1140c5c3054b, type: 2}
+  meleeRange: 2
+  meleeDamage: 35
+  meleeAngle: 55
+  meleeImpactForce: 5
+  muzzleFlashFX: {fileID: 0}
+  hitFX: {fileID: 0}
+  bloodFX: {fileID: 0}

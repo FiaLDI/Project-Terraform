@@ -1,55 +1,118 @@
 using UnityEngine;
+using System.Linq;
 using System.Collections.Generic;
+using Features.Buffs.Application;
+using Features.Buffs.UnityIntegration;
+using Features.Player.UnityIntegration;
 
-public class BuffHUD : MonoBehaviour
+namespace Features.Buffs.UI
 {
-    public Transform container;
-    public BuffIconUI iconPrefab;
-
-    private BuffSystem playerBuffSystem;
-
-    private readonly Dictionary<BuffInstance, BuffIconUI> icons = new();
-
-    private void Start()
+    public class BuffHUD : MonoBehaviour
     {
-        TryBindToPlayer();
-    }
+        [Header("UI")]
+        public Transform container;
+        public BuffIconUI iconPrefab;
 
-    private void Update()
-    {
-        if (playerBuffSystem == null)
-            TryBindToPlayer();
-    }
+        private BuffSystem buffSystem;
+        private readonly Dictionary<BuffInstance, BuffIconUI> icons = new();
 
-    private void TryBindToPlayer()
-    {
-        var playerEnergy = FindFirstObjectByType<PlayerEnergy>();
-        if (playerEnergy == null)
-            return;
+        private bool bound = false;
 
-        playerBuffSystem = playerEnergy.GetComponent<BuffSystem>();
-        if (playerBuffSystem == null)
-            return;
-
-        playerBuffSystem.OnBuffAdded += AddIcon;
-        playerBuffSystem.OnBuffRemoved += RemoveIcon;
-
-        Debug.Log("[BuffHUD] Successfully bound to player BuffSystem");
-    }
-
-    private void AddIcon(BuffInstance buff)
-    {
-        var ui = Instantiate(iconPrefab, container);
-        ui.Bind(buff);
-        icons[buff] = ui;
-    }
-
-    private void RemoveIcon(BuffInstance buff)
-    {
-        if (icons.TryGetValue(buff, out var ui))
+        private void Start()
         {
+            TryAutoBind();
+        }
+
+        private void Update()
+        {
+            if (!bound)
+                TryAutoBind();
+        }
+
+        // ==========================================================
+        // AUTO-BIND
+        // ==========================================================
+        private void TryAutoBind()
+        {
+            if (PlayerRegistry.Instance == null)
+                return;
+
+            var player = PlayerRegistry.Instance.LocalPlayer;
+            if (player == null)
+                return;
+
+            var bs = player.GetComponent<BuffSystem>();
+            if (bs == null)
+                return;
+
+            // Подождать один кадр после инициализации BuffSystem
+            if (!bs.ServiceReady)
+                return;
+
+            Bind(bs);
+        }
+
+
+        // ==========================================================
+        // BIND
+        // ==========================================================
+        private void Bind(BuffSystem bs)
+        {
+            buffSystem = bs;
+            bound = true;
+
+            buffSystem.OnBuffAdded += HandleAdd;
+            buffSystem.OnBuffRemoved += HandleRemove;
+
+            // Добавляем уже активные баффы
+            if (buffSystem.Active != null)
+            {
+                foreach (var inst in buffSystem.Active)
+                    HandleAdd(inst);
+            }
+        }
+
+        // ==========================================================
+        // ADD / REMOVE ICONS
+        // ==========================================================
+        private void HandleAdd(BuffInstance inst)
+        {
+            if (inst == null || inst.Config == null) return;
+            if (icons.ContainsKey(inst)) return;
+
+            var ui = Instantiate(iconPrefab, container);
+            ui.Bind(inst);
+
+            // Tooltip
+            var tt = ui.GetComponent<BuffTooltipTrigger>();
+            if (tt != null) tt.Bind(inst);
+
+            icons[inst] = ui;
+            Resort();
+        }
+
+        private void HandleRemove(BuffInstance inst)
+        {
+            if (!icons.TryGetValue(inst, out var ui)) return;
+
             Destroy(ui.gameObject);
-            icons.Remove(buff);
+            icons.Remove(inst);
+
+            Resort();
+        }
+
+        // ==========================================================
+        // SORT
+        // ==========================================================
+        private void Resort()
+        {
+            var sorted = icons
+                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1) // дебаффы слева
+                .ThenByDescending(kv => kv.Key.Remaining)
+                .ToList();
+
+            for (int i = 0; i < sorted.Count; i++)
+                sorted[i].Value.transform.SetSiblingIndex(i);
         }
     }
 }

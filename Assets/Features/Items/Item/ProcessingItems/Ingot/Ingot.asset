@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10408e8dc84845f4fb8b774b4f4b14fd, type: 3}
+  m_Name: Ingot
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
+  id: 4
+  itemName: Ingot
+  description: IngotIngotIngot
+  icon: {fileID: 21300000, guid: 4347e5e78c814434bb282c92bbfe8143, type: 3}
+  isTwoHanded: 0
+  category: 0
+  isStackable: 1
+  maxStackAmount: 5
+  baseStats: []
+  upgrades: []
+  worldPrefab: {fileID: 4734803529398659213, guid: 04178389ab887ad4a9dd2dfcd2b0160b, type: 3}
+  equippedPrefab: {fileID: 660079467764784854, guid: a8d23a52931ef074f92451487517246c, type: 3}
+  weaponConfig: {fileID: 0}
+  toolConfig: {fileID: 0}
+  scannerConfig: {fileID: 0}
+  throwableConfig: {fileID: 0}
