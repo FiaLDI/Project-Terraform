@@ -31,6 +31,8 @@ public class UpgradeStationUIController : BaseStationUI
         this.processor = processor;
         this.inventory = inventory;
 
+        recipePanel.Init(inventory);
+
         processor.OnStart += HandleStart;
         processor.OnProgress += HandleProgress;
         processor.OnComplete += HandleComplete;

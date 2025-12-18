@@ -21,6 +21,8 @@ public class WorkbenchUIController : BaseStationUI
         this.processor = processor;
         this.inventory = inventory;
 
+        recipePanel.Init(inventory);
+
         base.Init(station.GetRecipes());
 
         processor.OnStart += HandleStart;

@@ -20,6 +20,8 @@ public class MaterialProcessorUIController : BaseStationUI
         this.station = station;
         this.processor = processor;
         this.inventory = inventory;
+        
+        recipePanel.Init(inventory);
 
         base.Init(station.GetRecipes());
 

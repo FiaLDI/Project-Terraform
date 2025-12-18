@@ -180,7 +180,12 @@ public class RecipePanelUI : MonoBehaviour
     public void ProcessComplete()
     {
         progressUI.UpdateProgress(1f);
-        RefreshIngredients();
+        Invoke(nameof(HideProgress), 0.2f);
+    }
+
+    private void HideProgress()
+    {
+        progressUI.SetVisible(false);
     }
 
     // ========================================================
@@ -189,6 +194,14 @@ public class RecipePanelUI : MonoBehaviour
 
     private void OnCancel(InputAction.CallbackContext ctx)
     {
+        ResetProgress();
         gameObject.SetActive(false);
     }
+
+    public void ResetProgress()
+    {
+        progressUI.SetVisible(false);
+        progressUI.UpdateProgress(0f);
+    }
+
 }
