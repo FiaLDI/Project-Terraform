@@ -22,8 +22,8 @@ MonoBehaviour:
   maxStackAmount: 5
   baseStats: []
   upgrades: []
-  worldPrefab: {fileID: 1046357907567521835, guid: 99586948cf4af0744a9c288f9724b22c, type: 3}
-  equippedPrefab: {fileID: 0}
+  worldPrefab: {fileID: 2529932468941660297, guid: 9d0145176efc0ed4981cad32409c25b8, type: 3}
+  equippedPrefab: {fileID: 1582206983362753468, guid: 21f515118256e08498e4cf73086f671a, type: 3}
   weaponConfig: {fileID: 0}
   toolConfig: {fileID: 0}
   scannerConfig: {fileID: 0}

@@ -23,7 +23,7 @@ MonoBehaviour:
   baseStats: []
   upgrades: []
   worldPrefab: {fileID: 778727334413204419, guid: de2bd9ba3719fac48b8cfe90b3fb8aa1, type: 3}
-  equippedPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 4914763540001440454, guid: 17b024b8700d35842a7045620e7e3202, type: 3}
   weaponConfig: {fileID: 0}
   toolConfig: {fileID: 0}
   scannerConfig: {fileID: 0}

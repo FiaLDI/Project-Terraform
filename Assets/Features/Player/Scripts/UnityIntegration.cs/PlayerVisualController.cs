@@ -1,3 +1,4 @@
+using Features.Equipment.UnityIntegration;
 using Features.Player.UnityIntegration;
 using UnityEngine;
 
@@ -10,18 +11,13 @@ public class PlayerVisualController : MonoBehaviour
     private Animator _animator;
 
     public Animator Animator => _animator;
+    public CharacterSockets Sockets { get; private set; }
 
     public void ApplyVisual(string presetId)
     {
-        Debug.Log($"[PlayerVisual] ApplyVisual id={presetId}");
-
         var preset = visualLibrary.Find(presetId);
-
         if (preset == null)
-        {
-            Debug.LogError($"[PlayerVisual] Visual preset NOT FOUND: {presetId}");
             return;
-        }
 
         if (_spawnedModel != null)
             Destroy(_spawnedModel);
@@ -32,30 +28,15 @@ public class PlayerVisualController : MonoBehaviour
         _spawnedModel.transform.localScale = Vector3.one;
 
         _animator = _spawnedModel.GetComponentInChildren<Animator>();
-
-        if (_animator == null)
-        {
-            Debug.LogError("[PlayerVisual] Animator NOT FOUND in model prefab!");
-            return;
-        }
-
-        if (preset.animator == null)
-        {
-            Debug.LogError("[PlayerVisual] AnimatorController is NULL!");
-            return;
-        }
-
         _animator.runtimeAnimatorController = preset.animator;
 
-        var animController = GetComponent<PlayerAnimationController>();
-        if (animController == null)
+        Sockets = _spawnedModel.GetComponentInChildren<CharacterSockets>();
+        if (Sockets == null)
         {
-            Debug.LogError("[PlayerVisual] PlayerAnimationController NOT FOUND on Player root!");
-            return;
+            Debug.LogError("[PlayerVisual] CharacterSockets NOT FOUND on model!");
         }
 
-        animController.SetAnimator(_animator);
-
-        Debug.Log("[PlayerVisual] Visual applied successfully");
+        GetComponent<PlayerAnimationController>()?.SetAnimator(_animator);
+        GetComponent<EquipmentManager>()?.ApplySockets(Sockets);
     }
 }

@@ -1,4 +1,3 @@
-// Assets/Features/Player/Scripts/UnityIntegration/PlayerMovement.cs
 using UnityEngine;
 using Features.Stats.Adapter;
 

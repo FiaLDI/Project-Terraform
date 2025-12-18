@@ -203,11 +203,23 @@ namespace Features.Equipment.UnityIntegration
                 weapon.Initialize(playerCamera);
             }
 
-            // 🔹 Usable (обёртка)
-            usable.Initialize(playerCamera);
+            if (usable != null)
+            {
+                usable.Initialize(playerCamera);
+            }
 
         }
 
+        public void ApplySockets(CharacterSockets sockets)
+        {
+            if (sockets == null)
+                return;
+
+            rightHandTransform = sockets.rightHandSocket;
+            leftHandTransform  = sockets.leftHandSocket;
+
+            Debug.Log("[EquipmentManager] Hand sockets applied");
+        }
 
         // ======================================================
         // PUBLIC API
