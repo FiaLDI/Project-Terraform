@@ -64,6 +64,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   startLocked: 0
+  interactable: 1
 --- !u!114 &1412304778914497292
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -79,7 +80,7 @@ MonoBehaviour:
   glowButton: {fileID: 3755697914388916713}
   icon: {fileID: 8917889804485783458}
   title: {fileID: 3038025304740522519}
-  level: {fileID: 5133711130038602017}
+  levelText: {fileID: 5133711130038602017}
 --- !u!1 &2044608078435447504
 GameObject:
   m_ObjectHideFlags: 0

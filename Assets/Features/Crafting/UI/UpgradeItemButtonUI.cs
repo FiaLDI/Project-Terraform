@@ -16,13 +16,31 @@ public class UpgradeItemButtonUI : MonoBehaviour
     private UpgradeRecipeSO recipe;
     private UpgradeStationUIController controller;
 
-    public void Init(ItemInstance inst, UpgradeRecipeSO recipe, UpgradeStationUIController controller)
+    public void Init(
+        ItemInstance inst,
+        UpgradeRecipeSO recipe,
+        UpgradeStationUIController controller)
     {
         this.instance = inst;
         this.recipe = recipe;
         this.controller = controller;
 
-        Item def = inst.itemDefinition;
+        RefreshVisuals();
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(OnClick);
+    }
+
+    // ======================================================
+    // VISUALS
+    // ======================================================
+
+    private void RefreshVisuals()
+    {
+        if (instance == null || instance.itemDefinition == null)
+            return;
+
+        Item def = instance.itemDefinition;
 
         // ICON
         if (icon != null)
@@ -32,18 +50,38 @@ public class UpgradeItemButtonUI : MonoBehaviour
         if (title != null)
             title.text = def.itemName;
 
-        // LEVEL
+        int maxLv = def.upgrades?.Length ?? 0;
+
+        // LEVEL TEXT
         if (levelText != null)
         {
-            int maxLv = def.upgrades != null ? def.upgrades.Length : 0;
-            levelText.text = $"Lv {inst.level}/{maxLv}";
+            if (instance.level >= maxLv)
+                levelText.text = "MAX";
+            else
+                levelText.text = $"Lv {instance.level}/{maxLv}";
         }
 
-        // ACTION
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() =>
-        {
-            controller.OnUpgradeItemSelected(inst, recipe);
-        });
+        // INTERACTABLE
+        bool canUpgrade = instance.level < maxLv;
+        if (button != null)
+            button.interactable = canUpgrade;
+    }
+
+    // ======================================================
+    // BUTTON
+    // ======================================================
+
+    private void OnClick()
+    {
+        if (instance == null || recipe == null || controller == null)
+            return;
+
+        var def = instance.itemDefinition;
+        int maxLv = def?.upgrades?.Length ?? 0;
+
+        if (instance.level >= maxLv)
+            return;
+
+        controller.OnUpgradeItemSelected(instance, recipe);
     }
 }

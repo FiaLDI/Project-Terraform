@@ -14,6 +14,7 @@ namespace Features.Menu.Tooltip
     public class TooltipController : MonoBehaviour
     {
         public static TooltipController Instance;
+        private Object currentOwner;
 
         [Header("UI")]
         [SerializeField] private CanvasGroup group;
@@ -41,7 +42,16 @@ namespace Features.Menu.Tooltip
 
         private void Update()
         {
-            if (!isVisible || Mouse.current == null)
+            if (!isVisible)
+                return;
+
+            if (currentOwner == null)
+            {
+                Hide();
+                return;
+            }
+
+            if (Mouse.current == null)
                 return;
 
             UpdatePosition();
@@ -94,7 +104,7 @@ namespace Features.Menu.Tooltip
         // ITEM TOOLTIP
         // =====================================================
 
-        public void ShowForItemInstance(ItemInstance inst)
+        public void ShowForItemInstance(ItemInstance inst, Object owner)
         {
             if (inst == null || inst.itemDefinition == null)
             {
@@ -102,9 +112,9 @@ namespace Features.Menu.Tooltip
                 return;
             }
 
-            Item def = inst.itemDefinition;
+            currentOwner = owner;
 
-            // ⚠️ НЕ храним ссылку, сразу читаем данные
+            Item def = inst.itemDefinition;
             icon.sprite = def.icon;
             title.text = def.itemName;
             description.text = def.description;

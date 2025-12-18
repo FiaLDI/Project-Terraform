@@ -73,7 +73,8 @@ public class UpgradeStationUIController : BaseStationUI
             if (def == null) continue;
 
             if (!seen.Add(def.id)) continue;
-            if (def.upgrades == null || inst.level >= def.upgrades.Length) continue;
+            if (def.upgrades == null)
+                continue;
 
             var recipe = upgradeRecipes.FirstOrDefault(r =>
                 r.upgradeBaseItem != null &&
@@ -101,13 +102,37 @@ public class UpgradeStationUIController : BaseStationUI
 
         recipePanel.ShowUpgradeRecipe(inst, recipe);
 
-        // 🔥 ВАЖНО:
-        // апгрейд стартует ТОЛЬКО по кнопке
         recipePanel.SetAction(() =>
         {
+            if (selectedInstance == null || selectedRecipe == null)
+                return;
+
+            var def = selectedInstance.itemDefinition;
+            if (def == null || def.upgrades == null)
+                return;
+
+            if (selectedInstance.level >= def.upgrades.Length)
+                return;
+
             if (!processor.IsProcessing)
                 processor.BeginUpgrade(selectedRecipe, selectedInstance);
         });
+    }
+
+    private void HandleComplete(ItemInstance inst)
+    {
+        recipePanel.ProcessComplete();
+        recipePanel.RefreshIngredients();
+        recipePanel.RefreshUpgradeInfo();
+        BuildUpgradeList();
+    }
+
+    private void ClearSelection()
+    {
+        selectedInstance = null;
+        selectedRecipe = null;
+
+        recipePanel.Clear();
     }
 
     // ======================================================
@@ -119,12 +144,4 @@ public class UpgradeStationUIController : BaseStationUI
 
     private void HandleProgress(float t)
         => recipePanel.UpdateProgress(t);
-
-    private void HandleComplete(ItemInstance inst)
-    {
-        recipePanel.ProcessComplete();
-        recipePanel.RefreshIngredients();
-
-        BuildUpgradeList();
-    }
 }

@@ -204,4 +204,40 @@ public class RecipePanelUI : MonoBehaviour
         progressUI.UpdateProgress(0f);
     }
 
+    public void Clear()
+    {
+        currentRecipe = null;
+        currentInstance = null;
+        currentAction = null;
+
+        gameObject.SetActive(false);
+        ResetProgress();
+    }
+
+    public void RefreshUpgradeInfo()
+    {
+        if (currentInstance == null || currentRecipe == null)
+            return;
+
+        var def = currentInstance.itemDefinition;
+        if (def == null || def.upgrades == null)
+            return;
+
+        if (currentInstance.level >= def.upgrades.Length)
+        {
+            Clear();
+            return;
+        }
+
+        var next = def.upgrades[currentInstance.level];
+
+        upgradeInfoText.text =
+            $"Current: Lv {currentInstance.level}\n" +
+            $"Next: Lv {currentInstance.level + 1}\n" +
+            next.ToStatsText();
+
+        upgradePreviewIcon.sprite =
+            next.UpgradedIcon != null ? next.UpgradedIcon : def.icon;
+    }
+
 }

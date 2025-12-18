@@ -45,6 +45,13 @@ namespace Features.Inventory.UI
             {
                 icon.enabled = false;
                 amountText.text = "";
+
+                if (HoveredSlot == this)
+                {
+                    HoveredSlot = null;
+                    TooltipController.Instance?.Hide();
+                }
+
                 return;
             }
 
@@ -96,6 +103,14 @@ namespace Features.Inventory.UI
             InventoryDragController.Instance.DropOnto(this, boundSlot);
         }
 
+        private void OnDisable()
+        {
+            if (HoveredSlot == this)
+                HoveredSlot = null;
+
+            TooltipController.Instance?.Hide();
+        }
+
         // ===========================================================
         // TOOLTIP / HOVER
         // ===========================================================
@@ -106,7 +121,7 @@ namespace Features.Inventory.UI
                 return;
 
             HoveredSlot = this;
-            TooltipController.Instance?.ShowForItemInstance(boundSlot.item);
+            TooltipController.Instance?.ShowForItemInstance(boundSlot.item, this);
         }
 
         public void OnPointerExit(PointerEventData eventData)
