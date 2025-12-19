@@ -21,6 +21,7 @@ namespace Features.Inventory.UnityIntegration
 
         public event Action OnInventoryChanged;
         public event Action<ItemInstance> OnItemAddedInstance;
+        public event Action OnReady;
 
         [Header("Config")]
         [SerializeField] private int bagSize = 12;
@@ -37,6 +38,8 @@ namespace Features.Inventory.UnityIntegration
             CreateModel();
             CreateService();
             InitEquipment();
+            
+            OnReady?.Invoke();
         }
 
         private void OnDestroy()

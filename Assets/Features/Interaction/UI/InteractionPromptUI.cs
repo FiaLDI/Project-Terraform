@@ -13,9 +13,13 @@ public class InteractionPromptUI : MonoBehaviour
     private InteractionRayService rayService;
     private INearbyInteractables nearby;
 
+    private bool initialized;
+
     private void Awake()
     {
         interactionService = new InteractionService();
+        promptText.text = "";
+        promptText.enabled = false;
     }
 
     private void Start()
@@ -28,35 +32,55 @@ public class InteractionPromptUI : MonoBehaviour
             return;
         }
 
+        if (LocalPlayerContext.IsReady)
+            Init();
+        else
+            LocalPlayerContext.OnReady += Init;
+    }
+
+    private void OnDestroy()
+    {
+        LocalPlayerContext.OnReady -= Init;
+    }
+
+    private void Init()
+    {
+        if (initialized)
+            return;
+
         nearby = LocalPlayerContext.Get<NearbyInteractables>();
 
-        promptText.text = "";
-        promptText.enabled = false;
+        if (nearby == null)
+        {
+            Debug.LogWarning(
+                "[InteractionPromptUI] NearbyInteractables not found on LocalPlayer"
+            );
+            return;
+        }
+
+        initialized = true;
     }
 
     private void Update()
     {
-        if (nearby == null)
-            nearby = LocalPlayerContext.Get<NearbyInteractables>();
-        if (nearby != null && Camera.main != null)
+        if (!initialized || Camera.main == null)
+            return;
+
+        // ==== PICKUPS ====
+        var best = nearby.GetBestItem(Camera.main);
+        if (best != null && best.GetInstance()?.itemDefinition != null)
         {
-            var best = nearby.GetBestItem(Camera.main);
+            var def = best.GetInstance().itemDefinition;
+            int qty = best.GetInstance().quantity;
 
-
-            if (best != null && best.GetInstance()?.itemDefinition != null)
-            {
-                var def = best.GetInstance().itemDefinition;
-                int qty = best.GetInstance().quantity;
-
-                promptText.enabled = true;
-                promptText.text = qty > 1
-                    ? $"[E] Подобрать: {def.itemName} x{qty}"
-                    : $"[E] Подобрать: {def.itemName}";
-
-                return;
-            }
+            promptText.enabled = true;
+            promptText.text = qty > 1
+                ? $"[E] Подобрать: {def.itemName} x{qty}"
+                : $"[E] Подобрать: {def.itemName}";
+            return;
         }
 
+        // ==== INTERACTABLES ====
         var hit = rayService.Raycast();
         if (interactionService.TryGetInteractable(hit, out var interactable))
         {
@@ -67,5 +91,4 @@ public class InteractionPromptUI : MonoBehaviour
 
         promptText.enabled = false;
     }
-
 }

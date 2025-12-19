@@ -1,16 +1,10 @@
 using UnityEngine;
-using Features.Inventory;
 using Features.Inventory.Domain;
 using Features.Player;
 using Features.Inventory.UnityIntegration;
-using Features.Input;
 
 namespace Features.Inventory.UI
 {
-    /// <summary>
-    /// UI слой инвентаря: отображает сумку, хотбар, руки.
-    /// Только отображение.
-    /// </summary>
     public class InventoryUIView : MonoBehaviour, IUIScreen
     {
         [Header("Windows")]
@@ -33,6 +27,7 @@ namespace Features.Inventory.UI
         public InputMode Mode => InputMode.Inventory;
 
         private IInventoryContext inventory;
+        private bool initialized;
 
         // ======================================================
         // LIFECYCLE
@@ -40,25 +35,46 @@ namespace Features.Inventory.UI
 
         private void Start()
         {
-            inventory = LocalPlayerContext.Inventory;
-
-            if (inventory == null)
+            if (LocalPlayerContext.IsReady)
             {
-                Debug.LogError("[InventoryUIView] InventoryContext is NULL");
-                enabled = false;
-                return;
+                Init();
+            }
+            else
+            {
+                LocalPlayerContext.OnReady += Init;
             }
 
-            inventory.Service.OnChanged += Refresh;
-
             bagWindow.SetActive(false);
-            Refresh();
         }
 
         private void OnDestroy()
         {
+            LocalPlayerContext.OnReady -= Init;
+
             if (inventory != null)
                 inventory.Service.OnChanged -= Refresh;
+        }
+
+        // ======================================================
+        // INIT
+        // ======================================================
+
+        private void Init()
+        {
+            if (initialized)
+                return;
+
+            var inv = LocalPlayerContext.Inventory;
+            if (inv == null)
+                return;
+
+            inv.OnReady += () =>
+            {
+                inventory = inv;
+                inventory.Service.OnChanged += Refresh;
+                Refresh();
+                initialized = true;
+            };
         }
 
         // ======================================================
@@ -96,7 +112,7 @@ namespace Features.Inventory.UI
 
         public void Refresh()
         {
-            if (inventory == null)
+            if (!initialized || inventory == null)
                 return;
 
             var model = inventory.Model;

@@ -3,6 +3,7 @@ using UnityEngine;
 using Features.Stats.Adapter;
 using Features.Abilities.Application;
 using Features.Inventory.UnityIntegration;
+using System;
 
 namespace Features.Player.UnityIntegration
 {
@@ -17,8 +18,11 @@ namespace Features.Player.UnityIntegration
 
         public readonly List<GameObject> PlayerTurrets = new();
         public readonly List<GameObject> Players = new();
+        private bool _localPlayerInitialized;
 
         public GameObject LocalPlayer { get; private set; }
+
+        public static event Action<PlayerRegistry> OnLocalPlayerReady;
 
         // Адаптеры статов
         public StatsFacadeAdapter LocalStats { get; private set; }
@@ -65,10 +69,16 @@ namespace Features.Player.UnityIntegration
 
             if (LocalPlayer == null)
                 LocalPlayer = player;
-                
+
             LocalInventory = player.GetComponent<InventoryManager>();
             LocalStats = statsAdapter;
             LocalAbilities = player.GetComponent<AbilityCaster>();
+
+            if (!_localPlayerInitialized && LocalPlayer != null)
+            {
+                _localPlayerInitialized = true;
+                OnLocalPlayerReady?.Invoke(this);
+            }
         }
 
         public void RegisterTurret(GameObject ownerPlayer, GameObject turret)

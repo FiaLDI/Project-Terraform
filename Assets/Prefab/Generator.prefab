@@ -52,7 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeWorldGenerator
   worldConfig: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
-  playerPrefab: {fileID: 3004063548674256600, guid: 6cdd3b07ef32a4842a401c8a6bb97c27, type: 3}
+  playerPrefab: {fileID: 5329499696602917847, guid: 129d114e0f2c6154797ab5ecbe0a1a5f, type: 3}
   systemsPrefab: {fileID: 2830221871605978793, guid: 63613e7461b902147a0c030a9608a25f, type: 3}
   customPrefab: {fileID: 5502989716011450611, guid: 12b39b97c144da94682c029abc2ff1a4, type: 3}
   loadDistance: 5
@@ -103,6 +103,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50f53dbe799b585499761d1fe02c0f65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Pooling.SmartPool
+  maxPerPrefab: 200
+  maxTotalObjects: 5000
 --- !u!1 &1374794961381146978
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,6 +345,9 @@ MonoBehaviour:
   maxLODScale: 1.5
   minEnemyScale: 0.5
   maxEnemyScale: 1
+  responsiveness: 0.1
+  maxLODStep: 0.05
+  maxEnemyStep: 0.05
 --- !u!114 &1453818908326979475
 MonoBehaviour:
   m_ObjectHideFlags: 0
