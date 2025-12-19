@@ -20,12 +20,9 @@ namespace Features.Player
         {
             _actions = new InputSystem_Actions();
 
-            // UI всегда активно
             _actions.UI.Enable();
 
-            // Player по умолчанию
             _actions.Player.Enable();
-            _actions.Inventory.Disable();
         }
 
         private void OnDisable()

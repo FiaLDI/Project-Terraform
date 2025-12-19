@@ -1,163 +1,69 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem;
-using Features.Player;
+using Features.Input;
 
-public class PauseMenu : MonoBehaviour
+public class PauseMenu : MonoBehaviour, IUIScreen
 {
-    public static PauseMenu I;
+    [SerializeField] private Canvas canvas;
+    [SerializeField] private CanvasGroup canvasGroup;
 
     [Header("Buttons")]
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitButton;
 
-    private bool isOpen;
-    private PlayerInputContext input;
-    private bool subscribed;
-
-    // ======================================================
-    // LIFECYCLE
-    // ======================================================
+    public InputMode Mode => InputMode.Pause;
 
     private void Awake()
     {
-        if (I != null && I != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (canvasGroup == null)
+            canvasGroup = GetComponent<CanvasGroup>();
 
-        I = this;
+        canvas.enabled = false;
+        canvasGroup.alpha = 0;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
 
-        BindButtons();
-
-        // Стартуем выключенными
-        gameObject.SetActive(false);
+        resumeButton.onClick.AddListener(OnResume);
+        settingsButton.onClick.AddListener(OnSettings);
+        exitButton.onClick.AddListener(OnExit);
     }
 
-    private void OnEnable()
+    public void Show()
     {
-        if (input == null)
-            input = LocalPlayerContext.Get<PlayerInputContext>();
-
-        if (input == null)
-        {
-            Debug.LogError("[PauseMenu] PlayerInputContext not found");
-            return;
-        }
-
-        input.Actions.UI.Cancel1.performed += OnCancelPressed;
-        subscribed = true;
+        canvas.enabled = true;
+        canvasGroup.alpha = 1;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
     }
 
-    private void OnDisable()
+    public void Hide()
     {
-        if (!subscribed || input == null)
-            return;
-
-        input.Actions.UI.Cancel1.performed -= OnCancelPressed;
-        subscribed = false;
-    }
-
-    private void BindButtons()
-    {
-        if (resumeButton != null)
-            resumeButton.onClick.AddListener(Resume);
-        else
-            Debug.LogError("[PauseMenu] resumeButton is NULL", this);
-
-        if (settingsButton != null)
-            settingsButton.onClick.AddListener(OnSettingsClicked);
-        else
-            Debug.LogError("[PauseMenu] settingsButton is NULL", this);
-
-        if (exitButton != null)
-            exitButton.onClick.AddListener(OnExitClicked);
-        else
-            Debug.LogError("[PauseMenu] exitButton is NULL", this);
-    }
-
-    // ======================================================
-    // INPUT
-    // ======================================================
-
-    private void OnCancelPressed(InputAction.CallbackContext _)
-    {
-        Toggle();
-    }
-
-    // ======================================================
-    // PUBLIC API
-    // ======================================================
-
-    public void Toggle()
-    {
-        if (isOpen) Resume();
-        else Open();
+        canvas.enabled = false;
+        canvasGroup.alpha = 0;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
     }
 
     public void Open()
     {
-        if (isOpen)
-            return;
-
-        isOpen = true;
-        gameObject.SetActive(true);
-
-        Time.timeScale = 0f;
-
-        input?.Actions.Player.Disable();
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        UIStackManager.I.Push(this);
     }
 
-    public void Resume()
+    private void OnResume()
     {
-        if (!isOpen)
-            return;
+        UIStackManager.I.Pop();
+    }
 
-        isOpen = false;
-        gameObject.SetActive(false);
+    private void OnSettings()
+    {
+        SettingsMenu.I.Open();
+    }
 
+    private void OnExit()
+    {
         Time.timeScale = 1f;
-
-        input?.Actions.Player.Enable();
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
-
-    // ======================================================
-    // BUTTON HANDLERS
-    // ======================================================
-
-    private void OnSettingsClicked()
-    {
-        Debug.Log("[PauseMenu] Settings");
-
-        if (SettingsMenuManager.I != null)
-        {
-            SettingsMenuManager.I.OpenSettings(SettingsCaller.PauseMenu);
-
-            // PauseMenu прячем, но состояние времени не трогаем
-            gameObject.SetActive(false);
-            isOpen = false;
-        }
-    }
-
-    private void OnExitClicked()
-    {
-        Debug.Log("[PauseMenu] Exit");
-
-        Time.timeScale = 1f;
-
-        const string mainMenuScene = "MainMenu";
-        if (Application.CanStreamedLevelBeLoaded(mainMenuScene))
-            SceneManager.LoadScene(mainMenuScene);
-        else
-            Application.Quit();
+        Application.Quit();
     }
 }

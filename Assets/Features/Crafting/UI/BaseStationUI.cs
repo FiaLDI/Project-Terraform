@@ -1,10 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
-using Features.Camera.Application;
-using Features.Camera.Domain;
-using Features.Camera.UnityIntegration;
+using Features.Input;
 
-public abstract class BaseStationUI : MonoBehaviour
+public abstract class BaseStationUI : MonoBehaviour, IUIScreen
 {
     [Header("UI Root")]
     [SerializeField] protected Canvas canvas;
@@ -15,20 +13,58 @@ public abstract class BaseStationUI : MonoBehaviour
     [SerializeField] protected RecipeButtonUI recipeButtonPrefab;
     [SerializeField] protected RecipePanelUI recipePanel;
 
-    protected bool isOpen = false;
-    public bool IsOpen => isOpen;
-
-    private ICameraControlService cameraControl;
+    public InputMode Mode => InputMode.Inventory;
 
     protected virtual void Awake()
     {
-        cameraControl = CameraServiceProvider.Control;
+        if (canvas == null)
+            canvas = GetComponentInChildren<Canvas>(true);
+
+        if (canvas == null)
+        {
+            Debug.LogError($"[{name}] Canvas not found", this);
+            enabled = false;
+            return;
+        }
+
+        canvas.enabled = false;
 
         if (closeButton != null)
-            closeButton.onClick.AddListener(() => Toggle());
-
-        canvas.gameObject.SetActive(false);
+            closeButton.onClick.AddListener(Close);
     }
+
+
+    // =========================
+    // IUIScreen
+    // =========================
+
+    public virtual void Show()
+    {
+        canvas.enabled = true;
+    }
+
+    public virtual void Hide()
+    {
+        canvas.enabled = false;
+    }
+
+    // =========================
+    // STACK API
+    // =========================
+
+    public void Open()
+    {
+        UIStackManager.I.Push(this);
+    }
+
+    public void Close()
+    {
+        UIStackManager.I.Pop();
+    }
+
+    // =========================
+    // DATA
+    // =========================
 
     public void Init(RecipeSO[] recipes)
     {
@@ -45,44 +81,6 @@ public abstract class BaseStationUI : MonoBehaviour
             var btn = Instantiate(recipeButtonPrefab, recipeListContainer);
             btn.Init(recipe, this);
         }
-    }
-
-    public void Toggle()
-    {
-        if (!isOpen)
-            Open();
-        else
-            Close();
-    }
-
-    private void Open()
-    {
-        if (isOpen) return;
-        isOpen = true;
-
-        canvas.gameObject.SetActive(true);
-
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
-        cameraControl?.SetInputBlocked(true);
-
-        UIStationManager.Instance.OpenStation(this);
-    }
-
-    private void Close()
-    {
-        if (!isOpen) return;
-        isOpen = false;
-
-        canvas.gameObject.SetActive(false);
-
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-
-        cameraControl?.SetInputBlocked(false);
-
-        UIStationManager.Instance.CloseStation(this);
     }
 
     public virtual void ShowRecipe(RecipeSO recipe)

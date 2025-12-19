@@ -20,7 +20,7 @@ public class MaterialProcessor : MonoBehaviour, IInteractable
         if (!initialized)
             InitForLocalPlayer();
 
-        ui.Toggle();
+        ui.Open();
         return true;
     }
 

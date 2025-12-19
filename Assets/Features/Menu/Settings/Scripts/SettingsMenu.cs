@@ -1,79 +1,74 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Features.Input;
 
-public class SettingsMenu : MonoBehaviour
+public class SettingsMenu : MonoBehaviour, IUIScreen
 {
-    public GameObject panel;
-    public Button backButton;
-    public Button applyButton;
-    public Button resetButton;
+    public static SettingsMenu I;
 
-    public bool IsOpen { get; private set; }
+    [SerializeField] private GameObject panel;
+    [SerializeField] private Button backButton;
+    [SerializeField] private Button applyButton;
+    [SerializeField] private Button resetButton;
+
+    public InputMode Mode => InputMode.Pause;
 
     private SettingsMenuController controller;
 
     private void Awake()
     {
-        HideInstant();
+        I = this;
 
+        panel.SetActive(false);
         controller = GetComponent<SettingsMenuController>();
 
-        if (backButton != null)
-            backButton.onClick.AddListener(Back);
-
-        if (applyButton != null)
-            applyButton.onClick.AddListener(Apply);
-        
-        if (resetButton != null)
-            resetButton.onClick.AddListener(ResetSettings);
+        backButton.onClick.AddListener(OnBack);
+        applyButton.onClick.AddListener(OnApply);
+        resetButton.onClick.AddListener(OnReset);
     }
+
+    // =========================
+    // IUIScreen
+    // =========================
 
     public void Show()
     {
-        IsOpen = true;
         panel.SetActive(true);
-
-        Time.timeScale = 0f;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
     }
 
     public void Hide()
     {
-        IsOpen = false;
-        panel.SetActive(false);
-
-        SettingsMenuManager.I.CloseSettings();
-    }
-
-    public void HideInstant()
-    {
-        IsOpen = false;
         panel.SetActive(false);
     }
 
-    public void Back()
+    // =========================
+    // PUBLIC
+    // =========================
+
+    public void Open()
     {
-        Hide();
+        UIStackManager.I.Push(this);
     }
 
-    private void Apply()
-    {
-        if (controller != null)
-            controller.ApplySettings();
+    // =========================
+    // BUTTONS
+    // =========================
 
+    private void OnBack()
+    {
+        UIStackManager.I.Pop();
+    }
+
+    private void OnApply()
+    {
+        controller?.ApplySettings();
         SettingsStorage.Save();
-        Hide();
+        UIStackManager.I.Pop();
     }
 
-    private void ResetSettings()
+    private void OnReset()
     {
-        Debug.Log("[SettingsMenu] Resetting to defaults!");
-
         SettingsStorage.ResetToDefaults();
-
-        if (controller != null)
-            controller.LoadSettingsUI();
-
+        controller?.LoadSettingsUI();
     }
 }

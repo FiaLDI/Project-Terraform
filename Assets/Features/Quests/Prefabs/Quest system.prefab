@@ -1454,9 +1454,9 @@ MonoBehaviour:
   hudContainer: {fileID: 5371654823451825785}
   hudEntryTemplate: {fileID: 2085611799486711503, guid: bf8179d2369aae6498e250c47eca996e, type: 3}
   maxHudQuests: 5
-  journalPanel: {fileID: 8940154124572286790}
   listParent: {fileID: 3137197860898350870}
   journalEntryTemplate: {fileID: 2085611799486711503, guid: bf8179d2369aae6498e250c47eca996e, type: 3}
+  journalScreen: {fileID: 4821312116114162892}
   btnAll: {fileID: 2128101621019403154}
   btnActive: {fileID: 7350387948628857473}
   btnCompleted: {fileID: 6193692295178858494}
@@ -2296,6 +2296,7 @@ GameObject:
   - component: {fileID: 4294464786680695167}
   - component: {fileID: 2059013467045125357}
   - component: {fileID: 2383838562933076198}
+  - component: {fileID: 4821312116114162892}
   m_Layer: 0
   m_Name: AllQuestsPanel
   m_TagString: Untagged
@@ -2363,6 +2364,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4821312116114162892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8940154124572286790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca3a4df4177d5ee44bfeaff3ba1f82eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.UnityIntegration.QuestJournalScreen
+  journalPanel: {fileID: 8940154124572286790}
 --- !u!1 &9023374880799085531
 GameObject:
   m_ObjectHideFlags: 0

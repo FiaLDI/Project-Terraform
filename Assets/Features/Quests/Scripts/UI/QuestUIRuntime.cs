@@ -2,11 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;
 using Features.Quests.Domain;
 using System.Collections;
 using System.Linq;
-using Features.Player;
 
 namespace Features.Quests.UnityIntegration
 {
@@ -17,12 +15,10 @@ namespace Features.Quests.UnityIntegration
         [SerializeField] private GameObject hudEntryTemplate;
         [SerializeField] private int maxHudQuests = 5;
 
-        [Header("Journal Panel")]
-        [SerializeField] private GameObject journalPanel;
-
-        [Header("Journal Filtered List")]
+        [Header("Journal")]
         [SerializeField] private Transform listParent;
         [SerializeField] private GameObject journalEntryTemplate;
+        [SerializeField] private QuestJournalScreen journalScreen;
 
         [Header("Filter Buttons")]
         [SerializeField] private Button btnAll;
@@ -39,9 +35,6 @@ namespace Features.Quests.UnityIntegration
         private readonly Dictionary<QuestId, GameObject> hudEntries = new();
         private readonly Dictionary<QuestId, GameObject> journalEntries = new();
 
-        private PlayerInputContext input;
-        private bool subscribed;
-
         private enum QuestFilter { All, Active, Completed }
         private QuestFilter currentFilter = QuestFilter.All;
 
@@ -51,37 +44,11 @@ namespace Features.Quests.UnityIntegration
 
         private void Awake()
         {
-            journalPanel?.SetActive(false);
             notificationPanel?.SetActive(false);
 
             btnAll.onClick.AddListener(() => SetFilter(QuestFilter.All));
             btnActive.onClick.AddListener(() => SetFilter(QuestFilter.Active));
             btnCompleted.onClick.AddListener(() => SetFilter(QuestFilter.Completed));
-        }
-
-        private void OnEnable()
-        {
-            if (input == null)
-                input = LocalPlayerContext.Get<PlayerInputContext>();
-
-            if (input == null)
-            {
-                Debug.LogError(
-                    $"{nameof(QuestUIRuntime)}: PlayerInputContext not found");
-                return;
-            }
-
-            input.Actions.UI.ToggleQuests.performed += OnToggleJournal;
-            subscribed = true;
-        }
-
-        private void OnDisable()
-        {
-            if (!subscribed || input == null)
-                return;
-
-            input.Actions.UI.ToggleQuests.performed -= OnToggleJournal;
-            subscribed = false;
         }
 
         private void Start()
@@ -233,35 +200,13 @@ namespace Features.Quests.UnityIntegration
         }
 
         // ============================================================
-        // JOURNAL TOGGLE
+        // JOURNAL OPEN
         // ============================================================
 
-        private void OnToggleJournal(InputAction.CallbackContext _)
+        public void OpenJournal()
         {
-            ToggleJournal();
-        }
-
-        private void ToggleJournal()
-        {
-            bool open = !journalPanel.activeSelf;
-            journalPanel.SetActive(open);
-
-            if (open)
-                ApplyOpenEffects();
-            else
-                ApplyCloseEffects();
-        }
-
-        private void ApplyOpenEffects()
-        {
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-        }
-
-        private void ApplyCloseEffects()
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
+            Debug.Log("QuestUIRuntime.OpenJournal CALLED");
+            journalScreen.Open();
         }
 
         // ============================================================

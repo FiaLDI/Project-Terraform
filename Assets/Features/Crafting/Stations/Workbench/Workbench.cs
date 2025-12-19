@@ -20,7 +20,7 @@ public class Workbench : MonoBehaviour, IInteractable
         if (!initialized)
             InitForLocalPlayer();
 
-        ui.Toggle();
+        ui.Open();
         return true;
     }
 

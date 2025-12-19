@@ -17,6 +17,6 @@ public class InventoryBackdropClickCatcher : MonoBehaviour, IPointerClickHandler
         if (eventData.dragging)
             return;
         
-        inventoryInput?.CloseInventory();
+        
     }
 }

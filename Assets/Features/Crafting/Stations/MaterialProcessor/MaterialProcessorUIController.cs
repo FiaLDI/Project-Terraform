@@ -61,6 +61,12 @@ public class MaterialProcessorUIController : BaseStationUI
         });
     }
 
+    public void Open()
+    {
+        UIStackManager.I.Push(this);
+    }
+
+
     // ======================================================
     // PROCESSOR EVENTS
     // ======================================================

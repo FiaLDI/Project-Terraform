@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using Features.Player;
+using Features.Input;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -31,7 +32,7 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
-            var inv = input.Actions.Inventory;
+            var inv = input.Actions.UI;
 
             inv.DropOne.performed += OnDropOne;
             inv.DropAll.performed += OnDropAll;
@@ -44,7 +45,7 @@ namespace Features.Inventory.UnityIntegration
             if (!subscribed || input == null)
                 return;
 
-            var inv = input.Actions.Inventory;
+            var inv = input.Actions.UI;
 
             inv.DropOne.performed -= OnDropOne;
             inv.DropAll.performed -= OnDropAll;
@@ -72,13 +73,14 @@ namespace Features.Inventory.UnityIntegration
 
         private void TryDrop(bool dropAll)
         {
+            if (InputModeManager.I.CurrentMode != InputMode.Inventory)
+                return;
+
             InventorySlotUI slotUI = InventorySlotUI.HoveredSlot;
 
-            // Fallback через EventSystem (если hover не сработал)
             if (slotUI == null && EventSystem.current != null && Mouse.current != null)
             {
                 var results = new List<RaycastResult>();
-
                 var pointerData = new PointerEventData(EventSystem.current)
                 {
                     position = Mouse.current.position.ReadValue()
@@ -100,5 +102,7 @@ namespace Features.Inventory.UnityIntegration
             InventoryDragController.Instance
                 ?.DropFromSlotToWorld(slotUI, dropAll);
         }
+
+
     }
 }

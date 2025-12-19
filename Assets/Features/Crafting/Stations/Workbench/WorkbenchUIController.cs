@@ -50,6 +50,12 @@ public class WorkbenchUIController : BaseStationUI
         });
     }
 
+    public void Open()
+    {
+        UIStackManager.I.Push(this);
+    }
+
+
     // ======================================================
     // PROCESSOR EVENTS
     // ======================================================

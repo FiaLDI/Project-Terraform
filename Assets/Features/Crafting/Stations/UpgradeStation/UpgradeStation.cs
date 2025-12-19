@@ -20,8 +20,7 @@ public class UpgradeStation : MonoBehaviour, IInteractable
         if (!initialized)
             InitForLocalPlayer();
 
-        ui.Toggle();
-        ui.OnOpenUI();
+        ui.Open();
         return true;
     }
 

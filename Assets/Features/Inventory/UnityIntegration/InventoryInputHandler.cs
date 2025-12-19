@@ -1,13 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
-using Features.Camera.Application;
-using Features.Camera.Domain;
 using Features.Inventory;
 using Features.Inventory.UI;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player;
-using Features.Camera.UnityIntegration;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -15,10 +12,8 @@ namespace Features.Inventory.UnityIntegration
     {
         [Header("References")]
         [SerializeField] private InventoryUIView inventoryUI;
-        [SerializeField] private PlayerInteractionController interactionController;
 
         private PlayerInputContext input;
-        private ICameraControlService cameraControl;
         private IInventoryContext inventory;
 
         private bool subscribed;
@@ -29,7 +24,6 @@ namespace Features.Inventory.UnityIntegration
 
         private void OnEnable()
         {
-            // PlayerInputContext
             if (input == null)
                 input = GetComponentInParent<PlayerInputContext>();
 
@@ -41,26 +35,20 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
-            // Camera service
-            cameraControl ??= CameraServiceProvider.Control;
-
-            // Inventory (может быть не готов сразу)
             inventory ??= LocalPlayerContext.Inventory;
 
             var ui = input.Actions.UI;
-            var p  = input.Actions.Player;
 
             // === Inventory ===
-            ui.OpenInventory.performed += OnToggleInventory;
-            ui.Cancel1.performed        += OnCancel;
+            ui.OpenInventory.performed += OnOpenInventory;
 
             // === Hotbar ===
             ui.EquipFirst.performed  += OnEquipFirst;
             ui.EquipSecond.performed += OnEquipSecond;
             ui.ScrollWheel.performed += OnScroll;
 
-            // === Drop (из рук) ===
-            p.Drop.performed += OnDrop;
+            // === Drop from hands ===
+            input.Actions.Player.Drop.performed += OnDrop;
 
             subscribed = true;
         }
@@ -71,16 +59,14 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             var ui = input.Actions.UI;
-            var p  = input.Actions.Player;
 
-            ui.OpenInventory.performed -= OnToggleInventory;
-            ui.Cancel1.performed        -= OnCancel;
+            ui.OpenInventory.performed -= OnOpenInventory;
 
             ui.EquipFirst.performed  -= OnEquipFirst;
             ui.EquipSecond.performed -= OnEquipSecond;
             ui.ScrollWheel.performed -= OnScroll;
 
-            p.Drop.performed -= OnDrop;
+            input.Actions.Player.Drop.performed -= OnDrop;
 
             subscribed = false;
         }
@@ -89,16 +75,21 @@ namespace Features.Inventory.UnityIntegration
         // INPUT HANDLERS
         // ======================================================
 
-        private void OnToggleInventory(InputAction.CallbackContext _)
+        private void OnOpenInventory(InputAction.CallbackContext _)
         {
-            ToggleInventory();
+            if (UIStackManager.I.HasScreens)
+            {
+                // если сверху инвентарь — закрываем
+                if (UIStackManager.I.Peek() == inventoryUI)
+                    UIStackManager.I.Pop();
+
+                return;
+            }
+
+            // если UI пуст — открываем инвентарь
+            inventoryUI.Open();
         }
 
-        private void OnCancel(InputAction.CallbackContext _)
-        {
-            if (inventoryUI != null && inventoryUI.IsOpen)
-                ToggleInventory();
-        }
 
         private void OnEquipFirst(InputAction.CallbackContext _) => SelectHotbar(0);
         private void OnEquipSecond(InputAction.CallbackContext _) => SelectHotbar(1);
@@ -112,7 +103,7 @@ namespace Features.Inventory.UnityIntegration
 
         private void OnDrop(InputAction.CallbackContext _)
         {
-            DropItem();
+            DropFromHands();
         }
 
         // ======================================================
@@ -134,57 +125,21 @@ namespace Features.Inventory.UnityIntegration
             if (inventory == null)
                 return;
 
-            int max = inventory.Model.hotbar.Count;
-            if (max <= 0)
+            int count = inventory.Model.hotbar.Count;
+            if (count <= 0)
                 return;
 
             int current = inventory.Model.selectedHotbarIndex;
-            int next = (current + direction + max) % max;
+            int next = (current + direction + count) % count;
 
             SelectHotbar(next);
-        }
-
-        // ======================================================
-        // INVENTORY UI
-        // ======================================================
-
-        private void ToggleInventory()
-        {
-            if (inventoryUI == null)
-                return;
-
-            bool open = !inventoryUI.IsOpen;
-            inventoryUI.SetOpen(open);
-
-            if (open)
-                ApplyInventoryOpenEffects();
-            else
-                ApplyInventoryCloseEffects();
-        }
-
-        private void ApplyInventoryOpenEffects()
-        {
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-
-            cameraControl?.SetInputBlocked(true);
-            interactionController?.SetInteractionBlocked(true);
-        }
-
-        private void ApplyInventoryCloseEffects()
-        {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-
-            cameraControl?.SetInputBlocked(false);
-            interactionController?.SetInteractionBlocked(false);
         }
 
         // ======================================================
         // DROP
         // ======================================================
 
-        private void DropItem()
+        private void DropFromHands()
         {
             inventory ??= LocalPlayerContext.Inventory;
             if (inventory == null)
@@ -195,14 +150,6 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             SpawnDroppedItem(dropped);
-        }
-
-        public void CloseInventory()
-        {
-            if (inventoryUI == null || !inventoryUI.IsOpen)
-                return;
-
-            ToggleInventory();
         }
 
         private void SpawnDroppedItem(ItemInstance inst)

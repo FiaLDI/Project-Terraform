@@ -262,6 +262,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Pause"",
+                    ""type"": ""Button"",
+                    ""id"": ""84457312-7c6d-445c-8f1f-616dea0a8775"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -770,6 +779,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""action"": ""Reload"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d84fa713-5774-4eda-a5e9-cda7ba8f0b4e"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -895,9 +915,27 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Cancel1"",
+                    ""name"": ""Cancel"",
                     ""type"": ""Button"",
                     ""id"": ""c6f8cd2c-294e-4678-9469-5c974fcec8da"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""DropOne"",
+                    ""type"": ""Button"",
+                    ""id"": ""311b7ac8-aae4-4e48-878e-1eb76f036aa0"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""DropAll"",
+                    ""type"": ""Button"",
+                    ""id"": ""dbb00e2b-ae36-4b6a-951d-11b265448e42"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -1170,6 +1208,50 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": true
                 },
                 {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""1ac949c4-73ee-4efb-b778-493f2832e8cb"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DropAll"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""fe536654-cbaa-4da4-84aa-df6ac8702efb"",
+                    ""path"": ""<Keyboard>/leftCtrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DropAll"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""ca5270c1-dc28-4e2c-a887-f1411294a0e9"",
+                    ""path"": ""<Keyboard>/g"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DropAll"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fb362ab4-88e5-43c4-b03d-e92a3947cd00"",
+                    ""path"": ""<Keyboard>/g"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DropOne"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
                     ""name"": """",
                     ""id"": ""9e92bb26-7e3b-4ec4-b06b-3c8f8e498ddc"",
                     ""path"": ""*/{Submit}"",
@@ -1363,79 +1445,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""Cancel1"",
+                    ""action"": ""Cancel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
-                }
-            ]
-        },
-        {
-            ""name"": ""Inventory"",
-            ""id"": ""dda228b7-117b-4d37-978e-c7fb684dff3f"",
-            ""actions"": [
-                {
-                    ""name"": ""DropOne"",
-                    ""type"": ""Button"",
-                    ""id"": ""99c0f63f-ab79-4a1a-855b-754705b59643"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""DropAll"",
-                    ""type"": ""Button"",
-                    ""id"": ""84b429f4-a79d-44d9-9333-8acf243996c7"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""044114b0-bcb4-4464-bcbc-d0de2ce70796"",
-                    ""path"": ""<Keyboard>/g"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""DropOne"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""One Modifier"",
-                    ""id"": ""cf8253b3-bf19-4ad9-b002-53ea284b6ce1"",
-                    ""path"": ""OneModifier"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""DropAll"",
-                    ""isComposite"": true,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""modifier"",
-                    ""id"": ""c8a5f21b-30f3-4613-a7ad-a42c6f5b4cbe"",
-                    ""path"": ""<Keyboard>/leftCtrl"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""DropAll"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""binding"",
-                    ""id"": ""f451786a-9a0c-41af-828e-9395351f5278"",
-                    ""path"": ""<Keyboard>/g"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""DropAll"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -1524,6 +1536,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_Ability5 = m_Player.FindAction("Ability5", throwIfNotFound: true);
         m_Player_SecondaryUse = m_Player.FindAction("SecondaryUse", throwIfNotFound: true);
         m_Player_Reload = m_Player.FindAction("Reload", throwIfNotFound: true);
+        m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1539,18 +1552,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_UI_OpenInventory = m_UI.FindAction("OpenInventory", throwIfNotFound: true);
         m_UI_EquipFirst = m_UI.FindAction("EquipFirst", throwIfNotFound: true);
         m_UI_EquipSecond = m_UI.FindAction("EquipSecond", throwIfNotFound: true);
-        m_UI_Cancel1 = m_UI.FindAction("Cancel1", throwIfNotFound: true);
-        // Inventory
-        m_Inventory = asset.FindActionMap("Inventory", throwIfNotFound: true);
-        m_Inventory_DropOne = m_Inventory.FindAction("DropOne", throwIfNotFound: true);
-        m_Inventory_DropAll = m_Inventory.FindAction("DropAll", throwIfNotFound: true);
+        m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
+        m_UI_DropOne = m_UI.FindAction("DropOne", throwIfNotFound: true);
+        m_UI_DropAll = m_UI.FindAction("DropAll", throwIfNotFound: true);
     }
 
     ~@InputSystem_Actions()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, InputSystem_Actions.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, InputSystem_Actions.UI.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_Inventory.enabled, "This will cause a leak and performance issues, InputSystem_Actions.Inventory.Disable() has not been called.");
     }
 
     /// <summary>
@@ -1645,6 +1655,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Ability5;
     private readonly InputAction m_Player_SecondaryUse;
     private readonly InputAction m_Player_Reload;
+    private readonly InputAction m_Player_Pause;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1733,6 +1744,10 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Reload => m_Wrapper.m_Player_Reload;
         /// <summary>
+        /// Provides access to the underlying input action "Player/Pause".
+        /// </summary>
+        public InputAction @Pause => m_Wrapper.m_Player_Pause;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -1815,6 +1830,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Reload.started += instance.OnReload;
             @Reload.performed += instance.OnReload;
             @Reload.canceled += instance.OnReload;
+            @Pause.started += instance.OnPause;
+            @Pause.performed += instance.OnPause;
+            @Pause.canceled += instance.OnPause;
         }
 
         /// <summary>
@@ -1883,6 +1901,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Reload.started -= instance.OnReload;
             @Reload.performed -= instance.OnReload;
             @Reload.canceled -= instance.OnReload;
+            @Pause.started -= instance.OnPause;
+            @Pause.performed -= instance.OnPause;
+            @Pause.canceled -= instance.OnPause;
         }
 
         /// <summary>
@@ -1933,7 +1954,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_OpenInventory;
     private readonly InputAction m_UI_EquipFirst;
     private readonly InputAction m_UI_EquipSecond;
-    private readonly InputAction m_UI_Cancel1;
+    private readonly InputAction m_UI_Cancel;
+    private readonly InputAction m_UI_DropOne;
+    private readonly InputAction m_UI_DropAll;
     /// <summary>
     /// Provides access to input actions defined in input action map "UI".
     /// </summary>
@@ -1998,9 +2021,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @EquipSecond => m_Wrapper.m_UI_EquipSecond;
         /// <summary>
-        /// Provides access to the underlying input action "UI/Cancel1".
+        /// Provides access to the underlying input action "UI/Cancel".
         /// </summary>
-        public InputAction @Cancel1 => m_Wrapper.m_UI_Cancel1;
+        public InputAction @Cancel => m_Wrapper.m_UI_Cancel;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/DropOne".
+        /// </summary>
+        public InputAction @DropOne => m_Wrapper.m_UI_DropOne;
+        /// <summary>
+        /// Provides access to the underlying input action "UI/DropAll".
+        /// </summary>
+        public InputAction @DropAll => m_Wrapper.m_UI_DropAll;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -2066,9 +2097,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @EquipSecond.started += instance.OnEquipSecond;
             @EquipSecond.performed += instance.OnEquipSecond;
             @EquipSecond.canceled += instance.OnEquipSecond;
-            @Cancel1.started += instance.OnCancel1;
-            @Cancel1.performed += instance.OnCancel1;
-            @Cancel1.canceled += instance.OnCancel1;
+            @Cancel.started += instance.OnCancel;
+            @Cancel.performed += instance.OnCancel;
+            @Cancel.canceled += instance.OnCancel;
+            @DropOne.started += instance.OnDropOne;
+            @DropOne.performed += instance.OnDropOne;
+            @DropOne.canceled += instance.OnDropOne;
+            @DropAll.started += instance.OnDropAll;
+            @DropAll.performed += instance.OnDropAll;
+            @DropAll.canceled += instance.OnDropAll;
         }
 
         /// <summary>
@@ -2119,9 +2156,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @EquipSecond.started -= instance.OnEquipSecond;
             @EquipSecond.performed -= instance.OnEquipSecond;
             @EquipSecond.canceled -= instance.OnEquipSecond;
-            @Cancel1.started -= instance.OnCancel1;
-            @Cancel1.performed -= instance.OnCancel1;
-            @Cancel1.canceled -= instance.OnCancel1;
+            @Cancel.started -= instance.OnCancel;
+            @Cancel.performed -= instance.OnCancel;
+            @Cancel.canceled -= instance.OnCancel;
+            @DropOne.started -= instance.OnDropOne;
+            @DropOne.performed -= instance.OnDropOne;
+            @DropOne.canceled -= instance.OnDropOne;
+            @DropAll.started -= instance.OnDropAll;
+            @DropAll.performed -= instance.OnDropAll;
+            @DropAll.canceled -= instance.OnDropAll;
         }
 
         /// <summary>
@@ -2155,113 +2198,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="UIActions" /> instance referencing this action map.
     /// </summary>
     public UIActions @UI => new UIActions(this);
-
-    // Inventory
-    private readonly InputActionMap m_Inventory;
-    private List<IInventoryActions> m_InventoryActionsCallbackInterfaces = new List<IInventoryActions>();
-    private readonly InputAction m_Inventory_DropOne;
-    private readonly InputAction m_Inventory_DropAll;
-    /// <summary>
-    /// Provides access to input actions defined in input action map "Inventory".
-    /// </summary>
-    public struct InventoryActions
-    {
-        private @InputSystem_Actions m_Wrapper;
-
-        /// <summary>
-        /// Construct a new instance of the input action map wrapper class.
-        /// </summary>
-        public InventoryActions(@InputSystem_Actions wrapper) { m_Wrapper = wrapper; }
-        /// <summary>
-        /// Provides access to the underlying input action "Inventory/DropOne".
-        /// </summary>
-        public InputAction @DropOne => m_Wrapper.m_Inventory_DropOne;
-        /// <summary>
-        /// Provides access to the underlying input action "Inventory/DropAll".
-        /// </summary>
-        public InputAction @DropAll => m_Wrapper.m_Inventory_DropAll;
-        /// <summary>
-        /// Provides access to the underlying input action map instance.
-        /// </summary>
-        public InputActionMap Get() { return m_Wrapper.m_Inventory; }
-        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
-        public void Enable() { Get().Enable(); }
-        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
-        public void Disable() { Get().Disable(); }
-        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
-        public bool enabled => Get().enabled;
-        /// <summary>
-        /// Implicitly converts an <see ref="InventoryActions" /> to an <see ref="InputActionMap" /> instance.
-        /// </summary>
-        public static implicit operator InputActionMap(InventoryActions set) { return set.Get(); }
-        /// <summary>
-        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
-        /// </summary>
-        /// <param name="instance">Callback instance.</param>
-        /// <remarks>
-        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
-        /// </remarks>
-        /// <seealso cref="InventoryActions" />
-        public void AddCallbacks(IInventoryActions instance)
-        {
-            if (instance == null || m_Wrapper.m_InventoryActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_InventoryActionsCallbackInterfaces.Add(instance);
-            @DropOne.started += instance.OnDropOne;
-            @DropOne.performed += instance.OnDropOne;
-            @DropOne.canceled += instance.OnDropOne;
-            @DropAll.started += instance.OnDropAll;
-            @DropAll.performed += instance.OnDropAll;
-            @DropAll.canceled += instance.OnDropAll;
-        }
-
-        /// <summary>
-        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
-        /// </summary>
-        /// <remarks>
-        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
-        /// </remarks>
-        /// <seealso cref="InventoryActions" />
-        private void UnregisterCallbacks(IInventoryActions instance)
-        {
-            @DropOne.started -= instance.OnDropOne;
-            @DropOne.performed -= instance.OnDropOne;
-            @DropOne.canceled -= instance.OnDropOne;
-            @DropAll.started -= instance.OnDropAll;
-            @DropAll.performed -= instance.OnDropAll;
-            @DropAll.canceled -= instance.OnDropAll;
-        }
-
-        /// <summary>
-        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="InventoryActions.UnregisterCallbacks(IInventoryActions)" />.
-        /// </summary>
-        /// <seealso cref="InventoryActions.UnregisterCallbacks(IInventoryActions)" />
-        public void RemoveCallbacks(IInventoryActions instance)
-        {
-            if (m_Wrapper.m_InventoryActionsCallbackInterfaces.Remove(instance))
-                UnregisterCallbacks(instance);
-        }
-
-        /// <summary>
-        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
-        /// </summary>
-        /// <remarks>
-        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
-        /// </remarks>
-        /// <seealso cref="InventoryActions.AddCallbacks(IInventoryActions)" />
-        /// <seealso cref="InventoryActions.RemoveCallbacks(IInventoryActions)" />
-        /// <seealso cref="InventoryActions.UnregisterCallbacks(IInventoryActions)" />
-        public void SetCallbacks(IInventoryActions instance)
-        {
-            foreach (var item in m_Wrapper.m_InventoryActionsCallbackInterfaces)
-                UnregisterCallbacks(item);
-            m_Wrapper.m_InventoryActionsCallbackInterfaces.Clear();
-            AddCallbacks(instance);
-        }
-    }
-    /// <summary>
-    /// Provides a new <see cref="InventoryActions" /> instance referencing this action map.
-    /// </summary>
-    public InventoryActions @Inventory => new InventoryActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -2467,6 +2403,13 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnReload(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Pause" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPause(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.
@@ -2567,20 +2510,12 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEquipSecond(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Cancel1" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Cancel" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnCancel1(InputAction.CallbackContext context);
-    }
-    /// <summary>
-    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Inventory" which allows adding and removing callbacks.
-    /// </summary>
-    /// <seealso cref="InventoryActions.AddCallbacks(IInventoryActions)" />
-    /// <seealso cref="InventoryActions.RemoveCallbacks(IInventoryActions)" />
-    public interface IInventoryActions
-    {
+        void OnCancel(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "DropOne" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

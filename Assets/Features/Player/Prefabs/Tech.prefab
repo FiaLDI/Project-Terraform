@@ -4003,10 +4003,6 @@ MonoBehaviour:
     m_ActionName: 'UI/Submit[/Keyboard/enter]'
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 15cef263-9014-4fd5-94d9-4e4a6234a6ef
-    m_ActionName: 'UI/Cancel[/Keyboard/escape]'
-  - m_PersistentCalls:
-      m_Calls: []
     m_ActionId: 32b35790-4ed0-4e9a-aa41-69ac6d629449
     m_ActionName: 'UI/Point[/Mouse/position]'
   - m_PersistentCalls:
@@ -4079,10 +4075,6 @@ MonoBehaviour:
     m_ActionName: 'Player/SecondaryUse[/Mouse/rightButton]'
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: a69db79b-621b-4395-8f9c-94d8c797c612
-    m_ActionName: 'Player/ToggleQuests[/Keyboard/u]'
-  - m_PersistentCalls:
-      m_Calls: []
     m_ActionId: c6f8cd2c-294e-4678-9469-5c974fcec8da
     m_ActionName: 'UI/Cancel1[/Keyboard/escape]'
   - m_PersistentCalls:
@@ -4091,12 +4083,16 @@ MonoBehaviour:
     m_ActionName: 'Player/Reload[/Keyboard/r]'
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 99c0f63f-ab79-4a1a-855b-754705b59643
-    m_ActionName: 'Inventory/DropOne[/Keyboard/g]'
+    m_ActionId: 84457312-7c6d-445c-8f1f-616dea0a8775
+    m_ActionName: 'Player/Pause[/Keyboard/escape]'
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 84b429f4-a79d-44d9-9333-8acf243996c7
-    m_ActionName: 'Inventory/DropAll[/Keyboard/leftCtrl,/Keyboard/g]'
+    m_ActionId: 311b7ac8-aae4-4e48-878e-1eb76f036aa0
+    m_ActionName: 'UI/DropOne[/Keyboard/g]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: dbb00e2b-ae36-4b6a-951d-11b265448e42
+    m_ActionName: 'UI/DropAll[/Keyboard/leftCtrl,/Keyboard/g]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player
@@ -4380,7 +4376,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryInputHandler
   inventoryUI: {fileID: 5143891437804264260}
-  interactionController: {fileID: 1939957361857395306}
 --- !u!114 &2771684450268149011
 MonoBehaviour:
   m_ObjectHideFlags: 0

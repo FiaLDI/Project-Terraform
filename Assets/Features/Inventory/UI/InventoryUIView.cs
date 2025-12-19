@@ -3,14 +3,15 @@ using Features.Inventory;
 using Features.Inventory.Domain;
 using Features.Player;
 using Features.Inventory.UnityIntegration;
+using Features.Input;
 
 namespace Features.Inventory.UI
 {
     /// <summary>
     /// UI слой инвентаря: отображает сумку, хотбар, руки.
-    /// Не содержит логики — только отображение.
+    /// Только отображение.
     /// </summary>
-    public class InventoryUIView : MonoBehaviour
+    public class InventoryUIView : MonoBehaviour, IUIScreen
     {
         [Header("Windows")]
         [SerializeField] private GameObject bagWindow;
@@ -29,10 +30,13 @@ namespace Features.Inventory.UI
         [SerializeField]
         private InventoryUIInputController inventoryInput;
 
-        public bool IsOpen => bagWindow.activeSelf;
+        public InputMode Mode => InputMode.Inventory;
 
         private IInventoryContext inventory;
 
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
 
         private void Start()
         {
@@ -48,7 +52,6 @@ namespace Features.Inventory.UI
             inventory.Service.OnChanged += Refresh;
 
             bagWindow.SetActive(false);
-
             Refresh();
         }
 
@@ -58,19 +61,38 @@ namespace Features.Inventory.UI
                 inventory.Service.OnChanged -= Refresh;
         }
 
-        public void SetOpen(bool open)
-        {
-            if (bagWindow != null)
-                bagWindow.SetActive(open);
+        // ======================================================
+        // IUIScreen
+        // ======================================================
 
-            Cursor.visible = open;
-            Cursor.lockState = open
-                ? CursorLockMode.None
-                : CursorLockMode.Locked;
+        public void Show()
+        {
+            bagWindow.SetActive(true);
 
             if (inventoryInput != null)
-                inventoryInput.enabled = open;
+                inventoryInput.enabled = true;
         }
+
+        public void Hide()
+        {
+            bagWindow.SetActive(false);
+
+            if (inventoryInput != null)
+                inventoryInput.enabled = false;
+        }
+
+        // ======================================================
+        // STACK API
+        // ======================================================
+
+        public void Open()
+        {
+            UIStackManager.I.Push(this);
+        }
+
+        // ======================================================
+        // UI REFRESH
+        // ======================================================
 
         public void Refresh()
         {

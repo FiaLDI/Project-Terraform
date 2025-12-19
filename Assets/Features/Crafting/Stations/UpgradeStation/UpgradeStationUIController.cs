@@ -135,6 +135,12 @@ public class UpgradeStationUIController : BaseStationUI
         recipePanel.Clear();
     }
 
+    public void Open()
+    {
+        UIStackManager.I.Push(this);
+    }
+
+
     // ======================================================
     // PROCESSOR EVENTS
     // ======================================================
