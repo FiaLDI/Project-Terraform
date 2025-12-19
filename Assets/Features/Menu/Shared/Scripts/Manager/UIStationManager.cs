@@ -15,6 +15,7 @@ public class UIStationManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     public void OpenStation(BaseStationUI station)

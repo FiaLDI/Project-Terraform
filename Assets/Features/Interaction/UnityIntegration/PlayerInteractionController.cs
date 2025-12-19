@@ -6,8 +6,9 @@ using Features.Interaction.UnityIntegration;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player;
+using Features.Input;
 
-public class PlayerInteractionController : MonoBehaviour
+public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
 {
     private bool interactionBlocked;
 
@@ -28,40 +29,6 @@ public class PlayerInteractionController : MonoBehaviour
         interactionService = new InteractionService();
     }
 
-    private void OnEnable()
-    {
-        if (input == null)
-            input = GetComponent<PlayerInputContext>();
-
-        if (input == null)
-        {
-            Debug.LogError(
-                $"{nameof(PlayerInteractionController)}: PlayerInputContext not found",
-                this);
-            return;
-        }
-
-        var p = input.Actions.Player;
-
-        p.Interact.performed += OnInteract;
-        p.Drop.performed     += OnDrop;
-
-        subscribed = true;
-    }
-
-    private void OnDisable()
-    {
-        if (!subscribed || input == null)
-            return;
-
-        var p = input.Actions.Player;
-
-        p.Interact.performed -= OnInteract;
-        p.Drop.performed     -= OnDrop;
-
-        subscribed = false;
-    }
-
     private void Start()
     {
         rayService = InteractionServiceProvider.Ray;
@@ -73,6 +40,71 @@ public class PlayerInteractionController : MonoBehaviour
         }
 
         nearby = LocalPlayerContext.Get<NearbyInteractables>();
+    }
+
+    // ======================================================
+    // INPUT BIND
+    // ======================================================
+
+    public void BindInput(PlayerInputContext ctx)
+    {
+        if (input == ctx)
+            return;
+
+        Unsubscribe();
+
+        input = ctx;
+
+        if (input == null)
+        {
+            Debug.LogError(
+                $"{nameof(PlayerInteractionController)}: BindInput with NULL",
+                this);
+            return;
+        }
+
+        Subscribe();
+    }
+
+    private void OnEnable()
+    {
+        if (input != null)
+            Subscribe();
+    }
+
+    private void OnDisable()
+    {
+        Unsubscribe();
+    }
+
+    // ======================================================
+    // SUBSCRIBE
+    // ======================================================
+
+    private void Subscribe()
+    {
+        if (subscribed || input == null)
+            return;
+
+        var p = input.Actions.Player;
+
+        p.FindAction("Interact").performed += OnInteract;
+        p.FindAction("Drop").performed += OnDrop;
+
+        subscribed = true;
+    }
+
+    private void Unsubscribe()
+    {
+        if (!subscribed || input == null)
+            return;
+
+        var p = input.Actions.Player;
+
+        p.FindAction("Interact").performed -= OnInteract;
+        p.FindAction("Drop").performed -= OnDrop;
+
+        subscribed = false;
     }
 
     // ======================================================
@@ -123,7 +155,7 @@ public class PlayerInteractionController : MonoBehaviour
         if (inventory == null || Camera.main == null)
             return;
 
-        var model   = inventory.Model;
+        var model = inventory.Model;
         var service = inventory.Service;
 
         if (model.hotbar.Count == 0)
@@ -183,7 +215,6 @@ public class PlayerInteractionController : MonoBehaviour
             return;
 
         inventory.Service.AddItem(inst);
-
         Destroy(presenter.gameObject);
     }
 

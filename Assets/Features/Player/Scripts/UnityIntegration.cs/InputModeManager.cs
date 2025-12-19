@@ -12,93 +12,122 @@ public enum InputMode
 
 namespace Features.Input
 {
-    public class InputModeManager : MonoBehaviour
-{
-    public static InputModeManager I;
-
-    private PlayerInputContext input;
-    private InputMode currentMode;
-
-    private void Awake()
+    [DefaultExecutionOrder(-100)]
+    public sealed class InputModeManager : MonoBehaviour
     {
-        if (I != null && I != this)
+        public static InputModeManager I { get; private set; }
+
+        private PlayerInputContext input;
+        private InputMode currentMode = InputMode.Disabled;
+
+        private void Awake()
         {
-            Destroy(gameObject);
-            return;
+             Debug.Log("[InputModeManager] Awake");
+            if (I != null && I != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            I = this;
+            DontDestroyOnLoad(gameObject);
         }
 
-        I = this;
-    }
+        // ======================================================
+        // BIND
+        // ======================================================
 
-    private void Start()
-    {
-        input = LocalPlayerContext.Get<PlayerInputContext>();
-        SetMode(InputMode.Gameplay);
-    }
-
-    // ======================================================
-    // PUBLIC API
-    // ======================================================
-
-    public void SetMode(InputMode mode)
-    {
-        if (currentMode == mode)
-            return;
-
-        currentMode = mode;
-
-        DisableAll();
-
-        switch (mode)
+        public void Bind(PlayerInputContext inputContext)
         {
-            case InputMode.Gameplay:
-                EnableGameplay();
-                break;
+            input = inputContext;
 
-            case InputMode.Inventory:
-            case InputMode.Dialog:
-                EnableUI(false);
-                break;
+            if (input == null)
+            {
+                Debug.LogError("[InputModeManager] Bind called with NULL input");
+                return;
+            }
 
-            case InputMode.Pause:
-                EnableUI(true);
-                break;
+            Debug.Log("[InputModeManager] SWITCH TO GAMEPLAY");
 
-            case InputMode.Disabled:
-                break;
+            input.PlayerInput.SwitchCurrentActionMap("Player");
+
+            SetMode(InputMode.Gameplay);
+        }
+
+
+        // ======================================================
+        // PUBLIC API
+        // ======================================================
+
+        public void SetMode(InputMode mode)
+        {
+            if (currentMode == mode)
+                return;
+
+            currentMode = mode;
+
+            if (input == null)
+            {
+                Debug.LogWarning(
+                    $"[InputModeManager] SetMode({mode}) called before Bind"
+                );
+                return;
+            }
+
+            switch (mode)
+            {
+                case InputMode.Gameplay:
+                    EnableGameplay();
+                    break;
+
+                case InputMode.Inventory:
+                case InputMode.Dialog:
+                    EnableUI(pauseTime: false);
+                    break;
+
+                case InputMode.Pause:
+                    EnableUI(pauseTime: true);
+                    break;
+
+                case InputMode.Disabled:
+                    DisableAll();
+                    break;
+            }
+        }
+
+        public InputMode CurrentMode => currentMode;
+
+        // ======================================================
+        // INTERNAL
+        // ======================================================
+
+        private void DisableAll()
+        {
+            input.Actions.Player.Disable();
+            input.Actions.UI.Disable();
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
+        private void EnableGameplay()
+        {
+            Debug.Log("[InputMode] SWITCH TO PLAYER");
+            input.PlayerInput.SwitchCurrentActionMap("Player");
+
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            Time.timeScale = 1f;
+        }
+
+        private void EnableUI(bool pauseTime)
+        {
+            Debug.Log("[InputMode] SWITCH TO UI");
+            input.PlayerInput.SwitchCurrentActionMap("UI");
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            Time.timeScale = pauseTime ? 0f : 1f;
         }
     }
-
-    public InputMode CurrentMode => currentMode;
-
-    // ======================================================
-    // INTERNAL
-    // ======================================================
-
-    private void DisableAll()
-    {
-        input.Actions.Player.Disable();
-    }
-
-    private void EnableGameplay()
-    {
-        input.Actions.Player.Enable();
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        Time.timeScale = 1f;
-    }
-
-    private void EnableUI(bool pauseTime)
-    {
-        input.Actions.Player.Disable();
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        Time.timeScale = pauseTime ? 0f : 1f;
-    }
-}
-
 }

@@ -55,11 +55,6 @@ public class ChunkManager
 
         if (ChunkedInstanceLODSystem.Instance != null)
             ChunkedInstanceLODSystem.Instance.UpdateVisibleChunks(activeRuntimeChunks);
-
-        // === DEBUG METRICS ===
-        WorldDebugRegistry.ActiveChunkCount = activeChunkCoords.Count;
-        WorldDebugRegistry.LoadedChunkCount = chunks.Count;
-        WorldDebugRegistry.LoadQueueLength = loadQueue.Count;
     }
 
     // ========================================================
@@ -147,10 +142,5 @@ public class ChunkManager
         chunksToRemove.Clear();
 
         _hasLastPlayerChunk = false;
-
-        // Debug reset
-        WorldDebugRegistry.ActiveChunkCount = 0;
-        WorldDebugRegistry.LoadedChunkCount = 0;
-        WorldDebugRegistry.LoadQueueLength = 0;
     }
 }

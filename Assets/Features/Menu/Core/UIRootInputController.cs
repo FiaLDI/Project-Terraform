@@ -20,8 +20,8 @@ public class UIRootInputController : MonoBehaviour
 
         var ui = input.Actions.UI;
 
-        ui.Cancel.performed += OnCancel;
-        ui.ToggleQuests.performed += OnToggleQuests;
+        ui.FindAction("Cancel").performed += OnCancel;
+        ui.FindAction("ToggleQuests").performed += OnToggleQuests;
     }
 
     private void OnDisable()
@@ -30,8 +30,8 @@ public class UIRootInputController : MonoBehaviour
 
         var ui = input.Actions.UI;
 
-        ui.Cancel.performed -= OnCancel;
-        ui.ToggleQuests.performed -= OnToggleQuests;
+        ui.FindAction("Cancel").performed -= OnCancel;
+        ui.FindAction("ToggleQuests").performed -= OnToggleQuests;
     }
 
     private void OnCancel(InputAction.CallbackContext _)

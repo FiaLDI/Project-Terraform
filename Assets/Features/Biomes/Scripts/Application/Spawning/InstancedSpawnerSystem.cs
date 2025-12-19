@@ -1,10 +1,11 @@
 using System.Collections.Generic;
-using UnityEngine;
-using Unity.Mathematics;
-using Unity.Collections;
 using Features.Biomes.Domain;
 using Features.Biomes.UnityIntegration;
 using Features.Camera.UnityIntegration;
+using Features.Player.UnityIntegration;
+using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace Features.Biomes.Application
 {
@@ -203,9 +204,9 @@ namespace Features.Biomes.Application
             if (targetOverride != null)
                 return targetOverride.position;
 
-            // Player position exists → use it
-            if (RuntimeWorldGenerator.PlayerInstance != null)
-                return RuntimeWorldGenerator.PlayerInstance.transform.position;
+            var registry = PlayerRegistry.Instance;
+            if (registry != null || registry.LocalPlayer != null)
+                return registry.LocalPlayer.transform.position;
 
             // Active camera from CameraRegistry
             if (CameraRegistry.Instance != null && CameraRegistry.Instance.CurrentCamera != null)

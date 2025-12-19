@@ -2,10 +2,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Features.Abilities.Application;
 using Features.Camera.UnityIntegration;
+using Features.Input;
+using Features.Player;
 
 namespace Features.Player.UnityIntegration
 {
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour, IInputContextConsumer
     {
         [Header("Core")]
         [SerializeField] private PlayerMovement playerMovement;
@@ -16,30 +18,47 @@ namespace Features.Player.UnityIntegration
         private bool subscribed;
 
         // ======================================================
-        // LIFECYCLE
+        // INPUT BIND
         // ======================================================
 
-        private void OnEnable()
+        public void BindInput(PlayerInputContext ctx)
         {
-            // Безопасно получаем PlayerInputContext
-            if (input == null)
-                input = GetComponent<PlayerInputContext>();
+            if (input == ctx)
+                return;
 
-            Debug.Log(
-                    $"[TEST] input={(input != null)} " +
-                    $"actions={(input?.Actions != null)} " +
-                    $"playerMap={(input?.Actions?.Player != null)} " +
-                    $"uiMap={(input?.Actions?.UI != null)}",
-                    this
-                );
+            Unsubscribe();
+            input = ctx;
 
             if (input == null)
             {
                 Debug.LogError(
-                    $"{nameof(PlayerController)}: {nameof(PlayerInputContext)} not found",
+                    $"{nameof(PlayerController)}: BindInput with NULL",
                     this);
                 return;
             }
+
+            Subscribe();
+        }
+
+        private void OnEnable()
+        {
+            if (input != null)
+                Subscribe();
+        }
+
+        private void OnDisable()
+        {
+            Unsubscribe();
+        }
+
+        // ======================================================
+        // SUBSCRIBE / UNSUBSCRIBE
+        // ======================================================
+
+        private void Subscribe()
+        {
+            if (subscribed || input == null)
+                return;
 
             if (abilityCaster == null)
                 abilityCaster = GetComponent<AbilityCaster>();
@@ -52,7 +71,7 @@ namespace Features.Player.UnityIntegration
             subscribed = true;
         }
 
-        private void OnDisable()
+        private void Unsubscribe()
         {
             if (!subscribed || input == null)
                 return;
@@ -80,36 +99,40 @@ namespace Features.Player.UnityIntegration
 
         private void BindMovement()
         {
+            Debug.Log("[DBG] Player Move enabled = " +
+    input.Actions.Player.FindAction("Move").enabled);
             var p = input.Actions.Player;
 
-            p.Move.performed += OnMove;
-            p.Move.canceled  += OnMoveCanceled;
+            p.FindAction("Move").performed += OnMove;
+            p.FindAction("Move").canceled  += OnMoveCanceled;
 
-            p.Jump.performed   += OnJump;
-            p.Sprint.performed += OnSprintStart;
-            p.Sprint.canceled  += OnSprintStop;
+            p.FindAction("Jump").performed += OnJump;
 
-            p.Walk.performed += OnWalkStart;
-            p.Walk.canceled  += OnWalkStop;
+            p.FindAction("Sprint").performed += OnSprintStart;
+            p.FindAction("Sprint").canceled  += OnSprintStop;
 
-            p.Crouch.performed += OnCrouch;
+            p.FindAction("Walk").performed += OnWalkStart;
+            p.FindAction("Walk").canceled  += OnWalkStop;
+
+            p.FindAction("Crouch").performed += OnCrouch;
         }
 
         private void UnbindMovement()
         {
             var p = input.Actions.Player;
 
-            p.Move.performed -= OnMove;
-            p.Move.canceled  -= OnMoveCanceled;
+            p.FindAction("Move").performed -= OnMove;
+            p.FindAction("Move").canceled  -= OnMoveCanceled;
 
-            p.Jump.performed   -= OnJump;
-            p.Sprint.performed -= OnSprintStart;
-            p.Sprint.canceled  -= OnSprintStop;
+            p.FindAction("Jump").performed -= OnJump;
 
-            p.Walk.performed -= OnWalkStart;
-            p.Walk.canceled  -= OnWalkStop;
+            p.FindAction("Sprint").performed -= OnSprintStart;
+            p.FindAction("Sprint").canceled  -= OnSprintStop;
 
-            p.Crouch.performed -= OnCrouch;
+            p.FindAction("Walk").performed -= OnWalkStart;
+            p.FindAction("Walk").canceled  -= OnWalkStop;
+
+            p.FindAction("Crouch").performed -= OnCrouch;
         }
 
         private void OnMove(InputAction.CallbackContext ctx)
@@ -160,18 +183,20 @@ namespace Features.Player.UnityIntegration
         {
             var p = input.Actions.Player;
 
-            p.Look.performed += OnLook;
-            p.Look.canceled  += OnLookCanceled;
-            p.SwitchView.performed += OnSwitchView;
+            p.FindAction("Look").performed += OnLook;
+            p.FindAction("Look").canceled  += OnLookCanceled;
+
+            p.FindAction("SwitchView").performed += OnSwitchView;
         }
 
         private void UnbindCamera()
         {
             var p = input.Actions.Player;
 
-            p.Look.performed -= OnLook;
-            p.Look.canceled  -= OnLookCanceled;
-            p.SwitchView.performed -= OnSwitchView;
+            p.FindAction("Look").performed -= OnLook;
+            p.FindAction("Look").canceled  -= OnLookCanceled;
+
+            p.FindAction("SwitchView").performed -= OnSwitchView;
         }
 
         private void OnLook(InputAction.CallbackContext ctx)
@@ -197,22 +222,22 @@ namespace Features.Player.UnityIntegration
         {
             var p = input.Actions.Player;
 
-            p.Ability1.performed += OnAbility1;
-            p.Ability2.performed += OnAbility2;
-            p.Ability3.performed += OnAbility3;
-            p.Ability4.performed += OnAbility4;
-            p.Ability5.performed += OnAbility5;
+            p.FindAction("Ability1").performed += OnAbility1;
+            p.FindAction("Ability2").performed += OnAbility2;
+            p.FindAction("Ability3").performed += OnAbility3;
+            p.FindAction("Ability4").performed += OnAbility4;
+            p.FindAction("Ability5").performed += OnAbility5;
         }
 
         private void UnbindAbilities()
         {
             var p = input.Actions.Player;
 
-            p.Ability1.performed -= OnAbility1;
-            p.Ability2.performed -= OnAbility2;
-            p.Ability3.performed -= OnAbility3;
-            p.Ability4.performed -= OnAbility4;
-            p.Ability5.performed -= OnAbility5;
+            p.FindAction("Ability1").performed -= OnAbility1;
+            p.FindAction("Ability2").performed -= OnAbility2;
+            p.FindAction("Ability3").performed -= OnAbility3;
+            p.FindAction("Ability4").performed -= OnAbility4;
+            p.FindAction("Ability5").performed -= OnAbility5;
         }
 
         private void OnAbility1(InputAction.CallbackContext _) => abilityCaster.TryCast(0);

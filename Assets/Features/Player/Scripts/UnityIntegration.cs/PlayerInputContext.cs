@@ -1,33 +1,27 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Features.Player
 {
+    [RequireComponent(typeof(PlayerInput))]
     public class PlayerInputContext : MonoBehaviour
     {
-        private InputSystem_Actions _actions;
+        public PlayerInput PlayerInput { get; private set; }
+        public GameInput Actions { get; private set; }
 
-        public InputSystem_Actions Actions
+        private void Awake()
         {
-            get
-            {
-                if (_actions == null)
-                    Init();
-                return _actions;
-            }
-        }
+            PlayerInput = GetComponent<PlayerInput>();
 
-        private void Init()
-        {
-            _actions = new InputSystem_Actions();
+            Actions = new GameInput(PlayerInput.actions);
 
-            _actions.UI.Enable();
+            Actions.Player.Disable();
+            Actions.UI.Disable();
 
-            _actions.Player.Enable();
-        }
+            Actions.Player.Enable();
 
-        private void OnDisable()
-        {
-            _actions?.Disable();
+            PlayerInput.ActivateInput();
         }
     }
+
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Features.Input;
 
+[DefaultExecutionOrder(-90)]
 public class UIStackManager : MonoBehaviour
 {
     public static UIStackManager I;
@@ -10,23 +11,32 @@ public class UIStackManager : MonoBehaviour
 
     private void Awake()
     {
-        if (I != null)
+        if (I != null && I != this)
         {
             Destroy(gameObject);
             return;
         }
+
         I = this;
+        DontDestroyOnLoad(gameObject);
     }
+
+    // ======================================================
+    // STACK API
+    // ======================================================
 
     public void Push(IUIScreen screen)
     {
+        if (screen == null)
+            return;
+
         if (stack.Count > 0)
             stack.Peek().Hide();
 
         stack.Push(screen);
         screen.Show();
 
-        InputModeManager.I.SetMode(screen.Mode);
+        TrySetMode(screen.Mode);
     }
 
     public void Pop()
@@ -40,13 +50,35 @@ public class UIStackManager : MonoBehaviour
         {
             var top = stack.Peek();
             top.Show();
-            InputModeManager.I.SetMode(top.Mode);
+            TrySetMode(top.Mode);
         }
         else
         {
-            InputModeManager.I.SetMode(InputMode.Gameplay);
+            TrySetMode(InputMode.Gameplay);
         }
     }
+
+    // ======================================================
+    // HELPERS
+    // ======================================================
+
+    private void TrySetMode(InputMode mode)
+    {
+        if (InputModeManager.I == null)
+            return;
+
+        if (stack.Count == 0)
+        {
+            InputModeManager.I.SetMode(InputMode.Gameplay);
+            return;
+        }
+
+        InputModeManager.I.SetMode(stack.Peek().Mode);
+    }
+
+    // ======================================================
+    // QUERIES
+    // ======================================================
 
     public IUIScreen Peek()
     {
@@ -55,11 +87,12 @@ public class UIStackManager : MonoBehaviour
 
     public bool IsTop<T>() where T : class, IUIScreen
     {
-        if (stack.Count == 0)
-            return false;
-
-        return stack.Peek() is T;
+        return stack.Count > 0 && stack.Peek() is T;
     }
 
-    public bool HasScreens => stack.Count > 0;
+    public bool HasScreens =>
+        stack.Count > 0 &&
+        stack.Peek().Mode != InputMode.Gameplay;
+
+
 }

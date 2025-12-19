@@ -383,8 +383,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16a6ae0db65aac74e9561075520cca37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseMenu
-  canvas: {fileID: 0}
-  canvasGroup: {fileID: 0}
+  canvas: {fileID: 5417946609454989186}
+  canvasGroup: {fileID: 6961764309200548516}
   resumeButton: {fileID: 5505961493531225462}
   settingsButton: {fileID: 1151799519781728366}
   exitButton: {fileID: 7127164701276745336}

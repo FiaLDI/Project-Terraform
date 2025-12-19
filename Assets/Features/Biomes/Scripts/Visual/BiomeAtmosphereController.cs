@@ -1,15 +1,13 @@
 using UnityEngine;
 using Features.Biomes.Domain;
 using Features.Biomes.UnityIntegration;
+using Features.Player.UnityIntegration;
 
 namespace Features.Biomes.Runtime.Visual
 {
     [DefaultExecutionOrder(210)]
     public class BiomeAtmosphereController : MonoBehaviour
     {
-        [Header("Targets")]
-        public Transform player;
-
         [Header("Weather Root")]
         public Transform weatherRoot;
         public Transform rainContainer;
@@ -18,29 +16,26 @@ namespace Features.Biomes.Runtime.Visual
 
         private BiomeConfig currentBiome;
 
-        private void Awake()
-        {
-            if (player == null && RuntimeWorldGenerator.PlayerInstance != null)
-                player = RuntimeWorldGenerator.PlayerInstance.transform;
-        }
-
-
         private void LateUpdate()
         {
-            if (RuntimeWorldGenerator.World == null) return;
-            if (RuntimeWorldGenerator.PlayerInstance == null) return;
+            if (RuntimeWorldGenerator.World == null)
+                return;
 
-            Vector3 pos = RuntimeWorldGenerator.PlayerInstance.transform.position;
+            var registry = PlayerRegistry.Instance;
+            if (registry == null || registry.LocalPlayer == null)
+                return;
+
+            Vector3 pos = registry.LocalPlayer.transform.position;
 
             BiomeConfig biome = RuntimeWorldGenerator.World.GetBiomeAtWorldPos(pos);
             if (biome == null || biome == currentBiome)
                 return;
 
             currentBiome = biome;
-            ApplyBiome(biome);
+            ApplyBiome(biome, pos);
         }
 
-        private void ApplyBiome(BiomeConfig biome)
+        private void ApplyBiome(BiomeConfig biome, Vector3 playerPos)
         {
             // -----------------------------
             // SKYBOX
@@ -52,13 +47,16 @@ namespace Features.Biomes.Runtime.Visual
             }
 
             // -----------------------------
-            // WEATHER
+            // WEATHER ROOT FOLLOW
             // -----------------------------
             if (weatherRoot != null)
             {
-                weatherRoot.position = RuntimeWorldGenerator.PlayerInstance.transform.position;
+                weatherRoot.position = playerPos;
             }
 
+            // -----------------------------
+            // WEATHER PREFABS
+            // -----------------------------
             ToggleWeather(rainContainer, biome.rainPrefab);
             ToggleWeather(dustContainer, biome.dustPrefab);
             ToggleWeather(firefliesContainer, biome.firefliesPrefab);
@@ -66,7 +64,8 @@ namespace Features.Biomes.Runtime.Visual
 
         private void ToggleWeather(Transform container, GameObject prefab)
         {
-            if (container == null) return;
+            if (container == null)
+                return;
 
             if (prefab == null)
             {

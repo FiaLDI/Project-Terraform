@@ -33,17 +33,27 @@ public class UpgradeStationUIController : BaseStationUI
 
         recipePanel.Init(inventory);
 
-        processor.OnStart += HandleStart;
+        processor.OnStart    += HandleStart;
         processor.OnProgress += HandleProgress;
         processor.OnComplete += HandleComplete;
     }
 
     // ======================================================
-    // UI OPEN
+    // UI LIFECYCLE (КЛЮЧЕВО)
     // ======================================================
 
-    public void OnOpenUI()
+    /// <summary>
+    /// Вызывается UIStackManager'ом при Push(this)
+    /// </summary>
+    public override void Show()
     {
+        base.Show();
+        OnOpenUI();
+    }
+
+    private void OnOpenUI()
+    {
+        ClearSelection();
         BuildUpgradeList();
     }
 
@@ -56,6 +66,9 @@ public class UpgradeStationUIController : BaseStationUI
         foreach (Transform t in recipeListContainer)
             Destroy(t.gameObject);
 
+        if (inventory == null || station == null)
+            return;
+
         var upgradeRecipes = station.GetRecipes()
             .Where(r => r.recipeType == RecipeType.Upgrade)
             .OfType<UpgradeRecipeSO>()
@@ -67,22 +80,32 @@ public class UpgradeStationUIController : BaseStationUI
         foreach (var slot in allSlots)
         {
             var inst = slot.item;
-            if (inst == null) continue;
+            if (inst == null)
+                continue;
 
             var def = inst.itemDefinition;
-            if (def == null) continue;
+            if (def == null || def.upgrades == null)
+                continue;
 
-            if (!seen.Add(def.id)) continue;
-            if (def.upgrades == null)
+            // 🔹 предмет уже максимального уровня — не показываем
+            if (inst.level >= def.upgrades.Length)
+                continue;
+
+            // 🔹 один пункт на тип предмета
+            if (!seen.Add(def.id))
                 continue;
 
             var recipe = upgradeRecipes.FirstOrDefault(r =>
                 r.upgradeBaseItem != null &&
                 r.upgradeBaseItem.id == def.id);
 
-            if (recipe == null) continue;
+            if (recipe == null)
+                continue;
 
-            var btn = Instantiate(upgradeGlowButtonPrefab, recipeListContainer);
+            var btn = Instantiate(
+                upgradeGlowButtonPrefab,
+                recipeListContainer);
+
             btn.Init(inst, recipe, this);
         }
     }
@@ -91,7 +114,9 @@ public class UpgradeStationUIController : BaseStationUI
     // UI CALLBACKS
     // ======================================================
 
-    public void OnUpgradeItemSelected(ItemInstance inst, RecipeSO recipeBase)
+    public void OnUpgradeItemSelected(
+        ItemInstance inst,
+        RecipeSO recipeBase)
     {
         var recipe = recipeBase as UpgradeRecipeSO;
         if (recipe == null)
@@ -115,31 +140,11 @@ public class UpgradeStationUIController : BaseStationUI
                 return;
 
             if (!processor.IsProcessing)
-                processor.BeginUpgrade(selectedRecipe, selectedInstance);
+                processor.BeginUpgrade(
+                    selectedRecipe,
+                    selectedInstance);
         });
     }
-
-    private void HandleComplete(ItemInstance inst)
-    {
-        recipePanel.ProcessComplete();
-        recipePanel.RefreshIngredients();
-        recipePanel.RefreshUpgradeInfo();
-        BuildUpgradeList();
-    }
-
-    private void ClearSelection()
-    {
-        selectedInstance = null;
-        selectedRecipe = null;
-
-        recipePanel.Clear();
-    }
-
-    public void Open()
-    {
-        UIStackManager.I.Push(this);
-    }
-
 
     // ======================================================
     // PROCESSOR EVENTS
@@ -150,4 +155,30 @@ public class UpgradeStationUIController : BaseStationUI
 
     private void HandleProgress(float t)
         => recipePanel.UpdateProgress(t);
+
+    private void HandleComplete(ItemInstance inst)
+    {
+        recipePanel.ProcessComplete();
+        recipePanel.RefreshIngredients();
+        recipePanel.RefreshUpgradeInfo();
+
+        // 🔹 обновляем список после апгрейда
+        BuildUpgradeList();
+    }
+
+    // ======================================================
+    // HELPERS
+    // ======================================================
+
+    private void ClearSelection()
+    {
+        selectedInstance = null;
+        selectedRecipe = null;
+        recipePanel.Clear();
+    }
+
+    public void Open()
+    {
+        UIStackManager.I.Push(this);
+    }
 }

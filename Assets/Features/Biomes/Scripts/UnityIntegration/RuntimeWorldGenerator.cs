@@ -3,18 +3,19 @@ using System.Collections;
 using Unity.Mathematics;
 using Features.Biomes.Domain;
 using Features.Biomes.Application;
+using Features.Player.UI;
 
 namespace Features.Biomes.UnityIntegration
 {
-    public class RuntimeWorldGenerator : MonoBehaviour
+    public sealed class RuntimeWorldGenerator : MonoBehaviour
     {
         [Header("World Settings")]
         public WorldConfig worldConfig;
 
-        [Header("Player Prefab")]
+        [Header("Player Prefab (PlayerCore)")]
         public GameObject playerPrefab;
 
-        [Header("Systems Prefab")]
+        [Header("Systems Prefab (World-only)")]
         public GameObject systemsPrefab;
 
         [Header("Custom Prefab")]
@@ -32,10 +33,11 @@ namespace Features.Biomes.UnityIntegration
         private GameObject playerInstance;
         private GameObject systemsInstance;
 
-        private bool worldReady = false;
-
-        public static GameObject PlayerInstance { get; private set; }
         public static WorldConfig World { get; private set; }
+
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
 
         private void Start()
         {
@@ -55,10 +57,10 @@ namespace Features.Biomes.UnityIntegration
 
             // 3) Первая генерация вокруг (0,0)
             manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
-
-            // 4) Асинхронный спавн
-            StartCoroutine(SpawnSequence());
             manager.ProcessLoadQueue();
+
+            // 4) Асинхронный спавн мира + игрока
+            StartCoroutine(SpawnSequence());
         }
 
         private void Update()
@@ -66,72 +68,72 @@ namespace Features.Biomes.UnityIntegration
             if (manager == null)
                 return;
 
-            Vector3 focusPos;
+            Vector3 focusPos = playerInstance != null
+                ? playerInstance.transform.position
+                : Vector3.zero;
 
-            if (playerInstance != null)
-                focusPos = playerInstance.transform.position;
-            else
-                focusPos = Vector3.zero;
-
-            manager.UpdateChunks(
-                focusPos,
-                loadDistance,
-                unloadDistance
-            );
-
+            manager.UpdateChunks(focusPos, loadDistance, unloadDistance);
             manager.ProcessLoadQueue();
         }
 
+        // ======================================================
+        // SPAWN SEQUENCE
+        // ======================================================
+
         private IEnumerator SpawnSequence()
         {
-            // Чанк, в котором хотим заспавнить игрока — (0,0)
-            Vector2Int playerChunk = new Vector2Int(0, 0);
+            // Ждём готовность стартового чанка (0,0)
+            Vector2Int startChunk = new Vector2Int(0, 0);
 
-            // Ждём, пока этот чанк реально появится и на нём будет MeshCollider
-            while (!ChunkExistsAndReady(playerChunk))
+            while (!ChunkExistsAndReady(startChunk))
                 yield return null;
 
-            // ещё пара кадров на обновление физики
+            // Пара кадров на физику
             yield return null;
             yield return null;
 
-            // 1) SystemsPrefab
+            // 1) World systems (ТОЛЬКО world)
             if (systemsPrefab != null)
             {
                 SpawnSystemsAtCenter();
                 yield return null;
             }
 
-            // 2) Игрок
+            // 2) PlayerCore
             Vector3 spawnPos = GetSafePlayerSpawnPosition();
             Debug.Log("[RuntimeWorldGenerator] Player spawn at: " + spawnPos);
 
             playerInstance = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-            PlayerInstance = playerInstance;
 
+            // 🔑 ЯВНЫЙ БИНДИНГ
+            if (LocalPlayerController.I != null)
+                LocalPlayerController.I.Bind(playerInstance);
+
+            if (PlayerUIRoot.I != null)
+                PlayerUIRoot.I.Bind(playerInstance);
+
+            // для врагов / спавнеров
             if (InstancedSpawnerSystem.Instance != null)
                 InstancedSpawnerSystem.Instance.targetOverride = playerInstance.transform;
 
             yield return null;
 
-            // 3) Кастомный префаб
+            // 3) Кастомный префаб (опционально)
             if (customPrefab != null)
                 SpawnCustomPrefabNearPlayer();
-
-            worldReady = true;
         }
 
+        // ======================================================
+        // SPAWN HELPERS
+        // ======================================================
 
         /// <summary>
-        /// Находит безопасную позицию для спавна:
-        /// - несколько Raycast'ов сверху в разных точках;
-        /// - если все мимо, fallback по GetHeight.
+        /// Находит безопасную позицию для спавна игрока
         /// </summary>
         private Vector3 GetSafePlayerSpawnPosition()
         {
             int cs = worldConfig.chunkSize;
 
-            // центр первого чанка в мировых координатах
             float centerX = cs * 0.5f;
             float centerZ = cs * 0.5f;
 
@@ -149,25 +151,17 @@ namespace Features.Biomes.UnityIntegration
             return new Vector3(centerX, h + 2f, centerZ);
         }
 
-
-        private void SpawnSystemsInFront()
+        private void SpawnSystemsAtCenter()
         {
-            if (playerInstance == null || systemsPrefab == null)
-                return;
+            Vector3 pos = GetSafePlayerSpawnPosition();
 
-            Vector3 forwardPos = playerInstance.transform.position +
-                                 playerInstance.transform.forward * spawnDistanceForward +
-                                 Vector3.up * spawnHeightCheck;
+            systemsInstance = Instantiate(
+                systemsPrefab,
+                pos,
+                Quaternion.identity
+            );
 
-            if (Physics.Raycast(forwardPos, Vector3.down, out var hit, spawnHeightCheck * 2f))
-            {
-                systemsInstance = Instantiate(
-                    systemsPrefab,
-                    hit.point + Vector3.up * 1f,
-                    Quaternion.identity
-                );
-                systemsInstance.name = "GameSystems";
-            }
+            systemsInstance.name = "GameSystems";
         }
 
         private void SpawnCustomPrefabNearPlayer()
@@ -183,54 +177,21 @@ namespace Features.Biomes.UnityIntegration
                     startPos,
                     out Vector3 snapped,
                     out Quaternion rot,
-                    out float slope))
+                    out _))
             {
-                GameObject inst = Instantiate(customPrefab, snapped, rot);
-                inst.name = "CustomPrefab";
-
-                foreach (Transform child in inst.transform)
-                {
-                    Vector3 childStart = child.position + Vector3.up * 20f;
-
-                    if (GroundSnapUtility.TrySnapWithNormal(
-                            childStart,
-                            out Vector3 cPos,
-                            out Quaternion cRot,
-                            out float cSlope))
-                    {
-                        child.position = cPos;
-                        child.rotation = cRot * Quaternion.Euler(0, child.rotation.eulerAngles.y, 0);
-                    }
-                }
+                Instantiate(customPrefab, snapped, rot);
             }
-        }
-
-        private void SpawnSystemsAtCenter()
-        {
-            if (systemsPrefab == null)
-                return;
-
-            Vector3 pos = GetSafePlayerSpawnPosition();
-
-            systemsInstance = Instantiate(
-                systemsPrefab,
-                pos,
-                Quaternion.identity
-            );
-            systemsInstance.name = "GameSystems";
         }
 
         private bool ChunkExistsAndReady(Vector2Int c)
         {
-            // Ищем объект чанка в сцене
             string name = $"Chunk_{c.x}_{c.y}";
             var chunkGO = GameObject.Find(name);
+
             if (chunkGO == null)
                 return false;
 
-            // Collider должен уже создаться
             return chunkGO.GetComponentInChildren<MeshCollider>() != null;
         }
-
     }
 }

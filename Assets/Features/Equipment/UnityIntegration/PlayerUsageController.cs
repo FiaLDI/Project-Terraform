@@ -5,7 +5,7 @@ using Features.Player;
 
 namespace Features.Equipment.UnityIntegration
 {
-    public class PlayerUsageController : MonoBehaviour
+    public class PlayerUsageController : MonoBehaviour, IInputContextConsumer
     {
         private PlayerInputContext input;
 
@@ -19,49 +19,76 @@ namespace Features.Equipment.UnityIntegration
         private bool subscribed;
 
         // ======================================================
-        // LIFECYCLE
+        // INPUT BIND
         // ======================================================
 
-        private void OnEnable()
+        public void BindInput(PlayerInputContext ctx)
         {
-            if (input == null)
-                input = GetComponent<PlayerInputContext>();
+            if (input == ctx)
+                return;
+
+            Unsubscribe();
+
+            input = ctx;
 
             if (input == null)
             {
                 Debug.LogError(
-                    $"{nameof(PlayerUsageController)}: PlayerInputContext not found",
+                    $"{nameof(PlayerUsageController)}: BindInput with NULL",
                     this);
                 return;
             }
 
+            Subscribe();
+        }
+
+        private void OnEnable()
+        {
+            if (input != null)
+                Subscribe();
+        }
+
+        private void OnDisable()
+        {
+            Unsubscribe();
+        }
+
+        // ======================================================
+        // SUBSCRIBE
+        // ======================================================
+
+        private void Subscribe()
+        {
+            if (subscribed || input == null)
+                return;
+
             var p = input.Actions.Player;
 
-            p.Use.performed += OnPrimaryStart;
-            p.Use.canceled  += OnPrimaryStop;
+            p.FindAction("Use").performed += OnPrimaryStart;
+            p.FindAction("Use").canceled += OnPrimaryStop;
 
-            p.SecondaryUse.performed += OnSecondaryStart;
-            p.SecondaryUse.canceled  += OnSecondaryStop;
+            p.FindAction("SecondaryUse").performed += OnSecondaryStart;
+            p.FindAction("SecondaryUse").canceled += OnSecondaryStop;
 
-            p.Reload.performed += OnReload;
+            p.FindAction("Reload").performed += OnReload;
 
             subscribed = true;
         }
 
-        private void OnDisable()
+        private void Unsubscribe()
         {
             if (!subscribed || input == null)
                 return;
 
             var p = input.Actions.Player;
 
-            p.Use.performed -= OnPrimaryStart;
-            p.Use.canceled  -= OnPrimaryStop;
+            p.FindAction("Use").performed -= OnPrimaryStart;
+            p.FindAction("Use").canceled -= OnPrimaryStop;
 
-            p.SecondaryUse.performed -= OnSecondaryStart;
-            p.SecondaryUse.canceled  -= OnSecondaryStop;
+            p.FindAction("SecondaryUse").performed -= OnSecondaryStart;
+            p.FindAction("SecondaryUse").canceled -= OnSecondaryStop;
 
-            p.Reload.performed -= OnReload;
+            p.FindAction("Reload").performed -= OnReload;
 
             subscribed = false;
         }

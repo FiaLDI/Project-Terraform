@@ -1,4 +1,5 @@
 using UnityEngine;
+using Features.Player.UnityIntegration;
 
 namespace Features.Biomes.UnityIntegration
 {
@@ -14,30 +15,22 @@ namespace Features.Biomes.UnityIntegration
         public Mesh lod2Mesh;
 
         private MeshFilter mf;
-        private Transform player;
         private Mesh currentMesh;
 
         private void Awake()
         {
             mf = GetComponent<MeshFilter>();
-        }
-
-        private void Start()
-        {
-            FindPlayer();
             SetLODMesh(lod0Mesh);
         }
 
         private void Update()
         {
-            if (player == null)
-            {
-                FindPlayer();
-                if (player == null)
-                    return;
-            }
+            var registry = PlayerRegistry.Instance;
+            if (registry == null || registry.LocalPlayer == null)
+                return;
 
-            float dist = Vector3.Distance(player.position, transform.position);
+            Vector3 playerPos = registry.LocalPlayer.transform.position;
+            float dist = Vector3.Distance(playerPos, transform.position);
 
             if (dist > lod2Distance)
             {
@@ -54,12 +47,6 @@ namespace Features.Biomes.UnityIntegration
                 if (currentMesh != lod0Mesh)
                     SetLODMesh(lod0Mesh);
             }
-        }
-
-        private void FindPlayer()
-        {
-            if (RuntimeWorldGenerator.PlayerInstance != null)
-                player = RuntimeWorldGenerator.PlayerInstance.transform;
         }
 
         private void SetLODMesh(Mesh m)
