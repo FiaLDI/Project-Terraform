@@ -93,9 +93,12 @@ namespace Features.Buffs.UI
 
         private void HandleRemove(BuffInstance inst)
         {
-            if (!icons.TryGetValue(inst, out var ui)) return;
+            if (!icons.TryGetValue(inst, out var ui))
+                return;
 
-            Destroy(ui.gameObject);
+            if (ui != null) // Unity-null check
+                Destroy(ui.gameObject);
+
             icons.Remove(inst);
 
             Resort();
@@ -113,6 +116,31 @@ namespace Features.Buffs.UI
 
             for (int i = 0; i < sorted.Count; i++)
                 sorted[i].Value.transform.SetSiblingIndex(i);
+        }
+
+        private void OnDisable()
+        {
+            if (buffSystem != null)
+            {
+                buffSystem.OnBuffAdded -= HandleAdd;
+                buffSystem.OnBuffRemoved -= HandleRemove;
+            }
+
+            ClearAll();
+
+            buffSystem = null;
+            bound = false;
+        }
+
+        private void ClearAll()
+        {
+            foreach (var ui in icons.Values)
+            {
+                if (ui != null)
+                    Destroy(ui.gameObject);
+            }
+
+            icons.Clear();
         }
     }
 }

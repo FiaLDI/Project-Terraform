@@ -19,6 +19,7 @@ namespace Features.Buffs.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            Debug.Log("HOVER BUFF ICON", this);
             if (inst != null)
                 TooltipController.Instance?.ShowBuff(inst);
         }
