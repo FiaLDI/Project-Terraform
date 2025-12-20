@@ -29,6 +29,8 @@ namespace Features.Inventory.UnityIntegration
 
         private EquipmentManager equipment;
 
+        public bool IsReady { get; private set; }
+
         // ======================================================
         // LIFECYCLE
         // ======================================================
@@ -38,7 +40,9 @@ namespace Features.Inventory.UnityIntegration
             CreateModel();
             CreateService();
             InitEquipment();
-            
+
+            IsReady = true;
+            Debug.Log("XXX[InventoryManager] OnReady invoked", this);
             OnReady?.Invoke();
         }
 

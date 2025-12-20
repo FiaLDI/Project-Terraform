@@ -27,8 +27,6 @@ public class AmmoCounterUI : MonoBehaviour
 
     private void Update()
     {
-        //Debug.Log($"AmmoUI: provider={(ammoProvider != null)}");
-
         if (ammoProvider == null)
             return;
 
@@ -40,15 +38,12 @@ public class AmmoCounterUI : MonoBehaviour
         IUsable right,
         bool twoHanded)
     {
-        Debug.Log($"[AmmoUI] HandsUpdated called. Right = {right?.GetType().Name}");
 
         if (right is UsableGun gun)
         {
-            Debug.Log("[AmmoUI] Right hand IS UsableGun");
 
             if (gun.AmmoProvider != null)
             {
-                Debug.Log("[AmmoUI] AmmoProvider OK");
                 ammoProvider = gun.AmmoProvider;
                 root.SetActive(true);
                 return;

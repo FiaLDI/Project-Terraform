@@ -22,8 +22,6 @@ namespace Features.Camera.UnityIntegration
 
             if (Runtime == null)
                 Runtime = new CameraRuntimeService();
-
-            Debug.Log("[CameraServiceProvider] Initialized (Control + Runtime)");
         }
     }
 }

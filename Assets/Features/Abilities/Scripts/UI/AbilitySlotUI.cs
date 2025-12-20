@@ -237,10 +237,6 @@ namespace Features.Abilities.UI
         {
             if (warnedMissingRefs) return;
             warnedMissingRefs = true;
-
-            Debug.LogWarning(
-                $"[AbilitySlotUI] Missing reference: {field} on {name}. UI will still work safely."
-            );
         }
     }
 }

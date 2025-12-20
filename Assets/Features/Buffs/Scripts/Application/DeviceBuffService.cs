@@ -18,7 +18,6 @@ public class PlayerDeviceBuffService : MonoBehaviour
         }
 
         I = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     public void BuffAllPlayerDevices(GameObject player, BuffSO buff, float duration = -1f)

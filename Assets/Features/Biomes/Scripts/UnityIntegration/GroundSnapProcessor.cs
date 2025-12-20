@@ -5,7 +5,8 @@ public class GroundSnapProcessor : MonoBehaviour
     private void Update()
     {
         // Проходим всех PendingGroundSnap
-        var snaps = FindObjectsOfType<PendingGroundSnap>();
+        var snaps = Object.FindObjectsByType<PendingGroundSnap>(
+            FindObjectsSortMode.None);
 
         foreach (var s in snaps)
         {

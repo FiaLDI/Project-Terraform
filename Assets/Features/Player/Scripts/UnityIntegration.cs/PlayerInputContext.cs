@@ -15,11 +15,6 @@ namespace Features.Player
 
             Actions = new GameInput(PlayerInput.actions);
 
-            Actions.Player.Disable();
-            Actions.UI.Disable();
-
-            Actions.Player.Enable();
-
             PlayerInput.ActivateInput();
         }
     }

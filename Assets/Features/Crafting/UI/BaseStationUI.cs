@@ -52,7 +52,7 @@ public abstract class BaseStationUI : MonoBehaviour, IUIScreen
     // STACK API
     // =========================
 
-    public void Open()
+    public virtual void Open()
     {
         UIStackManager.I.Push(this);
     }

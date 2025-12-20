@@ -19,7 +19,6 @@ namespace Features.Quests.UnityIntegration
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
 
         public void Bind(QuestService service)

@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using Features.Inventory.Domain;
-using Features.Inventory.UnityIntegration;
 using Features.Menu.Tooltip;
 
 namespace Features.Inventory.UI
@@ -18,13 +17,15 @@ namespace Features.Inventory.UI
         [SerializeField] private GameObject highlight;
 
         public static InventorySlotUI HoveredSlot { get; private set; }
+        public static InventorySlotUI LastInteractedSlot { get; private set; }
+
 
         public InventorySlot BoundSlot => boundSlot;
-
         public InventorySection Section { get; private set; }
         public int Index { get; private set; }
 
         private InventorySlot boundSlot;
+        private InventoryDragController dragController;
 
         // ===========================================================
         // BINDING
@@ -74,39 +75,54 @@ namespace Features.Inventory.UI
         // DRAG & DROP
         // ===========================================================
 
+        private InventoryDragController Drag
+        {
+            get
+            {
+                if (dragController == null)
+                    dragController =
+                        GetComponentInParent<InventoryDragController>(true);
+
+                return dragController;
+            }
+        }
+
         public void OnBeginDrag(PointerEventData eventData)
         {
+            Debug.Log("SLOT BEGIN DRAG: " + gameObject.name, this);
+
             if (boundSlot?.item == null)
                 return;
+            LastInteractedSlot = this;
 
             TooltipController.Instance?.Hide();
 
-            InventoryDragController.Instance.BeginDrag(
-                this,
-                boundSlot,
-                eventData
-            );
+            InventoryDragController.Instance?.BeginDrag(this, boundSlot, eventData);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            InventoryDragController.Instance.UpdateDrag(eventData);
+            InventoryDragController.Instance?.UpdateDrag(eventData);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            InventoryDragController.Instance.EndDrag(eventData);
+            InventoryDragController.Instance?.EndDrag(eventData);
         }
 
         public void OnDrop(PointerEventData eventData)
         {
-            InventoryDragController.Instance.DropOnto(this, boundSlot);
+            InventoryDragController.Instance?.DropOnto(this, boundSlot);
         }
+
 
         private void OnDisable()
         {
             if (HoveredSlot == this)
                 HoveredSlot = null;
+
+            if (LastInteractedSlot == this)
+                LastInteractedSlot = null;
 
             TooltipController.Instance?.Hide();
         }
@@ -121,6 +137,7 @@ namespace Features.Inventory.UI
                 return;
 
             HoveredSlot = this;
+            LastInteractedSlot = this;
             TooltipController.Instance?.ShowForItemInstance(boundSlot.item, this);
         }
 

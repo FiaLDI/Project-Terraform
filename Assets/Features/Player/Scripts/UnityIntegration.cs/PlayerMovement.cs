@@ -83,8 +83,15 @@ namespace Features.Player.UnityIntegration
             else
             {
                 IsCrouching = true;
-                controller.height = crouchHeight;
-                controller.center = new Vector3(0, crouchHeight / 2f, 0);
+                float targetHeight = IsCrouching ? crouchHeight : standHeight;
+                controller.height = Mathf.Lerp(
+                    controller.height,
+                    targetHeight,
+                    crouchTransitionSpeed * Time.deltaTime
+                );
+
+                controller.center = new Vector3(0, controller.height / 2f, 0);
+
             }
         }
 

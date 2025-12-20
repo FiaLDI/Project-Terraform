@@ -19,7 +19,6 @@ namespace Features.Camera.UnityIntegration
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
 
         public void RegisterCamera(UnityEngine.Camera cam)

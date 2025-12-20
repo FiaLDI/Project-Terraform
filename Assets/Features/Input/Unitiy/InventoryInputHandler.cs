@@ -5,6 +5,7 @@ using Features.Inventory.UI;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player;
+using Features.Input;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -16,8 +17,10 @@ namespace Features.Inventory.UnityIntegration
         private IInventoryContext inventory;
         private InventoryUIView inventoryUI;
 
-        private InputAction openInventoryPlayer;
-        private InputAction openInventoryUI;
+        private InputAction openInventoryPlayer;   // Player/OpenInventory (I)
+        private InputAction closeInventoryUI;      // UI/CloseInventory (I)
+        private InputAction cancelUI;               // UI/Cancel (Escape)
+
         private InputAction equipFirst;
         private InputAction equipSecond;
         private InputAction scrollWheel;
@@ -26,7 +29,7 @@ namespace Features.Inventory.UnityIntegration
         private bool subscribed;
 
         // ======================================================
-        // BIND INPUT (ТОЛЬКО ПОДПИСКИ)
+        // BIND INPUT
         // ======================================================
 
         public void BindInput(PlayerInputContext ctx)
@@ -42,29 +45,40 @@ namespace Features.Inventory.UnityIntegration
 
             input = ctx;
 
-            inventoryUI = FindObjectOfType<InventoryUIView>(true);
+            inventoryUI = Object.FindAnyObjectByType<InventoryUIView>(
+                FindObjectsInactive.Include);
             if (inventoryUI == null)
             {
                 Debug.LogError("[InventoryInputHandler] InventoryUIView not found");
                 return;
             }
 
-            var ui = input.Actions.UI;
             var player = input.Actions.Player;
+            var ui     = input.Actions.UI;
 
+            // ===== OPEN (ТОЛЬКО В GAMEPLAY) =====
             openInventoryPlayer = player.FindAction("OpenInventory", true);
-            openInventoryUI     = ui.FindAction("OpenInventory", true);
-            equipFirst          = ui.FindAction("EquipFirst", true);
-            equipSecond         = ui.FindAction("EquipSecond", true);
-            scrollWheel         = ui.FindAction("ScrollWheel", true);
-            drop                = player.FindAction("Drop", true);
+            openInventoryPlayer.started += OnOpenInventory;
 
-            openInventoryPlayer.performed += OnToggleInventory;
-            openInventoryUI.performed     += OnToggleInventory;
-            equipFirst.performed          += _ => SelectHotbar(0);
-            equipSecond.performed         += _ => SelectHotbar(1);
-            scrollWheel.performed         += OnScroll;
-            drop.performed                += _ => DropFromHands();
+            // ===== CLOSE (ТОЛЬКО В UI) =====
+            closeInventoryUI = ui.FindAction("CloseInventory", true);
+            cancelUI         = ui.FindAction("Cancel", true);
+
+            closeInventoryUI.started += OnCloseInventory;
+            cancelUI.started         += OnCloseInventory;
+
+            // ===== OTHER UI INPUT =====
+            equipFirst  = ui.FindAction("EquipFirst", true);
+            equipSecond = ui.FindAction("EquipSecond", true);
+            scrollWheel = ui.FindAction("ScrollWheel", true);
+
+            equipFirst.performed  += _ => SelectHotbar(0);
+            equipSecond.performed += _ => SelectHotbar(1);
+            scrollWheel.performed += OnScroll;
+
+            // ===== DROP (GAMEPLAY) =====
+            drop = player.FindAction("Drop", true);
+            drop.performed += _ => DropFromHands();
 
             subscribed = true;
 
@@ -76,31 +90,35 @@ namespace Features.Inventory.UnityIntegration
             if (!subscribed)
                 return;
 
-            openInventoryPlayer.performed -= OnToggleInventory;
-            openInventoryUI.performed     -= OnToggleInventory;
-            scrollWheel.performed         -= OnScroll;
+            openInventoryPlayer.started -= OnOpenInventory;
+            closeInventoryUI.started    -= OnCloseInventory;
+            cancelUI.started            -= OnCloseInventory;
+            scrollWheel.performed       -= OnScroll;
 
             subscribed = false;
         }
 
         // ======================================================
-        // TOGGLE INVENTORY
+        // OPEN / CLOSE INVENTORY
         // ======================================================
 
-        private void OnToggleInventory(InputAction.CallbackContext _)
+        private void OnOpenInventory(InputAction.CallbackContext ctx)
         {
-            if (UIStackManager.I == null)
+            if (InputModeManager.I.CurrentMode != InputMode.Gameplay)
                 return;
-
-            if (UIStackManager.I.HasScreens)
-            {
-                if (UIStackManager.I.Peek() == inventoryUI)
-                    UIStackManager.I.Pop();
-
-                return;
-            }
 
             inventoryUI.Open();
+        }
+
+        private void OnCloseInventory(InputAction.CallbackContext ctx)
+        {
+            if (InputModeManager.I.CurrentMode != InputMode.Inventory)
+                return;
+
+            if (ReferenceEquals(UIStackManager.I.Peek(), inventoryUI))
+            {
+                UIStackManager.I.Pop();
+            }
         }
 
         // ======================================================
@@ -190,9 +208,7 @@ namespace Features.Inventory.UnityIntegration
             {
                 rb.isKinematic = false;
                 rb.useGravity = true;
-                rb.AddForce(
-                    player.transform.forward * 2f,
-                    ForceMode.Impulse);
+                rb.AddForce(player.transform.forward * 2f, ForceMode.Impulse);
             }
         }
     }

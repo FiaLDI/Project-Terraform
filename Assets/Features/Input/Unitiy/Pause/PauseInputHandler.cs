@@ -10,7 +10,7 @@ public class PauseInputHandler : MonoBehaviour, IInputContextConsumer
 
     public void BindInput(PlayerInputContext ctx)
     {
-        pauseMenu = FindObjectOfType<PauseMenu>(true);
+        pauseMenu = Object.FindAnyObjectByType<PauseMenu>(FindObjectsInactive.Include);
         if (pauseMenu == null)
         {
             Debug.LogError("[PauseInputHandler] PauseMenu not found");

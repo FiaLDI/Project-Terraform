@@ -7,6 +7,8 @@ public sealed class PlayerSpawner : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private float retryDelay = 0.5f;
 
+    private bool spawned;
+
     private void Start()
     {
         Debug.Log($"[PlayerSpawner] Start | id={GetInstanceID()}", this);
@@ -17,9 +19,9 @@ public sealed class PlayerSpawner : MonoBehaviour
     {
         ScenePlayerSpawnPoint spawn = null;
 
-        while (spawn == null)
+        while (!spawned && spawn == null)
         {
-            spawn = FindObjectOfType<ScenePlayerSpawnPoint>();
+            spawn = Object.FindAnyObjectByType<ScenePlayerSpawnPoint>();
 
             if (spawn == null)
             {
@@ -28,11 +30,24 @@ public sealed class PlayerSpawner : MonoBehaviour
             }
         }
 
+        if (spawned)
+            yield break;
+
         SpawnPlayer(spawn);
     }
 
     private void SpawnPlayer(ScenePlayerSpawnPoint spawn)
     {
+        if (spawned)
+        {
+            Debug.LogWarning("[PlayerSpawner] Player already spawned, ignoring");
+            return;
+        }
+
+        spawned = true;
+
+        Debug.Log("[PlayerSpawner] Spawning player", this);
+
         var player = Instantiate(
             playerPrefab,
             spawn.transform.position,
@@ -51,5 +66,14 @@ public sealed class PlayerSpawner : MonoBehaviour
         }
 
         LocalPlayerController.I.Bind(player);
+
+        if (Features.Player.UI.PlayerUIRoot.I != null)
+        {
+            Features.Player.UI.PlayerUIRoot.I.Bind(player);
+        }
+        else
+        {
+            Debug.LogError("[PlayerSpawner] PlayerUIRoot not found");
+        }
     }
 }

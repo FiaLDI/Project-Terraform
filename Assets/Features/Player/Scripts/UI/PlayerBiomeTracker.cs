@@ -23,7 +23,7 @@ public class PlayerBiomeTracker : MonoBehaviour
     private void Start()
     {
         if (ui == null)
-            ui = FindObjectOfType<BiomeUIController>();
+            ui = Object.FindAnyObjectByType<BiomeUIController>();
 
         checkTimer = checkInterval;
         cooldownTimer = 0f;
@@ -44,32 +44,25 @@ public class PlayerBiomeTracker : MonoBehaviour
 
     private void UpdateBiome()
     {
-        // Получаем позицию игрока
         Vector3 pos = transform.position;
 
-        // Определяем chunk по позиции
         Vector2Int chunkPos = new Vector2Int(
             Mathf.FloorToInt(pos.x / world.chunkSize),
             Mathf.FloorToInt(pos.z / world.chunkSize)
         );
 
-        // Получаем биом
         BiomeConfig biome = world.GetBiomeAtChunk(chunkPos);
         if (biome == null)
             return;
 
-        // Обновляем градиент тумана каждый тик
         ui.UpdateFogGradient(biome.fogLightColor, biome.fogHeavyColor, biome.fogGradientScale);
 
-        // Если биом прежний или cooldown не вышел — ничего не делаем
         if (biome == lastBiome || cooldownTimer > 0f)
             return;
 
-        // Обновляем текущий биом
         lastBiome = biome;
         cooldownTimer = biomeChangeCooldown;
 
-        // UI обновление
         ui.SetBiome(biome.name, biome.uiColor);
         ui.ShowPopup(biome.name, biome.uiColor);
     }

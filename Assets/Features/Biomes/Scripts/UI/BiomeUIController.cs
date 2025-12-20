@@ -23,21 +23,18 @@ namespace Features.Biomes.Runtime.Visual
 
         private Coroutine popupRoutine;
 
-        // Кэш для тумана и материалов, чтобы не дергать FindObjectOfType / shared材
         private BiomeFog fog;
         private Material labelMatInstance;
 
         private void Awake()
         {
-            // Клонируем материал, чтобы не портить шрифт глобально
             if (biomeLabel != null && biomeLabel.fontMaterial != null)
             {
                 labelMatInstance = Instantiate(biomeLabel.fontMaterial);
                 biomeLabel.fontMaterial = labelMatInstance;
             }
 
-            // Попробуем найти BiomeFog один раз
-            fog = FindObjectOfType<BiomeFog>();
+            fog = Object.FindAnyObjectByType<BiomeFog>();
 
             if (biomePopup != null)
             {

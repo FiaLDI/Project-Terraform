@@ -22,7 +22,6 @@ namespace Features.Input
 
         private void Awake()
         {
-             Debug.Log("[InputModeManager] Awake");
             if (I != null && I != this)
             {
                 Destroy(gameObject);
@@ -46,8 +45,6 @@ namespace Features.Input
                 Debug.LogError("[InputModeManager] Bind called with NULL input");
                 return;
             }
-
-            Debug.Log("[InputModeManager] SWITCH TO GAMEPLAY");
 
             input.PlayerInput.SwitchCurrentActionMap("Player");
 
@@ -112,8 +109,8 @@ namespace Features.Input
 
         private void EnableGameplay()
         {
-            Debug.Log("[InputMode] SWITCH TO PLAYER");
             input.PlayerInput.SwitchCurrentActionMap("Player");
+            Debug.Log("CURRENT MAP = " + input.PlayerInput.currentActionMap?.name);
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -122,8 +119,8 @@ namespace Features.Input
 
         private void EnableUI(bool pauseTime)
         {
-            Debug.Log("[InputMode] SWITCH TO UI");
             input.PlayerInput.SwitchCurrentActionMap("UI");
+            Debug.Log("CURRENT MAP = " + input.PlayerInput.currentActionMap?.name);
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;

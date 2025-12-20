@@ -1,7 +1,7 @@
 using UnityEngine;
 using Features.Inventory.Domain;
-using Features.Player;
 using Features.Inventory.UnityIntegration;
+using Features.Input;
 
 namespace Features.Inventory.UI
 {
@@ -26,55 +26,69 @@ namespace Features.Inventory.UI
 
         public InputMode Mode => InputMode.Inventory;
 
-        private IInventoryContext inventory;
+
+        private InventoryManager inventory;
         private bool initialized;
+        private bool pendingShow;
 
         // ======================================================
         // LIFECYCLE
         // ======================================================
 
-        private void Start()
+        private void Awake()
         {
-            if (LocalPlayerContext.IsReady)
-            {
-                Init();
-            }
-            else
-            {
-                LocalPlayerContext.OnReady += Init;
-            }
-
-            bagWindow.SetActive(false);
+            if (bagWindow != null)
+                bagWindow.SetActive(false);
+            
         }
-
-        private void OnDestroy()
-        {
-            LocalPlayerContext.OnReady -= Init;
-
-            if (inventory != null)
-                inventory.Service.OnChanged -= Refresh;
-        }
-
-        // ======================================================
-        // INIT
-        // ======================================================
-
-        private void Init()
+        private void OnPlayerBound(GameObject player)
         {
             if (initialized)
                 return;
 
-            var inv = LocalPlayerContext.Inventory;
-            if (inv == null)
+            Debug.Log("[InventoryUIView] OnPlayerBound: " + player.name, this);
+
+            inventory = player.GetComponent<InventoryManager>();
+            if (inventory == null)
+            {
+                Debug.LogError(
+                    "[InventoryUIView] InventoryManager not found on player",
+                    player
+                );
+                return;
+            }
+
+            if (inventory.IsReady)
+                OnInventoryReady();
+            else
+                inventory.OnReady += OnInventoryReady;
+        }
+
+        private void OnInventoryReady()
+        {
+            if (initialized)
                 return;
 
-            inv.OnReady += () =>
+            inventory.OnReady -= OnInventoryReady;
+
+            if (inventory == null || inventory.Service == null)
             {
-                inventory = inv;
-                inventory.Service.OnChanged += Refresh;
-                Refresh();
-                initialized = true;
-            };
+                Debug.LogError("[InventoryUIView] Inventory not valid on ready", this);
+                return;
+            }
+
+            inventory.Service.OnChanged += Refresh;
+
+            initialized = true;
+            Refresh();
+
+            Debug.Log("[InventoryUIView] READY + refreshed", this);
+
+            if (pendingShow)
+            {
+                pendingShow = false;
+                Show();
+            }
         }
 
         // ======================================================
@@ -83,10 +97,18 @@ namespace Features.Inventory.UI
 
         public void Show()
         {
+            if (!initialized)
+            {
+                pendingShow = true;
+                return;
+            }
+
             bagWindow.SetActive(true);
 
             if (inventoryInput != null)
                 inventoryInput.enabled = true;
+
+            InputModeManager.I.SetMode(InputMode.Inventory);
         }
 
         public void Hide()
@@ -95,11 +117,9 @@ namespace Features.Inventory.UI
 
             if (inventoryInput != null)
                 inventoryInput.enabled = false;
-        }
 
-        // ======================================================
-        // STACK API
-        // ======================================================
+            InputModeManager.I.SetMode(InputMode.Gameplay);
+        }
 
         public void Open()
         {
@@ -116,6 +136,8 @@ namespace Features.Inventory.UI
                 return;
 
             var model = inventory.Model;
+            if (model == null)
+                return;
 
             // ==== BAG ====
             for (int i = 0; i < bagSlots.Length && i < model.main.Count; i++)

@@ -50,7 +50,6 @@ namespace Features.Player.UnityIntegration
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
 
         // =======================================================================

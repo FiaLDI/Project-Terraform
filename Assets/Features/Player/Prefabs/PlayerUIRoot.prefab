@@ -262,7 +262,6 @@ Transform:
   - {fileID: 9147812092020890523}
   - {fileID: 2816336541167010056}
   - {fileID: 1471926977407676835}
-  - {fileID: 1591283717414539998}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2453713052233347686
@@ -2320,7 +2319,7 @@ CanvasGroup:
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
-  m_BlocksRaycasts: 0
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!114 &7333237443441740417
 MonoBehaviour:
@@ -7340,7 +7339,7 @@ GameObject:
   - component: {fileID: 1591283717414539998}
   - component: {fileID: 7884208729151427699}
   m_Layer: 0
-  m_Name: Drag
+  m_Name: "Drag\u0421ontroller"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7355,11 +7354,11 @@ Transform:
   m_GameObject: {fileID: 5463416726269167169}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.3403406, y: 0, z: 35.268795}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -910.8122, y: -583.8414, z: 21.972752}
+  m_LocalScale: {x: 1.7459372, y: 1.7459372, z: 1.7459372}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2856212247140973098}
+  m_Father: {fileID: 9147812092020890523}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7884208729151427699
 MonoBehaviour:
@@ -11358,7 +11357,6 @@ GameObject:
   - component: {fileID: 822971000044885827}
   - component: {fileID: 6181718844445558880}
   - component: {fileID: 2703440073952305680}
-  - component: {fileID: 7326451550526311171}
   m_Layer: 0
   m_Name: Hub UI
   m_TagString: Untagged
@@ -11389,6 +11387,7 @@ RectTransform:
   - {fileID: 3728452664005581087}
   - {fileID: 756211731494738656}
   - {fileID: 7901950817420053937}
+  - {fileID: 1591283717414539998}
   m_Father: {fileID: 2856212247140973098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -11525,7 +11524,7 @@ MonoBehaviour:
   leftHandSlot: {fileID: 2616253479953918566}
   rightHandSlot: {fileID: 2735017754305288789}
   hotbarSelection: {fileID: 0}
-  inventoryInput: {fileID: 7326451550526311171}
+  inventoryInput: {fileID: 0}
 --- !u!114 &2703440073952305680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11540,18 +11539,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AmmoCounterUI
   root: {fileID: 3809207614031808909}
   ammoText: {fileID: 8131394080081947312}
---- !u!114 &7326451550526311171
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8532635294624535066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 372c92c3b2a4ba946aa194349b3ec3fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryUIInputController
 --- !u!1 &8626191399318619395
 GameObject:
   m_ObjectHideFlags: 0

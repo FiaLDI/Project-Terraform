@@ -35,22 +35,26 @@ namespace Features.Inventory.Domain
 
         public bool AddItem(ItemInstance inst)
         {
-            // 1️⃣ СТАК — ТОЛЬКО В BAG
+            if (inst == null || inst.quantity <= 0)
+                return false;
+
             if (inst.IsStackable)
             {
-                var stack = model.main
-                    .FirstOrDefault(s =>
-                        s.item != null &&
-                        s.item.itemDefinition == inst.itemDefinition &&
-                        s.item.level == inst.level &&
-                        s.item.quantity < inst.MaxStack);
-
-                if (stack != null)
+                foreach (var slot in model.main)
                 {
-                    int canAdd = inst.MaxStack - stack.item.quantity;
+                    var item = slot.item;
+                    if (item == null)
+                        continue;
+
+                    if (item.itemDefinition != inst.itemDefinition ||
+                        item.level != inst.level ||
+                        item.quantity >= inst.MaxStack)
+                        continue;
+
+                    int canAdd = inst.MaxStack - item.quantity;
                     int add = Math.Min(canAdd, inst.quantity);
 
-                    stack.item.quantity += add;
+                    item.quantity += add;
                     inst.quantity -= add;
 
                     if (inst.quantity <= 0)
@@ -61,20 +65,23 @@ namespace Features.Inventory.Domain
                 }
             }
 
-            // 2️⃣ ПУСТЫЕ СЛОТЫ BAG
             foreach (var slot in model.main)
             {
-                if (slot.item == null)
-                {
-                    slot.item = inst;
-                    OnChanged?.Invoke();
-                    return true;
-                }
+                if (slot.item != null)
+                    continue;
+
+                slot.item = inst;
+
+                OnItemAdded?.Invoke(inst);
+
+                OnChanged?.Invoke();
+                return true;
             }
 
-            // 3️⃣ НИКАКОГО AUTO-ADD В HOTBAR
             return false;
         }
+
+
 
 
         // ===============================================================
@@ -151,35 +158,29 @@ namespace Features.Inventory.Domain
             if (from == null || to == null || from.item == null)
                 return false;
 
-            // 🚫 нельзя класть в левую руку, если справа двуручный
             if (toSection == InventorySection.LeftHand &&
                 model.rightHand.item?.itemDefinition?.isTwoHanded == true)
                 return false;
 
-            // 🚫 если переносим двуручный в правую руку — левую очищаем
             if (toSection == InventorySection.RightHand &&
                 from.item?.itemDefinition?.isTwoHanded == true)
                 model.leftHand.item = null;
 
-            // ✅ Hand slots: делаем нормальный swap hand <-> other
             bool fromIsHand = fromSection is InventorySection.RightHand or InventorySection.LeftHand;
             bool toIsHand   = toSection   is InventorySection.RightHand or InventorySection.LeftHand;
 
             if (fromIsHand || toIsHand)
             {
-                // swap между from и to
                 var tmp = to.item;
                 to.item = from.item;
                 from.item = tmp;
 
-                // после любых операций с правой рукой — применить двуручность
                 HandleTwoHandedIfNeeded();
 
                 OnChanged?.Invoke();
                 return true;
             }
 
-            // ✅ обычные секции (bag/hotbar) — swap как раньше
             {
                 var tmp = to.item;
                 to.item = from.item;

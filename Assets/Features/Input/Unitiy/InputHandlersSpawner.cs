@@ -21,8 +21,7 @@ public sealed class InputHandlersSpawner : MonoBehaviour
         Spawn<UIBackInputHandler>(ctx);
         Spawn<InventoryInputHandler>(ctx);
         Spawn<QuestJournalInputHandler>(ctx);
-
-        Debug.Log("[InputHandlersSpawner] All handlers spawned");
+        Spawn<InventoryUIInputController>(ctx);
     }
 
     private void Spawn<T>(PlayerInputContext ctx)

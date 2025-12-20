@@ -18,7 +18,6 @@ public sealed class LocalPlayerController : MonoBehaviour
         }
 
         I = this;
-        DontDestroyOnLoad(gameObject);
 
         inputContext = GetComponent<PlayerInputContext>();
         if (inputContext == null)

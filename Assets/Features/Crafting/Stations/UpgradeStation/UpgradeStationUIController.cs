@@ -177,8 +177,8 @@ public class UpgradeStationUIController : BaseStationUI
         recipePanel.Clear();
     }
 
-    public void Open()
+    public override void Open()
     {
-        UIStackManager.I.Push(this);
+        base.Open();
     }
 }

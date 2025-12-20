@@ -49,7 +49,7 @@ namespace Features.Abilities.Application
         /// </summary>
         private IEnumerator DelayedInit()
         {
-            yield return null; // ждём кадр
+            yield return null;
 
             var statsAdapter = GetComponent<StatsFacadeAdapter>();
             if (statsAdapter != null)
@@ -66,9 +66,8 @@ namespace Features.Abilities.Application
             if (executor == null)
                 executor = AbilityExecutor.I;
 
-            // 🟢 AbilityService теперь работает без Camera
             _service = new AbilityService(
-                owner: (object)gameObject,     // передаём как object (Domain-safe)
+                owner: (object)gameObject, 
                 energy: _energy,
                 groundMask: groundMask,
                 executor: executor
@@ -80,6 +79,7 @@ namespace Features.Abilities.Application
             _service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
             _service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
             _service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
+            _service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
         }
 
         private void LateUpdate()

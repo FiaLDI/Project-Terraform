@@ -50,9 +50,9 @@ public class WorkbenchUIController : BaseStationUI
         });
     }
 
-    public void Open()
+    public override void Open()
     {
-        UIStackManager.I.Push(this);
+        base.Open();
     }
 
 

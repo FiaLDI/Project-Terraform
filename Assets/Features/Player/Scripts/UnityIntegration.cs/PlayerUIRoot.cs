@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Features.Player.UI
@@ -7,6 +8,8 @@ namespace Features.Player.UI
         public static PlayerUIRoot I { get; private set; }
 
         private GameObject boundPlayer;
+
+        public event Action<GameObject> OnPlayerBound;
 
         private void Awake()
         {
@@ -37,14 +40,16 @@ namespace Features.Player.UI
 
             boundPlayer = player;
 
-            // Рассылаем всем UI-компонентам
+            var drag = GetComponentInChildren<InventoryDragController>(true);
+            if (drag != null)
+                drag.BindPlayer(player);
+
             BroadcastMessage(
                 "OnPlayerBound",
                 player,
                 SendMessageOptions.DontRequireReceiver
             );
-
-            Debug.Log("[PlayerUIRoot] Bound to player: " + player.name);
+            OnPlayerBound?.Invoke(player);
         }
 
         public GameObject BoundPlayer => boundPlayer;

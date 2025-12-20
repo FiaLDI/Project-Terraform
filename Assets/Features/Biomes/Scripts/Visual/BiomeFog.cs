@@ -22,7 +22,6 @@ namespace Features.Biomes.Runtime.Visual
         {
             if (RuntimeWorldGenerator.World == null)
             {
-                Debug.LogWarning("[BiomeFog] No world config");
                 enabled = false;
                 return;
             }

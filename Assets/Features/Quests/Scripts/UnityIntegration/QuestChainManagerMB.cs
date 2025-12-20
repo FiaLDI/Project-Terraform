@@ -14,7 +14,7 @@ namespace Features.Quests.UnityIntegration
         private void Awake()
         {
             if (questManager == null)
-                questManager = FindObjectOfType<QuestManagerMB>();
+                questManager = Object.FindAnyObjectByType<QuestManagerMB>();
         }
 
         private void Start()

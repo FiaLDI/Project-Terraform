@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.Generic;
 
 namespace Features.Quests.Domain
@@ -80,3 +81,4 @@ namespace Features.Quests.Domain
         }
     }
 }
+#nullable restore

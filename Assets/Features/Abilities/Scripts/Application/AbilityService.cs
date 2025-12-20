@@ -29,6 +29,8 @@ namespace Features.Abilities.Application
         public event Action<AbilitySO> OnChannelStarted;
         public event Action<AbilitySO, float, float> OnChannelProgress;
         public event Action<AbilitySO> OnChannelCompleted;
+        public event Action<AbilitySO> OnChannelInterrupted;
+
 
         private bool _isChanneling;
         private AbilitySO _channelAbility;
@@ -171,6 +173,20 @@ namespace Features.Abilities.Application
             OnChannelCompleted?.Invoke(ab);
             _cooldowns[ab] = ab.cooldown;
         }
+
+        public void InterruptChannel()
+        {
+            if (!_isChanneling)
+                return;
+
+            var ab = _channelAbility;
+
+            _isChanneling = false;
+            _channelAbility = null;
+
+            OnChannelInterrupted?.Invoke(ab);
+        }
+
 
         // ============================================================
         // CONTEXT BUILDING

@@ -20,7 +20,9 @@ namespace Features.Quests.UnityIntegration
             if (subscribed)
                 return;
 
-            questUI = FindObjectOfType<QuestUIRuntime>(true);
+            questUI = Object.FindAnyObjectByType<QuestUIRuntime>(
+                FindObjectsInactive.Include);
+
             if (questUI == null)
             {
                 Debug.LogError("[QuestJournalInputHandler] QuestUIRuntime not found");

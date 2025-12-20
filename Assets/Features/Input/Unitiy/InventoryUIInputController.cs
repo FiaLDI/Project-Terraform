@@ -1,10 +1,11 @@
+using System.Collections.Generic;
+using Features.Input;
+using Features.Inventory.Domain;
 using Features.Inventory.UI;
+using Features.Player;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using System.Collections.Generic;
-using Features.Input;
-using Features.Player;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -14,7 +15,7 @@ namespace Features.Inventory.UnityIntegration
         private bool subscribed;
 
         // ======================================================
-        // BIND INPUT (от LocalPlayerController)
+        // BIND INPUT
         // ======================================================
 
         public void BindInput(PlayerInputContext ctx)
@@ -33,7 +34,6 @@ namespace Features.Inventory.UnityIntegration
                     this);
                 return;
             }
-
             Subscribe();
         }
 
@@ -57,10 +57,10 @@ namespace Features.Inventory.UnityIntegration
             if (subscribed || input == null)
                 return;
 
-            var inv = input.Actions.UI;
+            var ui = input.Actions.UI;
 
-            inv.FindAction("DropOne").performed += OnDropOne;
-            inv.FindAction("DropAll").performed += OnDropAll;
+            ui.FindAction("DropOne", true).performed += OnDropOne;
+            ui.FindAction("DropAll", true).performed += OnDropAll;
 
             subscribed = true;
         }
@@ -70,10 +70,10 @@ namespace Features.Inventory.UnityIntegration
             if (!subscribed || input == null)
                 return;
 
-            var inv = input.Actions.UI;
+            var ui = input.Actions.UI;
 
-            inv.FindAction("DropOne").performed -= OnDropOne;
-            inv.FindAction("DropAll").performed -= OnDropAll;
+            ui.FindAction("DropOne", true).performed -= OnDropOne;
+            ui.FindAction("DropAll", true).performed -= OnDropAll;
 
             subscribed = false;
         }
@@ -84,11 +84,13 @@ namespace Features.Inventory.UnityIntegration
 
         private void OnDropOne(InputAction.CallbackContext _)
         {
+            Debug.Log("DROP ONE INPUT");
             TryDrop(dropAll: false);
         }
 
         private void OnDropAll(InputAction.CallbackContext _)
         {
+            Debug.Log("DROP ALL INPUT");
             TryDrop(dropAll: true);
         }
 
@@ -98,12 +100,14 @@ namespace Features.Inventory.UnityIntegration
 
         private void TryDrop(bool dropAll)
         {
-            if (InputModeManager.I.CurrentMode != InputMode.Inventory)
-                return;
+            // 1. Берём слот
+            InventorySlotUI slotUI =
+                InventorySlotUI.HoveredSlot ??
+                InventorySlotUI.LastInteractedSlot;
 
-            InventorySlotUI slotUI = InventorySlotUI.HoveredSlot;
-
-            if (slotUI == null && EventSystem.current != null && Mouse.current != null)
+            if (slotUI == null &&
+                EventSystem.current != null &&
+                Mouse.current != null)
             {
                 var results = new List<RaycastResult>();
                 var pointerData = new PointerEventData(EventSystem.current)
@@ -124,8 +128,14 @@ namespace Features.Inventory.UnityIntegration
             if (slotUI == null)
                 return;
 
-            InventoryDragController.Instance
-                ?.DropFromSlotToWorld(slotUI, dropAll);
+            if (slotUI.BoundSlot == null || slotUI.BoundSlot.item == null)
+                return;
+
+            var dc = InventoryDragController.Instance;
+            if (dc == null)
+                return;
+
+            dc.DropFromSlotToWorld(slotUI, dropAll);
         }
     }
 }

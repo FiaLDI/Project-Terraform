@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+#nullable enable
 namespace Features.Quests.Domain
 {
     public sealed class QuestChainDefinition
@@ -21,3 +22,4 @@ namespace Features.Quests.Domain
         QuestDefinition? GetNextQuest(QuestChainDefinition chain, QuestId completedId);
     }
 }
+#nullable restore
