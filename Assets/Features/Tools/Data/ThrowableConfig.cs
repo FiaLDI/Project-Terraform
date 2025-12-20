@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Features.Tools.Data
 {
-    [CreateAssetMenu(menuName = "Configs/Throwable")]
+    [CreateAssetMenu(menuName = "Items/Configs/Throwable")]
     public class ThrowableConfig : ScriptableObject
     {
         [Header("Projectile prefab")]

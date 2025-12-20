@@ -4,7 +4,7 @@ using Features.Items.Data;
 
 namespace Features.Resources.Data 
 {
-    [CreateAssetMenu(menuName = "Orbis/Resources/Resource Bundle")]
+    [CreateAssetMenu(menuName = "Game/Resources/Resource Bundle")]
     public class ResourceSO : ScriptableObject
     {
         [Header("Base Info")]

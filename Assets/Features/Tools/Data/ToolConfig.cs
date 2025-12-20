@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Features.Tools.Data
 {
-    [CreateAssetMenu(menuName = "Configs/Tool")]
+    [CreateAssetMenu(menuName = "Items/Configs/Tool")]
     public class ToolConfig : ScriptableObject
     {
         public float baseMiningSpeed = 1f;

@@ -6,7 +6,7 @@ using Features.Stats.Application;
 
 namespace Features.Classes.Data
 {
-    [CreateAssetMenu(menuName = "Orbis/Classes/Class Config")]
+    [CreateAssetMenu(menuName = "Game/Classes/Class Config")]
     public class PlayerClassConfigSO : ScriptableObject
     {
         [Header("Identity")]

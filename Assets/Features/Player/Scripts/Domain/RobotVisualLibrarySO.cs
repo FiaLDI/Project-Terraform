@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-[CreateAssetMenu(menuName = "Orbis/Characters/Robot Visual Library")]
+[CreateAssetMenu(menuName = "Game/Characters/Robot Visual Library")]
 public class RobotVisualLibrarySO : ScriptableObject
 {
     public List<RobotVisualPresetSO> presets;

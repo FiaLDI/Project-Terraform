@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
-[CreateAssetMenu(menuName = "Crafting/Recipe Database")]
+[CreateAssetMenu(menuName = "Items/Recipe Database")]
 public class RecipeDatabase : ScriptableObject
 {
     [Header("All recipes in game")]

@@ -16,7 +16,8 @@ MonoBehaviour:
   questName: asdada
   description: adadadd
   behaviourType: 0
-  enemyTag: Enemy
+  enemyDatabase: {fileID: 11400000, guid: e1cb7efbca71fe14fbb7abf6331e4b42, type: 2}
+  enemyId: enemy_3ee078
   requiredKills: 10
   itemRequirements: []
   pointId: 

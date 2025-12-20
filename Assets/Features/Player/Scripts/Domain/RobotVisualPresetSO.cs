@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Orbis/Characters/Robot Visual Preset")]
+[CreateAssetMenu(menuName = "Game/Characters/Robot Visual Preset")]
 public class RobotVisualPresetSO : ScriptableObject
 {
     public string id;                     // visualPresetId

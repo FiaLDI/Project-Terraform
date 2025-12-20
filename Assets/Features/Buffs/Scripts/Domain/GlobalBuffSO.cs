@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Features.Buffs.Domain
 {
-    [CreateAssetMenu(menuName = "Orbis/Buffs/Global Buff")]
+    [CreateAssetMenu(menuName = "Game/Buff/Global Buff")]
     public class GlobalBuffSO : ScriptableObject
     {
         public string key;

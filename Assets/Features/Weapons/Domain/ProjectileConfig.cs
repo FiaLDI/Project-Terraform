@@ -3,7 +3,7 @@ using Features.Combat.Domain;
 
 namespace Features.Weapons.Domain
 {
-    [CreateAssetMenu(menuName = "Weapons/Projectile Config")]
+    [CreateAssetMenu(menuName = "Items/Configs/Projectile Config")]
     public class ProjectileConfig : ScriptableObject
     {
         [Header("Prefab")]

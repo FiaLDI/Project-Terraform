@@ -15,7 +15,7 @@ namespace Features.Quests.Editor
         private List<QuestAsset> quests = new();
         private List<QuestChainAsset> chains = new();
 
-        [MenuItem("Orbis/Quest Editor")]
+        [MenuItem("Game/Quest Editor")]
         public static void Open()
         {
             GetWindow<QuestEditorWindow>("Quest Editor").Show();

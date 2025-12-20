@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Features.Stats.Application
 {
-    [CreateAssetMenu(menuName = "Orbis/Stats/Preset")]
+    [CreateAssetMenu(menuName = "Game/Stats/Preset")]
     public class StatsPresetSO : ScriptableObject
     {
         [System.Serializable]

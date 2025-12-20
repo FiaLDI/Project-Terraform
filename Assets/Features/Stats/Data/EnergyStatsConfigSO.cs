@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Orbis/Stats/Energy")]
+[CreateAssetMenu(menuName = "Game/Stats/Energy")]
 public class EnergyStatsConfigSO : ScriptableObject
 {
     public float baseMaxEnergy = 100f;

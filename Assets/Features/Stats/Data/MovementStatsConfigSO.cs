@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Orbis/Stats/Movement")]
+[CreateAssetMenu(menuName = "Game/Stats/Movement")]
 public class MovementStatsConfigSO : ScriptableObject
 {
     [Header("Скорости")]

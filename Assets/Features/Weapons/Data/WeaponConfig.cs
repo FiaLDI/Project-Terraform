@@ -5,7 +5,7 @@ using Features.Items.Data;
 
 namespace Features.Weapons.Data
 {
-    [CreateAssetMenu(menuName = "Weapon/WeaponConfig")]
+    [CreateAssetMenu(menuName = "Items/Configs/WeaponConfig")]
     public class WeaponConfig : ScriptableObject
     {
         [Header("Identity")]

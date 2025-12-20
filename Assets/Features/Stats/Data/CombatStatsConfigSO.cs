@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Orbis/Stats/Combat")]
+[CreateAssetMenu(menuName = "Game/Stats/Combat")]
 public class CombatStatsConfigSO : ScriptableObject
 {
     [Header("Базовый множитель урона")]

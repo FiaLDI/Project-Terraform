@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Features.Classes.Data
 {
-    [CreateAssetMenu(menuName = "Orbis/Classes/Class Library")]
+    [CreateAssetMenu(menuName = "Game/Classes/Class Library")]
     public class PlayerClassLibrarySO : ScriptableObject
     {
         public List<PlayerClassConfigSO> classes;

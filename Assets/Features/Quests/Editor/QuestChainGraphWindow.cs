@@ -12,7 +12,7 @@ namespace Features.Quests.Editor
         private ObjectField chainField;
         private QuestChainAsset currentChain;
 
-        [MenuItem("Orbis/Quest Chain Editor")]
+        [MenuItem("Game/Quest Chain Editor")]
         public static void Open()
         {
             var window = GetWindow<QuestChainGraphWindow>();

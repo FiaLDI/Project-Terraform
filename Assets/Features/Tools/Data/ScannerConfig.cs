@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Features.Tools.Data
 {
-    [CreateAssetMenu(menuName = "Configs/Scanner")]
+    [CreateAssetMenu(menuName = "Items/Configs/Scanner")]
     public class ScannerConfig : ScriptableObject
     {
         public float baseScanRange = 10f;
