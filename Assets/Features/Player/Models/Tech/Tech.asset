@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Tech
   m_EditorClassIdentifier: Assembly-CSharp::RobotVisualPresetSO
   id: 0
-  modelPrefab: {fileID: 3033427689945799750, guid: 615d18436f9ed2648a85756a8cb3a29c, type: 3}
-  animator: {fileID: 9100000, guid: da6d4522b93f8634c8318197d177b459, type: 2}
+  modelPrefab: {fileID: 4880691048133481891, guid: 72107504b42fa454db9a3300a698d2cb, type: 3}
+  animator: {fileID: 9100000, guid: 643323f2184677847972ad9c41708e7c, type: 2}

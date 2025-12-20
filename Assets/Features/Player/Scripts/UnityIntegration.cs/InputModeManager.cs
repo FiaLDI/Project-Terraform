@@ -110,7 +110,6 @@ namespace Features.Input
         private void EnableGameplay()
         {
             input.PlayerInput.SwitchCurrentActionMap("Player");
-            Debug.Log("CURRENT MAP = " + input.PlayerInput.currentActionMap?.name);
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -120,7 +119,6 @@ namespace Features.Input
         private void EnableUI(bool pauseTime)
         {
             input.PlayerInput.SwitchCurrentActionMap("UI");
-            Debug.Log("CURRENT MAP = " + input.PlayerInput.currentActionMap?.name);
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
