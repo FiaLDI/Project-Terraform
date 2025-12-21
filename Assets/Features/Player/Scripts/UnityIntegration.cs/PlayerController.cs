@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Features.Abilities.Application;
 using Features.Camera.UnityIntegration;
-using Features.Input;
 using Features.Player;
 
 namespace Features.Player.UnityIntegration
@@ -10,12 +9,44 @@ namespace Features.Player.UnityIntegration
     public class PlayerController : MonoBehaviour, IInputContextConsumer
     {
         [Header("Core")]
-        [SerializeField] private PlayerMovement playerMovement;
+        [SerializeField] private PlayerMovementNetAdapter movementNet;
         [SerializeField] private PlayerCameraController playerCameraController;
-        [SerializeField] private AbilityCaster abilityCaster;
+        [SerializeField] private AbilityCasterNetAdapter abilityCasterNet;
 
         private PlayerInputContext input;
-        private bool subscribed;
+        private bool bound;
+
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
+
+        private void Awake()
+        {
+            if (movementNet == null)
+                movementNet = GetComponent<PlayerMovementNetAdapter>();
+
+            if (playerCameraController == null)
+                playerCameraController = GetComponent<PlayerCameraController>();
+
+            if (abilityCasterNet == null)
+                abilityCasterNet = GetComponent<AbilityCasterNetAdapter>();
+
+            if (movementNet == null)
+                Debug.LogError($"[{name}] PlayerMovementNetAdapter not found", this);
+
+            if (playerCameraController == null)
+                Debug.LogError($"[{name}] PlayerCameraController not found", this);
+
+            if (abilityCasterNet == null)
+                Debug.LogError($"[{name}] AbilityCasterNetAdapter not found", this);
+        }
+
+        private bool Ready =>
+            bound &&
+            input != null &&
+            movementNet != null &&
+            playerCameraController != null &&
+            abilityCasterNet != null;
 
         // ======================================================
         // INPUT BIND
@@ -26,61 +57,41 @@ namespace Features.Player.UnityIntegration
             if (input == ctx)
                 return;
 
-            Unsubscribe();
-            input = ctx;
-
-            if (input == null)
+            if (movementNet == null || playerCameraController == null || abilityCasterNet == null)
             {
-                Debug.LogError(
-                    $"{nameof(PlayerController)}: BindInput with NULL",
-                    this);
+                Debug.LogError($"[{name}] BindInput called but required refs are missing", this);
                 return;
             }
 
-            Subscribe();
-        }
-
-        private void OnEnable()
-        {
             if (input != null)
-                Subscribe();
-        }
+                UnbindInput(input);
 
-        private void OnDisable()
-        {
-            Unsubscribe();
-        }
-
-        // ======================================================
-        // SUBSCRIBE / UNSUBSCRIBE
-        // ======================================================
-
-        private void Subscribe()
-        {
-            if (subscribed || input == null)
+            input = ctx;
+            if (input == null)
                 return;
-
-            if (abilityCaster == null)
-                abilityCaster = GetComponent<AbilityCaster>();
 
             BindMovement();
             BindCamera();
             BindAbilities();
             SetupCursor();
 
-            subscribed = true;
+            bound = true;
         }
 
-        private void Unsubscribe()
+        public void UnbindInput(PlayerInputContext ctx)
         {
-            if (!subscribed || input == null)
+            if (!bound || input != ctx)
                 return;
 
             UnbindMovement();
             UnbindCamera();
             UnbindAbilities();
 
-            subscribed = false;
+            // Глушим всю карту, чтобы не прилетели колбэки в тот же кадр
+            input.Actions.Player.Disable();
+
+            input = null;
+            bound = false;
         }
 
         // ======================================================
@@ -99,13 +110,12 @@ namespace Features.Player.UnityIntegration
 
         private void BindMovement()
         {
-            Debug.Log("[DBG] Player Move enabled = " +
-    input.Actions.Player.FindAction("Move").enabled);
             var p = input.Actions.Player;
+
+            Enable(p, "Move", "Jump", "Sprint", "Walk", "Crouch");
 
             p.FindAction("Move").performed += OnMove;
             p.FindAction("Move").canceled  += OnMoveCanceled;
-
             p.FindAction("Jump").performed += OnJump;
 
             p.FindAction("Sprint").performed += OnSprintStart;
@@ -119,11 +129,12 @@ namespace Features.Player.UnityIntegration
 
         private void UnbindMovement()
         {
+            if (input == null) return;
+
             var p = input.Actions.Player;
 
             p.FindAction("Move").performed -= OnMove;
             p.FindAction("Move").canceled  -= OnMoveCanceled;
-
             p.FindAction("Jump").performed -= OnJump;
 
             p.FindAction("Sprint").performed -= OnSprintStart;
@@ -133,46 +144,56 @@ namespace Features.Player.UnityIntegration
             p.FindAction("Walk").canceled  -= OnWalkStop;
 
             p.FindAction("Crouch").performed -= OnCrouch;
+
+            Disable(p, "Move", "Jump", "Sprint", "Walk", "Crouch");
         }
 
         private void OnMove(InputAction.CallbackContext ctx)
         {
-            playerMovement.SetMoveInput(ctx.ReadValue<Vector2>());
+            if (!Ready) return;
+            movementNet.SendMoveInput(ctx.ReadValue<Vector2>());
         }
 
         private void OnMoveCanceled(InputAction.CallbackContext _)
         {
-            playerMovement.SetMoveInput(Vector2.zero);
+            if (!Ready) return;
+            movementNet.SendMoveInput(Vector2.zero);
         }
 
         private void OnJump(InputAction.CallbackContext _)
         {
-            playerMovement.TryJump();
+            if (!Ready) return;
+            movementNet.Jump();
         }
 
         private void OnSprintStart(InputAction.CallbackContext _)
         {
-            playerMovement.SetSprint(true);
+            if (!Ready) return;
+            movementNet.SetSprint(true);
         }
 
         private void OnSprintStop(InputAction.CallbackContext _)
         {
-            playerMovement.SetSprint(false);
+            if (!Ready) return;
+            movementNet.SetSprint(false);
         }
 
         private void OnWalkStart(InputAction.CallbackContext _)
         {
-            playerMovement.SetWalk(true);
+            if (!Ready) return;
+            movementNet.SetWalk(true);
         }
 
         private void OnWalkStop(InputAction.CallbackContext _)
         {
-            playerMovement.SetWalk(false);
+            if (!Ready) return;
+            movementNet.SetWalk(false);
         }
 
         private void OnCrouch(InputAction.CallbackContext _)
         {
-            playerMovement.ToggleCrouch();
+            if (!Ready) return;
+            movementNet.ToggleCrouch();
         }
 
         // ======================================================
@@ -183,34 +204,41 @@ namespace Features.Player.UnityIntegration
         {
             var p = input.Actions.Player;
 
+            Enable(p, "Look", "SwitchView");
+
             p.FindAction("Look").performed += OnLook;
             p.FindAction("Look").canceled  += OnLookCanceled;
-
             p.FindAction("SwitchView").performed += OnSwitchView;
         }
 
         private void UnbindCamera()
         {
+            if (input == null) return;
+
             var p = input.Actions.Player;
 
             p.FindAction("Look").performed -= OnLook;
             p.FindAction("Look").canceled  -= OnLookCanceled;
-
             p.FindAction("SwitchView").performed -= OnSwitchView;
+
+            Disable(p, "Look", "SwitchView");
         }
 
         private void OnLook(InputAction.CallbackContext ctx)
         {
+            if (!Ready) return;
             playerCameraController.SetLookInput(ctx.ReadValue<Vector2>());
         }
 
         private void OnLookCanceled(InputAction.CallbackContext _)
         {
+            if (!Ready) return;
             playerCameraController.SetLookInput(Vector2.zero);
         }
 
         private void OnSwitchView(InputAction.CallbackContext _)
         {
+            if (!Ready) return;
             playerCameraController.SwitchView();
         }
 
@@ -222,28 +250,43 @@ namespace Features.Player.UnityIntegration
         {
             var p = input.Actions.Player;
 
-            p.FindAction("Ability1").performed += OnAbility1;
-            p.FindAction("Ability2").performed += OnAbility2;
-            p.FindAction("Ability3").performed += OnAbility3;
-            p.FindAction("Ability4").performed += OnAbility4;
-            p.FindAction("Ability5").performed += OnAbility5;
+            Enable(p, "Ability1", "Ability2", "Ability3", "Ability4", "Ability5");
+
+            p.FindAction("Ability1").performed += _ => TryCast(0);
+            p.FindAction("Ability2").performed += _ => TryCast(1);
+            p.FindAction("Ability3").performed += _ => TryCast(2);
+            p.FindAction("Ability4").performed += _ => TryCast(3);
+            p.FindAction("Ability5").performed += _ => TryCast(4);
         }
 
         private void UnbindAbilities()
         {
-            var p = input.Actions.Player;
+            if (input == null) return;
 
-            p.FindAction("Ability1").performed -= OnAbility1;
-            p.FindAction("Ability2").performed -= OnAbility2;
-            p.FindAction("Ability3").performed -= OnAbility3;
-            p.FindAction("Ability4").performed -= OnAbility4;
-            p.FindAction("Ability5").performed -= OnAbility5;
+            Disable(input.Actions.Player,
+                "Ability1", "Ability2", "Ability3", "Ability4", "Ability5");
         }
 
-        private void OnAbility1(InputAction.CallbackContext _) => abilityCaster.TryCast(0);
-        private void OnAbility2(InputAction.CallbackContext _) => abilityCaster.TryCast(1);
-        private void OnAbility3(InputAction.CallbackContext _) => abilityCaster.TryCast(2);
-        private void OnAbility4(InputAction.CallbackContext _) => abilityCaster.TryCast(3);
-        private void OnAbility5(InputAction.CallbackContext _) => abilityCaster.TryCast(4);
+        private void TryCast(int index)
+        {
+            if (!Ready) return;
+            abilityCasterNet.Cast(index);
+        }
+
+        // ======================================================
+        // HELPERS
+        // ======================================================
+
+        private static void Enable(InputActionMap map, params string[] names)
+        {
+            foreach (var n in names)
+                map.FindAction(n, true).Enable();
+        }
+
+        private static void Disable(InputActionMap map, params string[] names)
+        {
+            foreach (var n in names)
+                map.FindAction(n, true).Disable();
+        }
     }
 }

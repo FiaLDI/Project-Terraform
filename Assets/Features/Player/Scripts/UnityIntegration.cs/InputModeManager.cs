@@ -109,15 +109,26 @@ namespace Features.Input
 
         private void EnableGameplay()
         {
+            input.Actions.UI.Disable();
+            input.Actions.Player.Enable();
+
             input.PlayerInput.SwitchCurrentActionMap("Player");
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             Time.timeScale = 1f;
+            Debug.Log(
+    $"[InputModeManager] Gameplay enabled | " +
+    $"PlayerEnabled={input.Actions.Player.enabled} | " +
+    $"Map={input.PlayerInput.currentActionMap?.name}"
+);
         }
 
         private void EnableUI(bool pauseTime)
         {
+            input.Actions.Player.Disable();
+            input.Actions.UI.Enable();
+
             input.PlayerInput.SwitchCurrentActionMap("UI");
 
             Cursor.lockState = CursorLockMode.None;

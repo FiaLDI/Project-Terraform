@@ -38,6 +38,8 @@ namespace Features.Player.UnityIntegration
         private bool isSprinting;
         private bool isWalking;
 
+        public bool AllowMovement { get; set; }
+
         private MovementStatsAdapter stats;
 
         private void Awake()
@@ -97,8 +99,10 @@ namespace Features.Player.UnityIntegration
 
         private void Update()
         {
+            if (!AllowMovement)
+                return;
+
             HandleMovement();
-            HandleAnimation();
         }
 
         private float GetSpeedFromStats()
@@ -178,6 +182,14 @@ namespace Features.Player.UnityIntegration
             anim.SetGrounded(grounded);
             anim.SetCrouch(IsCrouching);
         }
+
+        public void SetBodyYaw(float yaw)
+        {
+            Vector3 euler = transform.eulerAngles;
+            euler.y = yaw;
+            transform.eulerAngles = euler;
+        }
+
 
     }
 }

@@ -16,7 +16,7 @@ namespace Features.Equipment.UnityIntegration
         private bool usingPrimary;
         private bool usingSecondary;
 
-        private bool subscribed;
+        private bool bound;
 
         // ======================================================
         // INPUT BIND
@@ -27,42 +27,40 @@ namespace Features.Equipment.UnityIntegration
             if (input == ctx)
                 return;
 
-            Unsubscribe();
-
+            if (input != null)
+                UnbindInput(input);
             input = ctx;
 
             if (input == null)
-            {
-                Debug.LogError(
-                    $"{nameof(PlayerUsageController)}: BindInput with NULL",
-                    this);
                 return;
-            }
 
-            Subscribe();
+            BindActions();
+            bound = true;
         }
 
-        private void OnEnable()
+        public void UnbindInput(PlayerInputContext ctx)
         {
-            if (input != null)
-                Subscribe();
-        }
+            if (!bound || input != ctx)
+                return;
 
-        private void OnDisable()
-        {
-            Unsubscribe();
+            UnbindActions();
+
+            usingPrimary = false;
+            usingSecondary = false;
+
+            input = null;
+            bound = false;
         }
 
         // ======================================================
-        // SUBSCRIBE
+        // ACTIONS
         // ======================================================
 
-        private void Subscribe()
+        private void BindActions()
         {
-            if (subscribed || input == null)
-                return;
-
             var p = input.Actions.Player;
+
+            Enable(p, "Use", "SecondaryUse", "Reload");
 
             p.FindAction("Use").performed += OnPrimaryStart;
             p.FindAction("Use").canceled += OnPrimaryStop;
@@ -71,13 +69,11 @@ namespace Features.Equipment.UnityIntegration
             p.FindAction("SecondaryUse").canceled += OnSecondaryStop;
 
             p.FindAction("Reload").performed += OnReload;
-
-            subscribed = true;
         }
 
-        private void Unsubscribe()
+        private void UnbindActions()
         {
-            if (!subscribed || input == null)
+            if (input == null)
                 return;
 
             var p = input.Actions.Player;
@@ -90,7 +86,7 @@ namespace Features.Equipment.UnityIntegration
 
             p.FindAction("Reload").performed -= OnReload;
 
-            subscribed = false;
+            Disable(p, "Use", "SecondaryUse", "Reload");
         }
 
         // ======================================================
@@ -152,11 +148,30 @@ namespace Features.Equipment.UnityIntegration
 
         private void Update()
         {
+            if (!bound)
+                return;
+
             if (usingPrimary)
                 rightHand?.OnUsePrimary_Hold();
 
             if (usingSecondary)
                 rightHand?.OnUseSecondary_Hold();
+        }
+
+        // ======================================================
+        // HELPERS
+        // ======================================================
+
+        private static void Enable(InputActionMap map, params string[] names)
+        {
+            foreach (var n in names)
+                map.FindAction(n, true).Enable();
+        }
+
+        private static void Disable(InputActionMap map, params string[] names)
+        {
+            foreach (var n in names)
+                map.FindAction(n, true).Disable();
         }
     }
 }

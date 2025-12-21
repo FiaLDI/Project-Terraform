@@ -37,6 +37,15 @@ namespace Features.Inventory.UnityIntegration
             Subscribe();
         }
 
+        public void UnbindInput(PlayerInputContext ctx)
+        {
+            if (input != ctx)
+                return;
+
+            Unsubscribe();
+            input = null;
+        }
+
         private void OnEnable()
         {
             if (input != null)

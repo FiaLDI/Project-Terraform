@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
-using Features.Camera.Application;
 using Features.Camera.Domain;
 using Features.Camera.UnityIntegration;
 using Features.Stats.Domain;
@@ -18,9 +17,9 @@ namespace Features.Abilities.Application
         private AbilityExecutor _executor;
         private LayerMask _groundMask;
 
-        // ==== NEW CAMERA SERVICES ====
-        private readonly ICameraControlService _control;   // yaw/pitch + view state
-        private readonly ICameraRuntimeService _runtime;   // active Unity camera
+        // Camera services (LOCAL ONLY)
+        private readonly ICameraControlService _control;
+        private readonly ICameraRuntimeService _runtime;
 
         private readonly Dictionary<AbilitySO, float> _cooldowns = new();
 
@@ -30,7 +29,6 @@ namespace Features.Abilities.Application
         public event Action<AbilitySO, float, float> OnChannelProgress;
         public event Action<AbilitySO> OnChannelCompleted;
         public event Action<AbilitySO> OnChannelInterrupted;
-
 
         private bool _isChanneling;
         private AbilitySO _channelAbility;
@@ -60,10 +58,10 @@ namespace Features.Abilities.Application
             _runtime = CameraServiceProvider.Runtime;
 
             if (_control == null)
-                Debug.LogError("[AbilityService] CameraControlService is NULL!");
+                Debug.LogWarning("[AbilityService] CameraControlService not ready yet");
 
             if (_runtime == null)
-                Debug.LogError("[AbilityService] CameraRuntimeService is NULL!");
+                Debug.LogWarning("[AbilityService] CameraRuntimeService not ready yet");
         }
 
         public void SetEnergy(IEnergyStats e) => _energy = e;
@@ -112,23 +110,16 @@ namespace Features.Abilities.Application
             if (ability == null) return false;
             if (_isChanneling) return false;
             if (_executor == null) return false;
+            if (_energy == null) return false;
 
-            if (_energy == null)
-            {
-                Debug.LogError("[AbilityService] No IEnergyStats assigned!");
-                return false;
-            }
-
-            // Cooldown
             if (GetCooldownRemaining(ability) > 0f)
                 return false;
 
-            // Cost
             float finalCost = ability.energyCost * _energy.CostMultiplier;
             if (!_energy.TrySpend(finalCost))
                 return false;
 
-            var ctx = BuildContext(slot);
+            AbilityContext ctx = BuildContext(slot);
 
             if (ability.castType == AbilityCastType.Instant)
             {
@@ -163,8 +154,8 @@ namespace Features.Abilities.Application
 
         private void CompleteChannel()
         {
-            var ab = _channelAbility;
-            var ctx = _channelContext;
+            AbilitySO ab = _channelAbility;
+            AbilityContext ctx = _channelContext;
 
             _isChanneling = false;
             _channelAbility = null;
@@ -179,37 +170,38 @@ namespace Features.Abilities.Application
             if (!_isChanneling)
                 return;
 
-            var ab = _channelAbility;
-
+            AbilitySO ab = _channelAbility;
             _isChanneling = false;
             _channelAbility = null;
 
             OnChannelInterrupted?.Invoke(ab);
         }
 
-
         // ============================================================
-        // CONTEXT BUILDING
+        // CONTEXT BUILDING (SAFE)
         // ============================================================
         private AbilityContext BuildContext(int slot)
         {
-            Vector3 dir = BuildDirection();
-            Vector3 point = BuildTargetPoint(dir);
+            float yaw = _control?.State.Yaw ?? 0f;
+            float pitch = _control?.State.Pitch ?? 0f;
+
+            Vector3 direction = BuildDirection(yaw, pitch);
+            Vector3 targetPoint = BuildTargetPoint(direction);
 
             return new AbilityContext(
                 owner: _owner,
-                targetPoint: point,
-                direction: dir,
+                targetPoint: targetPoint,
+                direction: direction,
                 slotIndex: slot,
-                yaw: _control.State.Yaw,
-                pitch: _control.State.Pitch
+                yaw: yaw,
+                pitch: pitch
             );
         }
 
-        private Vector3 BuildDirection()
+        private Vector3 BuildDirection(float yaw, float pitch)
         {
-            float yawRad = Mathf.Deg2Rad * _control.State.Yaw;
-            float pitchRad = Mathf.Deg2Rad * _control.State.Pitch;
+            float yawRad = Mathf.Deg2Rad * yaw;
+            float pitchRad = Mathf.Deg2Rad * pitch;
 
             return new Vector3(
                 Mathf.Cos(pitchRad) * Mathf.Sin(yawRad),
@@ -220,15 +212,17 @@ namespace Features.Abilities.Application
 
         private Vector3 BuildTargetPoint(Vector3 direction)
         {
-            var cam = _runtime.CurrentCamera;
+            UnityEngine.Camera cam = _runtime?.CurrentCamera;
+
             if (cam == null)
                 return direction * 10f;
 
             Vector3 origin = cam.transform.position;
 
-            return Physics.Raycast(origin, direction, out var hit, 100f, _groundMask)
-                ? hit.point
-                : origin + direction * 30f;
+            if (Physics.Raycast(origin, direction, out RaycastHit hit, 100f, _groundMask))
+                return hit.point;
+
+            return origin + direction * 30f;
         }
 
         // ============================================================

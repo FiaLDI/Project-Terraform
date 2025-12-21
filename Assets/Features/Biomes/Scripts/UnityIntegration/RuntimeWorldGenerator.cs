@@ -92,33 +92,29 @@ namespace Features.Biomes.UnityIntegration
             yield return null;
             yield return null;
 
-            // 1) World systems (ТОЛЬКО world)
             if (systemsPrefab != null)
             {
                 SpawnSystemsAtCenter();
                 yield return null;
             }
 
-            // 2) PlayerCore
             Vector3 spawnPos = GetSafePlayerSpawnPosition();
             Debug.Log("[RuntimeWorldGenerator] Player spawn at: " + spawnPos);
 
             playerInstance = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
 
-            // 🔑 ЯВНЫЙ БИНДИНГ
-            if (LocalPlayerController.I != null)
-                LocalPlayerController.I.Bind(playerInstance);
+            // TODO: NETWORK
+            //if (LocalPlayerController.I != null)
+            //    LocalPlayerController.I.Bind(playerInstance);
 
             if (PlayerUIRoot.I != null)
                 PlayerUIRoot.I.Bind(playerInstance);
 
-            // для врагов / спавнеров
             if (InstancedSpawnerSystem.Instance != null)
                 InstancedSpawnerSystem.Instance.targetOverride = playerInstance.transform;
 
             yield return null;
 
-            // 3) Кастомный префаб (опционально)
             if (customPrefab != null)
                 SpawnCustomPrefabNearPlayer();
         }

@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class ScenePlayerSpawnPoint : MonoBehaviour, IPlayerSpawnProvider
 {
+    public int TeamId = 0;
+    
     public bool TryGetSpawnPoint(out Vector3 position, out Quaternion rotation)
     {
         position = transform.position;

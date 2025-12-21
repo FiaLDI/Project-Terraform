@@ -1,13 +1,15 @@
 using UnityEngine;
-using Features.Player;
 using Features.Input;
+using Features.Player.UnityIntegration;
+using Features.Camera.UnityIntegration;
+using Features.Player;
 
 public sealed class LocalPlayerController : MonoBehaviour
 {
     public static LocalPlayerController I { get; private set; }
 
     private PlayerInputContext inputContext;
-    private GameObject boundPlayer;
+    private NetworkPlayer boundPlayer;
 
     private void Awake()
     {
@@ -26,31 +28,61 @@ public sealed class LocalPlayerController : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        if (InputModeManager.I == null)
-        {
-            Debug.LogError("[LocalPlayerController] InputModeManager not found");
-            return;
-        }
-
-        InputModeManager.I.Bind(inputContext);
+        NetworkPlayer.OnLocalPlayerSpawned += Bind;
     }
 
-    public void Bind(GameObject player)
+    private void OnDisable()
     {
-        Debug.Log("LocalPlayerController.Bind CALLED", player);
+        NetworkPlayer.OnLocalPlayerSpawned -= Bind;
+    }
+
+    // ======================================================
+    // BIND / UNBIND
+    // ======================================================
+
+    public void Bind(NetworkPlayer player)
+    {
+        if (boundPlayer == player)
+            return;
+
+        Unbind(boundPlayer);
+
         boundPlayer = player;
 
-        var consumers = player.GetComponentsInChildren<IInputContextConsumer>(true);
-        foreach (var consumer in consumers)
-        {
-            Debug.Log("LocalPlayerController.consumer CALLED");
-            consumer.BindInput(inputContext);
-        }
+        // INPUT
+        inputContext.Enable();
+        InputModeManager.I.Bind(inputContext);
+        InputModeManager.I.SetMode(InputMode.Gameplay);
 
-        Debug.Log("[LocalPlayerController] Input bound to Player");
+        // PLAYER CONTROLLER
+        player.Controller.BindInput(inputContext);
+
+        // CAMERA — ВКЛЮЧАЕМ ТОЛЬКО У ЛОКАЛЬНОГО
+        var cam = player.GetComponent<PlayerCameraController>();
+        if (cam != null)
+            cam.SetLocal(true);
+
+        Debug.Log($"[LocalPlayerController] Bound to {player.name}");
     }
 
-    public GameObject BoundPlayer => boundPlayer;
+    public void Unbind(NetworkPlayer player)
+    {
+        if (boundPlayer != player || boundPlayer == null)
+            return;
+
+        boundPlayer.Controller.UnbindInput(inputContext);
+
+        var cam = boundPlayer.GetComponent<PlayerCameraController>();
+        if (cam != null)
+            cam.SetLocal(false);
+
+        inputContext.Disable();
+        boundPlayer = null;
+
+        Debug.Log("[LocalPlayerController] Unbound");
+    }
+
+    public NetworkPlayer BoundPlayer => boundPlayer;
 }

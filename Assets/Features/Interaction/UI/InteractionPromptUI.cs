@@ -25,8 +25,6 @@ public class InteractionPromptUI : MonoBehaviour
 
         promptText.text = "";
         promptText.enabled = false;
-
-        Debug.Log("[InteractionPromptUI] Awake", this);
     }
 
     private void OnEnable()
@@ -50,7 +48,6 @@ public class InteractionPromptUI : MonoBehaviour
         if (initialized)
             return;
 
-        Debug.Log("[InteractionPromptUI] OnPlayerBound: " + player.name, this);
 
         nearby = player.GetComponentInChildren<INearbyInteractables>();
         if (nearby == null)

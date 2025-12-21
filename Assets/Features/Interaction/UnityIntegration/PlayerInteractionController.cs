@@ -18,6 +18,9 @@ public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
     private PlayerInputContext input;
     private INearbyInteractables nearby;
 
+    private InputAction interactAction;
+    private InputAction dropAction;
+
     private bool subscribed;
 
     // ======================================================
@@ -51,59 +54,47 @@ public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
         if (input == ctx)
             return;
 
-        Unsubscribe();
-
+        if (input != null)
+            UnbindInput(input);
         input = ctx;
 
         if (input == null)
-        {
-            Debug.LogError(
-                $"{nameof(PlayerInteractionController)}: BindInput with NULL",
-                this);
-            return;
-        }
-
-        Subscribe();
-    }
-
-    private void OnEnable()
-    {
-        if (input != null)
-            Subscribe();
-    }
-
-    private void OnDisable()
-    {
-        Unsubscribe();
-    }
-
-    // ======================================================
-    // SUBSCRIBE
-    // ======================================================
-
-    private void Subscribe()
-    {
-        if (subscribed || input == null)
             return;
 
         var p = input.Actions.Player;
 
-        p.FindAction("Interact").performed += OnInteract;
-        p.FindAction("Drop").performed += OnDrop;
+        interactAction = p.FindAction("Interact", true);
+        dropAction = p.FindAction("Drop", true);
+
+        interactAction.performed += OnInteract;
+        dropAction.performed += OnDrop;
+
+        interactAction.Enable();
+        dropAction.Enable();
 
         subscribed = true;
     }
 
-    private void Unsubscribe()
+    public void UnbindInput(PlayerInputContext ctx)
     {
-        if (!subscribed || input == null)
+        if (!subscribed || input != ctx)
             return;
 
-        var p = input.Actions.Player;
+        if (interactAction != null)
+        {
+            interactAction.performed -= OnInteract;
+            interactAction.Disable();
+            interactAction = null;
+        }
 
-        p.FindAction("Interact").performed -= OnInteract;
-        p.FindAction("Drop").performed -= OnDrop;
+        if (dropAction != null)
+        {
+            dropAction.performed -= OnDrop;
+            dropAction.Disable();
+            dropAction = null;
+        }
 
+        input = null;
         subscribed = false;
     }
 

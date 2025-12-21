@@ -17,92 +17,129 @@ namespace Features.Inventory.UnityIntegration
         private IInventoryContext inventory;
         private InventoryUIView inventoryUI;
 
-        private InputAction openInventoryPlayer;   // Player/OpenInventory (I)
-        private InputAction closeInventoryUI;      // UI/CloseInventory (I)
-        private InputAction cancelUI;               // UI/Cancel (Escape)
+        private InputAction openInventoryPlayer;
+        private InputAction closeInventoryUI;
+        private InputAction cancelUI;
 
         private InputAction equipFirst;
         private InputAction equipSecond;
         private InputAction scrollWheel;
         private InputAction drop;
 
-        private bool subscribed;
+        private bool bound;
 
         // ======================================================
-        // BIND INPUT
+        // INPUT BIND
         // ======================================================
 
         public void BindInput(PlayerInputContext ctx)
         {
-            if (ctx == null)
-            {
-                Debug.LogError("[InventoryInputHandler] BindInput with NULL context", this);
-                return;
-            }
-
-            if (subscribed)
+            if (input == ctx)
                 return;
 
+            if (input != null)
+                UnbindInput(input);
             input = ctx;
+
+            if (input == null)
+                return;
+
+            inventory = null;
 
             inventoryUI = Object.FindAnyObjectByType<InventoryUIView>(
                 FindObjectsInactive.Include);
+
             if (inventoryUI == null)
             {
                 Debug.LogError("[InventoryInputHandler] InventoryUIView not found");
                 return;
             }
 
-            var player = input.Actions.Player;
-            var ui     = input.Actions.UI;
+            BindActions();
+            bound = true;
+        }
 
-            // ===== OPEN (ТОЛЬКО В GAMEPLAY) =====
+        public void UnbindInput(PlayerInputContext ctx)
+        {
+            if (!bound || input != ctx)
+                return;
+
+            UnbindActions();
+
+            input = null;
+            inventory = null;
+            bound = false;
+        }
+
+        // ======================================================
+        // ACTIONS
+        // ======================================================
+
+        private void BindActions()
+        {
+            var player = input.Actions.Player;
+            var ui = input.Actions.UI;
+
+            Enable(player, "OpenInventory", "Drop");
+            Enable(ui,
+                "CloseInventory",
+                "Cancel",
+                "EquipFirst",
+                "EquipSecond",
+                "ScrollWheel");
+
             openInventoryPlayer = player.FindAction("OpenInventory", true);
             openInventoryPlayer.started += OnOpenInventory;
 
-            // ===== CLOSE (ТОЛЬКО В UI) =====
             closeInventoryUI = ui.FindAction("CloseInventory", true);
-            cancelUI         = ui.FindAction("Cancel", true);
+            cancelUI = ui.FindAction("Cancel", true);
 
             closeInventoryUI.started += OnCloseInventory;
-            cancelUI.started         += OnCloseInventory;
+            cancelUI.started += OnCloseInventory;
 
-            // ===== OTHER UI INPUT =====
-            equipFirst  = ui.FindAction("EquipFirst", true);
+            equipFirst = ui.FindAction("EquipFirst", true);
             equipSecond = ui.FindAction("EquipSecond", true);
             scrollWheel = ui.FindAction("ScrollWheel", true);
 
-            equipFirst.performed  += _ => SelectHotbar(0);
+            equipFirst.performed += _ => SelectHotbar(0);
             equipSecond.performed += _ => SelectHotbar(1);
             scrollWheel.performed += OnScroll;
 
-            // ===== DROP (GAMEPLAY) =====
             drop = player.FindAction("Drop", true);
             drop.performed += _ => DropFromHands();
-
-            subscribed = true;
-
-            Debug.Log("[InventoryInputHandler] Input bound");
         }
 
-        private void OnDisable()
+        private void UnbindActions()
         {
-            if (!subscribed)
+            if (input == null)
                 return;
 
-            openInventoryPlayer.started -= OnOpenInventory;
-            closeInventoryUI.started    -= OnCloseInventory;
-            cancelUI.started            -= OnCloseInventory;
-            scrollWheel.performed       -= OnScroll;
+            var player = input.Actions.Player;
+            var ui = input.Actions.UI;
 
-            subscribed = false;
+            openInventoryPlayer.started -= OnOpenInventory;
+            closeInventoryUI.started -= OnCloseInventory;
+            cancelUI.started -= OnCloseInventory;
+            scrollWheel.performed -= OnScroll;
+
+            equipFirst.performed -= _ => SelectHotbar(0);
+            equipSecond.performed -= _ => SelectHotbar(1);
+            drop.performed -= _ => DropFromHands();
+
+            Disable(player, "OpenInventory", "Drop");
+            Disable(ui,
+                "CloseInventory",
+                "Cancel",
+                "EquipFirst",
+                "EquipSecond",
+                "ScrollWheel");
         }
 
         // ======================================================
         // OPEN / CLOSE INVENTORY
         // ======================================================
 
-        private void OnOpenInventory(InputAction.CallbackContext ctx)
+        private void OnOpenInventory(InputAction.CallbackContext _)
         {
             if (InputModeManager.I.CurrentMode != InputMode.Gameplay)
                 return;
@@ -110,15 +147,13 @@ namespace Features.Inventory.UnityIntegration
             inventoryUI.Open();
         }
 
-        private void OnCloseInventory(InputAction.CallbackContext ctx)
+        private void OnCloseInventory(InputAction.CallbackContext _)
         {
             if (InputModeManager.I.CurrentMode != InputMode.Inventory)
                 return;
 
             if (ReferenceEquals(UIStackManager.I.Peek(), inventoryUI))
-            {
                 UIStackManager.I.Pop();
-            }
         }
 
         // ======================================================
@@ -210,6 +245,22 @@ namespace Features.Inventory.UnityIntegration
                 rb.useGravity = true;
                 rb.AddForce(player.transform.forward * 2f, ForceMode.Impulse);
             }
+        }
+
+        // ======================================================
+        // HELPERS
+        // ======================================================
+
+        private static void Enable(InputActionMap map, params string[] names)
+        {
+            foreach (var n in names)
+                map.FindAction(n, true).Enable();
+        }
+
+        private static void Disable(InputActionMap map, params string[] names)
+        {
+            foreach (var n in names)
+                map.FindAction(n, true).Disable();
         }
     }
 }

@@ -5,36 +5,68 @@ using Features.Player;
 
 public class PauseInputHandler : MonoBehaviour, IInputContextConsumer
 {
+    private PlayerInputContext input;
     private InputAction pauseAction;
     private PauseMenu pauseMenu;
+    private bool subscribed;
 
     public void BindInput(PlayerInputContext ctx)
     {
-        pauseMenu = Object.FindAnyObjectByType<PauseMenu>(FindObjectsInactive.Include);
+        if (input == ctx)
+            return;
+
+        if (input != null)
+                UnbindInput(input);
+        input = ctx;
+
+        if (input == null)
+            return;
+
         if (pauseMenu == null)
         {
-            Debug.LogError("[PauseInputHandler] PauseMenu not found");
-            return;
+            pauseMenu = Object.FindAnyObjectByType<PauseMenu>(
+                FindObjectsInactive.Include);
+
+            if (pauseMenu == null)
+            {
+                Debug.LogError("[PauseInputHandler] PauseMenu not found");
+                return;
+            }
         }
 
-        pauseAction = ctx.Actions.Player.FindAction("Pause", true);
-        pauseAction.Enable();
+        pauseAction = input.Actions.Player.FindAction("Pause", true);
         pauseAction.performed += OnPause;
+        pauseAction.Enable();
 
-        Debug.Log("[PauseInputHandler] Pause bound");
+        subscribed = true;
     }
 
-    private void OnDisable()
+    public void UnbindInput(PlayerInputContext ctx)
     {
+        if (!subscribed || input != ctx)
+            return;
+
         if (pauseAction != null)
+        {
             pauseAction.performed -= OnPause;
+            pauseAction.Disable();
+            pauseAction = null;
+        }
+
+        input = null;
+        subscribed = false;
     }
 
     private void OnPause(InputAction.CallbackContext _)
     {
-        if (UIStackManager.I != null && UIStackManager.I.IsTop<PauseMenu>())
+        if (UIStackManager.I != null &&
+            UIStackManager.I.IsTop<PauseMenu>())
+        {
             UIStackManager.I.Pop();
+        }
         else
+        {
             pauseMenu.Open();
+        }
     }
 }

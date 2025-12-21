@@ -14,7 +14,6 @@ namespace Features.Abilities.UnityIntegration
         private void Awake()
         {
             I = this;
-            Debug.Log("[AbilityExecutor] Registered singleton.");
 
             Register(new DeployTurretHandler());
             Register(new ChargeDeviceHandler());

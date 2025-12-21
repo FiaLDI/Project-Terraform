@@ -20,7 +20,6 @@ namespace Features.Interaction.UnityIntegration
                 LayerMask.GetMask("Player")
             );
 
-            Debug.Log("[InteractionServiceProvider] Ray INITIALIZED");
             OnRayInitialized?.Invoke(Ray);
         }
     }

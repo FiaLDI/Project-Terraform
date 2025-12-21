@@ -5,14 +5,17 @@ using Features.Camera.UnityIntegration;
 
 namespace Features.Player.UnityIntegration
 {
-    public class PlayerCameraController : MonoBehaviour
+    /// <summary>
+    /// Локальный контроллер камеры игрока.
+    /// Управляет ГЛОБАЛЬНОЙ Unity Camera через CameraRegistry.
+    /// </summary>
+    public sealed class PlayerCameraController : MonoBehaviour
     {
         [Header("References")]
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Transform fpsPoint;
         [SerializeField] private Transform playerBody;
         [SerializeField] private Transform headTransform;
-        [SerializeField] private Transform cameraTransform;
 
         [Header("Settings")]
         [SerializeField] private float mouseSensitivity = 100f;
@@ -26,44 +29,66 @@ namespace Features.Player.UnityIntegration
         [Header("TPS Body Turn Limit")]
         [SerializeField] private float bodyTurnLimit = 40f;
 
-        // ⚠️ НЕ кешируем сервис — берём лениво
-        private ICameraControlService Service
-            => CameraServiceProvider.Control;
+        // ===== Runtime =====
+        private UnityEngine.Camera unityCamera;
+        private Transform cameraTransform;
+
+        // 🔑 УНИКАЛЬНЫЙ control-сервис на игрока
+        private ICameraControlService control;
 
         private float currentTpsDistance = 3f;
-        private bool isReady;
+        private bool isLocal;
 
-        private void Start()
+        private PlayerMovementNetAdapter movementNet;
+
+        // ======================================================
+        // LIFECYCLE
+        // ======================================================
+
+        private void Awake()
         {
-            currentTpsDistance = 3f;
-            isReady = true;
+            // По умолчанию ВЫКЛЮЧЕН
+            enabled = false;
+
+            control = new CameraControlService();
+            movementNet = GetComponent<PlayerMovementNetAdapter>();
+        }
+
+        private void OnEnable()
+        {
+            ResolveCamera();
+        }
+
+        private void OnDisable()
+        {
+            unityCamera = null;
+            cameraTransform = null;
         }
 
         // ======================================================
-        // INPUT
+        // INPUT (из PlayerController)
         // ======================================================
 
         public void SetLookInput(Vector2 input)
         {
-            if (!isReady)
+            if (!isLocal || cameraTransform == null)
                 return;
 
-            TryResolveCamera();
+            control.SetLookInput(input, mouseSensitivity, Time.deltaTime);
 
-            if (cameraTransform == null ||
-                cameraPivot == null ||
-                playerBody == null)
-                return;
-
-            Service?.SetLookInput(input, mouseSensitivity, Time.deltaTime);
+            // Передаём yaw серверу для поворота тела
+            if (movementNet != null)
+            {
+                movementNet.SetBodyRotation(control.State.Yaw);
+            }
         }
 
         public void SwitchView()
         {
-            if (!isReady)
+            if (!isLocal)
                 return;
 
-            Service?.SwitchView();
+            control.SwitchView();
         }
 
         // ======================================================
@@ -72,70 +97,57 @@ namespace Features.Player.UnityIntegration
 
         private void LateUpdate()
         {
-            if (!isReady)
+            if (!isLocal)
                 return;
 
-            TryResolveCamera();
-
-            if (cameraTransform == null ||
-                cameraPivot == null ||
-                playerBody == null)
+            if (cameraTransform == null && !ResolveCamera())
                 return;
 
-            var svc = Service;
-            if (svc == null)
-                return;
+            control.UpdateTransition(Time.deltaTime);
 
-            svc.UpdateTransition(Time.deltaTime);
+            var state = control.State;
 
-            float blend = svc.State.Blend;
-
-            if (blend < 0.5f)
-                UpdateFPS(svc);
+            if (state.Blend < 0.5f)
+                UpdateFPS(state);
             else
-                UpdateTPS(svc);
+                UpdateTPS(state);
         }
 
         // ======================================================
         // FPS
         // ======================================================
 
-        private void UpdateFPS(ICameraControlService svc)
+        private void UpdateFPS(PlayerCameraState state)
         {
-            if (cameraTransform == null || fpsPoint == null)
+            if (fpsPoint == null)
                 return;
 
-            svc.UpdateRotationFPS(playerBody);
-
-            Vector3 camEuler = new Vector3(
-                svc.State.Pitch,
-                svc.State.Yaw,
-                0f
-            );
-
             cameraTransform.position = fpsPoint.position;
-            cameraTransform.rotation = Quaternion.Euler(camEuler);
+            cameraTransform.rotation = Quaternion.Euler(state.Pitch, state.Yaw, 0f);
 
             if (headTransform != null)
+            {
                 headTransform.localRotation =
-                    Quaternion.Euler(svc.State.Pitch, 0f, 0f);
+                    Quaternion.Euler(state.Pitch, 0f, 0f);
+            }
         }
 
         // ======================================================
         // TPS
         // ======================================================
 
-        private void UpdateTPS(ICameraControlService svc)
+        private void UpdateTPS(PlayerCameraState state)
         {
-            if (cameraTransform == null || cameraPivot == null)
+            if (cameraPivot == null)
                 return;
 
-            svc.UpdateRotationTPS(cameraPivot, playerBody, bodyTurnLimit);
+            cameraPivot.localRotation =
+                Quaternion.Euler(state.Pitch, 0f, 0f);
 
             Vector3 desired =
                 cameraPivot.position - cameraPivot.forward * currentTpsDistance;
 
-            float targetDistance = svc.ComputeTpsDistance(
+            float targetDistance = control.ComputeTpsDistance(
                 cameraPivot.position,
                 desired,
                 collisionMask,
@@ -152,27 +164,48 @@ namespace Features.Player.UnityIntegration
             cameraTransform.position =
                 cameraPivot.position - cameraPivot.forward * currentTpsDistance;
 
-            cameraTransform.rotation = cameraPivot.rotation;
+            cameraTransform.rotation =
+                Quaternion.Euler(state.Pitch, state.Yaw, 0f);
 
             if (headTransform != null)
-                headTransform.rotation = cameraPivot.rotation;
+                headTransform.rotation = cameraTransform.rotation;
         }
 
         // ======================================================
         // CAMERA RESOLVE
         // ======================================================
 
-        private void TryResolveCamera()
+        private bool ResolveCamera()
         {
-            if (cameraTransform != null)
+            if (unityCamera != null)
+                return true;
+
+            if (CameraRegistry.Instance == null)
+                return false;
+
+            unityCamera = CameraRegistry.Instance.CurrentCamera;
+            if (unityCamera == null)
+                return false;
+
+            cameraTransform = unityCamera.transform;
+            return true;
+        }
+
+        // ======================================================
+        // LOCAL CONTROL (из PlayerCameraNetAdapter)
+        // ======================================================
+
+        public void SetLocal(bool value)
+        {
+            if (isLocal == value)
                 return;
 
-            if (CameraRegistry.Instance != null &&
-                CameraRegistry.Instance.CurrentCamera != null)
-            {
-                cameraTransform =
-                    CameraRegistry.Instance.CurrentCamera.transform;
-            }
+            isLocal = value;
+            enabled = value;
+
+            Debug.Log(
+                $"[PlayerCameraController] {name} SetLocal={value}"
+            );
         }
     }
 }
