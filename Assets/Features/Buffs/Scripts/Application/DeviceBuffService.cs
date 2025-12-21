@@ -35,28 +35,26 @@ public class PlayerDeviceBuffService : MonoBehaviour
 
     private void BuffAllTurrets(GameObject player, BuffSO buff, float duration)
     {
-        var registry = PlayerRegistry.Instance;
-
-        if (!registry.PlayerOwnedTurrets.TryGetValue(player, out var list))
+        var devices = PlayerDeviceRegistry.Instance?.GetDevices(player);
+        if (devices == null)
             return;
 
-        foreach (var turret in list)
+        foreach (var turret in devices)
         {
-            if (turret == null) continue;
+            if (!turret) continue;
 
             if (turret.TryGetComponent<BuffSystem>(out var bs))
             {
                 var service = bs.GetServiceSafe();
                 if (service == null) continue;
 
-                // создаём бафф
                 var inst = service.AddBuff(buff, bs.Target);
 
-                // кастомная длительность
                 if (duration >= 0 && inst != null)
                     inst.SetDuration(duration);
             }
         }
     }
+
 
 }

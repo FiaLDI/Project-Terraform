@@ -2,7 +2,6 @@ using UnityEngine;
 
 namespace Features.Player.UnityIntegration
 {
-    [RequireComponent(typeof(Animator))]
     public class PlayerAnimationController : MonoBehaviour
     {
         private Animator _animator;
@@ -11,9 +10,16 @@ namespace Features.Player.UnityIntegration
             _animator != null &&
             _animator.runtimeAnimatorController != null;
 
-        private void Awake()
+        // ===== INIT =====
+        internal void SetAnimator(Animator animator)
         {
-            _animator = GetComponent<Animator>();
+            _animator = animator;
+
+            if (_animator != null)
+            {
+                Debug.Log($"[AnimCtrl] Animator bound: {_animator.name}");
+                ForceRefreshLocomotion();
+            }
         }
 
         // ===== MOVEMENT =====
@@ -54,16 +60,10 @@ namespace Features.Player.UnityIntegration
             _animator.SetTrigger("Throw");
         }
 
-        internal void SetAnimator(Animator animator)
-        {
-            _animator = animator;
-        }
-
         public void ForceRefreshLocomotion()
         {
             if (!IsReady) return;
             _animator.Play("Locomotion", 0, 0f);
         }
-
     }
 }

@@ -3,25 +3,17 @@ using UnityEngine;
 
 namespace Features.Player.UnityIntegration
 {
-    /// <summary>
-    /// Server-authoritative adapter:
-    /// - Клиент отправляет input
-    /// - Сервер двигает PlayerMovement
-    /// - Host обрабатывается корректно
-    /// </summary>
     [RequireComponent(typeof(PlayerMovement))]
+    [RequireComponent(typeof(MovementStateNetwork))]
     public sealed class PlayerMovementNetAdapter : NetworkBehaviour
     {
         private PlayerMovement movement;
+        private MovementStateNetwork movementState;
 
         private void Awake()
         {
             movement = GetComponent<PlayerMovement>();
-
-            Debug.Log(
-                $"[MoveNet][Awake] {name} | " +
-                $"netId={ObjectId}"
-            );
+            movementState = GetComponent<MovementStateNetwork>();
         }
 
         // ======================================================
@@ -31,12 +23,6 @@ namespace Features.Player.UnityIntegration
         public override void OnStartServer()
         {
             base.OnStartServer();
-
-            Debug.Log(
-                $"[MoveNet][OnStartServer] {name} | " +
-                $"IsServer={IsServerInitialized} IsOwner=NOTAALOWED"
-            );
-
             movement.AllowMovement = true;
         }
 
@@ -46,43 +32,41 @@ namespace Features.Player.UnityIntegration
             movement.AllowMovement = false;
         }
 
+        private void Update()
+        {
+            // 🔑 ТОЛЬКО сервер публикует состояние
+            if (!IsServerInitialized)
+                return;
+
+            Vector3 v = movement.Velocity;
+
+            float planarSpeed = new Vector2(v.x, v.z).magnitude;
+
+            movementState.SetMovementState(
+                planarSpeed,
+                movement.IsGrounded,
+                movement.IsCrouching
+            );
+        }
+
         // ======================================================
-        // MOVEMENT INPUT (CLIENT → SERVER)
+        // INPUT (CLIENT → SERVER)
         // ======================================================
 
         public void SendMoveInput(Vector2 input)
         {
-            Debug.Log(
-                $"[MoveNet][Input] {name} | " +
-                $"input={input} IsOwner={IsOwner} IsServer={IsServerInitialized}"
-            );
-
             if (!IsOwner)
-            {
-                Debug.Log($"[MoveNet][Input BLOCKED] not owner: {name}");
                 return;
-            }
 
             if (IsServerInitialized)
-            {
-                Debug.Log($"[MoveNet][HOST MOVE] {name}");
                 movement.SetMoveInput(input);
-            }
             else
-            {
-                Debug.Log($"[MoveNet][CLIENT → SERVER RPC] {name}");
                 SendMoveInput_Server(input);
-            }
         }
 
         [ServerRpc]
         private void SendMoveInput_Server(Vector2 input)
         {
-            Debug.Log(
-                $"[MoveNet][ServerRpc] {name} | " +
-                $"input={input} IsServer={IsServerInitialized}"
-            );
-
             movement.SetMoveInput(input);
         }
 
@@ -154,27 +138,15 @@ namespace Features.Player.UnityIntegration
             movement.TryJump();
         }
 
-        // ======================================================
-        // BODY ROTATION (FROM CAMERA)
-        // ======================================================
-
-        /// <summary>
-        /// Поворот тела игрока (Yaw).
-        /// Вызывается ТОЛЬКО из локальной камеры.
-        /// </summary>
         public void SetBodyRotation(float yaw)
         {
             if (!IsOwner)
                 return;
 
             if (IsServerInitialized)
-            {
                 movement.SetBodyYaw(yaw);
-            }
             else
-            {
                 SetBodyRotation_Server(yaw);
-            }
         }
 
         [ServerRpc]

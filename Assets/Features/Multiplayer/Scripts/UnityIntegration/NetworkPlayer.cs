@@ -1,32 +1,52 @@
 using FishNet.Object;
 using UnityEngine;
-using Features.Player.UnityIntegration;
 
-public sealed class NetworkPlayer : NetworkBehaviour
+namespace Features.Player.UnityIntegration
 {
-    [SerializeField] private PlayerController playerController;
-
-    public PlayerController Controller => playerController;
-
-    public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
-
-    public override void OnStartClient()
+    [RequireComponent(typeof(PlayerController))]
+    public sealed class NetworkPlayer : NetworkBehaviour
     {
-        base.OnStartClient();
+        [SerializeField] private PlayerController playerController;
+        public PlayerController Controller => playerController;
 
-        if (IsOwner && Owner.IsLocalClient)
+        /// <summary>
+        /// Вызывается ТОЛЬКО для локального игрока
+        /// </summary>
+        public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
+
+        private void Awake()
         {
+            if (playerController == null)
+                playerController = GetComponent<PlayerController>();
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            // регистрируем любого игрока
+            PlayerRegistry.Instance?.RegisterPlayer(gameObject);
+
+            // локальный игрок
+            if (!IsOwner || !Owner.IsLocalClient)
+                return;
+
+            Debug.Log($"[NetworkPlayer] Local player spawned: {name}");
+
+            PlayerRegistry.Instance?.SetLocalPlayer(gameObject);
             OnLocalPlayerSpawned?.Invoke(this);
         }
-    }
 
-    public override void OnStopClient()
-    {
-        base.OnStopClient();
-
-        if (IsOwner && Owner.IsLocalClient && LocalPlayerController.I != null)
+        public override void OnStopClient()
         {
-            LocalPlayerController.I.Unbind(this);
+            base.OnStopClient();
+
+            if (IsOwner && Owner.IsLocalClient)
+            {
+                Debug.Log($"[NetworkPlayer] Local player despawned: {name}");
+            }
+
+            PlayerRegistry.Instance?.UnregisterPlayer(gameObject);
         }
     }
 }

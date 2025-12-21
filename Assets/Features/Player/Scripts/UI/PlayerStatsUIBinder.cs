@@ -1,15 +1,10 @@
-// Assets/Features/Player/Scripts/UI/PlayerStatsUIBinder.cs
 using UnityEngine;
 using Features.Player.UnityIntegration;
-using Features.Stats.UnityIntegration;
+using Features.Stats.Adapter;
 
 namespace Features.Player.UI
 {
-    /// <summary>
-    /// Чистый UI-адаптер, который слушает OnStatsReady и
-    /// привязывает HP/Energy к PlayerRegistry.
-    /// </summary>
-    public class PlayerStatsUIBinder : MonoBehaviour
+    public sealed class PlayerStatsUIBinder : MonoBehaviour
     {
         [Header("UI")]
         [SerializeField] private EnergyBarUI energyUI;
@@ -17,49 +12,48 @@ namespace Features.Player.UI
 
         private void OnEnable()
         {
-            PlayerStats.OnStatsReady += HandleStatsReady;
+            PlayerRegistry.OnLocalPlayerReady += OnLocalPlayerReady;
+
+            // если локальный игрок уже есть
+            var reg = PlayerRegistry.Instance;
+            if (reg != null && reg.LocalPlayer != null)
+            {
+                TryBind(reg);
+            }
         }
 
         private void OnDisable()
         {
-            PlayerStats.OnStatsReady -= HandleStatsReady;
+            PlayerRegistry.OnLocalPlayerReady -= OnLocalPlayerReady;
         }
 
-        private void Start()
+        private void OnLocalPlayerReady(PlayerRegistry reg)
         {
-            // на случай, если к этому моменту статы уже готовы
-            var reg = PlayerRegistry.Instance;
-            if (reg != null && reg.LocalEnergy != null && reg.LocalHealth != null)
-            {
-                BindUI(reg);
-            }
+            TryBind(reg);
         }
 
-        private void HandleStatsReady(PlayerStats _)
+        private void TryBind(PlayerRegistry reg)
         {
-            var reg = PlayerRegistry.Instance;
-            if (reg == null)
+            if (reg == null || reg.LocalPlayer == null)
             {
-                Debug.LogError("[PlayerStatsUIBinder] PlayerRegistry.Instance == null");
+                Debug.LogWarning("[PlayerStatsUIBinder] No local player yet");
                 return;
             }
 
-            if (reg.LocalEnergy == null || reg.LocalHealth == null)
+            var statsAdapter = reg.LocalPlayer.GetComponent<StatsFacadeAdapter>();
+            if (statsAdapter == null)
             {
-                Debug.LogError("[PlayerStatsUIBinder] LocalEnergy/LocalHealth == null!");
+                Debug.LogError("[PlayerStatsUIBinder] StatsFacadeAdapter not found on LocalPlayer");
                 return;
             }
 
-            BindUI(reg);
-        }
+            Debug.Log("[PlayerStatsUIBinder] Binding UI to local player stats");
 
-        private void BindUI(PlayerRegistry reg)
-        {
-            if (energyUI != null)
-                energyUI.Bind(reg.LocalEnergy);
+            if (energyUI != null && statsAdapter.EnergyStats != null)
+                energyUI.Bind(statsAdapter.EnergyStats);
 
-            if (hpUI != null)
-                hpUI.Bind(reg.LocalHealth);
+            if (hpUI != null && statsAdapter.HealthStats != null)
+                hpUI.Bind(statsAdapter.HealthStats);
         }
     }
 }

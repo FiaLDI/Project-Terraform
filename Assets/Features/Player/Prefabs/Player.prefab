@@ -372,6 +372,8 @@ GameObject:
   - component: {fileID: 8671413978466710636}
   - component: {fileID: 9183921448104923755}
   - component: {fileID: 5907872678837714149}
+  - component: {fileID: 5082500085448155888}
+  - component: {fileID: 7463166964726445143}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -592,7 +594,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerController
   movementNet: {fileID: 187266121288184345}
-  playerCameraController: {fileID: 0}
+  playerCameraController: {fileID: 9183921448104923755}
   abilityCasterNet: {fileID: 273676337467518626}
 --- !u!114 &5819680935717294758
 MonoBehaviour:
@@ -945,6 +947,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51e313d0a6e6dfa42828e25eac92185e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerCameraNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &5082500085448155888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b96363ed380ba6d449cf8004205ce624, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerStateNetwork
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &7463166964726445143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3781b7fb4f7dcf741a8346f250fd87f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.MovementStateNetwork
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}

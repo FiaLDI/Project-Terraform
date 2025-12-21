@@ -42,6 +42,10 @@ namespace Features.Player.UnityIntegration
 
         private MovementStatsAdapter stats;
 
+        public Vector3 Velocity => velocity;
+        public bool IsGrounded => controller.isGrounded;
+
+
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
@@ -102,6 +106,7 @@ namespace Features.Player.UnityIntegration
             if (!AllowMovement)
                 return;
 
+            HandleAnimation();
             HandleMovement();
         }
 

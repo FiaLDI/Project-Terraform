@@ -51,7 +51,7 @@ namespace Features.Abilities.UnityIntegration
                 turret.AddComponent<TurretBuffTarget>();
 
             // Register turret
-            PlayerRegistry.Instance?.RegisterTurret(owner, turret);
+            PlayerDeviceRegistry.Instance?.RegisterDevice(owner, turret);
 
             // Smooth spawn animation
             turret.transform.localScale = Vector3.zero;

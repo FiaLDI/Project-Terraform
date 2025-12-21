@@ -25,9 +25,6 @@ namespace Features.Stats.UnityIntegration
             // Создаём адаптер для Unity-систем (UI, Movement)
             Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
             Adapter.Init(Facade);
-
-            // Регистрируем в PlayerRegistry (если нужно)
-            PlayerRegistry.Instance?.Register(gameObject, Adapter);
         }
 
         private void Start()

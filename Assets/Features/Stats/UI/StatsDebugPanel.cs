@@ -59,7 +59,7 @@ Power: {(mining != null ? $"{mining.MiningPower:0.00}" : "NO")}
         // ===============================
         if (PlayerRegistry.Instance != null)
         {
-            var local = PlayerRegistry.Instance.LocalStats;
+            var local = PlayerRegistry.Instance.LocalPlayer.GetComponent<StatsFacadeAdapter>(); ;
             if (local != null)
             {
                 adapter = local;

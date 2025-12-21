@@ -9,7 +9,6 @@ using Features.Stats.Domain;
 using Features.Stats.Adapter;
 using Features.Buffs.UnityIntegration;
 
-[DefaultExecutionOrder(-100)]
 [RequireComponent(typeof(PlayerVisualController))]
 public class PlayerClassController : MonoBehaviour
 {
@@ -39,6 +38,15 @@ public class PlayerClassController : MonoBehaviour
     private AbilityCaster _abilityCaster;
     private PlayerBuffTarget _buffTarget;
 
+    public string CurrentVisualId =>
+    _pendingClassCfg != null && _pendingClassCfg.visualPreset != null
+        ? _pendingClassCfg.visualPreset.id
+        : null;
+    
+    public string CurrentClassId =>
+        _pendingClassCfg != null ? _pendingClassCfg.id : defaultClassId;
+
+
     private void OnEnable()
     {
         PlayerStats.OnStatsReady += HandleStatsReady;
@@ -61,8 +69,6 @@ public class PlayerClassController : MonoBehaviour
             visualController = GetComponent<PlayerVisualController>();
 
         _classService = new PlayerClassService(library.classes, defaultClassId);
-
-        SelectInitialClass();
     }
 
     private void CacheAdapters()
@@ -72,27 +78,6 @@ public class PlayerClassController : MonoBehaviour
         _combat = GetComponent<CombatStatsAdapter>();
         _movement = GetComponent<MovementStatsAdapter>();
         _mining = GetComponent<MiningStatsAdapter>();
-    }
-
-    private void SelectInitialClass()
-    {
-        var progress = PlayerProgressService.Instance;
-        var activeChar = progress != null ? progress.GetActiveCharacter() : null;
-
-        if (activeChar != null)
-        {
-            _pendingClassCfg = library.FindById(activeChar.classId);
-
-            if (_pendingClassCfg != null)
-            {
-                Debug.Log("[PlayerClass] Using character class: " + activeChar.classId);
-                return;
-            }
-        }
-
-        // fallback
-        _pendingClassCfg = library.FindById(defaultClassId);
-        Debug.Log("[PlayerClass] Using DEFAULT class: " + defaultClassId);
     }
 
     private void HandleStatsReady(PlayerStats ps)
@@ -110,6 +95,24 @@ public class PlayerClassController : MonoBehaviour
         if (_pendingClassCfg != null)
             StartCoroutine(DelayedApplyClass(_pendingClassCfg));
     }
+
+    public void SetClass(string classId)
+    {
+        _pendingClassCfg = library.FindById(classId);
+
+        if (_pendingClassCfg == null)
+        {
+            Debug.LogWarning($"[PlayerClass] Class {classId} not found, using default");
+            _pendingClassCfg = library.FindById(defaultClassId);
+        }
+
+        // если статы уже готовы — применяем сразу
+        if (_stats != null)
+        {
+            StartCoroutine(DelayedApplyClass(_pendingClassCfg));
+        }
+    }
+
 
     private IEnumerator DelayedApplyClass(PlayerClassConfigSO cfg)
     {
@@ -152,15 +155,5 @@ public class PlayerClassController : MonoBehaviour
 
         _passiveSystem?.SetPassives(cfg.passives.ToArray());
         _abilityCaster?.SetAbilities(cfg.abilities.ToArray());
-
-
-        if (cfg.visualPreset != null)
-        {
-            visualController.ApplyVisual(cfg.visualPreset.id);
-        }
-        else
-        {
-            Debug.LogWarning($"[PlayerClass] Class {cfg.displayName} has no visual preset");
-        }
     }
 }
