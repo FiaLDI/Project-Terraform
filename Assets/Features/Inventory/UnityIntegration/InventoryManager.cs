@@ -1,21 +1,19 @@
-﻿using UnityEngine;
-using Features.Inventory.Domain;
-using Features.Inventory.Application;
-using Features.Items.Domain;
-using Features.Items.Data;
-using System;
-using Features.Inventory;
-using Features.Equipment.UnityIntegration;
+﻿using System;
 using System.Collections.Generic;
+using Features.Equipment.UnityIntegration;
+using Features.Inventory.Domain;
+using Features.Items.Data;
+using Features.Items.Domain;
+using UnityEngine;
 
 namespace Features.Inventory.UnityIntegration
 {
     /// <summary>
     /// Player-scoped Inventory.
-    /// Владелец модели, сервиса и экипировки.
-    /// Никаких singleton'ов.
+    /// Владелец модели и сервиса.
+    /// НЕ содержит сетевой логики.
     /// </summary>
-    public class InventoryManager : MonoBehaviour, IInventoryContext
+    public sealed class InventoryManager : MonoBehaviour, IInventoryContext
     {
         public InventoryModel Model { get; private set; }
         public InventoryService Service { get; private set; }
@@ -24,12 +22,9 @@ namespace Features.Inventory.UnityIntegration
         public event Action<ItemInstance> OnItemAddedInstance;
         public event Action OnReady;
 
-        [SerializeField] private ItemRegistry itemRegistry;
-
-
         [Header("Config")]
         [SerializeField] private int bagSize = 12;
-        [SerializeField] private int hotbarSize = 2; // руки
+        [SerializeField] private int hotbarSize = 2;
 
         private EquipmentManager equipment;
 
@@ -46,7 +41,6 @@ namespace Features.Inventory.UnityIntegration
             InitEquipment();
 
             IsReady = true;
-            Debug.Log("XXX[InventoryManager] OnReady invoked", this);
             OnReady?.Invoke();
         }
 
@@ -81,15 +75,9 @@ namespace Features.Inventory.UnityIntegration
         {
             equipment = GetComponent<EquipmentManager>();
             if (equipment != null)
-            {
                 equipment.Init(this);
-            }
             else
-            {
-                Debug.LogWarning(
-                    "[InventoryManager] EquipmentManager not found on Player"
-                );
-            }
+                Debug.LogWarning("[InventoryManager] EquipmentManager not found");
         }
 
         // ======================================================
@@ -102,7 +90,7 @@ namespace Features.Inventory.UnityIntegration
         }
 
         // ======================================================
-        // PUBLIC API — NO GAME LOGIC
+        // PUBLIC API (LOCAL ONLY)
         // ======================================================
 
         public void AddItem(Item definition, int amount = 1)
@@ -112,12 +100,10 @@ namespace Features.Inventory.UnityIntegration
 
             var inst = new ItemInstance(definition, amount);
 
-            bool added = Service.AddItem(inst);
-            if (!added)
+            if (!Service.AddItem(inst))
             {
                 Debug.LogWarning(
-                    $"[InventoryManager] Failed to add item {definition.name}"
-                );
+                    $"[InventoryManager] Failed to add item {definition.id}");
                 return;
             }
 
@@ -134,37 +120,9 @@ namespace Features.Inventory.UnityIntegration
             return Service.GetItemCount(definition);
         }
 
-        public void SelectHotbarIndex(int index)
-        {
-            Model.selectedHotbarIndex =
-                Mathf.Clamp(index, 0, Model.hotbar.Count - 1);
-
-            OnInventoryChanged?.Invoke();
-        }
-
         // ======================================================
-        // EQUIPMENT SHORTCUTS (UI ONLY)
+        // NETWORK STATE APPLY
         // ======================================================
-
-        public void EquipRightFromUI(int slotIndex, InventorySection section)
-        {
-            Service.EquipRightHand(slotIndex, section);
-        }
-
-        public void EquipLeftFromUI(int slotIndex, InventorySection section)
-        {
-            Service.EquipLeftHand(slotIndex, section);
-        }
-
-        public void UnequipRight()
-        {
-            Service.UnequipRightHand();
-        }
-
-        public void UnequipLeft()
-        {
-            Service.UnequipLeftHand();
-        }
 
         public void ApplyNetState(
             IReadOnlyList<InventorySlotNet> bagNet,
@@ -173,46 +131,33 @@ namespace Features.Inventory.UnityIntegration
             InventorySlotNet right,
             int selectedIndex)
         {
-            Model.main.Clear();
-            Model.hotbar.Clear();
+            // BAG
+            for (int i = 0; i < Model.main.Count && i < bagNet.Count; i++)
+                Model.main[i].item = FromNet(bagNet[i]);
 
-
-
-            foreach (var s in bagNet) {
-                var slot = new InventorySlot();
-                slot.item = FromNet(s);
-                Model.main.Add(slot);
-            }
-
-            foreach (var s in hotbarNet)
-            {
-                var slot = new InventorySlot();
-                slot.item = FromNet(s);
-                Model.hotbar.Add(slot);
-            }
+            // HOTBAR
+            for (int i = 0; i < Model.hotbar.Count && i < hotbarNet.Count; i++)
+                Model.hotbar[i].item = FromNet(hotbarNet[i]);
 
             Model.leftHand.item = FromNet(left);
             Model.rightHand.item = FromNet(right);
-            Model.selectedHotbarIndex = selectedIndex;
 
-            Service.NotifyChanged();
+            Model.selectedHotbarIndex = selectedIndex;
         }
 
         private ItemInstance FromNet(InventorySlotNet net)
         {
-            if (string.IsNullOrEmpty(net.itemId))
-                return null;
+            if (string.IsNullOrEmpty(net.itemId) || net.quantity <= 0)
+                return ItemInstance.Empty;
 
-            var def = itemRegistry.Get(net.itemId);
+            var def = ItemRegistrySO.Instance?.Get(net.itemId);
             if (def == null)
             {
-                Debug.LogError($"Item not found: {net.itemId}");
-                return null;
+                Debug.LogError($"[InventoryManager] Item not found: {net.itemId}");
+                return ItemInstance.Empty;
             }
 
             return new ItemInstance(def, net.quantity, net.level);
         }
-
-
     }
 }

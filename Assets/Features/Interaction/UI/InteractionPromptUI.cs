@@ -4,6 +4,7 @@ using Features.Interaction.UnityIntegration;
 using Features.Player.UI;
 using Features.Interaction.Application;
 using Features.Interaction.Domain;
+using Features.Items.UnityIntegration;
 
 public sealed class InteractionPromptUI : MonoBehaviour
 {
@@ -13,6 +14,10 @@ public sealed class InteractionPromptUI : MonoBehaviour
     private INearbyInteractables nearby;
 
     private bool initialized;
+
+    // ======================================================
+    // UNITY
+    // ======================================================
 
     private void Awake()
     {
@@ -29,7 +34,7 @@ public sealed class InteractionPromptUI : MonoBehaviour
 
     private void Start()
     {
-        // ✅ гарантированно после всех Awake
+        // гарантированно после всех Awake
         if (PlayerUIRoot.I == null)
         {
             Debug.LogError("[InteractionPromptUI] PlayerUIRoot.I is NULL in Start");
@@ -99,15 +104,19 @@ public sealed class InteractionPromptUI : MonoBehaviour
         {
             case InteractionTargetType.Pickup:
             {
-                var inst = target.Pickup?.GetInstance();
-                if (inst?.itemDefinition == null)
+                WorldItemNetwork worldItem = target.WorldItem;
+                if (worldItem == null || !worldItem.IsPickupAvailable)
                     break;
 
-                int qty = inst.quantity;
+                var inst = worldItem.GetComponent<ItemRuntimeHolder>()?.Instance;
+                if (inst == null || inst.itemDefinition == null)
+                    break;
+
                 promptText.enabled = true;
-                promptText.text = qty > 1
-                    ? $"[E] Подобрать: {inst.itemDefinition.itemName} x{qty}"
-                    : $"[E] Подобрать: {inst.itemDefinition.itemName}";
+                promptText.text =
+                    inst.quantity > 1
+                        ? $"[E] Подобрать: {inst.itemDefinition.itemName} x{inst.quantity}"
+                        : $"[E] Подобрать: {inst.itemDefinition.itemName}";
                 return;
             }
 

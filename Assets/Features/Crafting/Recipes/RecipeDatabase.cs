@@ -7,6 +7,7 @@ public class RecipeDatabase : ScriptableObject
 {
     [Header("All recipes in game")]
     public RecipeSO[] recipes;
+    public static RecipeDatabase Instance;
 
     private Dictionary<string, RecipeSO> recipeById;
     private RecipeSO[] cachedWorkbench;
@@ -15,6 +16,7 @@ public class RecipeDatabase : ScriptableObject
 
     private void OnEnable()
     {
+        Instance = this;
         BuildCache();
     }
 

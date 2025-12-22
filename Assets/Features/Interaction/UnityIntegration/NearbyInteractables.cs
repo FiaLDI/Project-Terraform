@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Features.Interaction.Domain;
+using Features.Items.UnityIntegration;
 using UnityEngine;
 
 public class NearbyInteractables : MonoBehaviour, INearbyInteractables
@@ -8,17 +9,14 @@ public class NearbyInteractables : MonoBehaviour, INearbyInteractables
     [SerializeField] private float maxDistance = 3.0f;
     [SerializeField] private float maxAngle = 45f;
 
-    private readonly List<NearbyItemPresenter> items = new();
+    private readonly List<WorldItemNetwork> items = new();
 
-    public NearbyItemPresenter GetBestItem(Camera cam)
+    public WorldItemNetwork GetBestItem(Camera cam)
     {
         if (cam == null)
-        {
-            Debug.LogWarning("[NearbyInteractables] Camera is NULL");
             return null;
-        }
 
-        NearbyItemPresenter best = null;
+        WorldItemNetwork best = null;
         float bestScore = float.MaxValue;
 
         Vector3 camPos = cam.transform.position;
@@ -29,23 +27,21 @@ public class NearbyInteractables : MonoBehaviour, INearbyInteractables
             if (item == null)
                 continue;
 
+            // важно: не предлагать “пустые” предметы
+            if (!item.IsPickupAvailable)
+                continue;
+
             Vector3 toItem = item.transform.position - camPos;
             float distance = toItem.magnitude;
-
             float angle = Vector3.Angle(camForward, toItem);
 
             if (distance > maxDistance)
-            {
                 continue;
-            }
 
             if (angle > maxAngle)
-            {
                 continue;
-            }
 
             float score = distance + angle * 0.03f;
-
             if (score < bestScore)
             {
                 bestScore = score;
@@ -53,32 +49,24 @@ public class NearbyInteractables : MonoBehaviour, INearbyInteractables
             }
         }
 
-
         return best;
     }
 
-    // ======================================================
-    // REGISTRATION
-    // ======================================================
-
-    public void Register(NearbyItemPresenter presenter)
+    public void Register(WorldItemNetwork item)
     {
-        if (presenter == null)
+        Debug.Log("[Nearby] Register: " + item.name);
+        if (item == null)
             return;
 
-        if (!items.Contains(presenter))
-        {
-            items.Add(presenter);
-        }
+        if (!items.Contains(item))
+            items.Add(item);
     }
 
-    public void Unregister(NearbyItemPresenter presenter)
+    public void Unregister(WorldItemNetwork item)
     {
-        if (presenter == null)
+        if (item == null)
             return;
 
-        if (items.Remove(presenter))
-        {
-        }
+        items.Remove(item);
     }
 }

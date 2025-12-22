@@ -43,7 +43,7 @@ public static class ItemSetupMenu
         });
 
         AddOrGet<ItemRuntimeHolder>(go);
-        AddOrGet<NearbyItemPresenter>(go);
+        AddOrGet<WorldItemNetwork>(go);
 
         Debug.Log($"[Items] World Item applied to {go.name}");
     }

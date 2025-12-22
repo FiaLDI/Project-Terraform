@@ -18,7 +18,7 @@ namespace Features.Equipment.UnityIntegration
         [SerializeField] private UnityEngine.Camera playerCamera;
 
         private PlayerAnimationController anim;
-
+        private PlayerUsageController usage;
 
         private GameObject currentRightHandObject;
         private GameObject currentLeftHandObject;
@@ -26,8 +26,8 @@ namespace Features.Equipment.UnityIntegration
         private IUsable rightHandUsable;
         private IUsable leftHandUsable;
 
-        private PlayerUsageController usage;
         private IInventoryContext inventory;
+        private bool initialized;
 
         // ======================================================
         // INIT
@@ -35,8 +35,16 @@ namespace Features.Equipment.UnityIntegration
 
         public void Init(IInventoryContext inventory)
         {
+            if (inventory == null)
+                return;
+
             this.inventory = inventory;
             inventory.Service.OnChanged += EquipFromInventory;
+
+            initialized = true;
+
+            // начальное применение
+            EquipFromInventory();
         }
 
         private void Awake()
@@ -45,12 +53,12 @@ namespace Features.Equipment.UnityIntegration
                 playerCamera = UnityEngine.Camera.main;
 
             usage = GetComponent<PlayerUsageController>();
-            anim = GetComponent<PlayerAnimationController>();
+            anim  = GetComponent<PlayerAnimationController>();
         }
 
         private void OnDestroy()
         {
-            if (inventory != null)
+            if (inventory != null && inventory.Service != null)
                 inventory.Service.OnChanged -= EquipFromInventory;
         }
 
@@ -60,24 +68,34 @@ namespace Features.Equipment.UnityIntegration
 
         private void EquipFromInventory()
         {
-            if (inventory == null)
+            if (!initialized || inventory == null)
                 return;
 
             var model = inventory.Model;
+            if (model == null)
+                return;
 
+            // ---------- RIGHT HAND ----------
             EquipRightHand(model.rightHand.item);
 
             bool isTwoHanded =
                 model.rightHand.item?.itemDefinition?.isTwoHanded == true;
 
+            // ---------- LEFT HAND ----------
             if (isTwoHanded)
                 ClearLeftHand();
             else
                 EquipLeftHand(model.leftHand.item);
 
+            // ---------- ANIMATION ----------
             UpdateWeaponPose(model.rightHand.item);
 
-            usage?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
+            // ---------- USAGE ----------
+            usage?.OnHandsUpdated(
+                leftHandUsable,
+                rightHandUsable,
+                isTwoHanded
+            );
 
             EquipmentEvents.OnHandsUpdated?.Invoke(
                 leftHandUsable,
@@ -86,7 +104,6 @@ namespace Features.Equipment.UnityIntegration
             );
         }
 
-
         // ======================================================
         // RIGHT HAND
         // ======================================================
@@ -94,7 +111,8 @@ namespace Features.Equipment.UnityIntegration
         private void EquipRightHand(ItemInstance inst)
         {
             ClearRightHand();
-            if (inst == null)
+
+            if (inst == null || inst.itemDefinition == null)
                 return;
 
             InstantiateEquippedItem(
@@ -121,7 +139,8 @@ namespace Features.Equipment.UnityIntegration
         private void EquipLeftHand(ItemInstance inst)
         {
             ClearLeftHand();
-            if (inst == null)
+
+            if (inst == null || inst.itemDefinition == null)
                 return;
 
             InstantiateEquippedItem(
@@ -141,30 +160,29 @@ namespace Features.Equipment.UnityIntegration
             leftHandUsable = null;
         }
 
+        // ======================================================
+        // ANIMATION
+        // ======================================================
+
         private void UpdateWeaponPose(ItemInstance rightHandItem)
         {
             if (anim == null)
                 return;
 
-            if (rightHandItem == null)
+            if (rightHandItem == null || rightHandItem.itemDefinition == null)
             {
                 anim.SetWeaponPose(0); // no weapon
                 return;
             }
 
             if (rightHandItem.itemDefinition.isTwoHanded)
-            {
                 anim.SetWeaponPose(2); // two-handed
-            }
             else
-            {
                 anim.SetWeaponPose(1); // one-handed
-            }
         }
 
-
         // ======================================================
-        // INSTANTIATION (EQUIPPED ONLY)
+        // INSTANTIATION
         // ======================================================
 
         private void InstantiateEquippedItem(
@@ -176,21 +194,23 @@ namespace Features.Equipment.UnityIntegration
             obj = null;
             usable = null;
 
-            if (inst == null || inst.itemDefinition == null || parent == null)
+            if (inst == null ||
+                inst.itemDefinition == null ||
+                parent == null)
                 return;
 
             var prefab = inst.itemDefinition.equippedPrefab;
             if (prefab == null)
-            {
-                Debug.LogError($"[EquipmentManager] equippedPrefab NULL for {inst.itemDefinition.name}");
                 return;
-            }
 
             obj = Instantiate(prefab, parent);
             obj.transform.localPosition = Vector3.zero;
             obj.transform.localRotation = Quaternion.identity;
 
-            var holder = obj.GetComponent<ItemRuntimeHolder>() ?? obj.AddComponent<ItemRuntimeHolder>();
+            var holder =
+                obj.GetComponent<ItemRuntimeHolder>() ??
+                obj.AddComponent<ItemRuntimeHolder>();
+
             holder.SetInstance(inst);
 
             usable = obj.GetComponent<IUsable>();
@@ -203,12 +223,12 @@ namespace Features.Equipment.UnityIntegration
                 weapon.Initialize(playerCamera);
             }
 
-            if (usable != null)
-            {
-                usable.Initialize(playerCamera);
-            }
-
+            usable?.Initialize(playerCamera);
         }
+
+        // ======================================================
+        // SOCKETS
+        // ======================================================
 
         public void ApplySockets(CharacterSockets sockets)
         {
@@ -218,7 +238,7 @@ namespace Features.Equipment.UnityIntegration
             rightHandTransform = sockets.rightHandSocket;
             leftHandTransform  = sockets.leftHandSocket;
 
-            Debug.Log("[EquipmentManager] Hand sockets applied");
+            EquipFromInventory();
         }
 
         // ======================================================

@@ -4,6 +4,8 @@ using TMPro;
 using UnityEngine.EventSystems;
 using Features.Inventory.Domain;
 using Features.Menu.Tooltip;
+using Features.Items.Domain;
+using Features.Inventory.UnityIntegration;
 
 namespace Features.Inventory.UI
 {
@@ -18,7 +20,6 @@ namespace Features.Inventory.UI
 
         public static InventorySlotUI HoveredSlot { get; private set; }
         public static InventorySlotUI LastInteractedSlot { get; private set; }
-
 
         public InventorySlot BoundSlot => boundSlot;
         public InventorySection Section { get; private set; }
@@ -42,7 +43,12 @@ namespace Features.Inventory.UI
 
         private void Refresh()
         {
-            if (boundSlot?.item == null)
+            if (icon == null || amountText == null)
+                return;
+
+            if (boundSlot == null ||
+                boundSlot.item == null ||
+                boundSlot.item.IsEmpty)
             {
                 icon.enabled = false;
                 amountText.text = "";
@@ -64,6 +70,8 @@ namespace Features.Inventory.UI
                     ? boundSlot.item.quantity.ToString()
                     : "";
         }
+
+
 
         public void SetHighlight(bool value)
         {
@@ -89,15 +97,16 @@ namespace Features.Inventory.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            Debug.Log("SLOT BEGIN DRAG: " + gameObject.name, this);
-
-            if (boundSlot?.item == null)
+            if (boundSlot == null ||
+                boundSlot.item == null ||
+                boundSlot.item.IsEmpty)
                 return;
-            LastInteractedSlot = this;
 
+            LastInteractedSlot = this;
             TooltipController.Instance?.Hide();
 
-            InventoryDragController.Instance?.BeginDrag(this, boundSlot, eventData);
+            InventoryDragController.Instance
+                ?.BeginDrag(this, boundSlot, eventData);
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -112,7 +121,7 @@ namespace Features.Inventory.UI
 
         public void OnDrop(PointerEventData eventData)
         {
-            InventoryDragController.Instance?.DropOnto(this, boundSlot);
+            InventoryDragController.Instance?.NotifyDropTarget(this);
         }
 
 
@@ -133,13 +142,18 @@ namespace Features.Inventory.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (boundSlot?.item == null)
+            if (boundSlot == null ||
+                boundSlot.item == null ||
+                boundSlot.item.IsEmpty)
                 return;
 
             HoveredSlot = this;
             LastInteractedSlot = this;
-            TooltipController.Instance?.ShowForItemInstance(boundSlot.item, this);
+
+            TooltipController.Instance
+                ?.ShowForItemInstance(boundSlot.item, this);
         }
+
 
         public void OnPointerExit(PointerEventData eventData)
         {

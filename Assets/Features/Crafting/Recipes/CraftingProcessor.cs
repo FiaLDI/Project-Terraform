@@ -4,6 +4,8 @@ using UnityEngine;
 using Features.Items.Domain;
 using Features.Inventory;
 using Features.Inventory.Application;
+using Features.Player;
+using Features.Inventory.Domain;
 
 public class CraftingProcessor : MonoBehaviour
 {
@@ -86,42 +88,27 @@ public class CraftingProcessor : MonoBehaviour
     // ======================================================
 
     private void FinishRecipe(RecipeSO recipe)
-    {
+    {   
         isProcessing = false;
 
-        var service = inventory.Service;
-
-        // 1️⃣ REMOVE INGREDIENTS
-        foreach (var ing in recipe.ingredients)
-        {
-            bool removed = service.TryRemove(ing.item, ing.amount);
-            if (!removed)
-            {
-                Debug.LogError($"[Crafting] Failed to remove ingredient: {ing.item.name}");
-                return;
-            }
-        }
-
-        // 2️⃣ ADD OUTPUT
-        var output = recipe.outputItem;
-        if (output == null)
-        {
-            Debug.LogWarning("[Crafting] Recipe has no output item");
+        var player = LocalPlayerContext.Player;
+        if (player == null)
             return;
-        }
 
-        if (output.isStackable)
+        var net = player.GetComponent<InventoryStateNetwork>();
+        if (net == null)
+            return;
+
+        net.RequestInventoryCommand(new InventoryCommandData
         {
-            service.AddItem(new ItemInstance(output, recipe.outputAmount));
-        }
-        else
-        {
-            for (int i = 0; i < recipe.outputAmount; i++)
-                service.AddItem(new ItemInstance(output, 1));
-        }
+            Command  = InventoryCommand.CraftRecipe,
+            RecipeId = recipe.recipeId
+        });
 
         OnComplete?.Invoke(recipe);
     }
+
+
 
     // ======================================================
     // OPTIONAL API

@@ -1,188 +1,162 @@
 ﻿using FishNet.Object;
-using FishNet.Object.Synchronizing;
 using UnityEngine;
-using Features.Inventory.UnityIntegration;
 using Features.Inventory.Domain;
+using Features.Inventory.UnityIntegration;
+using Features.Items.Domain;
 
-[RequireComponent(typeof(InventoryManager))]
 public sealed class InventoryStateNetwork : NetworkBehaviour
 {
-    // ================= SYNC DATA =================
-
-    public readonly SyncList<InventorySlotNet> bag = new();
-    public readonly SyncList<InventorySlotNet> hotbar = new();
-
-    private readonly SyncVar<InventorySlotNet> leftHand = new();
-    private readonly SyncVar<InventorySlotNet> rightHand = new();
-    private readonly SyncVar<int> selectedHotbarIndex = new();
-
     private InventoryManager inventory;
 
-    // ================= LIFECYCLE =================
-
-    public override void OnStartServer()
+    private void Awake()
     {
-        base.OnStartServer();
-
         inventory = GetComponent<InventoryManager>();
-        inventory.Service.OnChanged += PublishState;
-
-        PublishState();
     }
 
-    public override void OnStopServer()
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestInventoryCommand(InventoryCommandData cmd)
     {
-        base.OnStopServer();
+        if (inventory == null || inventory.Service == null)
+            return;
 
-        if (inventory != null)
-            inventory.Service.OnChanged -= PublishState;
-    }
+        Debug.Log($"[INV CMD] {cmd.Command}");
 
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-
-        inventory = GetComponent<InventoryManager>();
-        if (inventory == null)
+        switch (cmd.Command)
         {
-            Debug.LogError(
-                "[InventoryStateNetwork] InventoryManager missing on client",
-                this);
-            return;
+            case InventoryCommand.SelectHotbar:
+                HandleSelectHotbar(cmd);
+                break;
+
+            case InventoryCommand.MoveItem:
+                HandleMove(cmd);
+                break;
+
+            case InventoryCommand.DropFromSlot:
+                HandleDrop(cmd);
+                break;
+
+            case InventoryCommand.UpgradeItem:
+                HandleUpgrade(cmd);
+                break;
+
+            case InventoryCommand.CraftRecipe:
+                HandleCraft(cmd);
+                break;
+            
+            case InventoryCommand.PickupWorldItem:
+                HandlePickup(cmd);
+                break;
+
         }
-
-        bag.OnChange += OnBagChanged;
-        hotbar.OnChange += OnHotbarChanged;
-
-        leftHand.OnChange += OnSlotChanged;
-        rightHand.OnChange += OnSlotChanged;
-        selectedHotbarIndex.OnChange += OnIndexChanged;
-
-        ApplyToClient();
     }
 
+    // ================= HANDLERS =================
 
-    public override void OnStopClient()
+    private void HandleSelectHotbar(InventoryCommandData cmd)
     {
-        base.OnStopClient();
-
-        bag.OnChange -= OnBagChanged;
-        hotbar.OnChange -= OnHotbarChanged;
-
-        leftHand.OnChange -= OnSlotChanged;
-        rightHand.OnChange -= OnSlotChanged;
-        selectedHotbarIndex.OnChange -= OnIndexChanged;
+        inventory.Service.SelectHotbarIndex(cmd.Index);
     }
 
-    // ================= SERVER =================
-
-    private void PublishState()
+    private void HandleMove(InventoryCommandData cmd)
     {
-        if (!IsServerInitialized)
-            return;
-
-        bag.Clear();
-        foreach (var s in inventory.Model.main)
-            bag.Add(ToNet(s));
-
-        hotbar.Clear();
-        foreach (var s in inventory.Model.hotbar)
-            hotbar.Add(ToNet(s));
-
-        leftHand.Value = ToNet(inventory.Model.leftHand);
-        rightHand.Value = ToNet(inventory.Model.rightHand);
-        selectedHotbarIndex.Value = inventory.Model.selectedHotbarIndex;
-    }
-
-    // ================= CLIENT =================
-
-    private void ApplyToClient()
-    {
-        if (IsServerInitialized || inventory == null)
-            return;
-
-        inventory.ApplyNetState(
-            bag,
-            hotbar,
-            leftHand.Value,
-            rightHand.Value,
-            selectedHotbarIndex.Value
+        inventory.Service.MoveItem(
+            cmd.FromIndex,
+            cmd.FromSection,
+            cmd.ToIndex,
+            cmd.ToSection
         );
     }
 
-
-    private void OnBagChanged(
-        SyncListOperation op,
-        int index,
-        InventorySlotNet oldItem,
-        InventorySlotNet newItem,
-        bool asServer)
+    private void HandleDrop(InventoryCommandData cmd)
     {
-        ApplyToClient();
+        var extracted = inventory.Service.ExtractFromSlot(
+            cmd.Section,
+            cmd.Index,
+            cmd.Amount <= 0 ? int.MaxValue : cmd.Amount
+        );
+
+        if (extracted.IsEmpty)
+            return;
+
+        WorldItemDropService.I.DropServer(
+            extracted,
+            cmd.WorldPos,
+            cmd.WorldForward
+        );
     }
 
-    private void OnHotbarChanged(
-        SyncListOperation op,
-        int index,
-        InventorySlotNet oldItem,
-        InventorySlotNet newItem,
-        bool asServer)
+    private void HandleUpgrade(InventoryCommandData cmd)
     {
-        ApplyToClient();
+        var recipe = RecipeDatabase.Instance.GetRecipeById(cmd.RecipeId);
+        if (recipe == null)
+            return;
+
+        var slot = inventory.Service
+            .ExtractFromSlot(cmd.Section, cmd.Index, 0);
+
+        inventory.Service.ConsumeIngredients(recipe.ingredients);
+
+        var inst = GetSlot(cmd.Section, cmd.Index).item;
+        inst.level++;
     }
 
-    private void OnSlotChanged(
-        InventorySlotNet oldVal,
-        InventorySlotNet newVal,
-        bool asServer)
+    private InventorySlot GetSlot(InventorySection section, int index)
     {
-        ApplyToClient();
-    }
-
-    private void OnIndexChanged(
-        int oldVal,
-        int newVal,
-        bool asServer)
-    {
-        ApplyToClient();
-    }
-
-    // ================= CONVERSION =================
-
-    private InventorySlotNet ToNet(InventorySlot slot)
-    {
-        if (slot.item == null)
-            return default;
-
-        return new InventorySlotNet
+        return section switch
         {
-            itemId = slot.item.itemDefinition.id,
-            quantity = slot.item.quantity,
-            level = slot.item.level
+            InventorySection.Bag => inventory.Model.main[index],
+            InventorySection.Hotbar => inventory.Model.hotbar[index],
+            InventorySection.LeftHand => inventory.Model.leftHand,
+            InventorySection.RightHand => inventory.Model.rightHand,
+            _ => null
         };
     }
 
-    // ================= RPC API (CLIENT → SERVER) =================
 
-    [ServerRpc]
-    public void RequestMoveItem(
-        int fromIdx,
-        InventorySection from,
-        int toIdx,
-        InventorySection to)
+    private void HandleCraft(InventoryCommandData cmd)
     {
-        inventory.Service.MoveItem(fromIdx, from, toIdx, to);
+        var recipe = RecipeDatabase.Instance.GetRecipeById(cmd.RecipeId);
+        if (recipe == null)
+            return;
+
+        if (!inventory.Service.HasIngredients(recipe.ingredients))
+            return;
+
+        inventory.Service.ConsumeIngredients(recipe.ingredients);
+
+        var output = recipe.outputItem;
+        if (output.isStackable)
+        {
+            inventory.Service.AddItem(
+                new ItemInstance(output, recipe.outputAmount)
+            );
+        }
+        else
+        {
+            for (int i = 0; i < recipe.outputAmount; i++)
+                inventory.Service.AddItem(new ItemInstance(output, 1));
+        }
     }
 
-    [ServerRpc]
-    public void RequestEquipRight(int index, InventorySection section)
+    private void HandlePickup(InventoryCommandData cmd)
     {
-        inventory.Service.EquipRightHand(index, section);
+        if (!NetworkManager.ServerManager.Objects
+                .Spawned.TryGetValue(cmd.WorldItemNetId, out var netObj))
+            return;
+
+        var worldItem = netObj.GetComponent<WorldItemNetwork>();
+        if (worldItem == null || !worldItem.IsPickupAvailable)
+            return;
+
+        var def = ItemRegistrySO.Instance.Get(worldItem.ItemId);
+        if (def == null)
+            return;
+
+        if (!inventory.Service.AddItem(
+                new ItemInstance(def, worldItem.Quantity, worldItem.Level)))
+            return;
+
+        worldItem.ServerConsume();
     }
 
-    [ServerRpc]
-    public void RequestEquipLeft(int index, InventorySection section)
-    {
-        inventory.Service.EquipLeftHand(index, section);
-    }
 }

@@ -4,15 +4,42 @@ namespace Features.Items.Domain
 {
     /// <summary>
     /// Runtime-экземпляр предмета.
-    /// Хранит состояние, которое нельзя держать в ScriptableObject.
+    /// Никогда не должен быть null.
+    /// Пустой предмет представлен через ItemInstance.Empty.
     /// </summary>
     public class ItemInstance
     {
-        public readonly Item itemDefinition; // чистые данные из SO
+        // =====================================================
+        // EMPTY (Null Object Pattern)
+        // =====================================================
 
+        public static readonly ItemInstance Empty = new ItemInstance();
+
+        // =====================================================
+        // DATA
+        // =====================================================
+
+        public readonly Item itemDefinition; // ScriptableObject
         public int quantity;                 // runtime количество
-        public int level;                    // runtime уровень (апгрейды)
+        public int level;                    // runtime уровень
 
+        // =====================================================
+        // CONSTRUCTORS
+        // =====================================================
+
+        /// <summary>
+        /// Приватный конструктор для Empty.
+        /// </summary>
+        private ItemInstance()
+        {
+            itemDefinition = null;
+            quantity = 0;
+            level = 0;
+        }
+
+        /// <summary>
+        /// Обычный runtime-предмет.
+        /// </summary>
         public ItemInstance(Item definition, int quantity = 1, int level = 0)
         {
             itemDefinition = definition;
@@ -20,21 +47,31 @@ namespace Features.Items.Domain
             this.level = level;
         }
 
+        // =====================================================
+        // STATE
+        // =====================================================
+
+        public bool IsEmpty =>
+            itemDefinition == null || quantity <= 0;
+
         public bool IsStackable =>
-            itemDefinition.isStackable;
+            !IsEmpty && itemDefinition.isStackable;
 
         public int MaxStack =>
-            itemDefinition.maxStackAmount;
+            IsEmpty ? 0 : itemDefinition.maxStackAmount;
 
         // =====================================================
         // CLONE
         // =====================================================
 
         /// <summary>
-        /// Полная копия предмета (со всем количеством).
+        /// Полная копия предмета.
         /// </summary>
         public ItemInstance Clone()
         {
+            if (IsEmpty)
+                return Empty;
+
             return new ItemInstance(
                 itemDefinition,
                 quantity,
@@ -43,11 +80,13 @@ namespace Features.Items.Domain
         }
 
         /// <summary>
-        /// Копия предмета с указанным количеством.
-        /// Используется для split stack / drop 1.
+        /// Копия предмета с новым количеством.
         /// </summary>
         public ItemInstance CloneWithQuantity(int newQuantity)
         {
+            if (IsEmpty || newQuantity <= 0)
+                return Empty;
+
             return new ItemInstance(
                 itemDefinition,
                 newQuantity,

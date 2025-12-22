@@ -1,11 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.InputSystem;
-using Features.Inventory;
+﻿using Features.Input;
+using Features.Inventory.Domain;
 using Features.Inventory.UI;
-using Features.Items.Domain;
-using Features.Items.UnityIntegration;
 using Features.Player;
-using Features.Input;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -17,10 +15,9 @@ namespace Features.Inventory.UnityIntegration
         private IInventoryContext inventory;
         private InventoryUIView inventoryUI;
 
-        private InputAction openInventoryPlayer;
-        private InputAction closeInventoryUI;
-        private InputAction cancelUI;
-
+        private InputAction openInventory;
+        private InputAction closeInventory;
+        private InputAction cancel;
         private InputAction equipFirst;
         private InputAction equipSecond;
         private InputAction scrollWheel;
@@ -39,12 +36,10 @@ namespace Features.Inventory.UnityIntegration
 
             if (input != null)
                 UnbindInput(input);
-            input = ctx;
 
+            input = ctx;
             if (input == null)
                 return;
-
-            inventory = null;
 
             inventoryUI = Object.FindAnyObjectByType<InventoryUIView>(
                 FindObjectsInactive.Include);
@@ -65,7 +60,6 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             UnbindActions();
-
             input = null;
             inventory = null;
             bound = false;
@@ -81,21 +75,16 @@ namespace Features.Inventory.UnityIntegration
             var ui = input.Actions.UI;
 
             Enable(player, "OpenInventory", "Drop");
-            Enable(ui,
-                "CloseInventory",
-                "Cancel",
-                "EquipFirst",
-                "EquipSecond",
-                "ScrollWheel");
+            Enable(ui, "CloseInventory", "Cancel", "EquipFirst", "EquipSecond", "ScrollWheel");
 
-            openInventoryPlayer = player.FindAction("OpenInventory", true);
-            openInventoryPlayer.started += OnOpenInventory;
+            openInventory = player.FindAction("OpenInventory", true);
+            openInventory.started += OnOpenInventory;
 
-            closeInventoryUI = ui.FindAction("CloseInventory", true);
-            cancelUI = ui.FindAction("Cancel", true);
+            closeInventory = ui.FindAction("CloseInventory", true);
+            cancel = ui.FindAction("Cancel", true);
 
-            closeInventoryUI.started += OnCloseInventory;
-            cancelUI.started += OnCloseInventory;
+            closeInventory.started += OnCloseInventory;
+            cancel.started += OnCloseInventory;
 
             equipFirst = ui.FindAction("EquipFirst", true);
             equipSecond = ui.FindAction("EquipSecond", true);
@@ -114,50 +103,37 @@ namespace Features.Inventory.UnityIntegration
             if (input == null)
                 return;
 
-            var player = input.Actions.Player;
-            var ui = input.Actions.UI;
-
-            openInventoryPlayer.started -= OnOpenInventory;
-            closeInventoryUI.started -= OnCloseInventory;
-            cancelUI.started -= OnCloseInventory;
+            openInventory.started -= OnOpenInventory;
+            closeInventory.started -= OnCloseInventory;
+            cancel.started -= OnCloseInventory;
             scrollWheel.performed -= OnScroll;
 
             equipFirst.performed -= _ => SelectHotbar(0);
             equipSecond.performed -= _ => SelectHotbar(1);
             drop.performed -= _ => DropFromHands();
-
-            Disable(player, "OpenInventory", "Drop");
-            Disable(ui,
-                "CloseInventory",
-                "Cancel",
-                "EquipFirst",
-                "EquipSecond",
-                "ScrollWheel");
         }
 
         // ======================================================
-        // OPEN / CLOSE INVENTORY
+        // INVENTORY UI
         // ======================================================
 
         private void OnOpenInventory(InputAction.CallbackContext _)
         {
-            if (InputModeManager.I.CurrentMode != InputMode.Gameplay)
-                return;
-
-            inventoryUI.Open();
+            if (InputModeManager.I.CurrentMode == InputMode.Gameplay)
+                inventoryUI.Open();
         }
 
         private void OnCloseInventory(InputAction.CallbackContext _)
         {
-            if (InputModeManager.I.CurrentMode != InputMode.Inventory)
-                return;
-
-            if (ReferenceEquals(UIStackManager.I.Peek(), inventoryUI))
+            if (InputModeManager.I.CurrentMode == InputMode.Inventory &&
+                ReferenceEquals(UIStackManager.I.Peek(), inventoryUI))
+            {
                 UIStackManager.I.Pop();
+            }
         }
 
         // ======================================================
-        // SCROLL / HOTBAR
+        // HOTBAR
         // ======================================================
 
         private void OnScroll(InputAction.CallbackContext ctx)
@@ -167,34 +143,33 @@ namespace Features.Inventory.UnityIntegration
             else if (scroll < 0) CycleHotbar(-1);
         }
 
-        private IInventoryContext Inventory
-        {
-            get
-            {
-                inventory ??= LocalPlayerContext.Inventory;
-                return inventory;
-            }
-        }
+        private IInventoryContext Inventory =>
+            inventory ??= LocalPlayerContext.Inventory;
 
         private void SelectHotbar(int index)
         {
-            if (Inventory == null)
+            var net = GetNet();
+            if (net == null)
                 return;
 
-            Inventory.Service.SelectHotbarIndex(index);
+            net.RequestInventoryCommand(new InventoryCommandData
+            {
+                Command = InventoryCommand.SelectHotbar,
+                Index = index
+            });
         }
 
-        private void CycleHotbar(int direction)
+        private void CycleHotbar(int dir)
         {
             if (Inventory == null)
                 return;
 
             int count = Inventory.Model.hotbar.Count;
-            if (count <= 0)
+            if (count == 0)
                 return;
 
             int current = Inventory.Model.selectedHotbarIndex;
-            int next = (current + direction + count) % count;
+            int next = (current + dir + count) % count;
 
             SelectHotbar(next);
         }
@@ -205,62 +180,41 @@ namespace Features.Inventory.UnityIntegration
 
         private void DropFromHands()
         {
-            if (Inventory == null)
+            var net = GetNet();
+            if (net == null)
                 return;
 
-            var dropped = Inventory.Service.DropFromHands();
-            if (dropped == null)
+            var cam = UnityEngine.Camera.main;
+            if (cam == null)
                 return;
 
-            SpawnDroppedItem(dropped);
-        }
-
-        private void SpawnDroppedItem(ItemInstance inst)
-        {
-            if (inst?.itemDefinition?.worldPrefab == null)
-                return;
-
-            var player = LocalPlayerContext.Player;
-            if (player == null)
-                return;
-
-            Vector3 pos =
-                player.transform.position +
-                player.transform.forward * 1.2f;
-
-            var obj = Instantiate(
-                inst.itemDefinition.worldPrefab,
-                pos,
-                Quaternion.identity);
-
-            var holder =
-                obj.GetComponent<ItemRuntimeHolder>() ??
-                obj.AddComponent<ItemRuntimeHolder>();
-
-            holder.SetInstance(inst);
-
-            if (obj.TryGetComponent<Rigidbody>(out var rb))
+            net.RequestInventoryCommand(new InventoryCommandData
             {
-                rb.isKinematic = false;
-                rb.useGravity = true;
-                rb.AddForce(player.transform.forward * 2f, ForceMode.Impulse);
-            }
+                Command = InventoryCommand.DropFromSlot,
+                Section = InventorySection.RightHand,
+                Index = 0,
+                Amount = int.MaxValue,
+                WorldPos = cam.transform.position,
+                WorldForward = cam.transform.forward
+            });
         }
 
         // ======================================================
         // HELPERS
         // ======================================================
 
+        private InventoryStateNetwork GetNet()
+        {
+            var player = LocalPlayerContext.Player;
+            return player != null
+                ? player.GetComponent<InventoryStateNetwork>()
+                : null;
+        }
+
         private static void Enable(InputActionMap map, params string[] names)
         {
             foreach (var n in names)
                 map.FindAction(n, true).Enable();
-        }
-
-        private static void Disable(InputActionMap map, params string[] names)
-        {
-            foreach (var n in names)
-                map.FindAction(n, true).Disable();
         }
     }
 }

@@ -4,6 +4,8 @@ using UnityEngine;
 using Features.Items.Domain;
 using Features.Inventory;
 using Features.Inventory.Application;
+using Features.Player;
+using Features.Inventory.Domain;
 
 public class UpgradeProcessor : MonoBehaviour
 {
@@ -82,18 +84,23 @@ public class UpgradeProcessor : MonoBehaviour
         isProcessing = false;
         currentRoutine = null;
 
-        var service = inventory.Service;
+        var player = LocalPlayerContext.Player;
+        if (player == null)
+            return;
 
-        // 1️⃣ REMOVE INGREDIENTS
-        foreach (var ing in recipe.ingredients)
-            service.TryRemove(ing.item, ing.amount);
+        var net = player.GetComponent<InventoryStateNetwork>();
+        if (net == null)
+            return;
 
-        // 2️⃣ APPLY UPGRADE
-        inst.level++;
+        int index = inventory.Model.selectedHotbarIndex;
 
-        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
-        // Сообщаем всем UI, что модель изменилась
-        service.NotifyChanged();
+        net.RequestInventoryCommand(new InventoryCommandData
+        {
+            Command = InventoryCommand.UpgradeItem,
+            Section = InventorySection.Hotbar,
+            Index = index,
+            RecipeId = recipe.recipeId
+        });
 
         OnComplete?.Invoke(inst);
     }

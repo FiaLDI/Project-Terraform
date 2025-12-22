@@ -3,25 +3,19 @@ using System.Linq;
 using Features.Inventory.Application;
 using Features.Items.Data;
 using Features.Items.Domain;
-using UnityEngine;
 
 namespace Features.Inventory.Domain
 {
     /// <summary>
-    /// Application-слой инвентаря:
-    /// - добавление / удаление предметов
-    /// - перемещение
-    /// - экипировка
-    /// - обработка двуручности
-    /// 
-    /// НЕ содержит Unity API.
+    /// Application-слой инвентаря.
+    /// НЕ использует Unity API.
+    /// Работает ТОЛЬКО с ItemInstance.Empty.
     /// </summary>
-    public class InventoryService : IInventoryService
+    public sealed class InventoryService : IInventoryService
     {
         private readonly InventoryModel model;
 
         public event Action OnChanged;
-
         public event Action<ItemInstance> OnItemAdded;
 
         public InventoryService(InventoryModel model)
@@ -29,29 +23,30 @@ namespace Features.Inventory.Domain
             this.model = model;
         }
 
-        // ===============================================================
-        // ADD ITEM
-        // ===============================================================
+        // =====================================================
+        // ADD
+        // =====================================================
 
         public bool AddItem(ItemInstance inst)
         {
-            if (inst == null || inst.quantity <= 0)
+            if (inst == null || inst.IsEmpty || inst.quantity <= 0)
                 return false;
 
+            // 1️⃣ Stack
             if (inst.IsStackable)
             {
                 foreach (var slot in model.main)
                 {
                     var item = slot.item;
-                    if (item == null)
+                    if (item.IsEmpty)
                         continue;
 
                     if (item.itemDefinition != inst.itemDefinition ||
                         item.level != inst.level ||
-                        item.quantity >= inst.MaxStack)
+                        item.quantity >= item.MaxStack)
                         continue;
 
-                    int canAdd = inst.MaxStack - item.quantity;
+                    int canAdd = item.MaxStack - item.quantity;
                     int add = Math.Min(canAdd, inst.quantity);
 
                     item.quantity += add;
@@ -65,15 +60,14 @@ namespace Features.Inventory.Domain
                 }
             }
 
+            // 2️⃣ Empty slot
             foreach (var slot in model.main)
             {
-                if (slot.item != null)
+                if (!slot.item.IsEmpty)
                     continue;
 
                 slot.item = inst;
-
                 OnItemAdded?.Invoke(inst);
-
                 OnChanged?.Invoke();
                 return true;
             }
@@ -81,219 +75,167 @@ namespace Features.Inventory.Domain
             return false;
         }
 
-
-
-
-        // ===============================================================
+        // =====================================================
         // REMOVE
-        // ===============================================================
+        // =====================================================
 
         public bool TryRemove(Item def, int count)
         {
             int left = count;
 
-            foreach (var slot in model.hotbar)
+            foreach (var slot in model.hotbar.Concat(model.main))
             {
-                if (slot.item != null && slot.item.itemDefinition == def)
+                var item = slot.item;
+                if (item.IsEmpty || item.itemDefinition != def)
+                    continue;
+
+                int take = Math.Min(left, item.quantity);
+                item.quantity -= take;
+                left -= take;
+
+                if (item.quantity <= 0)
+                    slot.item = ItemInstance.Empty;
+
+                if (left <= 0)
                 {
-                    int take = Math.Min(left, slot.item.quantity);
-                    slot.item.quantity -= take;
-                    left -= take;
-
-                    if (slot.item.quantity <= 0)
-                        slot.item = null;
-
-                    if (left <= 0)
-                    {
-                        OnChanged?.Invoke();
-                        return true;
-                    }
-                }
-            }
-
-            foreach (var slot in model.main)
-            {
-                if (slot.item != null && slot.item.itemDefinition == def)
-                {
-                    int take = Math.Min(left, slot.item.quantity);
-                    slot.item.quantity -= take;
-                    left -= take;
-
-                    if (slot.item.quantity <= 0)
-                        slot.item = null;
-
-                    if (left <= 0)
-                    {
-                        OnChanged?.Invoke();
-                        return true;
-                    }
+                    OnChanged?.Invoke();
+                    return true;
                 }
             }
 
             return false;
         }
 
-        // ===============================================================
+        // =====================================================
         // COUNT
-        // ===============================================================
+        // =====================================================
 
         public int GetItemCount(Item def)
         {
             return model.hotbar
                 .Concat(model.main)
-                .Where(s => s.item != null && s.item.itemDefinition == def)
+                .Where(s => !s.item.IsEmpty && s.item.itemDefinition == def)
                 .Sum(s => s.item.quantity);
         }
 
-        // ===============================================================
-        // MOVE ITEM
-        // ===============================================================
+        // =====================================================
+        // MOVE
+        // =====================================================
 
-        public bool MoveItem(int fromIndex, InventorySection fromSection,
-                     int toIndex, InventorySection toSection)
+        public bool MoveItem(
+            int fromIndex,
+            InventorySection fromSection,
+            int toIndex,
+            InventorySection toSection)
         {
             var from = GetSlot(fromSection, fromIndex);
             var to   = GetSlot(toSection, toIndex);
 
-            if (from == null || to == null || from.item == null)
+            if (from == null || to == null || from.item.IsEmpty)
                 return false;
 
+            // forbid: two-handed → left hand
             if (toSection == InventorySection.LeftHand &&
-                model.rightHand.item?.itemDefinition?.isTwoHanded == true)
+                model.rightHand.item.itemDefinition?.isTwoHanded == true)
                 return false;
 
+            // two-handed → right clears left
             if (toSection == InventorySection.RightHand &&
-                from.item?.itemDefinition?.isTwoHanded == true)
-                model.leftHand.item = null;
+                from.item.itemDefinition?.isTwoHanded == true)
+                model.leftHand.item = ItemInstance.Empty;
 
-            bool fromIsHand = fromSection is InventorySection.RightHand or InventorySection.LeftHand;
-            bool toIsHand   = toSection   is InventorySection.RightHand or InventorySection.LeftHand;
-
-            if (fromIsHand || toIsHand)
-            {
-                var tmp = to.item;
-                to.item = from.item;
-                from.item = tmp;
-
-                HandleTwoHandedIfNeeded();
-
-                OnChanged?.Invoke();
-                return true;
-            }
-
-            {
-                var tmp = to.item;
-                to.item = from.item;
-                from.item = tmp;
-
-                OnChanged?.Invoke();
-                return true;
-            }
-        }
-
-
-        // ===============================================================
-        // EQUIP
-        // ===============================================================
-
-        public void EquipRightHand(int slot, InventorySection section)
-        {
-            var s = GetSlot(section, slot);
-            model.rightHand.item = s.item;
-
-            if (s.item.itemDefinition.equippedPrefab == null)
-            {
-                Debug.Log(
-                    $"[InventoryService] Item {s.item.itemDefinition.itemName} is NOT equippable"
-                );
-                return;
-            }
-
-            s.item = null;
+            Swap(from, to);
             HandleTwoHandedIfNeeded();
 
             OnChanged?.Invoke();
+            return true;
         }
 
-        public void EquipLeftHand(int slot, InventorySection section)
-        {
-            if (model.rightHand.item?.itemDefinition?.isTwoHanded == true)
-            {
-                Debug.Log("[InventoryService] Cannot equip left hand: right hand is TWO-HANDED");
-                return;
-            }
+        // =====================================================
+        // DROP / EXTRACT
+        // =====================================================
 
-            var s = GetSlot(section, slot);
-            model.leftHand.item = s.item;
-
-            s.item = null;
-
-            OnChanged?.Invoke();
-        }
-
-
-        public void UnequipRightHand()
-        {
-            model.rightHand.item = null;
-            OnChanged?.Invoke();
-        }
-
-        public void UnequipLeftHand()
-        {
-            model.leftHand.item = null;
-            OnChanged?.Invoke();
-        }
-
-        // ===============================================================
-        // TWO-HANDED ITEM LOGIC
-        // ===============================================================
-
-        public void HandleTwoHandedIfNeeded()
-        {
-            var item = model.rightHand.item;
-            if (item != null && item.itemDefinition.isTwoHanded)
-            {
-                model.leftHand.item = null;
-            }
-        }
-
-        // ===============================================================
-        // HELPERS
-        // ===============================================================
-
-        private InventorySlot GetSlot(InventorySection section, int index)
+        public ItemInstance ExtractFromSlot(
+            InventorySection section,
+            int index,
+            int amount)
         {
             return section switch
             {
-                InventorySection.Hotbar => model.hotbar[index],
-                InventorySection.Bag => model.main[index],
-                InventorySection.LeftHand => model.leftHand,
-                InventorySection.RightHand => model.rightHand,
-                _ => null
+                InventorySection.Hotbar =>
+                    ExtractFromHotbar(index, amount),
+
+                InventorySection.Bag =>
+                    ExtractFromBag(index, amount),
+
+                InventorySection.LeftHand or InventorySection.RightHand =>
+                    DropFromHands(),
+
+                _ => ItemInstance.Empty
             };
         }
 
-        public ItemInstance GetFirst(Item def)
+        private ItemInstance ExtractFromHotbar(int index, int amount)
         {
-            if (def == null)
-                return null;
+            if (index < 0 || index >= model.hotbar.Count)
+                return ItemInstance.Empty;
 
-            // 1) hotbar
-            foreach (var slot in model.hotbar)
-            {
-                if (slot.item != null && slot.item.itemDefinition == def)
-                    return slot.item;
-            }
-
-            // 2) bag
-            foreach (var slot in model.main)
-            {
-                if (slot.item != null && slot.item.itemDefinition == def)
-                    return slot.item;
-            }
-
-            return null;
+            var slot = model.hotbar[index];
+            return ExtractFromSlotInternal(slot, amount);
         }
+
+        private ItemInstance ExtractFromBag(int index, int amount)
+        {
+            if (index < 0 || index >= model.main.Count)
+                return ItemInstance.Empty;
+
+            var slot = model.main[index];
+            return ExtractFromSlotInternal(slot, amount);
+        }
+
+        private ItemInstance ExtractFromSlotInternal(
+            InventorySlot slot,
+            int amount)
+        {
+            var inst = slot.item;
+            if (inst.IsEmpty)
+                return ItemInstance.Empty;
+
+            int take = Math.Min(amount, inst.quantity);
+            var extracted = inst.CloneWithQuantity(take);
+
+            inst.quantity -= take;
+            if (inst.quantity <= 0)
+                slot.item = ItemInstance.Empty;
+
+            OnChanged?.Invoke();
+            return extracted;
+        }
+
+        public ItemInstance DropFromHands()
+        {
+            if (!model.rightHand.item.IsEmpty)
+            {
+                var dropped = model.rightHand.item;
+                model.rightHand.item = ItemInstance.Empty;
+                OnChanged?.Invoke();
+                return dropped;
+            }
+
+            if (!model.leftHand.item.IsEmpty)
+            {
+                var dropped = model.leftHand.item;
+                model.leftHand.item = ItemInstance.Empty;
+                OnChanged?.Invoke();
+                return dropped;
+            }
+
+            return ItemInstance.Empty;
+        }
+
+        // =====================================================
+        // INGREDIENTS
+        // =====================================================
 
         public bool HasIngredients(RecipeIngredient[] ingredients)
         {
@@ -305,8 +247,7 @@ namespace Features.Inventory.Domain
                 if (ing.item == null)
                     continue;
 
-                int have = GetItemCount(ing.item);
-                if (have < ing.amount)
+                if (GetItemCount(ing.item) < ing.amount)
                     return false;
             }
 
@@ -320,32 +261,30 @@ namespace Features.Inventory.Domain
 
             foreach (var ing in ingredients)
             {
-                if (ing.item == null)
-                    continue;
-
-                TryRemove(ing.item, ing.amount);
+                if (ing.item != null)
+                    TryRemove(ing.item, ing.amount);
             }
 
             return true;
         }
 
-        public (InventorySection section, int index)? FindSlot(ItemInstance inst)
+        // =====================================================
+        // QUERY
+        // =====================================================
+
+        public ItemInstance GetFirst(Item item)
         {
-            // hotbar
-            for (int i = 0; i < model.hotbar.Count; i++)
+            if (item == null)
+                return ItemInstance.Empty;
+
+            foreach (var slot in model.hotbar.Concat(model.main))
             {
-                if (model.hotbar[i].item == inst)
-                    return (InventorySection.Hotbar, i);
+                if (!slot.item.IsEmpty &&
+                    slot.item.itemDefinition == item)
+                    return slot.item;
             }
 
-            // bag
-            for (int i = 0; i < model.main.Count; i++)
-            {
-                if (model.main[i].item == inst)
-                    return (InventorySection.Bag, i);
-            }
-
-            return null;
+            return ItemInstance.Empty;
         }
 
         public void SelectHotbarIndex(int index)
@@ -357,39 +296,34 @@ namespace Features.Inventory.Domain
             OnChanged?.Invoke();
         }
 
-        public void NotifyChanged()
+        // =====================================================
+        // HELPERS
+        // =====================================================
+
+        private InventorySlot GetSlot(InventorySection section, int index)
         {
-            OnChanged?.Invoke();
+            return section switch
+            {
+                InventorySection.Hotbar   => model.hotbar[index],
+                InventorySection.Bag      => model.main[index],
+                InventorySection.LeftHand => model.leftHand,
+                InventorySection.RightHand=> model.rightHand,
+                _ => null
+            };
         }
 
-        public ItemInstance DropFromHands()
+        private void HandleTwoHandedIfNeeded()
         {
-            if (model.rightHand.item != null)
-            {
-                var dropped = model.rightHand.item;
-                model.rightHand.item = null;
-
-                if (model.leftHand.item != null)
-                {
-                    model.rightHand.item = model.leftHand.item;
-                    model.leftHand.item = null;
-                }
-
-                OnChanged?.Invoke();
-                return dropped;
-            }
-
-            if (model.leftHand.item != null)
-            {
-                var dropped = model.leftHand.item;
-                model.leftHand.item = null;
-
-                OnChanged?.Invoke();
-                return dropped;
-            }
-
-            return null;
+            var item = model.rightHand.item;
+            if (!item.IsEmpty && item.itemDefinition.isTwoHanded)
+                model.leftHand.item = ItemInstance.Empty;
         }
 
+        private static void Swap(InventorySlot a, InventorySlot b)
+        {
+            var tmp = a.item;
+            a.item = b.item;
+            b.item = tmp;
+        }
     }
 }

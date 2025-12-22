@@ -1,3 +1,5 @@
+using Features.Items.UnityIntegration; // где лежит WorldItemNetwork
+
 namespace Features.Interaction.Domain
 {
     public enum InteractionTargetType
@@ -10,17 +12,17 @@ namespace Features.Interaction.Domain
     public struct InteractionTarget
     {
         public InteractionTargetType Type;
-        public NearbyItemPresenter Pickup;
+        public WorldItemNetwork WorldItem;
         public IInteractable Interactable;
 
         public static InteractionTarget None =>
             new InteractionTarget { Type = InteractionTargetType.None };
 
-        public static InteractionTarget ForPickup(NearbyItemPresenter pickup) =>
+        public static InteractionTarget ForPickup(WorldItemNetwork worldItem) =>
             new InteractionTarget
             {
                 Type = InteractionTargetType.Pickup,
-                Pickup = pickup
+                WorldItem = worldItem
             };
 
         public static InteractionTarget ForInteractable(IInteractable interactable) =>

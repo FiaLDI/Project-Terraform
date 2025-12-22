@@ -1,4 +1,5 @@
 using System;
+using Features.Inventory.UnityIntegration;
 using UnityEngine;
 
 namespace Features.Player.UI

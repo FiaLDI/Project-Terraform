@@ -1,22 +1,25 @@
-﻿using UnityEngine;
-using UnityEngine.InputSystem;
+﻿using Features.Input;
 using Features.Interaction.Application;
 using Features.Interaction.Domain;
 using Features.Interaction.UnityIntegration;
-using Features.Items.Domain;
+using Features.Inventory.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player;
-using Features.Input;
+using FishNet;
+using FishNet.Connection;
+using FishNet.Object;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
-public sealed class PlayerInteractionController
-    : MonoBehaviour, IInputContextConsumer
+public sealed class PlayerInteractionController :
+    MonoBehaviour,
+    IInputContextConsumer
 {
     private PlayerInputContext input;
     private InteractionResolver resolver;
     private INearbyInteractables nearby;
 
     private InputAction interactAction;
-    private InputAction dropAction;
 
     private bool interactionBlocked;
     private bool subscribed;
@@ -45,6 +48,11 @@ public sealed class PlayerInteractionController
         Unsubscribe();
     }
 
+    private void OnDestroy()
+    {
+        Unsubscribe();
+    }
+
     // ======================================================
     // INPUT BIND
     // ======================================================
@@ -56,9 +64,7 @@ public sealed class PlayerInteractionController
             return;
 
         var player = input.Actions.Player;
-
         interactAction = player.FindAction("Interact", true);
-        dropAction     = player.FindAction("Drop", true);
 
         TrySubscribe();
 
@@ -73,7 +79,6 @@ public sealed class PlayerInteractionController
         Unsubscribe();
 
         interactAction = null;
-        dropAction = null;
         input = null;
     }
 
@@ -87,11 +92,7 @@ public sealed class PlayerInteractionController
             return;
 
         interactAction.performed += OnInteract;
-        dropAction.performed     += OnDrop;
-
         subscribed = true;
-
-        Debug.Log("[PlayerInteractionController] Actions subscribed");
     }
 
     private void Unsubscribe()
@@ -99,12 +100,10 @@ public sealed class PlayerInteractionController
         if (!subscribed)
             return;
 
-        interactAction.performed -= OnInteract;
-        dropAction.performed     -= OnDrop;
+        if (interactAction != null)
+            interactAction.performed -= OnInteract;
 
         subscribed = false;
-
-        Debug.Log("[PlayerInteractionController] Actions unsubscribed");
     }
 
     // ======================================================
@@ -116,99 +115,46 @@ public sealed class PlayerInteractionController
         TryInteract();
     }
 
-    private void OnDrop(InputAction.CallbackContext _)
-    {
-        DropCurrentItem(false);
-    }
-
     // ======================================================
     // INTERACTION
     // ======================================================
 
     private void TryInteract()
     {
-        if (interactionBlocked || resolver == null || Camera.main == null)
+        if (interactionBlocked || resolver == null)
             return;
 
-        var target = resolver.Resolve(Camera.main);
+        var cam = Camera.main;
+        if (cam == null)
+            return;
+
+        var target = resolver.Resolve(cam);
 
         switch (target.Type)
         {
             case InteractionTargetType.Pickup:
-                PickupItem(target.Pickup);
+                PickupWorldItem(target.WorldItem);
                 break;
 
             case InteractionTargetType.Interactable:
-                target.Interactable.Interact();
+                target.Interactable?.Interact();
                 break;
         }
     }
 
-    private void PickupItem(NearbyItemPresenter presenter)
+    private void PickupWorldItem(WorldItemNetwork worldItem)
     {
-        if (presenter == null)
+        var invNet = GetComponent<InventoryStateNetwork>();
+        if (invNet == null)
             return;
 
-        var inst = presenter.GetInstance();
-        if (inst == null)
-            return;
-
-        LocalPlayerContext.Inventory?.Service.AddItem(inst);
-        Destroy(presenter.gameObject);
-
-        Debug.Log("[INTERACTION] Item picked up");
-    }
-
-    // ======================================================
-    // DROP
-    // ======================================================
-
-    private void DropCurrentItem(bool dropFullStack)
-    {
-        var inventory = LocalPlayerContext.Inventory;
-        if (inventory == null || Camera.main == null)
-            return;
-
-        var model = inventory.Model;
-        var service = inventory.Service;
-
-        if (model.hotbar.Count == 0)
-            return;
-
-        var slot = model.hotbar[model.selectedHotbarIndex];
-        if (slot.item == null)
-            return;
-
-        var inst = slot.item;
-        int dropAmount = dropFullStack ? inst.quantity : 1;
-
-        var droppedInst = new ItemInstance(inst.itemDefinition, dropAmount);
-
-        Vector3 pos = Camera.main.transform.position +
-                      Camera.main.transform.forward * 1.2f;
-
-        SpawnWorldItem(droppedInst, pos);
-        service.TryRemove(inst.itemDefinition, dropAmount);
-    }
-
-    private void SpawnWorldItem(ItemInstance inst, Vector3 position)
-    {
-        var prefab = inst.itemDefinition.worldPrefab;
-        if (prefab == null)
-            return;
-
-        var obj = Instantiate(prefab, position, Quaternion.identity);
-
-        var holder = obj.GetComponent<ItemRuntimeHolder>() ??
-                     obj.AddComponent<ItemRuntimeHolder>();
-        holder.SetInstance(inst);
-
-        if (obj.TryGetComponent<Rigidbody>(out var rb))
+        invNet.RequestInventoryCommand(new InventoryCommandData
         {
-            rb.isKinematic = false;
-            rb.useGravity = true;
-        }
+            Command = InventoryCommand.PickupWorldItem,
+            WorldItemNetId = worldItem.NetworkObject.ObjectId
+        });
     }
+
 
     // ======================================================
     // EXTERNAL
