@@ -1,39 +1,45 @@
 using UnityEngine;
 using TMPro;
-using Features.Interaction.Application;
-using Features.Interaction.Domain;
 using Features.Interaction.UnityIntegration;
 using Features.Player.UI;
+using Features.Interaction.Application;
+using Features.Interaction.Domain;
 
-public class InteractionPromptUI : MonoBehaviour
+public sealed class InteractionPromptUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI promptText;
 
-    private InteractionService interactionService;
-    private InteractionRayService rayService;
+    private InteractionResolver resolver;
     private INearbyInteractables nearby;
 
     private bool initialized;
 
-    // ======================================================
-    // LIFECYCLE
-    // ======================================================
-
     private void Awake()
     {
-        interactionService = new InteractionService();
+        if (promptText == null)
+        {
+            Debug.LogError("[InteractionPromptUI] promptText is NULL", this);
+            enabled = false;
+            return;
+        }
 
         promptText.text = "";
         promptText.enabled = false;
     }
 
-    private void OnEnable()
+    private void Start()
     {
-        if (PlayerUIRoot.I != null)
-            PlayerUIRoot.I.OnPlayerBound += OnPlayerBound;
+        // ✅ гарантированно после всех Awake
+        if (PlayerUIRoot.I == null)
+        {
+            Debug.LogError("[InteractionPromptUI] PlayerUIRoot.I is NULL in Start");
+            return;
+        }
+
+        PlayerUIRoot.I.OnPlayerBound += OnPlayerBound;
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         if (PlayerUIRoot.I != null)
             PlayerUIRoot.I.OnPlayerBound -= OnPlayerBound;
@@ -48,26 +54,30 @@ public class InteractionPromptUI : MonoBehaviour
         if (initialized)
             return;
 
+        Debug.Log("[InteractionPromptUI] Player bound: " + player.name);
 
         nearby = player.GetComponentInChildren<INearbyInteractables>();
         if (nearby == null)
         {
-            Debug.LogWarning(
-                "[InteractionPromptUI] NearbyInteractables not found on player",
-                player
-            );
+            Debug.LogError("[InteractionPromptUI] NearbyInteractables NOT FOUND", player);
             return;
         }
 
-        rayService = InteractionServiceProvider.Ray;
-        if (rayService == null)
+        if (InteractionServiceProvider.Ray != null)
         {
-            Debug.LogError(
-                "[InteractionPromptUI] InteractionRayService not ready"
-            );
-            return;
+            InitResolver(InteractionServiceProvider.Ray);
         }
+        else
+        {
+            InteractionServiceProvider.OnRayInitialized += InitResolver;
+        }
+    }
 
+    private void InitResolver(InteractionRayService ray)
+    {
+        Debug.Log("[InteractionPromptUI] Resolver initialized");
+
+        resolver = new InteractionResolver(ray, nearby);
         initialized = true;
     }
 
@@ -77,30 +87,36 @@ public class InteractionPromptUI : MonoBehaviour
 
     private void Update()
     {
-        if (!initialized || Camera.main == null)
-            return;
-
-        // ==== PICKUPS ====
-        var best = nearby.GetBestItem(Camera.main);
-        if (best != null && best.GetInstance()?.itemDefinition != null)
+        if (!initialized || resolver == null || Camera.main == null)
         {
-            var def = best.GetInstance().itemDefinition;
-            int qty = best.GetInstance().quantity;
-
-            promptText.enabled = true;
-            promptText.text = qty > 1
-                ? $"[E] Подобрать: {def.itemName} x{qty}"
-                : $"[E] Подобрать: {def.itemName}";
+            promptText.enabled = false;
             return;
         }
 
-        // ==== INTERACTABLES ====
-        var hit = rayService.Raycast();
-        if (interactionService.TryGetInteractable(hit, out var interactable))
+        var target = resolver.Resolve(Camera.main);
+
+        switch (target.Type)
         {
-            promptText.enabled = true;
-            promptText.text = $"[E] {interactable.InteractionPrompt}";
-            return;
+            case InteractionTargetType.Pickup:
+            {
+                var inst = target.Pickup?.GetInstance();
+                if (inst?.itemDefinition == null)
+                    break;
+
+                int qty = inst.quantity;
+                promptText.enabled = true;
+                promptText.text = qty > 1
+                    ? $"[E] Подобрать: {inst.itemDefinition.itemName} x{qty}"
+                    : $"[E] Подобрать: {inst.itemDefinition.itemName}";
+                return;
+            }
+
+            case InteractionTargetType.Interactable:
+            {
+                promptText.enabled = true;
+                promptText.text = $"[E] {target.Interactable.InteractionPrompt}";
+                return;
+            }
         }
 
         promptText.enabled = false;

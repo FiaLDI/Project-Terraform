@@ -3,6 +3,8 @@ using Features.Input;
 using Features.Player.UnityIntegration;
 using Features.Camera.UnityIntegration;
 using Features.Player;
+using Features.Player.UI;
+using Features.Interaction.UnityIntegration;
 
 public sealed class LocalPlayerController : MonoBehaviour
 {
@@ -48,21 +50,39 @@ public sealed class LocalPlayerController : MonoBehaviour
             return;
 
         Unbind(boundPlayer);
-
         boundPlayer = player;
 
-        // INPUT
         inputContext.Enable();
         InputModeManager.I.Bind(inputContext);
         InputModeManager.I.SetMode(InputMode.Gameplay);
 
-        // PLAYER CONTROLLER
         player.Controller.BindInput(inputContext);
 
-        // CAMERA — ВКЛЮЧАЕМ ТОЛЬКО У ЛОКАЛЬНОГО
-        var cam = player.GetComponent<PlayerCameraController>();
+        var camController = player.GetComponent<PlayerCameraController>();
+        if (camController != null)
+            camController.SetLocal(true);
+
+        var cam = Camera.main;
         if (cam != null)
-            cam.SetLocal(true);
+        {
+            var rayProvider = cam.GetComponent<CameraRayProvider>();
+            if (rayProvider != null)
+            {
+                InteractionServiceProvider.Init(rayProvider);
+                Debug.Log("[LocalPlayerController] InteractionRayService initialized");
+            }
+            else
+            {
+                Debug.LogError("[LocalPlayerController] CameraRayProvider NOT FOUND");
+            }
+        }
+        else
+        {
+            Debug.LogError("[LocalPlayerController] Camera.main NOT FOUND");
+        }
+
+        // ✅ ТОЛЬКО ПОСЛЕ ЭТОГО биндим UI
+        PlayerUIRoot.I.Bind(player.gameObject);
 
         Debug.Log($"[LocalPlayerController] Bound to {player.name}");
     }

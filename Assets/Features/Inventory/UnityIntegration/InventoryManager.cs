@@ -6,6 +6,7 @@ using Features.Items.Data;
 using System;
 using Features.Inventory;
 using Features.Equipment.UnityIntegration;
+using System.Collections.Generic;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -22,6 +23,9 @@ namespace Features.Inventory.UnityIntegration
         public event Action OnInventoryChanged;
         public event Action<ItemInstance> OnItemAddedInstance;
         public event Action OnReady;
+
+        [SerializeField] private ItemRegistry itemRegistry;
+
 
         [Header("Config")]
         [SerializeField] private int bagSize = 12;
@@ -161,5 +165,54 @@ namespace Features.Inventory.UnityIntegration
         {
             Service.UnequipLeftHand();
         }
+
+        public void ApplyNetState(
+            IReadOnlyList<InventorySlotNet> bagNet,
+            IReadOnlyList<InventorySlotNet> hotbarNet,
+            InventorySlotNet left,
+            InventorySlotNet right,
+            int selectedIndex)
+        {
+            Model.main.Clear();
+            Model.hotbar.Clear();
+
+
+
+            foreach (var s in bagNet) {
+                var slot = new InventorySlot();
+                slot.item = FromNet(s);
+                Model.main.Add(slot);
+            }
+
+            foreach (var s in hotbarNet)
+            {
+                var slot = new InventorySlot();
+                slot.item = FromNet(s);
+                Model.hotbar.Add(slot);
+            }
+
+            Model.leftHand.item = FromNet(left);
+            Model.rightHand.item = FromNet(right);
+            Model.selectedHotbarIndex = selectedIndex;
+
+            Service.NotifyChanged();
+        }
+
+        private ItemInstance FromNet(InventorySlotNet net)
+        {
+            if (string.IsNullOrEmpty(net.itemId))
+                return null;
+
+            var def = itemRegistry.Get(net.itemId);
+            if (def == null)
+            {
+                Debug.LogError($"Item not found: {net.itemId}");
+                return null;
+            }
+
+            return new ItemInstance(def, net.quantity, net.level);
+        }
+
+
     }
 }

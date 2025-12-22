@@ -2,6 +2,7 @@ using UnityEngine;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
 using Features.Input;
+using Features.Player.UnityIntegration;
 
 namespace Features.Inventory.UI
 {
@@ -39,8 +40,10 @@ namespace Features.Inventory.UI
         {
             if (bagWindow != null)
                 bagWindow.SetActive(false);
-            
+
+            PlayerRegistry.OnLocalPlayerReady += OnLocalPlayerReady;
         }
+        
         private void OnPlayerBound(GameObject player)
         {
             if (initialized)
@@ -62,6 +65,19 @@ namespace Features.Inventory.UI
                 OnInventoryReady();
             else
                 inventory.OnReady += OnInventoryReady;
+        }
+
+        private void OnLocalPlayerReady(PlayerRegistry registry)
+        {
+            if (registry == null || registry.LocalPlayer == null)
+                return;
+
+            BindPlayer(registry.LocalPlayer);
+        }
+
+        public void BindPlayer(GameObject player)
+        {
+            OnPlayerBound(player);
         }
 
         private void OnInventoryReady()
@@ -124,6 +140,11 @@ namespace Features.Inventory.UI
         public void Open()
         {
             UIStackManager.I.Push(this);
+        }
+
+        private void OnDestroy()
+        {
+            PlayerRegistry.OnLocalPlayerReady -= OnLocalPlayerReady;
         }
 
         // ======================================================

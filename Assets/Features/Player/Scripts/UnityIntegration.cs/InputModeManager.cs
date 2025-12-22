@@ -117,11 +117,6 @@ namespace Features.Input
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             Time.timeScale = 1f;
-            Debug.Log(
-    $"[InputModeManager] Gameplay enabled | " +
-    $"PlayerEnabled={input.Actions.Player.enabled} | " +
-    $"Map={input.PlayerInput.currentActionMap?.name}"
-);
         }
 
         private void EnableUI(bool pauseTime)

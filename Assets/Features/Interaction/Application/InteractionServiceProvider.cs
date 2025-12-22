@@ -14,14 +14,16 @@ namespace Features.Interaction.UnityIntegration
             if (Ray != null)
                 return;
 
+            int interactableMask = LayerMask.GetMask("Interactable");
+            int ignoreMask = LayerMask.GetMask("Player");
+
             Ray = new InteractionRayService(
                 provider,
-                ~LayerMask.GetMask("Player"),
-                LayerMask.GetMask("Player")
+                interactableMask,
+                ignoreMask
             );
 
             OnRayInitialized?.Invoke(Ray);
         }
     }
-
 }

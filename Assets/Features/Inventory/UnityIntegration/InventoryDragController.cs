@@ -276,14 +276,16 @@ public class InventoryDragController : MonoBehaviour
 
         if (from == InventorySection.RightHand && to == InventorySection.Bag)
         {
-            inventory.Service.MoveItem(0, InventorySection.RightHand, targetUI.Index, InventorySection.Bag);
+            inventory.GetComponent<InventoryStateNetwork>()
+                .RequestMoveItem(0, InventorySection.RightHand, targetUI.Index, InventorySection.Bag);
             ClearDrag();
             return;
         }
 
         if (from == InventorySection.LeftHand && to == InventorySection.Bag)
         {
-            inventory.Service.MoveItem(0, InventorySection.LeftHand, targetUI.Index, InventorySection.Bag);
+            inventory.GetComponent<InventoryStateNetwork>()
+                .RequestMoveItem(0, InventorySection.LeftHand, targetUI.Index, InventorySection.Bag);
             ClearDrag();
             return;
         }

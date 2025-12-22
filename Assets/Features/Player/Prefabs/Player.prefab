@@ -167,7 +167,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2683651113482784269}
-  - component: {fileID: 4079258296507483703}
   m_Layer: 0
   m_Name: CameraPivot
   m_TagString: Untagged
@@ -190,19 +189,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8282239097301865665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4079258296507483703
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5151272602035875914}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68466c01d28ee65439f15f239603cc97, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Interaction.UnityIntegration.CameraRayProvider
-  maxDistance: 4
 --- !u!1 &6202741382508557473
 GameObject:
   m_ObjectHideFlags: 0
@@ -374,6 +360,7 @@ GameObject:
   - component: {fileID: 5907872678837714149}
   - component: {fileID: 5082500085448155888}
   - component: {fileID: 7463166964726445143}
+  - component: {fileID: 3277316184608179795}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -686,6 +673,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52e520fb07100ec4389a138f38ccb2dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryManager
+  itemRegistry: {fileID: 0}
   bagSize: 12
   hotbarSize: 2
 --- !u!114 &7104529458777332987
@@ -977,6 +965,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3781b7fb4f7dcf741a8346f250fd87f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.MovementStateNetwork
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &3277316184608179795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfed3782942c21f45862db33d51d9d43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryStateNetwork
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}

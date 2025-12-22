@@ -17,6 +17,7 @@ public sealed class InputHandlersSpawner : MonoBehaviour
             return;
         }
 
+        Spawn<PlayerInteractionController>(ctx);
         Spawn<PauseInputHandler>(ctx);
         Spawn<UIBackInputHandler>(ctx);
         Spawn<InventoryInputHandler>(ctx);

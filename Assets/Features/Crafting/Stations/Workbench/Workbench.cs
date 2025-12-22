@@ -17,12 +17,19 @@ public class Workbench : MonoBehaviour, IInteractable
 
     public bool Interact()
     {
+        InteractionDebug.Log("Workbench.Interact() called", this);
+
         if (!initialized)
+        {
+            InteractionDebug.Log("Workbench initializing for local player", this);
             InitForLocalPlayer();
+        }
 
         ui.Open();
+        InteractionDebug.Log("Workbench UI opened", this);
         return true;
     }
+
 
     private void InitForLocalPlayer()
     {

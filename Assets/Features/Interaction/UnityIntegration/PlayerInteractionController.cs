@@ -8,41 +8,41 @@ using Features.Items.UnityIntegration;
 using Features.Player;
 using Features.Input;
 
-public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
+public sealed class PlayerInteractionController
+    : MonoBehaviour, IInputContextConsumer
 {
-    private bool interactionBlocked;
-
-    private InteractionRayService rayService;
-    private InteractionService interactionService;
-
     private PlayerInputContext input;
+    private InteractionResolver resolver;
     private INearbyInteractables nearby;
 
     private InputAction interactAction;
     private InputAction dropAction;
 
+    private bool interactionBlocked;
     private bool subscribed;
 
     // ======================================================
-    // LIFECYCLE
+    // UNITY
     // ======================================================
-
-    private void Awake()
-    {
-        interactionService = new InteractionService();
-    }
 
     private void Start()
     {
-        rayService = InteractionServiceProvider.Ray;
-        if (rayService == null)
-        {
-            Debug.LogError("[PlayerInteractionController] InteractionRayService NOT FOUND");
-            enabled = false;
-            return;
-        }
+        nearby = GetComponentInChildren<INearbyInteractables>();
 
-        nearby = LocalPlayerContext.Get<NearbyInteractables>();
+        if (InteractionServiceProvider.Ray != null)
+            InitResolver(InteractionServiceProvider.Ray);
+        else
+            InteractionServiceProvider.OnRayInitialized += InitResolver;
+    }
+
+    private void OnEnable()
+    {
+        TrySubscribe();
+    }
+
+    private void OnDisable()
+    {
+        Unsubscribe();
     }
 
     // ======================================================
@@ -51,55 +51,64 @@ public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
 
     public void BindInput(PlayerInputContext ctx)
     {
-        if (input == ctx)
-            return;
-
-        if (input != null)
-            UnbindInput(input);
         input = ctx;
-
         if (input == null)
             return;
 
-        var p = input.Actions.Player;
+        var player = input.Actions.Player;
 
-        interactAction = p.FindAction("Interact", true);
-        dropAction = p.FindAction("Drop", true);
+        interactAction = player.FindAction("Interact", true);
+        dropAction     = player.FindAction("Drop", true);
 
-        interactAction.performed += OnInteract;
-        dropAction.performed += OnDrop;
+        TrySubscribe();
 
-        interactAction.Enable();
-        dropAction.Enable();
-
-        subscribed = true;
+        Debug.Log("[PlayerInteractionController] BindInput OK");
     }
 
     public void UnbindInput(PlayerInputContext ctx)
     {
-        if (!subscribed || input != ctx)
+        if (input != ctx)
             return;
 
-        if (interactAction != null)
-        {
-            interactAction.performed -= OnInteract;
-            interactAction.Disable();
-            interactAction = null;
-        }
+        Unsubscribe();
 
-        if (dropAction != null)
-        {
-            dropAction.performed -= OnDrop;
-            dropAction.Disable();
-            dropAction = null;
-        }
-
+        interactAction = null;
+        dropAction = null;
         input = null;
-        subscribed = false;
     }
 
     // ======================================================
-    // INTERACTION
+    // SUBSCRIBE
+    // ======================================================
+
+    private void TrySubscribe()
+    {
+        if (subscribed || interactAction == null)
+            return;
+
+        interactAction.performed += OnInteract;
+        dropAction.performed     += OnDrop;
+
+        subscribed = true;
+
+        Debug.Log("[PlayerInteractionController] Actions subscribed");
+    }
+
+    private void Unsubscribe()
+    {
+        if (!subscribed)
+            return;
+
+        interactAction.performed -= OnInteract;
+        dropAction.performed     -= OnDrop;
+
+        subscribed = false;
+
+        Debug.Log("[PlayerInteractionController] Actions unsubscribed");
+    }
+
+    // ======================================================
+    // ACTIONS
     // ======================================================
 
     private void OnInteract(InputAction.CallbackContext _)
@@ -107,40 +116,54 @@ public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
         TryInteract();
     }
 
-    public void TryInteract()
+    private void OnDrop(InputAction.CallbackContext _)
     {
-        if (interactionBlocked || rayService == null)
+        DropCurrentItem(false);
+    }
+
+    // ======================================================
+    // INTERACTION
+    // ======================================================
+
+    private void TryInteract()
+    {
+        if (interactionBlocked || resolver == null || Camera.main == null)
             return;
 
-        // 1️⃣ Pickup world item
-        if (nearby != null && Camera.main != null)
-        {
-            var best = nearby.GetBestItem(Camera.main);
-            if (best != null)
-            {
-                PickupItem(best);
-                return;
-            }
-        }
+        var target = resolver.Resolve(Camera.main);
 
-        // 2️⃣ Ray interactable
-        var hit = rayService.Raycast();
-        if (interactionService.TryGetInteractable(hit, out var interactable))
+        switch (target.Type)
         {
-            interactable.Interact();
+            case InteractionTargetType.Pickup:
+                PickupItem(target.Pickup);
+                break;
+
+            case InteractionTargetType.Interactable:
+                target.Interactable.Interact();
+                break;
         }
+    }
+
+    private void PickupItem(NearbyItemPresenter presenter)
+    {
+        if (presenter == null)
+            return;
+
+        var inst = presenter.GetInstance();
+        if (inst == null)
+            return;
+
+        LocalPlayerContext.Inventory?.Service.AddItem(inst);
+        Destroy(presenter.gameObject);
+
+        Debug.Log("[INTERACTION] Item picked up");
     }
 
     // ======================================================
     // DROP
     // ======================================================
 
-    private void OnDrop(InputAction.CallbackContext _)
-    {
-        DropCurrentItem(false);
-    }
-
-    public void DropCurrentItem(bool dropFullStack)
+    private void DropCurrentItem(bool dropFullStack)
     {
         var inventory = LocalPlayerContext.Inventory;
         if (inventory == null || Camera.main == null)
@@ -161,17 +184,12 @@ public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
 
         var droppedInst = new ItemInstance(inst.itemDefinition, dropAmount);
 
-        Vector3 pos = Camera.main.transform.position
-                    + Camera.main.transform.forward * 1.2f;
+        Vector3 pos = Camera.main.transform.position +
+                      Camera.main.transform.forward * 1.2f;
 
         SpawnWorldItem(droppedInst, pos);
-
         service.TryRemove(inst.itemDefinition, dropAmount);
     }
-
-    // ======================================================
-    // WORLD SPAWN
-    // ======================================================
 
     private void SpawnWorldItem(ItemInstance inst, Vector3 position)
     {
@@ -181,8 +199,8 @@ public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
 
         var obj = Instantiate(prefab, position, Quaternion.identity);
 
-        var holder = obj.GetComponent<ItemRuntimeHolder>()
-                    ?? obj.AddComponent<ItemRuntimeHolder>();
+        var holder = obj.GetComponent<ItemRuntimeHolder>() ??
+                     obj.AddComponent<ItemRuntimeHolder>();
         holder.SetInstance(inst);
 
         if (obj.TryGetComponent<Rigidbody>(out var rb))
@@ -192,29 +210,22 @@ public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
         }
     }
 
-    private void PickupItem(NearbyItemPresenter presenter)
-    {
-        if (presenter == null)
-            return;
-
-        var inst = presenter.GetInstance();
-        if (inst == null || inst.itemDefinition == null)
-            return;
-
-        var inventory = LocalPlayerContext.Inventory;
-        if (inventory == null)
-            return;
-
-        inventory.Service.AddItem(inst);
-        Destroy(presenter.gameObject);
-    }
-
     // ======================================================
-    // STATE
+    // EXTERNAL
     // ======================================================
 
     public void SetInteractionBlocked(bool blocked)
     {
         interactionBlocked = blocked;
+    }
+
+    // ======================================================
+    // RESOLVER
+    // ======================================================
+
+    private void InitResolver(InteractionRayService ray)
+    {
+        resolver = new InteractionResolver(ray, nearby);
+        Debug.Log("[INTERACTION] Resolver initialized");
     }
 }
