@@ -86,6 +86,20 @@ namespace Features.Player.UnityIntegration
             Debug.Log($"[PlayerRegistry] Unregistered player: {player.name}");
         }
 
+        public static void SubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
+        {
+            OnLocalPlayerReady += cb;
+
+            if (Instance != null && Instance.LocalPlayer != null)
+                cb(Instance);
+        }
+
+        public static void UnsubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
+        {
+            OnLocalPlayerReady -= cb;
+        }
+
+
         // ======================================================
         // LOCAL PLAYER
         // ======================================================

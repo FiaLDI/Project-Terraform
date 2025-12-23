@@ -1,24 +1,34 @@
-﻿using Features.Equipment.Domain;
-using Features.Items.Domain;
-using UnityEngine;
+﻿using UnityEngine;
+using FishNet.Object;
+using Features.Camera.UnityIntegration;
+using Features.Equipment.Domain;
 using Features.Inventory;
+using Features.Inventory.UnityIntegration;
+using Features.Items.Domain;
 using Features.Items.UnityIntegration;
-using Features.Weapons.UnityIntegration;
 using Features.Player.UnityIntegration;
+using Features.Weapons.UnityIntegration;
 
 namespace Features.Equipment.UnityIntegration
 {
-    public class EquipmentManager : MonoBehaviour
+    /// <summary>
+    /// Спавнит/удаляет предметы в руках на основе InventoryModel (left/right hand slots).
+    /// Работает на всех клиентах (чтобы другие видели экип), но камеру/Initialize(IUsable) даёт только owner.
+    /// Также напрямую обновляет локальный ввод (PlayerUsageController) и сетевой адаптер (PlayerUsageNetAdapter)
+    /// на этом же player root.
+    /// </summary>
+    public sealed class EquipmentManager : MonoBehaviour
     {
         [Header("Hands")]
         [SerializeField] private Transform rightHandTransform;
         [SerializeField] private Transform leftHandTransform;
 
-        [Header("Camera")]
+        [Header("Camera (optional override)")]
         [SerializeField] private UnityEngine.Camera playerCamera;
 
         private PlayerAnimationController anim;
-        private PlayerUsageController usage;
+        private PlayerUsageController usageLocal;
+        private PlayerUsageNetAdapter usageNet;
 
         private GameObject currentRightHandObject;
         private GameObject currentLeftHandObject;
@@ -27,7 +37,25 @@ namespace Features.Equipment.UnityIntegration
         private IUsable leftHandUsable;
 
         private IInventoryContext inventory;
+        private InventoryManager invManager;
+
         private bool initialized;
+
+        // ======================================================
+        // UNITY
+        // ======================================================
+
+        private void Awake()
+        {
+            anim = GetComponent<PlayerAnimationController>();
+            usageLocal = GetComponent<PlayerUsageController>();
+            usageNet = GetComponent<PlayerUsageNetAdapter>();
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeInventory();
+        }
 
         // ======================================================
         // INIT
@@ -38,27 +66,38 @@ namespace Features.Equipment.UnityIntegration
             if (inventory == null)
                 return;
 
+            // если уже инициализированы — перепривязка
+            UnsubscribeInventory();
+
             this.inventory = inventory;
-            inventory.Service.OnChanged += EquipFromInventory;
+            invManager = inventory as InventoryManager;
+
+            SubscribeInventory();
 
             initialized = true;
-
-            // начальное применение
             EquipFromInventory();
         }
 
-        private void Awake()
+        private void SubscribeInventory()
         {
-            if (playerCamera == null)
-                playerCamera = UnityEngine.Camera.main;
+            if (inventory == null)
+                return;
 
-            usage = GetComponent<PlayerUsageController>();
-            anim  = GetComponent<PlayerAnimationController>();
+            // ✅ симметрично с UnsubscribeInventory()
+            if (invManager != null)
+                invManager.OnInventoryChanged += EquipFromInventory;
+            else if (inventory.Service != null)
+                inventory.Service.OnChanged += EquipFromInventory;
         }
 
-        private void OnDestroy()
+        private void UnsubscribeInventory()
         {
-            if (inventory != null && inventory.Service != null)
+            if (inventory == null)
+                return;
+
+            if (invManager != null)
+                invManager.OnInventoryChanged -= EquipFromInventory;
+            else if (inventory.Service != null)
                 inventory.Service.OnChanged -= EquipFromInventory;
         }
 
@@ -90,18 +129,9 @@ namespace Features.Equipment.UnityIntegration
             // ---------- ANIMATION ----------
             UpdateWeaponPose(model.rightHand.item);
 
-            // ---------- USAGE ----------
-            usage?.OnHandsUpdated(
-                leftHandUsable,
-                rightHandUsable,
-                isTwoHanded
-            );
-
-            EquipmentEvents.OnHandsUpdated?.Invoke(
-                leftHandUsable,
-                rightHandUsable,
-                isTwoHanded
-            );
+            // ---------- USAGE (LOCAL + NET) ----------
+            usageLocal?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
+            usageNet?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
         }
 
         // ======================================================
@@ -175,10 +205,9 @@ namespace Features.Equipment.UnityIntegration
                 return;
             }
 
-            if (rightHandItem.itemDefinition.isTwoHanded)
-                anim.SetWeaponPose(2); // two-handed
-            else
-                anim.SetWeaponPose(1); // one-handed
+            anim.SetWeaponPose(
+                rightHandItem.itemDefinition.isTwoHanded ? 2 : 1
+            );
         }
 
         // ======================================================
@@ -194,9 +223,7 @@ namespace Features.Equipment.UnityIntegration
             obj = null;
             usable = null;
 
-            if (inst == null ||
-                inst.itemDefinition == null ||
-                parent == null)
+            if (inst == null || inst.itemDefinition == null || parent == null)
                 return;
 
             var prefab = inst.itemDefinition.equippedPrefab;
@@ -210,20 +237,47 @@ namespace Features.Equipment.UnityIntegration
             var holder =
                 obj.GetComponent<ItemRuntimeHolder>() ??
                 obj.AddComponent<ItemRuntimeHolder>();
-
             holder.SetInstance(inst);
 
             usable = obj.GetComponent<IUsable>();
 
+            // ✅ Камеру/Initialize даём только локальному владельцу
+            var cam = GetLocalCameraOrNull();
+
+            // Оружие имеет свою инициализацию (inventory + camera)
             var weapon = obj.GetComponent<WeaponController>();
             if (weapon != null)
             {
                 weapon.Setup(inst);
                 weapon.Init(inventory);
-                weapon.Initialize(playerCamera);
+                if (cam != null)
+                    weapon.Initialize(cam);
+                return;
             }
 
-            usable?.Initialize(playerCamera);
+            // Остальные usable
+            if (usable != null && cam != null)
+                usable.Initialize(cam);
+        }
+
+        private bool IsLocalOwner()
+        {
+            var nob = GetComponent<NetworkObject>();
+            return nob != null && nob.IsOwner;
+        }
+
+        private UnityEngine.Camera GetLocalCameraOrNull()
+        {
+            if (!IsLocalOwner())
+                return null;
+
+            if (playerCamera != null)
+                return playerCamera;
+
+            if (CameraRegistry.Instance != null && CameraRegistry.Instance.CurrentCamera != null)
+                return CameraRegistry.Instance.CurrentCamera;
+
+            return UnityEngine.Camera.main;
         }
 
         // ======================================================
@@ -236,7 +290,7 @@ namespace Features.Equipment.UnityIntegration
                 return;
 
             rightHandTransform = sockets.rightHandSocket;
-            leftHandTransform  = sockets.leftHandSocket;
+            leftHandTransform = sockets.leftHandSocket;
 
             EquipFromInventory();
         }
@@ -246,6 +300,6 @@ namespace Features.Equipment.UnityIntegration
         // ======================================================
 
         public IUsable GetRightHandUsable() => rightHandUsable;
-        public IUsable GetLeftHandUsable()  => leftHandUsable;
+        public IUsable GetLeftHandUsable() => leftHandUsable;
     }
 }

@@ -7,30 +7,26 @@ namespace Features.Player.UnityIntegration
     {
         private PlayerCameraController controller;
 
-        private void Awake()
-        {
-            controller = GetComponent<PlayerCameraController>();
-            Debug.Log($"[CameraNet][Awake] {name}");
-        }
-
         public override void OnStartNetwork()
         {
             base.OnStartNetwork();
 
-            bool isLocal = base.Owner.IsLocalClient;
+            controller = GetComponent<PlayerCameraController>();
 
-            Debug.Log(
-                $"[CameraNet][OnStartNetwork] {name} | " +
-                $"IsOwner={isLocal} IsClient={IsClient} IsServer={IsServer}"
-            );
+            if (controller == null)
+            {
+                Debug.LogError($"[CameraNet] PlayerCameraController missing on {name}");
+                return;
+            }
 
+            bool isLocal = Owner != null && Owner.IsLocalClient;
             controller.SetLocal(isLocal);
         }
 
         public override void OnStopClient()
         {
-            Debug.Log($"[CameraNet][OnStopClient] {name}");
-            controller.SetLocal(false);
+            if (controller != null)
+                controller.SetLocal(false);
         }
     }
 }

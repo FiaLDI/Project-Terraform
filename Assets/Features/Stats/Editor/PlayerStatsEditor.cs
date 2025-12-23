@@ -17,57 +17,75 @@ public class PlayerStatsEditor : Editor
 
         if (!Application.isPlaying)
         {
-            EditorGUILayout.HelpBox("Enter Play Mode to see live values.", MessageType.Info);
+            EditorGUILayout.HelpBox(
+                "Enter Play Mode to see live values.",
+                MessageType.Info);
             return;
         }
 
-        if (p.Facade == null)
+        if (p == null || p.Facade == null || p.Adapter == null || !p.Adapter.IsReady)
         {
-            EditorGUILayout.HelpBox("Stats not initialized yet.", MessageType.Info);
+            EditorGUILayout.HelpBox(
+                "Stats not initialized yet.",
+                MessageType.Info);
             return;
         }
 
-        //
+        var stats = p.Facade;
+
+        // =====================================================
         // HEALTH
-        //
+        // =====================================================
+
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Health", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("Current HP", p.Debug_HP);
-        EditorGUILayout.FloatField("Max HP", p.Debug_MaxHP);
+        EditorGUILayout.FloatField("Current HP", stats.Health.CurrentHp);
+        EditorGUILayout.FloatField("Max HP", stats.Health.MaxHp);
 
-        //
+        // =====================================================
         // ENERGY
-        //
+        // =====================================================
+
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Energy", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("Current Energy", p.Debug_Energy);
-        EditorGUILayout.FloatField("Max Energy", p.Debug_MaxEnergy);
-        EditorGUILayout.FloatField("Regen", p.FinalEnergyRegen);
+        EditorGUILayout.FloatField("Current Energy", stats.Energy.CurrentEnergy);
+        EditorGUILayout.FloatField("Max Energy", stats.Energy.MaxEnergy);
+        EditorGUILayout.FloatField("Regen", stats.Energy.Regen);
+        EditorGUILayout.FloatField("Cost Multiplier", stats.Energy.CostMultiplier);
 
-        //
+        // =====================================================
         // COMBAT
-        //
+        // =====================================================
+
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Combat", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("Damage Multiplier", p.Debug_DamageMultiplier);
-        EditorGUILayout.FloatField("Final Damage", p.FinalDamage);
+        EditorGUILayout.FloatField(
+            "Damage Multiplier",
+            stats.Combat.DamageMultiplier
+        );
 
-        //
+        // =====================================================
         // MOVEMENT
-        //
+        // =====================================================
+
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Movement", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("Base Speed", p.BaseSpeed);
-        EditorGUILayout.FloatField("Walk Speed", p.WalkSpeed);
-        EditorGUILayout.FloatField("Sprint Speed", p.SprintSpeed);
-        EditorGUILayout.FloatField("Crouch Speed", p.CrouchSpeed);
+        EditorGUILayout.FloatField("Base Speed", stats.Movement.BaseSpeed);
+        EditorGUILayout.FloatField("Walk Speed", stats.Movement.WalkSpeed);
+        EditorGUILayout.FloatField("Sprint Speed", stats.Movement.SprintSpeed);
+        EditorGUILayout.FloatField("Crouch Speed", stats.Movement.CrouchSpeed);
+        EditorGUILayout.FloatField("Rotation Speed", stats.Movement.RotationSpeed);
 
-        //
+        // =====================================================
         // MINING
-        //
+        // =====================================================
+
         GUILayout.Space(5);
         EditorGUILayout.LabelField("Mining", EditorStyles.boldLabel);
-        EditorGUILayout.FloatField("Mining Power", p.MiningSpeed);
+        EditorGUILayout.FloatField(
+            "Mining Power",
+            stats.Mining.MiningPower
+        );
     }
 }
 #endif

@@ -5,6 +5,7 @@ using Features.Camera.UnityIntegration;
 using Features.Player;
 using Features.Player.UI;
 using Features.Interaction.UnityIntegration;
+using Features.Stats.UnityIntegration;
 
 public sealed class LocalPlayerController : MonoBehaviour
 {
@@ -81,7 +82,18 @@ public sealed class LocalPlayerController : MonoBehaviour
             Debug.LogError("[LocalPlayerController] Camera.main NOT FOUND");
         }
 
-        // ✅ ТОЛЬКО ПОСЛЕ ЭТОГО биндим UI
+        // ===== INIT STATS =====
+        var stats = player.GetComponent<PlayerStats>();
+        if (stats != null)
+        {
+            stats.Init();
+        }
+        else
+        {
+            Debug.LogError("[LocalPlayerController] PlayerStats not found on player!");
+        }
+
+
         PlayerUIRoot.I.Bind(player.gameObject);
 
         Debug.Log($"[LocalPlayerController] Bound to {player.name}");

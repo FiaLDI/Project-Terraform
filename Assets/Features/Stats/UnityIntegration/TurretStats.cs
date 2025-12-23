@@ -17,7 +17,7 @@ namespace Features.Stats.UnityIntegration
         {
             Facade = new StatsFacade(isTurret: true);
 
-            Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
+            Adapter = GetComponent<StatsFacadeAdapter>();
             Adapter.Init(Facade);
 
             ApplyBaseStats();

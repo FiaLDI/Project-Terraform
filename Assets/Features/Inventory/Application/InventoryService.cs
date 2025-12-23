@@ -32,27 +32,24 @@ namespace Features.Inventory.Domain
             if (inst == null || inst.IsEmpty || inst.quantity <= 0)
                 return false;
 
-            // 1️⃣ Stack
+            int remaining = inst.quantity;
+
             if (inst.IsStackable)
             {
                 foreach (var slot in model.main)
                 {
                     var item = slot.item;
-                    if (item.IsEmpty)
-                        continue;
-
+                    if (item.IsEmpty) continue;
                     if (item.itemDefinition != inst.itemDefinition ||
                         item.level != inst.level ||
                         item.quantity >= item.MaxStack)
                         continue;
 
-                    int canAdd = item.MaxStack - item.quantity;
-                    int add = Math.Min(canAdd, inst.quantity);
-
+                    int add = Math.Min(item.MaxStack - item.quantity, remaining);
                     item.quantity += add;
-                    inst.quantity -= add;
+                    remaining -= add;
 
-                    if (inst.quantity <= 0)
+                    if (remaining <= 0)
                     {
                         OnChanged?.Invoke();
                         return true;
@@ -60,20 +57,24 @@ namespace Features.Inventory.Domain
                 }
             }
 
-            // 2️⃣ Empty slot
             foreach (var slot in model.main)
             {
-                if (!slot.item.IsEmpty)
-                    continue;
+                if (!slot.item.IsEmpty) continue;
 
-                slot.item = inst;
-                OnItemAdded?.Invoke(inst);
+                slot.item = new ItemInstance(
+                    inst.itemDefinition,
+                    remaining,
+                    inst.level
+                );
+
+                OnItemAdded?.Invoke(slot.item);
                 OnChanged?.Invoke();
                 return true;
             }
 
             return false;
         }
+
 
         // =====================================================
         // REMOVE

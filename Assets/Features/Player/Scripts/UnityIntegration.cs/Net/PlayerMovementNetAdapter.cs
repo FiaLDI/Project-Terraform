@@ -10,15 +10,16 @@ namespace Features.Player.UnityIntegration
         private PlayerMovement movement;
         private MovementStateNetwork movementState;
 
-        private void Awake()
-        {
-            movement = GetComponent<PlayerMovement>();
-            movementState = GetComponent<MovementStateNetwork>();
-        }
-
         // ======================================================
         // LIFECYCLE
         // ======================================================
+
+        public override void OnStartNetwork()
+        {
+            base.OnStartNetwork();
+            movement = GetComponent<PlayerMovement>();
+            movementState = GetComponent<MovementStateNetwork>();
+        }
 
         public override void OnStartServer()
         {
@@ -29,17 +30,16 @@ namespace Features.Player.UnityIntegration
         public override void OnStopServer()
         {
             base.OnStopServer();
+            if (movement != null)
             movement.AllowMovement = false;
         }
 
         private void Update()
         {
-            // 🔑 ТОЛЬКО сервер публикует состояние
-            if (!IsServerInitialized)
+            if (!IsServerInitialized || movement == null || movementState == null)
                 return;
 
             Vector3 v = movement.Velocity;
-
             float planarSpeed = new Vector2(v.x, v.z).magnitude;
 
             movementState.SetMovementState(

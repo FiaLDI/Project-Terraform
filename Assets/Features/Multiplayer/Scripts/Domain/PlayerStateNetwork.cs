@@ -1,4 +1,4 @@
-using FishNet.Object;
+﻿using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
 
@@ -11,11 +11,17 @@ namespace Features.Player.UnityIntegration
         private readonly SyncVar<string> _classId = new();
         private readonly SyncVar<string> _visualId = new();
 
-        /* ================= LIFETIME ================= */
+        private PlayerClassController classController;
+        private PlayerVisualController visualController;
+
+        /* ================= LIFECYCLE ================= */
 
         public override void OnStartNetwork()
         {
             base.OnStartNetwork();
+
+            classController = GetComponent<PlayerClassController>();
+            visualController = GetComponent<PlayerVisualController>();
 
             _classId.OnChange += OnClassChanged;
             _visualId.OnChange += OnVisualChanged;
@@ -35,35 +41,62 @@ namespace Features.Player.UnityIntegration
         {
             base.OnStartServer();
 
-            var classCtrl = GetComponent<PlayerClassController>();
+            if (classController == null)
+            {
+                Debug.LogError("[PlayerStateNetwork] PlayerClassController missing", this);
+                return;
+            }
 
-            _classId.Value = classCtrl != null
-                ? classCtrl.CurrentClassId
-                : null;
+            // Сервер инициализирует snapshot
+            _classId.Value = classController.CurrentClassId;
+            _visualId.Value = classController.CurrentVisualId;
 
-            _visualId.Value = classCtrl != null
-                ? classCtrl.CurrentVisualId
-                : null;
+            Debug.Log(
+                $"[PlayerStateNetwork] Init state class={_classId.Value}, visual={_visualId.Value}",
+                this
+            );
+        }
 
-            Debug.Log($"[PlayerStateNetwork] Init state class={_classId.Value}, visual={_visualId.Value}");
+        /// <summary>
+        /// Единственная серверная точка смены класса
+        /// </summary>
+        [Server]
+        public void SetClass(string classId)
+        {
+            if (string.IsNullOrEmpty(classId))
+                return;
+
+            if (_classId.Value == classId)
+                return;
+
+            _classId.Value = classId;
+
+            // visualId зависит от класса → обновляем сразу
+            _visualId.Value = classController.CurrentVisualId;
         }
 
         /* ================= CLIENT ================= */
 
         private void OnClassChanged(string oldValue, string newValue, bool asServer)
         {
+            if (asServer)
+                return;
+
             if (string.IsNullOrEmpty(newValue))
                 return;
 
-            GetComponent<PlayerClassController>()?.SetClass(newValue);
+            classController?.ApplyClass(newValue);
         }
 
         private void OnVisualChanged(string oldValue, string newValue, bool asServer)
         {
+            if (asServer)
+                return;
+
             if (string.IsNullOrEmpty(newValue))
                 return;
 
-            GetComponent<PlayerVisualController>()?.ApplyVisual(newValue);
+            visualController?.ApplyVisual(newValue);
         }
     }
 }

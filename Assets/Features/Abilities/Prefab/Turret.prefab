@@ -822,6 +822,11 @@ GameObject:
   - component: {fileID: 2094240665213674160}
   - component: {fileID: 6859820028838700850}
   - component: {fileID: 1926531339624578966}
+  - component: {fileID: 394026785594853742}
+  - component: {fileID: 4442242552899396924}
+  - component: {fileID: 3714489024258571851}
+  - component: {fileID: 2134744270812450051}
+  - component: {fileID: 6888746637339960081}
   m_Layer: 7
   m_Name: Turret
   m_TagString: Untagged
@@ -903,6 +908,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b94ec7f2359655e478dd46aa10740633, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurretBuffTarget
+--- !u!114 &394026785594853742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ac87626e41348844bd1334159d45404, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.StatsFacadeAdapter
+--- !u!114 &4442242552899396924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85745559778e9b340bbacedfd6b65084, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.EnergyStatsAdapter
+--- !u!114 &3714489024258571851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d213353b9eade47afdcfe3462a71fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.HealthStatsAdapter
+--- !u!114 &2134744270812450051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fe9cb848f5b9948aaf74e10346ebbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.MovementStatsAdapter
+--- !u!114 &6888746637339960081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c4e11ef3bbd86744b3e6e4dd85c2f22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.CombatStatsAdapter
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0

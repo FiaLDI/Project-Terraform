@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e303207a331f284cbb27206309c46c5, type: 3}
   m_Name: Charge Device Ability SO
   m_EditorClassIdentifier: Assembly-CSharp::Features.Abilities.Domain.ChargeDeviceAbilitySO
-  id: 4
+  id: 6
   displayName: Charge Device Ability SO
   icon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}
   buffIcon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}

@@ -18,9 +18,16 @@ namespace Features.Equipment.UnityIntegration
 
         private bool bound;
 
+        private PlayerUsageNetAdapter net;
+
         // ======================================================
         // INPUT BIND
         // ======================================================
+        
+        private void Awake()
+        {
+            net = GetComponent<PlayerUsageNetAdapter>();
+        }
 
         public void BindInput(PlayerInputContext ctx)
         {
@@ -107,13 +114,14 @@ namespace Features.Equipment.UnityIntegration
         private void OnPrimaryStart(InputAction.CallbackContext _)
         {
             usingPrimary = true;
-            rightHand?.OnUsePrimary_Start();
+
+            net?.PrimaryStart();
         }
 
         private void OnPrimaryStop(InputAction.CallbackContext _)
         {
             usingPrimary = false;
-            rightHand?.OnUsePrimary_Stop();
+            net?.PrimaryStop();
         }
 
         // ======================================================
@@ -123,13 +131,14 @@ namespace Features.Equipment.UnityIntegration
         private void OnSecondaryStart(InputAction.CallbackContext _)
         {
             usingSecondary = true;
-            rightHand?.OnUseSecondary_Start();
+
+            net?.SecondaryStart();
         }
 
         private void OnSecondaryStop(InputAction.CallbackContext _)
         {
             usingSecondary = false;
-            rightHand?.OnUseSecondary_Stop();
+            net?.SecondaryStop();
         }
 
         // ======================================================
@@ -138,24 +147,7 @@ namespace Features.Equipment.UnityIntegration
 
         private void OnReload(InputAction.CallbackContext _)
         {
-            if (rightHand is IReloadable reloadable)
-                reloadable.OnReloadPressed();
-        }
-
-        // ======================================================
-        // UPDATE (HOLD)
-        // ======================================================
-
-        private void Update()
-        {
-            if (!bound)
-                return;
-
-            if (usingPrimary)
-                rightHand?.OnUsePrimary_Hold();
-
-            if (usingSecondary)
-                rightHand?.OnUseSecondary_Hold();
+            net?.Reload();
         }
 
         // ======================================================
@@ -172,6 +164,21 @@ namespace Features.Equipment.UnityIntegration
         {
             foreach (var n in names)
                 map.FindAction(n, true).Disable();
+        }
+
+        private static bool TryGetAim(out Vector3 pos, out Vector3 forward)
+        {
+            var cam = UnityEngine.Camera.main;
+            if (cam == null)
+            {
+                pos = default;
+                forward = Vector3.forward;
+                return false;
+            }
+
+            pos = cam.transform.position;
+            forward = cam.transform.forward;
+            return true;
         }
     }
 }

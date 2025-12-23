@@ -361,6 +361,12 @@ GameObject:
   - component: {fileID: 5082500085448155888}
   - component: {fileID: 7463166964726445143}
   - component: {fileID: 3277316184608179795}
+  - component: {fileID: 6347126385330872850}
+  - component: {fileID: 1984978742174617564}
+  - component: {fileID: 142910258178585441}
+  - component: {fileID: 3522764533794228268}
+  - component: {fileID: 368187022757258266}
+  - component: {fileID: 9015480268040883364}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -537,7 +543,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eefe9874e88c6b54fb5f77e2a929969c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsUpdateSystem
-  statsAdapter: {fileID: 0}
   useUnscaledTime: 0
 --- !u!114 &3249233337102116910
 MonoBehaviour:
@@ -673,7 +678,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52e520fb07100ec4389a138f38ccb2dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryManager
-  itemRegistry: {fileID: 0}
   bagSize: 12
   hotbarSize: 2
 --- !u!114 &7104529458777332987
@@ -980,6 +984,81 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfed3782942c21f45862db33d51d9d43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryStateNetwork
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &6347126385330872850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c4e11ef3bbd86744b3e6e4dd85c2f22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.CombatStatsAdapter
+--- !u!114 &1984978742174617564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85745559778e9b340bbacedfd6b65084, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.EnergyStatsAdapter
+--- !u!114 &142910258178585441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d213353b9eade47afdcfe3462a71fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.HealthStatsAdapter
+--- !u!114 &3522764533794228268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fe9cb848f5b9948aaf74e10346ebbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.MovementStatsAdapter
+--- !u!114 &368187022757258266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d9b1d9d612d8204891bf6d03916066f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.MiningStatsAdapter
+--- !u!114 &9015480268040883364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 322e261a792007b4fa0262887681082f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStateNetAdapter
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}

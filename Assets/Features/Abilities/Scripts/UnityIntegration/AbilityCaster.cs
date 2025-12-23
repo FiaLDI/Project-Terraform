@@ -1,143 +1,139 @@
 using System;
-using System.Collections;
-using UnityEngine;
+using System.Collections.Generic;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
-using Features.Abilities.Application;
-using Features.Stats.Adapter;
 using Features.Stats.Domain;
-using Features.Camera.UnityIntegration;
+using Features.Stats.UnityIntegration;
+using UnityEngine;
 
 namespace Features.Abilities.Application
 {
-    /// <summary>
-    /// UnityIntegration-адаптер для AbilityService.
-    /// НЕ содержит логики способностей.
-    /// НЕ работает с камерой напрямую.
-    /// Только перенаправляет команды.
-    /// </summary>
     [DefaultExecutionOrder(-150)]
     public class AbilityCaster : MonoBehaviour
     {
         [Header("Ability slots")]
-        public AbilitySO[] abilities = new AbilitySO[5];
+        [SerializeField] private AbilitySO[] abilities = new AbilitySO[5];
+        public IReadOnlyList<AbilitySO> Abilities => abilities;
 
         [Header("Auto refs")]
         public LayerMask groundMask;
         public AbilityExecutor executor;
 
-        private IEnergyStats _energy;
-        public IEnergyStats Energy => _energy;
+        private IEnergyStats energy;
+        private AbilityService service;
 
-        private AbilityService _service;
+        public bool IsReady { get; private set; }
+        public IEnergyStats Energy => energy;
 
+        /* ================= EVENTS ================= */
+
+        public event Action OnAbilitiesChanged;
         public event Action<AbilitySO> OnAbilityCast;
         public event Action<AbilitySO, float, float> OnCooldownChanged;
         public event Action<AbilitySO> OnChannelStarted;
         public event Action<AbilitySO, float, float> OnChannelProgress;
         public event Action<AbilitySO> OnChannelCompleted;
         public event Action<AbilitySO> OnChannelInterrupted;
-        public event Action OnAbilitiesChanged;
 
-        private void Awake()
+        /* ================= LIFECYCLE ================= */
+
+        private void OnEnable()
         {
-            StartCoroutine(DelayedInit());
+            PlayerStats.OnStatsReady += HandleStatsReady;
         }
 
-        /// <summary>
-        /// Ждём StatsFacadeAdapter, чтобы IEnergy стало доступно.
-        /// </summary>
-        private IEnumerator DelayedInit()
+        private void OnDisable()
         {
-            yield return null;
-
-            var statsAdapter = GetComponent<StatsFacadeAdapter>();
-            if (statsAdapter != null)
-                _energy = statsAdapter.Stats.Energy;
-
-            if (_energy == null)
-                Debug.LogError("[AbilityCaster] No IEnergyStats found!");
-
-            FinalInit();
+            PlayerStats.OnStatsReady -= HandleStatsReady;
         }
 
-        private void FinalInit()
-        {
-            if (executor == null)
-                executor = AbilityExecutor.I;
+        /* ================= INIT ================= */
 
-            _service = new AbilityService(
-                owner: (object)gameObject, 
-                energy: _energy,
+        private void HandleStatsReady(PlayerStats ps)
+        {
+            if (IsReady)
+                return;
+
+            energy = ps.Facade?.Energy;
+            if (energy == null)
+            {
+                Debug.LogError("[AbilityCaster] IEnergyStats not found", this);
+                return;
+            }
+
+            executor ??= AbilityExecutor.I;
+
+            service = new AbilityService(
+                owner: gameObject,
+                energy: energy,
                 groundMask: groundMask,
                 executor: executor
             );
 
-            // Подписываем внутренние события AbilityService
-            _service.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
-            _service.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
-            _service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
-            _service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
-            _service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
-            _service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
+            service.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
+            service.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
+            service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
+            service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
+            service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
+            service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
+
+            IsReady = true;
         }
 
         private void LateUpdate()
         {
-            if (_service == null) return;
+            if (!IsReady || service == null)
+                return;
 
-            // executor может появиться позже
             if (executor == null && AbilityExecutor.I != null)
             {
                 executor = AbilityExecutor.I;
-                _service.SetExecutor(executor);
+                service.SetExecutor(executor);
             }
 
-            _service.Tick(Time.deltaTime);
+            service.Tick(Time.deltaTime);
         }
 
-        // ========================= PUBLIC API =========================
+        /* ================= PUBLIC API ================= */
 
         public void SetAbilities(AbilitySO[] newAbilities)
         {
+            Debug.Log($"[AbilityCaster] SetAbilities CALLED | this={name} id={GetInstanceID()} newLen={(newAbilities == null ? -1 : newAbilities.Length)}");
+
             for (int i = 0; i < abilities.Length; i++)
+            {
                 abilities[i] = (newAbilities != null && i < newAbilities.Length)
                     ? newAbilities[i]
                     : null;
+                Debug.Log($"[AbilityCaster]  ability[{i}]={(newAbilities[i] ? newAbilities[i].name : "null")} icon={(newAbilities[i] && newAbilities[i].icon ? newAbilities[i].icon.name : "null")}");
+            }
 
+
+            Debug.Log($"[AbilityCaster] Invoking OnAbilitiesChanged | subs={(OnAbilitiesChanged == null ? 0 : OnAbilitiesChanged.GetInvocationList().Length)}");
             OnAbilitiesChanged?.Invoke();
         }
 
         public void TryCast(int index)
         {
-            if (index < 0 || index >= abilities.Length) return;
+            if (!IsReady || index < 0 || index >= abilities.Length)
+                return;
 
             var ab = abilities[index];
-            if (ab == null) return;
+            if (ab == null)
+                return;
 
-            _service.TryCast(ab, index);
+            service.TryCast(ab, index);
         }
 
         public float GetCooldown(int index)
         {
-            if (index < 0 || index >= abilities.Length) return 0f;
-            return _service.GetCooldownRemaining(abilities[index]);
+            if (!IsReady || index < 0 || index >= abilities.Length)
+                return 0f;
+
+            return service.GetCooldownRemaining(abilities[index]);
         }
 
-        /// <summary>
-        /// Показывает КОРРЕКТНУЮ стоимость с учётом бафов (для Tooltip)
-        /// </summary>
-        public float GetFinalEnergyCost(AbilitySO ability)
-        {
-            if (ability == null) return 0f;
-
-            float baseCost = ability.energyCost;
-            if (_energy == null) return baseCost;
-
-            return baseCost * _energy.CostMultiplier;
-        }
-
-        public bool IsChanneling => _service?.IsChanneling ?? false;
-        public AbilitySO CurrentChannelAbility => _service?.CurrentChannelAbility;
+        public bool IsChanneling => service?.IsChanneling ?? false;
+        public AbilitySO CurrentChannelAbility => service?.CurrentChannelAbility;
     }
 }

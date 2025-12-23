@@ -6,144 +6,136 @@ using Features.Passives.UnityIntegration;
 using Features.Abilities.Application;
 using Features.Stats.UnityIntegration;
 using Features.Stats.Domain;
-using Features.Stats.Adapter;
 using Features.Buffs.UnityIntegration;
 
 [RequireComponent(typeof(PlayerVisualController))]
-public class PlayerClassController : MonoBehaviour
+public sealed class PlayerClassController : MonoBehaviour
 {
     [Header("Classes Library")]
-    public PlayerClassLibrarySO library;
+    [SerializeField] private PlayerClassLibrarySO library;
 
-    [Header("Default Class ID (fallback for tests)")]
-    public string defaultClassId = "engineer";
+    [Header("Default Class ID")]
+    [SerializeField] private string defaultClassId = "engineer";
 
-    [Header("Visuals")]
+    /* ================= COMPONENTS ================= */
+
     private PlayerVisualController visualController;
+    private PassiveSystem passiveSystem;
+    private AbilityCaster abilityCaster;
+    private PlayerBuffTarget buffTarget;
 
-    private PlayerClassService _classService;
-    private PlayerClassConfigSO _pendingClassCfg;
+    /* ================= DOMAIN ================= */
 
-    // DOMAIN facade
-    private IStatsFacade _stats;
+    private PlayerClassService classService;
+    private IStatsFacade stats;
 
-    // Adapters
-    private HealthStatsAdapter _health;
-    private EnergyStatsAdapter _energy;
-    private CombatStatsAdapter _combat;
-    private MovementStatsAdapter _movement;
-    private MiningStatsAdapter _mining;
+    private PlayerClassConfigSO currentClass;
 
-    private PassiveSystem _passiveSystem;
-    private AbilityCaster _abilityCaster;
-    private PlayerBuffTarget _buffTarget;
+    /* ================= PUBLIC STATE ================= */
+
+    public string CurrentClassId =>
+        currentClass != null ? currentClass.id : defaultClassId;
 
     public string CurrentVisualId =>
-    _pendingClassCfg != null && _pendingClassCfg.visualPreset != null
-        ? _pendingClassCfg.visualPreset.id
-        : null;
-    
-    public string CurrentClassId =>
-        _pendingClassCfg != null ? _pendingClassCfg.id : defaultClassId;
+        currentClass != null && currentClass.visualPreset != null
+            ? currentClass.visualPreset.id
+            : null;
 
+    /* ================= LIFECYCLE ================= */
+
+    private void Awake()
+    {
+        visualController = GetComponent<PlayerVisualController>();
+        passiveSystem   = GetComponent<PassiveSystem>();
+        abilityCaster   = GetComponent<AbilityCaster>();
+        buffTarget      = GetComponent<PlayerBuffTarget>();
+
+        classService = new PlayerClassService(
+            library.classes,
+            defaultClassId
+        );
+    }
 
     private void OnEnable()
     {
-        PlayerStats.OnStatsReady += HandleStatsReady;
+        PlayerStats.OnStatsReady += OnStatsReady;
     }
 
     private void OnDisable()
     {
-        PlayerStats.OnStatsReady -= HandleStatsReady;
+        PlayerStats.OnStatsReady -= OnStatsReady;
     }
 
-    private void Awake()
+    /* ================= STATS ================= */
+
+    private void OnStatsReady(PlayerStats ps)
     {
-        CacheAdapters();
+        stats = ps.Facade;
+        buffTarget?.SetStats(stats);
 
-        _buffTarget = GetComponent<PlayerBuffTarget>();
-        _passiveSystem = GetComponent<PassiveSystem>();
-        _abilityCaster = GetComponent<AbilityCaster>();
-
-        if (visualController == null)
-            visualController = GetComponent<PlayerVisualController>();
-
-        _classService = new PlayerClassService(library.classes, defaultClassId);
+        // если класс уже был назначен ранее — применяем
+        if (currentClass != null)
+            StartCoroutine(ApplyDeferred(currentClass));
     }
 
-    private void CacheAdapters()
+    /* ================= API ================= */
+
+    /// <summary>
+    /// Единственный публичный способ применить класс
+    /// </summary>
+    public void ApplyClass(string classId)
     {
-        _health = GetComponent<HealthStatsAdapter>();
-        _energy = GetComponent<EnergyStatsAdapter>();
-        _combat = GetComponent<CombatStatsAdapter>();
-        _movement = GetComponent<MovementStatsAdapter>();
-        _mining = GetComponent<MiningStatsAdapter>();
-    }
+        var cfg = library.FindById(classId);
 
-    private void HandleStatsReady(PlayerStats ps)
-    {
-        _stats = ps.Facade;
-
-        _health?.Init(_stats.Health);
-        _energy?.Init(_stats.Energy);
-        _combat?.Init(_stats.Combat);
-        _movement?.Init(_stats.Movement);
-        _mining?.Init(_stats.Mining);
-
-        _buffTarget?.SetStats(_stats);
-
-        if (_pendingClassCfg != null)
-            StartCoroutine(DelayedApplyClass(_pendingClassCfg));
-    }
-
-    public void SetClass(string classId)
-    {
-        _pendingClassCfg = library.FindById(classId);
-
-        if (_pendingClassCfg == null)
+        if (cfg == null)
         {
-            Debug.LogWarning($"[PlayerClass] Class {classId} not found, using default");
-            _pendingClassCfg = library.FindById(defaultClassId);
+            Debug.LogWarning(
+                $"[PlayerClassController] Class {classId} not found, using default",
+                this
+            );
+            cfg = library.FindById(defaultClassId);
         }
 
-        // если статы уже готовы — применяем сразу
-        if (_stats != null)
-        {
-            StartCoroutine(DelayedApplyClass(_pendingClassCfg));
-        }
+        currentClass = cfg;
+
+        if (stats != null)
+            StartCoroutine(ApplyDeferred(cfg));
     }
 
+    /* ================= APPLY ================= */
 
-    private IEnumerator DelayedApplyClass(PlayerClassConfigSO cfg)
+    private IEnumerator ApplyDeferred(PlayerClassConfigSO cfg)
     {
         yield return null;
-
-        yield return new WaitUntil(() =>
-            _abilityCaster != null &&
-            _abilityCaster.Energy != null
-        );
-
-        ApplyClassInternal(cfg);
+        ApplyInternal(cfg);
     }
 
-    private void ApplyClassInternal(PlayerClassConfigSO cfg)
+    private void ApplyInternal(PlayerClassConfigSO cfg)
     {
-        if (cfg == null) return;
+        if (cfg == null || stats == null)
+            return;
 
-        Debug.Log($"[PlayerClass] Applying: {cfg.displayName}");
+        Debug.Log($"[PlayerClassController] Applying class: {cfg.displayName}", this);
 
-        _classService.SelectClass(cfg);
+        classService.SelectClass(cfg);
 
         var p = cfg.preset;
 
-        _stats.Health.ApplyBase(p.health.baseHp);
-        _stats.Health.ApplyRegenBase(p.health.baseRegen);
+        // ===== BASE STATS =====
 
-        _stats.Energy.ApplyBase(p.energy.baseMaxEnergy, p.energy.baseRegen);
+        stats.Health.ApplyBase(p.health.baseHp);
+        stats.Health.ApplyRegenBase(p.health.baseRegen);
 
-        _stats.Combat.ApplyBase(p.combat.baseDamageMultiplier);
+        stats.Energy.ApplyBase(
+            p.energy.baseMaxEnergy,
+            p.energy.baseRegen
+        );
 
-        _stats.Movement.ApplyBase(
+        stats.Combat.ApplyBase(
+            p.combat.baseDamageMultiplier
+        );
+
+        stats.Movement.ApplyBase(
             p.movement.baseSpeed,
             p.movement.walkSpeed,
             p.movement.sprintSpeed,
@@ -151,9 +143,18 @@ public class PlayerClassController : MonoBehaviour
             p.movement.rotationSpeed
         );
 
-        _stats.Mining.ApplyBase(p.mining.baseMining);
+        stats.Mining.ApplyBase(
+            p.mining.baseMining
+        );
 
-        _passiveSystem?.SetPassives(cfg.passives.ToArray());
-        _abilityCaster?.SetAbilities(cfg.abilities.ToArray());
+        // ===== PASSIVES / ABILITIES =====
+
+        passiveSystem?.SetPassives(cfg.passives.ToArray());
+        abilityCaster?.SetAbilities(cfg.abilities.ToArray());
+
+        // ===== VISUAL =====
+
+        if (cfg.visualPreset != null)
+            visualController.ApplyVisual(cfg.visualPreset.id);
     }
 }

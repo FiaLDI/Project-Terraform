@@ -6,16 +6,17 @@ public sealed class WorldItemDropService : NetworkBehaviour
 {
     public static WorldItemDropService I { get; private set; }
 
-    private void Awake()
+    public override void OnStartServer()
     {
-        if (I != null && I != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         I = this;
     }
+
+    public override void OnStopServer()
+    {
+        if (I == this)
+            I = null;
+    }
+
 
     /// <summary>
     /// SERVER ONLY.

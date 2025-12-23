@@ -1,57 +1,92 @@
 using UnityEngine;
-using Features.Stats.Adapter;
 using Features.Stats.Domain;
+using Features.Stats.UnityIntegration;
 
 namespace Features.Stats.UnityIntegration
 {
     /// <summary>
     /// Единая система обновления статов сущности.
-    /// Обновляет энергию, хп, щиты, регенерацию и тики бафов.
-    /// Висит на Player / NPC / любом объекте со статами.
+    /// Обновляет энергию, хп, регенерацию и тики бафов.
+    /// Работает ТОЛЬКО после PlayerStats.Init().
     /// </summary>
     public class StatsUpdateSystem : MonoBehaviour
     {
-        [SerializeField] private StatsFacadeAdapter statsAdapter;
         [SerializeField] private bool useUnscaledTime = false;
 
         private IStatsCollection stats;
-
         private IEnergyStats energy;
         private IHealthStats health;
 
+        private bool isReady;
+
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
+
         private void Awake()
         {
-            if (statsAdapter == null)
-                statsAdapter = GetComponent<StatsFacadeAdapter>();
+            // Awake намеренно пуст
         }
 
-        private void Start()
+        private void OnEnable()
         {
-            if (statsAdapter == null || statsAdapter.Stats == null)
+            PlayerStats.OnStatsReady += HandleStatsReady;
+        }
+
+        private void OnDisable()
+        {
+            PlayerStats.OnStatsReady -= HandleStatsReady;
+        }
+
+        // =====================================================
+        // INIT
+        // =====================================================
+
+        private void HandleStatsReady(PlayerStats ps)
+        {
+            if (isReady)
+                return;
+
+            // Этот StatsUpdateSystem должен работать
+            // ТОЛЬКО со статами этого же объекта
+            if (ps.gameObject != gameObject)
+                return;
+
+            var facade = ps.Facade;
+            if (facade == null)
             {
-                Debug.LogError("[StatsUpdateSystem] No StatsFacadeAdapter or Stats found!");
-                enabled = false;
+                Debug.LogError("[StatsUpdateSystem] StatsFacade is null", this);
                 return;
             }
 
-            stats = statsAdapter.Stats as IStatsCollection;
-
+            stats = facade as IStatsCollection;
             if (stats == null)
             {
-                Debug.LogError("StatsFacade does not implement IStatsCollection!");
-                enabled = false;
+                Debug.LogError(
+                    "[StatsUpdateSystem] StatsFacade does not implement IStatsCollection",
+                    this
+                );
                 return;
             }
 
             energy = stats.Energy;
             health = stats.Health;
+
+            isReady = true;
         }
+
+        // =====================================================
+        // UPDATE
+        // =====================================================
 
         private void Update()
         {
-            if (stats == null) return;
+            if (!isReady || stats == null)
+                return;
 
-            float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            float dt = useUnscaledTime
+                ? Time.unscaledDeltaTime
+                : Time.deltaTime;
 
             // ================================
             // ENERGY REGEN
@@ -60,14 +95,10 @@ namespace Features.Stats.UnityIntegration
                 energy.Recover(energy.Regen * dt);
 
             // ================================
-            // HEALTH REGEN (если есть)
+            // HEALTH REGEN
             // ================================
             if (health != null && health.FinalRegen > 0f)
                 health.Recover(health.FinalRegen * dt);
-
-            // ================================
-            // SHIELD REGEN (если есть)
-            // ================================
 
             // ================================
             // BUFF / PASSIVE TICK UPDATE

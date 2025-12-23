@@ -3,7 +3,9 @@ using UnityEngine.UI;
 using TMPro;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
-public class EnergyBarUI : MonoBehaviour
+using Features.UI;
+
+public class EnergyBarUI : PlayerBoundUIView
 {
     [Header("UI")]
     [SerializeField] private Image fillImage;
@@ -13,50 +15,84 @@ public class EnergyBarUI : MonoBehaviour
     [SerializeField] private float smoothSpeed = 10f;
 
     private IEnergyView energy;
-    private float targetFill = 1f;
-    
-    private void Start()
-    {
-        PlayerStats.OnStatsReady += OnReady;
-    }
+    private float targetFill;
+    private PlayerStats boundStats;
 
-    private void OnReady(PlayerStats stats)
+    // =====================================================
+    // PLAYER BIND (FROM BASE)
+    // =====================================================
+
+    protected override void OnPlayerBound(GameObject player)
     {
-        var adapter = stats.GetFacadeAdapter();
+        boundStats = player.GetComponent<PlayerStats>();
+        if (boundStats == null)
+            return;
+
+        var adapter = boundStats.Adapter;
+        if (adapter == null)
+            return;
+
+        if (!adapter.IsReady)
+        {
+            PlayerStats.OnStatsReady += HandleStatsReady;
+            return;
+        }
+
         Bind(adapter.EnergyStats);
     }
 
+    protected override void OnPlayerUnbound(GameObject player)
+    {
+        PlayerStats.OnStatsReady -= HandleStatsReady;
+        Unbind();
+    }
 
-    private void OnDestroy()
+    // =====================================================
+    // STATS READY
+    // =====================================================
+
+    private void HandleStatsReady(PlayerStats stats)
+    {
+        if (stats != boundStats)
+            return;
+
+        PlayerStats.OnStatsReady -= HandleStatsReady;
+
+        if (stats.Adapter != null)
+            Bind(stats.Adapter.EnergyStats);
+    }
+
+    // =====================================================
+    // BIND / UNBIND
+    // =====================================================
+
+    private void Bind(IEnergyView view)
+    {
+        energy = view;
+        if (energy == null)
+            return;
+
+        energy.OnEnergyChanged += UpdateView;
+        UpdateView(energy.CurrentEnergy, energy.MaxEnergy);
+    }
+
+    private void Unbind()
     {
         if (energy != null)
             energy.OnEnergyChanged -= UpdateView;
+
+        energy = null;
+        boundStats = null;
+        targetFill = 0f;
     }
 
-    public void Bind(IEnergyView e)
-    {
-        if (energy != null)
-            energy.OnEnergyChanged -= UpdateView;
-
-        energy = e;
-
-         Debug.Log("[UI] Bind Energy: " +
-        $"Current={energy.CurrentEnergy} Max={energy.MaxEnergy}");
-
-        if (energy != null)
-        {
-            energy.OnEnergyChanged += UpdateView;
-            UpdateView(energy.CurrentEnergy, energy.MaxEnergy);
-        }
-        else
-        {
-            Debug.LogWarning("[EnergyBarUI] Bind() received null reference!");
-        }
-    }
+    // =====================================================
+    // VIEW
+    // =====================================================
 
     private void UpdateView(float current, float max)
     {
-        targetFill = (max > 0) ? current / max : 0f;
+        targetFill = max > 0 ? current / max : 0f;
 
         if (label != null)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";
@@ -64,7 +100,8 @@ public class EnergyBarUI : MonoBehaviour
 
     private void Update()
     {
-        if (!fillImage) return;
+        if (fillImage == null)
+            return;
 
         fillImage.fillAmount = Mathf.Lerp(
             fillImage.fillAmount,

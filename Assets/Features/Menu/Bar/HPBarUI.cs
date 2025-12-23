@@ -3,7 +3,9 @@ using UnityEngine.UI;
 using TMPro;
 using Features.Stats.Adapter;
 using Features.Stats.UnityIntegration;
-public class HPBarUI : MonoBehaviour
+using Features.UI;
+
+public class HPBarUI : PlayerBoundUIView
 {
     [Header("UI")]
     [SerializeField] private Image fillImage;
@@ -12,72 +14,95 @@ public class HPBarUI : MonoBehaviour
     [Header("Smooth")]
     [SerializeField] private float smoothSpeed = 10f;
 
-    private HealthStatsAdapter adapter;
-    private float targetFill = 1f;
+    private HealthStatsAdapter health;
+    private float targetFill;
+    private PlayerStats boundStats;
 
-    private void OnDestroy()
+    // =====================================================
+    // PLAYER BIND (FROM BASE)
+    // =====================================================
+
+    protected override void OnPlayerBound(GameObject player)
     {
-        Unsubscribe();
+        boundStats = player.GetComponent<PlayerStats>();
+        if (boundStats == null)
+            return;
+
+        var adapter = boundStats.Adapter;
+        if (adapter == null)
+            return;
+
+        if (!adapter.IsReady)
+        {
+            PlayerStats.OnStatsReady += HandleStatsReady;
+            return;
+        }
+
+        Bind(adapter.HealthStats);
     }
 
-    private void Start()
+    protected override void OnPlayerUnbound(GameObject player)
     {
-        PlayerStats.OnStatsReady += HandleStatsReady;
+        PlayerStats.OnStatsReady -= HandleStatsReady;
+        Unbind();
     }
+
+    // =====================================================
+    // STATS READY
+    // =====================================================
 
     private void HandleStatsReady(PlayerStats stats)
     {
-        Bind(stats.GetFacadeAdapter().HealthStats);
+        if (stats != boundStats)
+            return;
+
+        PlayerStats.OnStatsReady -= HandleStatsReady;
+
+        if (stats.Adapter != null)
+            Bind(stats.Adapter.HealthStats);
     }
 
-    private void Unsubscribe()
+    // =====================================================
+    // BIND / UNBIND
+    // =====================================================
+
+    private void Bind(HealthStatsAdapter adapter)
     {
-        if (adapter == null) return;
+        if (adapter == null)
+            return;
 
-        adapter.OnHealthChanged -= UpdateHp;
-        adapter.OnShieldChanged -= UpdateShield;
+        health = adapter;
+        health.OnHealthChanged += UpdateHp;
+
+        UpdateHp(health.CurrentHp, health.MaxHp);
     }
 
-    /// <summary>
-    /// Привязка к адаптеру HP. Вызывать из PlayerController.HandleStatsReady()
-    /// </summary>
-    public void Bind(HealthStatsAdapter a)
+    private void Unbind()
     {
-        Unsubscribe();
+        if (health != null)
+            health.OnHealthChanged -= UpdateHp;
 
-        adapter = a;
-
-        if (adapter != null)
-        {
-            adapter.OnHealthChanged += UpdateHp;
-            adapter.OnShieldChanged += UpdateShield;
-
-            // Инициализация UI текущими значениями
-            UpdateHp(adapter.CurrentHp, adapter.MaxHp);
-        }
-        else
-        {
-            Debug.LogWarning("[HPBarUI] Bind() received NULL!");
-        }
+        health = null;
+        boundStats = null;
+        targetFill = 0f;
     }
+
+    // =====================================================
+    // VIEW
+    // =====================================================
 
     private void UpdateHp(float current, float max)
     {
         targetFill = max > 0 ? current / max : 0f;
 
-        if (label)
+        if (label != null)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";
-    }
-
-    private void UpdateShield(float current, float max)
-    {
-        // OPTIONAL: если хочешь отображение щита в баре
-        // пока игнорируем
     }
 
     private void Update()
     {
-        if (!fillImage) return;
+        if (fillImage == null)
+            return;
 
         fillImage.fillAmount = Mathf.Lerp(
             fillImage.fillAmount,

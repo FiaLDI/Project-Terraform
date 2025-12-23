@@ -2,7 +2,7 @@ using UnityEngine;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
 using Features.Input;
-using Features.Player.UnityIntegration;
+using Features.Player.UI;
 
 namespace Features.Inventory.UI
 {
@@ -27,7 +27,6 @@ namespace Features.Inventory.UI
 
         public InputMode Mode => InputMode.Inventory;
 
-
         private InventoryManager inventory;
         private bool initialized;
         private bool pendingShow;
@@ -40,16 +39,44 @@ namespace Features.Inventory.UI
         {
             if (bagWindow != null)
                 bagWindow.SetActive(false);
-
-            PlayerRegistry.OnLocalPlayerReady += OnLocalPlayerReady;
         }
-        
+
+        private void OnEnable()
+        {
+            var root = PlayerUIRoot.I;
+            if (root == null)
+                return;
+
+            if (root.BoundPlayer != null)
+                OnPlayerBound(root.BoundPlayer);
+
+            root.OnPlayerBound += OnPlayerBound;
+        }
+
+        private void OnDisable()
+        {
+            if (PlayerUIRoot.I != null)
+                PlayerUIRoot.I.OnPlayerBound -= OnPlayerBound;
+        }
+
+        // ======================================================
+        // PLAYER BIND
+        // ======================================================
+
         private void OnPlayerBound(GameObject player)
         {
+            if (player == null)
+            {
+                initialized = false;
+                inventory = null;
+                bagWindow.SetActive(false);
+                return;
+            }
+
             if (initialized)
                 return;
 
-            Debug.Log("[InventoryUIView] OnPlayerBound: " + player.name, this);
+            Debug.Log("[InventoryUIView] Bound to player: " + player.name, this);
 
             inventory = player.GetComponent<InventoryManager>();
             if (inventory == null)
@@ -61,49 +88,35 @@ namespace Features.Inventory.UI
                 return;
             }
 
-            if (inventory.IsReady)
-                OnInventoryReady();
-            else
-                inventory.OnReady += OnInventoryReady;
-        }
+            InitDrag(player);
 
-        private void OnLocalPlayerReady(PlayerRegistry registry)
-        {
-            if (registry == null || registry.LocalPlayer == null)
-                return;
-
-            BindPlayer(registry.LocalPlayer);
-        }
-
-        public void BindPlayer(GameObject player)
-        {
-            OnPlayerBound(player);
-        }
-
-        private void OnInventoryReady()
-        {
-            if (initialized)
-                return;
-
-            inventory.OnReady -= OnInventoryReady;
-
-            if (inventory == null || inventory.Service == null)
-            {
-                Debug.LogError("[InventoryUIView] Inventory not valid on ready", this);
-                return;
-            }
-
-            inventory.Service.OnChanged += Refresh;
-
+            inventory.OnInventoryChanged += Refresh;
+            Debug.Log("[InventoryUIView] Subscribed to OnInventoryChanged");
             initialized = true;
             Refresh();
-
-            Debug.Log("[InventoryUIView] READY + refreshed", this);
 
             if (pendingShow)
             {
                 pendingShow = false;
                 Show();
+            }
+        }
+
+        private void InitDrag(GameObject player)
+        {
+            var drag = GetComponent<InventoryDragController>();
+            if (drag == null)
+            {
+                Debug.LogError("[InventoryUIView] InventoryDragController not found", this);
+                return;
+            }
+
+            drag.BindPlayer(player);
+            drag.RegisterSlots(GetComponentsInChildren<InventorySlotUI>(true));
+
+            foreach (var slot in GetComponentsInChildren<InventorySlotUI>(true))
+            {
+                slot.SetDragController(drag);
             }
         }
 
@@ -142,17 +155,13 @@ namespace Features.Inventory.UI
             UIStackManager.I.Push(this);
         }
 
-        private void OnDestroy()
-        {
-            PlayerRegistry.OnLocalPlayerReady -= OnLocalPlayerReady;
-        }
-
         // ======================================================
         // UI REFRESH
         // ======================================================
 
         public void Refresh()
         {
+            
             if (!initialized || inventory == null)
                 return;
 
@@ -163,47 +172,25 @@ namespace Features.Inventory.UI
             // ==== BAG ====
             for (int i = 0; i < bagSlots.Length && i < model.main.Count; i++)
             {
-                bagSlots[i].Bind(
-                    model.main[i],
-                    InventorySection.Bag,
-                    i
-                );
+                bagSlots[i].Bind(model.main[i], InventorySection.Bag, i);
             }
 
             // ==== HOTBAR ====
             for (int i = 0; i < hotbarSlots.Length && i < model.hotbar.Count; i++)
             {
-                hotbarSlots[i].Bind(
-                    model.hotbar[i],
-                    InventorySection.Hotbar,
-                    i
-                );
+                hotbarSlots[i].Bind(model.hotbar[i], InventorySection.Hotbar, i);
             }
 
             // ==== HANDS ====
-            leftHandSlot.Bind(
-                model.leftHand,
-                InventorySection.LeftHand,
-                0
-            );
-
-            rightHandSlot.Bind(
-                model.rightHand,
-                InventorySection.RightHand,
-                0
-            );
+            leftHandSlot.Bind(model.leftHand, InventorySection.LeftHand, 0);
+            rightHandSlot.Bind(model.rightHand, InventorySection.RightHand, 0);
 
             // ==== Hotbar Selection ====
-            if (hotbarSelection != null &&
-                hotbarSlots != null &&
-                hotbarSlots.Length > 0)
+            if (hotbarSelection != null && hotbarSlots.Length > 0)
             {
                 int idx = model.selectedHotbarIndex;
                 if (idx >= 0 && idx < hotbarSlots.Length)
-                {
-                    hotbarSelection.position =
-                        hotbarSlots[idx].transform.position;
-                }
+                    hotbarSelection.position = hotbarSlots[idx].transform.position;
             }
         }
     }

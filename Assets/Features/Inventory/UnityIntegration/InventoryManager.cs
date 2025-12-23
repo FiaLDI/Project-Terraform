@@ -4,6 +4,7 @@ using Features.Equipment.UnityIntegration;
 using Features.Inventory.Domain;
 using Features.Items.Data;
 using Features.Items.Domain;
+using FishNet.Object;
 using UnityEngine;
 
 namespace Features.Inventory.UnityIntegration
@@ -36,6 +37,11 @@ namespace Features.Inventory.UnityIntegration
 
         private void Awake()
         {
+            var nob = GetComponent<NetworkObject>();
+
+            if (nob != null && !nob.IsServerInitialized)
+                return;
+
             CreateModel();
             CreateService();
             InitEquipment();
@@ -43,6 +49,7 @@ namespace Features.Inventory.UnityIntegration
             IsReady = true;
             OnReady?.Invoke();
         }
+
 
         private void OnDestroy()
         {
@@ -131,18 +138,61 @@ namespace Features.Inventory.UnityIntegration
             InventorySlotNet right,
             int selectedIndex)
         {
-            // BAG
-            for (int i = 0; i < Model.main.Count && i < bagNet.Count; i++)
-                Model.main[i].item = FromNet(bagNet[i]);
+            ApplySection(Model.main, bagNet);
+            ApplySection(Model.hotbar, hotbarNet);
 
-            // HOTBAR
-            for (int i = 0; i < Model.hotbar.Count && i < hotbarNet.Count; i++)
-                Model.hotbar[i].item = FromNet(hotbarNet[i]);
-
-            Model.leftHand.item = FromNet(left);
-            Model.rightHand.item = FromNet(right);
+            ApplySlot(Model.leftHand, left);
+            ApplySlot(Model.rightHand, right);
 
             Model.selectedHotbarIndex = selectedIndex;
+
+            Debug.Log("[InventoryManager] ApplyNetState -> OnInventoryChanged");
+            OnInventoryChanged?.Invoke();
+        }
+
+        private void ApplySection(
+            IList<InventorySlot> slots,
+            IReadOnlyList<InventorySlotNet> net)
+        {
+            int count = Mathf.Min(slots.Count, net.Count);
+            for (int i = 0; i < count; i++)
+                ApplySlot(slots[i], net[i]);
+        }
+
+        private void ApplySlot(InventorySlot slot, InventorySlotNet net)
+        {
+            if (string.IsNullOrEmpty(net.itemId) || net.quantity <= 0)
+            {
+                slot.item = ItemInstance.Empty;
+                return;
+            }
+
+            if (!slot.item.IsEmpty &&
+                slot.item.itemDefinition.id == net.itemId &&
+                slot.item.level == net.level)
+            {
+                slot.item.quantity = net.quantity;
+                return;
+            }
+
+            // NEW ITEM
+            var def = ItemRegistrySO.Instance?.Get(net.itemId);
+            if (def == null)
+            {
+                Debug.LogError($"[Inventory] Item not found: {net.itemId}");
+                slot.item = ItemInstance.Empty;
+                return;
+            }
+
+            slot.item = new ItemInstance(def, net.quantity, net.level);
+        }
+
+
+        public void ApplyHandsNetState(InventorySlotNet left, InventorySlotNet right)
+        {
+            Model.leftHand.item  = FromNet(left);
+            Model.rightHand.item = FromNet(right);
+            OnInventoryChanged?.Invoke();
         }
 
         private ItemInstance FromNet(InventorySlotNet net)

@@ -1,18 +1,19 @@
-using Features.Inventory.Domain;
-using Features.Inventory.UI;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Features.Inventory.Domain;
+using Features.Inventory.UI;
 
 namespace Features.Inventory.UnityIntegration
 {
     public sealed class InventoryDragController : MonoBehaviour
     {
-        public static InventoryDragController Instance { get; private set; }
-
         [SerializeField] private float snapRadius = 50f;
 
         private InventoryManager inventory;
         private GameObject player;
+
+        private readonly List<InventorySlotUI> slots = new();
 
         private InventorySlotUI draggedUI;
         private InventorySlot draggedSlot;
@@ -20,22 +21,15 @@ namespace Features.Inventory.UnityIntegration
 
         private bool droppedOnSlot;
 
+        public InventorySlotUI HoveredSlot { get; private set; }
+        public InventorySlotUI LastInteractedSlot { get; private set; }
+
         // =====================================================
-        // LIFECYCLE
+        // INIT
         // =====================================================
 
-        private void Awake()
-        {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
+        public bool IsReady => inventory != null;
 
-            Instance = this;
-        }
-
-        // вызывается из PlayerUIRoot.Bind()
         public void BindPlayer(GameObject player)
         {
             this.player = player;
@@ -49,6 +43,12 @@ namespace Features.Inventory.UnityIntegration
             }
         }
 
+        public void RegisterSlots(IEnumerable<InventorySlotUI> uiSlots)
+        {
+            slots.Clear();
+            slots.AddRange(uiSlots);
+        }
+
         // =====================================================
         // DRAG
         // =====================================================
@@ -58,7 +58,7 @@ namespace Features.Inventory.UnityIntegration
             InventorySlot slot,
             PointerEventData eventData)
         {
-            if (inventory == null || ui == null || slot == null)
+            if (!IsReady || ui == null || slot == null)
                 return;
 
             if (slot.item == null || slot.item.IsEmpty)
@@ -66,11 +66,10 @@ namespace Features.Inventory.UnityIntegration
 
             draggedUI = ui;
             draggedSlot = slot;
+            droppedOnSlot = false;
 
             DraggableItemUI.Instance
                 ?.StartDrag(slot.item.itemDefinition.icon, eventData);
-
-            droppedOnSlot = false;
         }
 
         public void UpdateDrag(PointerEventData eventData)
@@ -90,15 +89,19 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
-            if (droppedOnSlot)
-            {
-                ClearDrag();
-                return;
-            }
-
-            if (!TrySnapToSlot(eventData))
+            if (!droppedOnSlot && !TrySnapToSlot(eventData))
                 RequestDropToWorld();
 
+            ClearDrag();
+        }
+
+        public void NotifyDropTarget(InventorySlotUI targetUI)
+        {
+            if (draggedUI == null || targetUI == null)
+                return;
+
+            droppedOnSlot = true;
+            SendMoveCommand(draggedUI, targetUI);
             ClearDrag();
         }
 
@@ -119,7 +122,7 @@ namespace Features.Inventory.UnityIntegration
 
         private void UpdateHighlight(PointerEventData eventData)
         {
-            InventorySlotUI closest = FindClosestSlot(eventData);
+            var closest = FindClosestSlot(eventData);
 
             if (highlightedSlot == closest)
                 return;
@@ -131,30 +134,46 @@ namespace Features.Inventory.UnityIntegration
 
         private bool TrySnapToSlot(PointerEventData eventData)
         {
-            var targetUI = FindClosestSlot(eventData);
-            if (targetUI == null || targetUI == draggedUI)
+            var target = FindClosestSlot(eventData);
+            if (target == null || target == draggedUI)
                 return false;
 
             droppedOnSlot = true;
-            SendMoveCommand(draggedUI, targetUI);
+            SendMoveCommand(draggedUI, target);
             return true;
+        }
+
+        public void SetHovered(InventorySlotUI slot)
+        {
+            HoveredSlot = slot;
+        }
+
+        public void ClearHovered(InventorySlotUI slot)
+        {
+            if (HoveredSlot == slot)
+                HoveredSlot = null;
+        }
+
+        public void SetLastInteracted(InventorySlotUI slot)
+        {
+            LastInteractedSlot = slot;
         }
 
         private InventorySlotUI FindClosestSlot(PointerEventData eventData)
         {
-            var slots = FindObjectsByType<InventorySlotUI>(
-                FindObjectsSortMode.None);
-
             InventorySlotUI best = null;
             float bestDist = snapRadius;
 
             foreach (var slot in slots)
             {
-                if (slot.transform is not RectTransform rt)
+                if (!slot.isActiveAndEnabled)
                     continue;
 
                 if (draggedSlot?.item?.itemDefinition?.isTwoHanded == true &&
                     slot.Section == InventorySection.LeftHand)
+                    continue;
+
+                if (slot.transform is not RectTransform rt)
                     continue;
 
                 Vector2 pos = RectTransformUtility.WorldToScreenPoint(
@@ -184,16 +203,13 @@ namespace Features.Inventory.UnityIntegration
             if (net == null)
                 return;
 
-            int fromIdx = NormalizeIndex(fromUI);
-            int toIdx = NormalizeIndex(toUI);
-
             net.RequestInventoryCommand(new InventoryCommandData
             {
                 Command = InventoryCommand.MoveItem,
                 FromSection = fromUI.Section,
-                FromIndex = fromIdx,
+                FromIndex = NormalizeIndex(fromUI),
                 ToSection = toUI.Section,
-                ToIndex = toIdx
+                ToIndex = NormalizeIndex(toUI)
             });
         }
 
@@ -218,10 +234,6 @@ namespace Features.Inventory.UnityIntegration
             });
         }
 
-        // =====================================================
-        // HELPERS
-        // =====================================================
-
         private InventoryStateNetwork GetNet()
         {
             return player != null
@@ -236,16 +248,6 @@ namespace Features.Inventory.UnityIntegration
                 InventorySection.LeftHand or InventorySection.RightHand => 0,
                 _ => ui.Index
             };
-        }
-
-        public void NotifyDropTarget(InventorySlotUI targetUI)
-        {
-            if (draggedUI == null || targetUI == null)
-                return;
-
-            droppedOnSlot = true;
-            SendMoveCommand(draggedUI, targetUI);
-            ClearDrag();
         }
     }
 }

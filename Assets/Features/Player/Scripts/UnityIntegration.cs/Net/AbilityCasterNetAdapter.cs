@@ -7,24 +7,31 @@ public sealed class AbilityCasterNetAdapter : NetworkBehaviour
 {
     private AbilityCaster caster;
 
-    private void Awake()
+    public override void OnStartServer()
     {
         caster = GetComponent<AbilityCaster>();
     }
 
     public override void OnStartClient()
     {
-        base.OnStartClient();
+        caster = GetComponent<AbilityCaster>();
+        caster.enabled = Owner.IsLocalClient;
+    }
 
-        // Локальный клиент НЕ кастует напрямую
-        caster.enabled = false;
+    public override void OnStopClient()
+    {
+        if (caster != null)
+            caster.enabled = false;
     }
 
     // ================= INPUT =================
 
     public void Cast(int index)
     {
-        // Host (server + local)
+        if (caster == null || !caster.IsReady)
+            return;
+
+        // Host
         if (IsServerInitialized && Owner.IsLocalClient)
         {
             caster.TryCast(index);
@@ -39,6 +46,9 @@ public sealed class AbilityCasterNetAdapter : NetworkBehaviour
     [ServerRpc]
     private void Cast_Server(int index)
     {
+        if (caster == null || !caster.IsReady)
+            return;
+
         caster.TryCast(index);
     }
 }

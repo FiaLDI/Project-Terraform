@@ -1,70 +1,74 @@
 using UnityEngine;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
-using Features.Player.UnityIntegration;
+using Features.UI; // PlayerBoundUIView
 
 namespace Features.Buffs.UI
 {
-    public class BuffHUD : MonoBehaviour
+    public class BuffHUD : PlayerBoundUIView
     {
         [Header("UI")]
-        public Transform container;
-        public BuffIconUI iconPrefab;
+        [SerializeField] private Transform container;
+        [SerializeField] private BuffIconUI iconPrefab;
 
         private BuffSystem buffSystem;
         private readonly Dictionary<BuffInstance, BuffIconUI> icons = new();
 
-        private bool bound = false;
+        private Coroutine waitCoroutine;
 
-        private void Start()
+        // ======================================================
+        // PLAYER BIND (FROM BASE)
+        // ======================================================
+
+        protected override void OnPlayerBound(GameObject player)
         {
-            TryAutoBind();
-        }
-
-        private void Update()
-        {
-            if (!bound)
-                TryAutoBind();
-        }
-
-        // ==========================================================
-        // AUTO-BIND
-        // ==========================================================
-        private void TryAutoBind()
-        {
-            if (PlayerRegistry.Instance == null)
-                return;
-
-            var player = PlayerRegistry.Instance.LocalPlayer;
-            if (player == null)
-                return;
-
             var bs = player.GetComponent<BuffSystem>();
             if (bs == null)
                 return;
 
-            // Подождать один кадр после инициализации BuffSystem
+            // BuffSystem может быть не готов
             if (!bs.ServiceReady)
+            {
+                waitCoroutine = StartCoroutine(WaitForBuffSystem(bs));
                 return;
+            }
 
             Bind(bs);
         }
 
+        protected override void OnPlayerUnbound(GameObject player)
+        {
+            Unbind();
+        }
 
-        // ==========================================================
-        // BIND
-        // ==========================================================
+        // ======================================================
+        // WAIT FOR READY
+        // ======================================================
+
+        private System.Collections.IEnumerator WaitForBuffSystem(BuffSystem bs)
+        {
+            while (bs != null && !bs.ServiceReady)
+                yield return null;
+
+            waitCoroutine = null;
+
+            if (bs != null)
+                Bind(bs);
+        }
+
+        // ======================================================
+        // BIND / UNBIND
+        // ======================================================
+
         private void Bind(BuffSystem bs)
         {
             buffSystem = bs;
-            bound = true;
 
             buffSystem.OnBuffAdded += HandleAdd;
             buffSystem.OnBuffRemoved += HandleRemove;
 
-            // Добавляем уже активные баффы
             if (buffSystem.Active != null)
             {
                 foreach (var inst in buffSystem.Active)
@@ -72,20 +76,42 @@ namespace Features.Buffs.UI
             }
         }
 
-        // ==========================================================
-        // ADD / REMOVE ICONS
-        // ==========================================================
+        private void Unbind()
+        {
+            if (waitCoroutine != null)
+            {
+                StopCoroutine(waitCoroutine);
+                waitCoroutine = null;
+            }
+
+            if (buffSystem != null)
+            {
+                buffSystem.OnBuffAdded -= HandleAdd;
+                buffSystem.OnBuffRemoved -= HandleRemove;
+            }
+
+            buffSystem = null;
+            ClearAll();
+        }
+
+        // ======================================================
+        // ADD / REMOVE
+        // ======================================================
+
         private void HandleAdd(BuffInstance inst)
         {
-            if (inst == null || inst.Config == null) return;
-            if (icons.ContainsKey(inst)) return;
+            if (inst == null || inst.Config == null)
+                return;
+
+            if (icons.ContainsKey(inst))
+                return;
 
             var ui = Instantiate(iconPrefab, container);
             ui.Bind(inst);
 
-            // Tooltip
             var tt = ui.GetComponent<BuffTooltipTrigger>();
-            if (tt != null) tt.Bind(inst);
+            if (tt != null)
+                tt.Bind(inst);
 
             icons[inst] = ui;
             Resort();
@@ -96,40 +122,26 @@ namespace Features.Buffs.UI
             if (!icons.TryGetValue(inst, out var ui))
                 return;
 
-            if (ui != null) // Unity-null check
+            if (ui != null)
                 Destroy(ui.gameObject);
 
             icons.Remove(inst);
-
             Resort();
         }
 
-        // ==========================================================
-        // SORT
-        // ==========================================================
+        // ======================================================
+        // SORT / CLEAR
+        // ======================================================
+
         private void Resort()
         {
             var sorted = icons
-                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1) // дебаффы слева
+                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1)
                 .ThenByDescending(kv => kv.Key.Remaining)
                 .ToList();
 
             for (int i = 0; i < sorted.Count; i++)
                 sorted[i].Value.transform.SetSiblingIndex(i);
-        }
-
-        private void OnDisable()
-        {
-            if (buffSystem != null)
-            {
-                buffSystem.OnBuffAdded -= HandleAdd;
-                buffSystem.OnBuffRemoved -= HandleRemove;
-            }
-
-            ClearAll();
-
-            buffSystem = null;
-            bound = false;
         }
 
         private void ClearAll()

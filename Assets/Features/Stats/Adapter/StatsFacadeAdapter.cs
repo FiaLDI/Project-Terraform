@@ -1,47 +1,50 @@
 using UnityEngine;
 using Features.Stats.Domain;
-using System;
 
 namespace Features.Stats.Adapter
 {
     public class StatsFacadeAdapter : MonoBehaviour
     {
-        private IStatsFacade _stats;
-        public IStatsFacade Stats => _stats;
+        public bool IsReady { get; private set; }
 
-        public CombatStatsAdapter CombatStats  { get; private set; }
-        public EnergyStatsAdapter EnergyStats  { get; private set; }
-        public HealthStatsAdapter HealthStats  { get; private set; }
+        public CombatStatsAdapter CombatStats { get; private set; }
+        public EnergyStatsAdapter EnergyStats { get; private set; }
+        public HealthStatsAdapter HealthStats { get; private set; }
         public MovementStatsAdapter MovementStats { get; private set; }
         public MiningStatsAdapter MiningStats { get; private set; }
 
-        public EnergyViewAdapter EnergyView { get; private set; }
-        public HealthViewAdapter HealthView { get; private set; }
+        private void Awake()
+        {
+            CombatStats   = GetComponent<CombatStatsAdapter>();
+            EnergyStats   = GetComponent<EnergyStatsAdapter>();
+            HealthStats   = GetComponent<HealthStatsAdapter>();
+            MovementStats = GetComponent<MovementStatsAdapter>();
+            MiningStats   = GetComponent<MiningStatsAdapter>();
+
+            Debug.Assert(EnergyStats != null, "EnergyStatsAdapter MISSING");
+        }
 
         public void Init(IStatsFacade stats)
         {
-            _stats = stats;
+            Debug.Log("[StatsFacadeAdapter] Init START");
 
-            CombatStats = gameObject.AddComponent<CombatStatsAdapter>();
-            CombatStats.Init(stats.Combat);
+            if (stats == null)
+            {
+                Debug.LogError("[StatsFacadeAdapter] stats == NULL");
+                return;
+            }
 
-            EnergyStats = gameObject.AddComponent<EnergyStatsAdapter>();
-            EnergyStats.Init(stats.Energy);
+            CombatStats?.Init(stats.Combat);
+            EnergyStats?.Init(stats.Energy);
+            HealthStats?.Init(stats.Health);
+            MovementStats?.Init(stats.Movement);
+            MiningStats?.Init(stats.Mining);
 
-            HealthStats = gameObject.AddComponent<HealthStatsAdapter>();
-            HealthStats.Init(stats.Health);
+            IsReady = true;
 
-            MovementStats = gameObject.AddComponent<MovementStatsAdapter>();
-            MovementStats.Init(stats.Movement);
-
-            MiningStats = gameObject.AddComponent<MiningStatsAdapter>();
-            MiningStats.Init(stats.Mining);
-
-            EnergyView = gameObject.AddComponent<EnergyViewAdapter>();
-            EnergyView.Init(stats.Energy);
-
-            HealthView = gameObject.AddComponent<HealthViewAdapter>();
-            HealthView.Init(stats.Health);
+            Debug.Log("[StatsFacadeAdapter] Init COMPLETE → IsReady = true");
         }
+
+
     }
 }

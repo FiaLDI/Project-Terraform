@@ -58,9 +58,13 @@ namespace Features.Inventory.UnityIntegration
 
         private void TryDrop(bool dropAll)
         {
+            var drag = GetComponentInParent<InventoryDragController>();
+            if (drag == null)
+                return;
+
             var slotUI =
-                InventorySlotUI.HoveredSlot ??
-                InventorySlotUI.LastInteractedSlot;
+                drag.HoveredSlot ??
+                drag.LastInteractedSlot;
 
             if (slotUI == null || slotUI.BoundSlot == null || slotUI.BoundSlot.item.IsEmpty)
                 return;

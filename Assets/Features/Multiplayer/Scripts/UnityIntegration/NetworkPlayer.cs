@@ -11,11 +11,13 @@ namespace Features.Player.UnityIntegration
 
         /// <summary>
         /// Вызывается ТОЛЬКО для локального игрока
-        /// </summary>
+            /// </summary>
         public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
-
-        private void Awake()
+        
+         public override void OnStartServer()
         {
+            base.OnStartServer();
+            
             if (playerController == null)
                 playerController = GetComponent<PlayerController>();
         }
@@ -24,7 +26,11 @@ namespace Features.Player.UnityIntegration
         {
             base.OnStartClient();
 
-            // регистрируем любого игрока
+            if (PlayerRegistry.Instance == null)
+            {
+                Debug.LogError("[NetworkPlayer] PlayerRegistry missing");
+                return;
+            }
             PlayerRegistry.Instance?.RegisterPlayer(gameObject);
 
             // локальный игрок
