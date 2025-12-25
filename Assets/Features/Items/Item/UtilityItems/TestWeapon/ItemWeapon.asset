@@ -15,7 +15,7 @@ MonoBehaviour:
   id: 7
   itemName: Weapon
   description: Weapon
-  icon: {fileID: 21300000, guid: 4b99686319a216f4bac083dfaf5a6a72, type: 3}
+  icon: {fileID: 21300000, guid: 75aa400a89e99bd4f849e89526a8eabc, type: 3}
   isTwoHanded: 1
   category: 1
   isStackable: 0

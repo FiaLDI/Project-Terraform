@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1d3398aa04d93742806742749139e7b, type: 3}
   m_Name: pROJE
   m_EditorClassIdentifier: Assembly-CSharp::Features.Weapons.Domain.ProjectileConfig
-  projectilePrefab: {fileID: 1027280074777179613, guid: 7d8c589f23bc8264b901150444491067, type: 3}
+  projectilePrefab: {fileID: 1788979334579304981, guid: c60a8f2ce1f159e449345186e7525e36, type: 3}
   speed: 30
   lifetime: 5
   useGravity: 0
