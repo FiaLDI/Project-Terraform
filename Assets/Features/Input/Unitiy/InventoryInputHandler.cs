@@ -5,6 +5,7 @@ using Features.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+
 namespace Features.Inventory.UnityIntegration
 {
     public sealed class InventoryInputHandler :
@@ -12,37 +13,53 @@ namespace Features.Inventory.UnityIntegration
         IInputContextConsumer
     {
         private PlayerInputContext input;
-        private IInventoryContext inventory;
         private InventoryUIView inventoryUI;
+
 
         private InputAction openInventory;
         private InputAction closeInventory;
         private InputAction cancel;
-        private InputAction equipFirst;
-        private InputAction equipSecond;
-        private InputAction scrollWheel;
         private InputAction drop;
 
+
         private bool bound;
+
 
         // ======================================================
         // INPUT BIND
         // ======================================================
 
+
         public void BindInput(PlayerInputContext ctx)
         {
+            Debug.Log($"[InventoryInputHandler] BindInput called with ctx={ctx}, current={input}", this);
+
+
             if (input == ctx)
+            {
+                Debug.Log("[InventoryInputHandler] BindInput ignored: same context");
                 return;
+            }
+
 
             if (input != null)
+            {
+                Debug.Log("[InventoryInputHandler] Rebinding, unbinding old context");
                 UnbindInput(input);
+            }
+
 
             input = ctx;
             if (input == null)
+            {
+                Debug.LogWarning("[InventoryInputHandler] BindInput: ctx is NULL, abort");
                 return;
+            }
+
 
             inventoryUI = Object.FindAnyObjectByType<InventoryUIView>(
                 FindObjectsInactive.Include);
+
 
             if (inventoryUI == null)
             {
@@ -50,143 +67,159 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
+
+            Debug.Log("[InventoryInputHandler] InventoryUIView found, binding actions");
             BindActions();
             bound = true;
         }
 
+
         public void UnbindInput(PlayerInputContext ctx)
         {
+            Debug.Log($"[InventoryInputHandler] UnbindInput called with ctx={ctx}, current={input}, bound={bound}", this);
+
+
             if (!bound || input != ctx)
                 return;
 
+
             UnbindActions();
             input = null;
-            inventory = null;
             bound = false;
+
+
+            Debug.Log("[InventoryInputHandler] Unbound");
         }
+
 
         // ======================================================
         // ACTIONS
         // ======================================================
 
+
         private void BindActions()
         {
+            if (input == null)
+            {
+                Debug.LogError("[InventoryInputHandler] BindActions called with null input");
+                return;
+            }
+
+
             var player = input.Actions.Player;
             var ui = input.Actions.UI;
 
+
+            Debug.Log("[InventoryInputHandler] Enabling actions: OpenInventory, Drop, CloseInventory, Cancel");
+
+
             Enable(player, "OpenInventory", "Drop");
-            Enable(ui, "CloseInventory", "Cancel", "EquipFirst", "EquipSecond", "ScrollWheel");
+            Enable(ui, "CloseInventory", "Cancel");
+
 
             openInventory = player.FindAction("OpenInventory", true);
             openInventory.started += OnOpenInventory;
 
+
             closeInventory = ui.FindAction("CloseInventory", true);
             cancel = ui.FindAction("Cancel", true);
+
 
             closeInventory.started += OnCloseInventory;
             cancel.started += OnCloseInventory;
 
-            equipFirst = ui.FindAction("EquipFirst", true);
-            equipSecond = ui.FindAction("EquipSecond", true);
-            scrollWheel = ui.FindAction("ScrollWheel", true);
-
-            equipFirst.performed += _ => SelectHotbar(0);
-            equipSecond.performed += _ => SelectHotbar(1);
-            scrollWheel.performed += OnScroll;
 
             drop = player.FindAction("Drop", true);
             drop.performed += _ => DropFromHands();
+
+
+            Debug.Log("[InventoryInputHandler] Actions bound successfully");
         }
+
 
         private void UnbindActions()
         {
             if (input == null)
                 return;
 
-            openInventory.started -= OnOpenInventory;
-            closeInventory.started -= OnCloseInventory;
-            cancel.started -= OnCloseInventory;
-            scrollWheel.performed -= OnScroll;
 
-            equipFirst.performed -= _ => SelectHotbar(0);
-            equipSecond.performed -= _ => SelectHotbar(1);
-            drop.performed -= _ => DropFromHands();
+            Debug.Log("[InventoryInputHandler] Unbinding actions");
+
+
+            if (openInventory != null)
+                openInventory.started -= OnOpenInventory;
+
+
+            if (closeInventory != null)
+                closeInventory.started -= OnCloseInventory;
+
+
+            if (cancel != null)
+                cancel.started -= OnCloseInventory;
         }
+
 
         // ======================================================
         // INVENTORY UI
         // ======================================================
 
+
         private void OnOpenInventory(InputAction.CallbackContext _)
         {
+            Debug.Log($"[InventoryInputHandler] OnOpenInventory, mode={InputModeManager.I?.CurrentMode}");
+
+
             if (InputModeManager.I.CurrentMode == InputMode.Gameplay)
+            {
+                Debug.Log("[InventoryInputHandler] Opening inventory UI");
                 inventoryUI.Open();
+            }
+            else
+            {
+                Debug.Log("[InventoryInputHandler] Ignored OpenInventory: mode != Gameplay");
+            }
         }
+
 
         private void OnCloseInventory(InputAction.CallbackContext _)
         {
+            Debug.Log($"[InventoryInputHandler] OnCloseInventory, mode={InputModeManager.I?.CurrentMode}");
+
+
             if (InputModeManager.I.CurrentMode == InputMode.Inventory &&
                 ReferenceEquals(UIStackManager.I.Peek(), inventoryUI))
             {
+                Debug.Log("[InventoryInputHandler] Closing inventory via UIStack");
                 UIStackManager.I.Pop();
             }
         }
 
-        // ======================================================
-        // HOTBAR
-        // ======================================================
-
-        private void OnScroll(InputAction.CallbackContext ctx)
-        {
-            float scroll = ctx.ReadValue<Vector2>().y;
-            if (scroll > 0) CycleHotbar(+1);
-            else if (scroll < 0) CycleHotbar(-1);
-        }
-
-        private IInventoryContext Inventory =>
-            inventory ??= LocalPlayerContext.Inventory;
-
-        private void SelectHotbar(int index)
-        {
-            var net = GetNet();
-            if (net == null)
-                return;
-
-            net.RequestInventoryCommand(new InventoryCommandData
-            {
-                Command = InventoryCommand.SelectHotbar,
-                Index = index
-            });
-        }
-
-        private void CycleHotbar(int dir)
-        {
-            if (Inventory == null)
-                return;
-
-            int count = Inventory.Model.hotbar.Count;
-            if (count == 0)
-                return;
-
-            int current = Inventory.Model.selectedHotbarIndex;
-            int next = (current + dir + count) % count;
-
-            SelectHotbar(next);
-        }
 
         // ======================================================
         // DROP
         // ======================================================
 
+
         private void DropFromHands()
         {
+            Debug.Log("[InventoryInputHandler] DropFromHands called");
+
+
             var net = GetNet();
             if (net == null)
+            {
+                Debug.LogWarning("[InventoryInputHandler] DropFromHands: net is NULL");
                 return;
+            }
+
 
             var cam = UnityEngine.Camera.main;
             if (cam == null)
+            {
+                Debug.LogWarning("[InventoryInputHandler] DropFromHands: Camera.main is NULL");
                 return;
+            }
+
 
             net.RequestInventoryCommand(new InventoryCommandData
             {
@@ -199,22 +232,39 @@ namespace Features.Inventory.UnityIntegration
             });
         }
 
+
         // ======================================================
         // HELPERS
         // ======================================================
 
+
         private InventoryStateNetwork GetNet()
         {
             var player = LocalPlayerContext.Player;
-            return player != null
-                ? player.GetComponent<InventoryStateNetwork>()
-                : null;
+            if (player == null)
+            {
+                Debug.LogWarning("[InventoryInputHandler] GetNet: LocalPlayer is NULL");
+                return null;
+            }
+
+
+            var net = player.GetComponent<InventoryStateNetwork>();
+            if (net == null)
+                Debug.LogWarning("[InventoryInputHandler] GetNet: InventoryStateNetwork not found on player");
+
+
+            return net;
         }
+
 
         private static void Enable(InputActionMap map, params string[] names)
         {
             foreach (var n in names)
-                map.FindAction(n, true).Enable();
+            {
+                var a = map.FindAction(n, true);
+                a.Enable();
+                Debug.Log($"[InventoryInputHandler] Enabled action {map.name}/{n}");
+            }
         }
     }
 }

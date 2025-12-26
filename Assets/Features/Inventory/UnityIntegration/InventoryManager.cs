@@ -25,7 +25,6 @@ namespace Features.Inventory.UnityIntegration
 
         [Header("Config")]
         [SerializeField] private int bagSize = 12;
-        [SerializeField] private int hotbarSize = 2;
 
         private EquipmentManager equipment;
 
@@ -37,18 +36,17 @@ namespace Features.Inventory.UnityIntegration
 
         private void Awake()
         {
-            var nob = GetComponent<NetworkObject>();
-
-            if (nob != null && !nob.IsServerInitialized)
-                return;
-
-            CreateModel();
+            Debug.Log("[InventoryManager] Awake");
+             CreateModel();
             CreateService();
             InitEquipment();
 
             IsReady = true;
             OnReady?.Invoke();
+            
+            Debug.Log("[InventoryManager] Ready");
         }
+
 
 
         private void OnDestroy()
@@ -67,9 +65,6 @@ namespace Features.Inventory.UnityIntegration
 
             for (int i = 0; i < bagSize; i++)
                 Model.main.Add(new InventorySlot());
-
-            for (int i = 0; i < hotbarSize; i++)
-                Model.hotbar.Add(new InventorySlot());
         }
 
         private void CreateService()
@@ -133,18 +128,13 @@ namespace Features.Inventory.UnityIntegration
 
         public void ApplyNetState(
             IReadOnlyList<InventorySlotNet> bagNet,
-            IReadOnlyList<InventorySlotNet> hotbarNet,
             InventorySlotNet left,
-            InventorySlotNet right,
-            int selectedIndex)
+            InventorySlotNet right)
         {
             ApplySection(Model.main, bagNet);
-            ApplySection(Model.hotbar, hotbarNet);
 
             ApplySlot(Model.leftHand, left);
             ApplySlot(Model.rightHand, right);
-
-            Model.selectedHotbarIndex = selectedIndex;
 
             Debug.Log("[InventoryManager] ApplyNetState -> OnInventoryChanged");
             OnInventoryChanged?.Invoke();

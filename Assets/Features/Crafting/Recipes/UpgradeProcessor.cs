@@ -92,13 +92,10 @@ public class UpgradeProcessor : MonoBehaviour
         if (net == null)
             return;
 
-        int index = inventory.Model.selectedHotbarIndex;
 
         net.RequestInventoryCommand(new InventoryCommandData
         {
             Command = InventoryCommand.UpgradeItem,
-            Section = InventorySection.Hotbar,
-            Index = index,
             RecipeId = recipe.recipeId
         });
 

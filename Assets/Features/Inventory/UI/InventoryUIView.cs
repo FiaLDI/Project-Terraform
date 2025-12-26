@@ -15,12 +15,8 @@ namespace Features.Inventory.UI
 
         [Header("Slots")]
         [SerializeField] private InventorySlotUI[] bagSlots;
-        [SerializeField] private InventorySlotUI[] hotbarSlots;
         [SerializeField] private InventorySlotUI leftHandSlot;
         [SerializeField] private InventorySlotUI rightHandSlot;
-
-        [Header("Hotbar")]
-        [SerializeField] private RectTransform hotbarSelection;
 
         [SerializeField]
         private InventoryUIInputController inventoryInput;
@@ -41,16 +37,28 @@ namespace Features.Inventory.UI
                 bagWindow.SetActive(false);
         }
 
-        private void OnEnable()
+        private void Start()
         {
+            Debug.Log("[InventoryUIView] OnEnable", this);
+            
             var root = PlayerUIRoot.I;
+            Debug.Log($"[InventoryUIView] PlayerUIRoot.I = {root}", this);
+            
             if (root == null)
+            {
+                Debug.LogWarning("[InventoryUIView] PlayerUIRoot is null!", this);
                 return;
-
-            if (root.BoundPlayer != null)
+            }
+            
+            Debug.Log($"[InventoryUIView] root.BoundPlayer = {root.BoundPlayer}", this);
+            
+            if (root.BoundPlayer != null) {
+                Debug.LogWarning("[InventoryUIView] PlayerUIRoot is null! TRYING BOUND", this);
                 OnPlayerBound(root.BoundPlayer);
-
+            }
+            
             root.OnPlayerBound += OnPlayerBound;
+            Debug.Log("[InventoryUIView] Subscribed to OnPlayerBound");
         }
 
         private void OnDisable()
@@ -175,23 +183,10 @@ namespace Features.Inventory.UI
                 bagSlots[i].Bind(model.main[i], InventorySection.Bag, i);
             }
 
-            // ==== HOTBAR ====
-            for (int i = 0; i < hotbarSlots.Length && i < model.hotbar.Count; i++)
-            {
-                hotbarSlots[i].Bind(model.hotbar[i], InventorySection.Hotbar, i);
-            }
 
             // ==== HANDS ====
             leftHandSlot.Bind(model.leftHand, InventorySection.LeftHand, 0);
             rightHandSlot.Bind(model.rightHand, InventorySection.RightHand, 0);
-
-            // ==== Hotbar Selection ====
-            if (hotbarSelection != null && hotbarSlots.Length > 0)
-            {
-                int idx = model.selectedHotbarIndex;
-                if (idx >= 0 && idx < hotbarSlots.Length)
-                    hotbarSelection.position = hotbarSlots[idx].transform.position;
-            }
         }
     }
 }

@@ -3,9 +3,6 @@ namespace Features.Inventory.Domain
     public enum InventoryCommand
     {
         None = 0,
-
-        // selection
-        SelectHotbar,
         PickupWorldItem,
 
         // move / swap

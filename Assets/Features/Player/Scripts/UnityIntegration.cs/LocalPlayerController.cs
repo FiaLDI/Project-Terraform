@@ -59,6 +59,10 @@ public sealed class LocalPlayerController : MonoBehaviour
 
         player.Controller.BindInput(inputContext);
 
+        var consumers = player.GetComponents<IInputContextConsumer>();
+        foreach (var c in consumers)
+            c.BindInput(inputContext);
+
         var camController = player.GetComponent<PlayerCameraController>();
         if (camController != null)
             camController.SetLocal(true);
@@ -104,6 +108,9 @@ public sealed class LocalPlayerController : MonoBehaviour
         if (boundPlayer != player || boundPlayer == null)
             return;
 
+        var consumers = boundPlayer.GetComponents<IInputContextConsumer>();
+        foreach (var c in consumers)
+            c.UnbindInput(inputContext);
         boundPlayer.Controller.UnbindInput(inputContext);
 
         var cam = boundPlayer.GetComponent<PlayerCameraController>();

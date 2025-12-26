@@ -1,4 +1,5 @@
 using System;
+using Features.Inventory.UnityIntegration;
 using UnityEngine;
 
 namespace Features.Player.UI
@@ -45,19 +46,24 @@ namespace Features.Player.UI
         /// </summary>
         public void Bind(GameObject player)
         {
-            if (player == BoundPlayer)
-                return;
+            Debug.Log($"[PlayerUIRoot] Bind called with player={player?.name}");
 
             BoundPlayer = player;
-
-            Debug.Log(
-                player != null
-                    ? $"[PlayerUIRoot] Bound to player: {player.name}"
-                    : "[PlayerUIRoot] Player unbound"
-            );
-
+            
+            // Важно: убедись, что Inventory висит на корне Player, а не на дочернем объекте
+            var inv = player.GetComponent<InventoryManager>();
+            Debug.Log($"[PlayerUIRoot] Found InventoryManager: {inv}");
+            
+            if (inv == null)
+            {
+                Debug.LogError("[PlayerUIRoot] InventoryManager NOT FOUND on " + player.name);
+                return; // Не вызываем OnPlayerBound, если инвентаря нет
+            }
+            
+            Debug.Log("[PlayerUIRoot] Invoking OnPlayerBound");
             OnPlayerBound?.Invoke(player);
         }
+
 
         /// <summary>
         /// Явный unbind (на будущее: despawn / spectator / disconnect).

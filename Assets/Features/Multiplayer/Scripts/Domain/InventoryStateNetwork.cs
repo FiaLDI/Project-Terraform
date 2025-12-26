@@ -5,13 +5,18 @@ using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
 using Features.Items.Domain;
 
+
 public sealed class InventoryStateNetwork : NetworkBehaviour
 {
     private InventoryManager inventory;
+    private bool syncing;  // Guard против сетевого цикла
+    private int applyCount;  // Диагностика
+
 
     // ======================================================
     // LIFECYCLE
     // ======================================================
+
 
     public override void OnStartNetwork()
     {
@@ -19,43 +24,54 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         inventory = GetComponent<InventoryManager>();
     }
 
+
     public override void OnStartServer()
     {
         base.OnStartServer();
 
+
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
 
+
         if (inventory != null)
             inventory.OnInventoryChanged += ServerOnInventoryChanged;
+
 
         // initial snapshot (host / early owner)
         ServerOnInventoryChanged();
     }
 
+
     public override void OnStopServer()
     {
         base.OnStopServer();
+
 
         if (inventory != null)
             inventory.OnInventoryChanged -= ServerOnInventoryChanged;
     }
 
+
     public override void OnStartClient()
     {
         base.OnStartClient();
 
+
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
+
 
         // remote owner → запрос полного состояния
         if (IsOwner)
             RequestFullState_Server();
     }
 
+
     // ======================================================
     // COMMANDS (CLIENT → SERVER)
     // ======================================================
+
 
     [ServerRpc(RequireOwnership = true)]
     public void RequestInventoryCommand(InventoryCommandData cmd)
@@ -63,12 +79,9 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         if (inventory == null || inventory.Service == null)
             return;
 
+
         switch (cmd.Command)
         {
-            case InventoryCommand.SelectHotbar:
-                inventory.Service.SelectHotbarIndex(cmd.Index);
-                break;
-
             case InventoryCommand.MoveItem:
                 inventory.Service.MoveItem(
                     cmd.FromIndex,
@@ -78,17 +91,21 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
                 );
                 break;
 
+
             case InventoryCommand.DropFromSlot:
                 HandleDrop(cmd);
                 break;
+
 
             case InventoryCommand.UpgradeItem:
                 HandleUpgrade(cmd);
                 break;
 
+
             case InventoryCommand.CraftRecipe:
                 HandleCraft(cmd);
                 break;
+
 
             case InventoryCommand.PickupWorldItem:
                 HandlePickup(cmd);
@@ -97,79 +114,101 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         // state sync пойдёт через OnInventoryChanged
     }
 
+
     [ServerRpc(RequireOwnership = true)]
     private void RequestFullState_Server()
     {
         ServerOnInventoryChanged();
     }
 
+
     // ======================================================
     // SERVER → CLIENT STATE
     // ======================================================
 
+
     [Server]
     private void ServerOnInventoryChanged()
     {
-        if (inventory == null || inventory.Model == null)
+        // Guard: если уже синхронизируем, не запускать снова
+        if (syncing || inventory == null || inventory.Model == null)
             return;
 
-        var m = inventory.Model;
 
-        // ---------- OWNER : FULL SNAPSHOT ----------
-        var owner = Owner;
-        if (owner != null)
+        syncing = true;
+        try
         {
-            var bag = new InventorySlotNet[m.main.Count];
-            for (int i = 0; i < m.main.Count; i++)
-                bag[i] = ToNet(m.main[i].item);
+            var m = inventory.Model;
 
-            var hotbar = new InventorySlotNet[m.hotbar.Count];
-            for (int i = 0; i < m.hotbar.Count; i++)
-                hotbar[i] = ToNet(m.hotbar[i].item);
 
-            var left  = ToNet(m.leftHand.item);
-            var right = ToNet(m.rightHand.item);
+            // ---------- OWNER : FULL SNAPSHOT ----------
+            var owner = Owner;
+            if (owner != null)
+            {
+                var bag = new InventorySlotNet[m.main.Count];
+                for (int i = 0; i < m.main.Count; i++)
+                    bag[i] = ToNet(m.main[i].item);
 
-            TargetReceiveInventoryState(
-                owner,
-                bag,
-                hotbar,
-                left,
-                right,
-                m.selectedHotbarIndex
+
+                var left  = ToNet(m.leftHand.item);
+                var right = ToNet(m.rightHand.item);
+
+
+                Debug.Log("[InventoryStateNetwork] Sending snapshot to owner", this);
+                TargetReceiveInventoryState(
+                    owner,
+                    bag,
+                    left,
+                    right
+                );
+            }
+
+
+            // ---------- OBSERVERS : HANDS ONLY ----------
+            ObserversReceiveHands(
+                ToNet(m.leftHand.item),
+                ToNet(m.rightHand.item)
             );
         }
-
-        // ---------- OBSERVERS : HANDS ONLY ----------
-        ObserversReceiveHands(
-            ToNet(m.leftHand.item),
-            ToNet(m.rightHand.item)
-        );
+        finally
+        {
+            syncing = false;
+        }
     }
+
 
     [TargetRpc]
     private void TargetReceiveInventoryState(
         NetworkConnection _,
         InventorySlotNet[] bag,
-        InventorySlotNet[] hotbar,
         InventorySlotNet left,
-        InventorySlotNet right,
-        int selectedIndex)
+        InventorySlotNet right)
     {
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
 
+
         if (inventory == null)
             return;
 
-        inventory.ApplyNetState(
-            bag,
-            hotbar,
-            left,
-            right,
-            selectedIndex
-        );
+
+        syncing = true;
+        try
+        {
+            applyCount++;
+            Debug.Log($"[InventoryStateNetwork] TargetReceiveInventoryState #{applyCount}", this);
+            inventory.ApplyNetState(
+                bag,
+                left,
+                right
+            );
+        }
+        finally
+        {
+            syncing = false;
+        }
     }
+
 
     [ObserversRpc]
     private void ObserversReceiveHands(
@@ -179,16 +218,27 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
 
+
         if (inventory == null)
             return;
 
-        // observers знают только экип (для EquipmentManager)
-        inventory.ApplyHandsNetState(left, right);
+
+        syncing = true;
+        try
+        {
+            inventory.ApplyHandsNetState(left, right);
+        }
+        finally
+        {
+            syncing = false;
+        }
     }
+
 
     // ======================================================
     // NET CONVERSION
     // ======================================================
+
 
     private static InventorySlotNet ToNet(ItemInstance inst)
     {
@@ -205,6 +255,7 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             };
         }
 
+
         return new InventorySlotNet
         {
             itemId = inst.itemDefinition.id,
@@ -213,9 +264,11 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         };
     }
 
+
     // ======================================================
     // HANDLERS (SERVER ONLY)
     // ======================================================
+
 
     private void HandleDrop(InventoryCommandData cmd)
     {
@@ -225,8 +278,10 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             cmd.Amount <= 0 ? int.MaxValue : cmd.Amount
         );
 
+
         if (extracted.IsEmpty)
             return;
+
 
         WorldItemDropService.I.DropServer(
             extracted,
@@ -235,19 +290,23 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         );
     }
 
+
     private void HandleUpgrade(InventoryCommandData cmd)
     {
         var recipe = RecipeDatabase.Instance.GetRecipeById(cmd.RecipeId);
         if (recipe == null)
             return;
 
+
         inventory.Service.ExtractFromSlot(cmd.Section, cmd.Index, 0);
         inventory.Service.ConsumeIngredients(recipe.ingredients);
+
 
         var inst = GetSlot(cmd.Section, cmd.Index)?.item;
         if (inst != null)
             inst.level++;
     }
+
 
     private void HandleCraft(InventoryCommandData cmd)
     {
@@ -259,15 +318,19 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             return;
         }
 
+
         if (!inventory.Service.HasIngredients(recipe.ingredients))
         {
             Debug.Log("[CRAFT] Missing ingredients on SERVER");
             return;
         }
 
+
         Debug.Log("[CRAFT] Ingredients OK, crafting...");
 
+
         inventory.Service.ConsumeIngredients(recipe.ingredients);
+
 
         var output = recipe.outputItem;
         bool added;
@@ -286,8 +349,10 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
                 );
         }
 
+
         Debug.Log($"[CRAFT] AddItem result = {added}");
     }
+
 
     private void HandlePickup(InventoryCommandData cmd)
     {
@@ -299,13 +364,16 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             return;
         }
 
+
         var worldItem = netObj.GetComponent<WorldItemNetwork>();
         if (worldItem == null || !worldItem.IsPickupAvailable)
             return;
 
+
         var def = ItemRegistrySO.Instance.Get(worldItem.ItemId);
         if (def == null)
             return;
+
 
         if (!inventory.Service.AddItem(
                 new ItemInstance(
@@ -314,15 +382,16 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
                     worldItem.Level)))
             return;
 
+
         worldItem.ServerConsume();
     }
+
 
     private InventorySlot GetSlot(InventorySection section, int index)
     {
         return section switch
         {
             InventorySection.Bag       => inventory.Model.main[index],
-            InventorySection.Hotbar    => inventory.Model.hotbar[index],
             InventorySection.LeftHand  => inventory.Model.leftHand,
             InventorySection.RightHand => inventory.Model.rightHand,
             _ => null
