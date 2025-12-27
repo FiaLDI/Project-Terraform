@@ -70,8 +70,6 @@ public sealed class LocalPlayerController : MonoBehaviour
             InputModeManager.I.SetMode(InputMode.Gameplay);
         }
 
-        player.Controller.BindInput(inputContext);
-
         var consumers = this.GetComponents<IInputContextConsumer>();
         foreach (var c in consumers)
             c.BindInput(inputContext);
@@ -99,7 +97,6 @@ public sealed class LocalPlayerController : MonoBehaviour
             Debug.LogError("[LocalPlayerController] Camera.main NOT FOUND");
         }
 
-        // Статы можно инициализировать тут, но у тебя они уже Init в NetworkPlayer.
         var stats = player.GetComponent<PlayerStats>();
         if (stats != null)
             stats.Init();
@@ -120,8 +117,6 @@ public sealed class LocalPlayerController : MonoBehaviour
         var consumers = this.GetComponents<IInputContextConsumer>();
         foreach (var c in consumers)
             c.UnbindInput(inputContext);
-
-        boundPlayer.Controller.UnbindInput(inputContext);
 
         var cam = boundPlayer.GetComponent<PlayerCameraController>();
         if (cam != null)

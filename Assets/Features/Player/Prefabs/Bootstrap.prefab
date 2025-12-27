@@ -292,6 +292,9 @@ GameObject:
   - component: {fileID: 3622763400669334575}
   - component: {fileID: 7728110988054051029}
   - component: {fileID: 3166487864416577241}
+  - component: {fileID: 4908646979383403430}
+  - component: {fileID: 3573662119950025895}
+  - component: {fileID: 6935516939186511060}
   m_Layer: 0
   m_Name: Input
   m_TagString: Untagged
@@ -464,6 +467,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0066e41d35fdd5f4d9a8b22e83d0d254, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.PlayerUsageController
+--- !u!114 &4908646979383403430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742051322264911869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ffb7a9d72203934188c9eb096e202df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.MovementInputHandler
+--- !u!114 &3573662119950025895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742051322264911869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c84359f9941d0f4d9bf346ebcedaca8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Camera.UnityIntegration.CameraInputHandler
+--- !u!114 &6935516939186511060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742051322264911869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2accbf60c194ef747aa5187f172c4b1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityInputHandler
 --- !u!1 &1057123202320390765
 GameObject:
   m_ObjectHideFlags: 0
