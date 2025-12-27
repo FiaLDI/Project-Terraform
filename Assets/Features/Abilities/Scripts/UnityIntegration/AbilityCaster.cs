@@ -19,6 +19,9 @@ namespace Features.Abilities.Application
         public LayerMask groundMask;
         public AbilityExecutor executor;
 
+        [Header("Library")]
+        [SerializeField] private AbilityLibrarySO abilityLibrary;
+
         private IEnergyStats energy;
         private AbilityService service;
 
@@ -47,8 +50,6 @@ namespace Features.Abilities.Application
             PlayerStats.OnStatsReady -= HandleStatsReady;
         }
 
-        /* ================= INIT ================= */
-
         private void HandleStatsReady(PlayerStats ps)
         {
             if (IsReady)
@@ -70,12 +71,20 @@ namespace Features.Abilities.Application
                 executor: executor
             );
 
-            service.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
-            service.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
-            service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
-            service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
-            service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
-            service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
+            service.OnAbilityCast       += a => OnAbilityCast?.Invoke(a);
+            service.OnCooldownChanged   += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
+            service.OnChannelStarted    += a => OnChannelStarted?.Invoke(a);
+            service.OnChannelProgress   += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
+            service.OnChannelCompleted  += a => OnChannelCompleted?.Invoke(a);
+            service.OnChannelInterrupted+= a => OnChannelInterrupted?.Invoke(a);
+
+            if (abilityLibrary == null)
+            {
+                abilityLibrary = UnityEngine.Resources.Load<AbilityLibrarySO>(
+                    "Databases/AbilityLibrary");
+                if (abilityLibrary == null)
+                    Debug.LogError("[AbilityCaster] AbilityLibrary not found in Resources/Databases/AbilityLibrary", this);
+            }
 
             IsReady = true;
         }
@@ -98,32 +107,64 @@ namespace Features.Abilities.Application
 
         public void SetAbilities(AbilitySO[] newAbilities)
         {
-            Debug.Log($"[AbilityCaster] SetAbilities CALLED | this={name} id={GetInstanceID()} newLen={(newAbilities == null ? -1 : newAbilities.Length)}");
-
             for (int i = 0; i < abilities.Length; i++)
-            {
                 abilities[i] = (newAbilities != null && i < newAbilities.Length)
                     ? newAbilities[i]
                     : null;
-                Debug.Log($"[AbilityCaster]  ability[{i}]={(newAbilities[i] ? newAbilities[i].name : "null")} icon={(newAbilities[i] && newAbilities[i].icon ? newAbilities[i].icon.name : "null")}");
-            }
 
-
-            Debug.Log($"[AbilityCaster] Invoking OnAbilitiesChanged | subs={(OnAbilitiesChanged == null ? 0 : OnAbilitiesChanged.GetInvocationList().Length)}");
             OnAbilitiesChanged?.Invoke();
         }
 
-        public void TryCast(int index)
+        /// <summary>
+        /// Серверный вызов: пытается кастануть и, если успех, возвращает AbilityContext.
+        /// </summary>
+        public bool TryCastWithContext(int index, out AbilitySO ability, out AbilityContext ctx)
         {
+            ability = null;
+            ctx     = default;
+
             if (!IsReady || index < 0 || index >= abilities.Length)
-                return;
+                return false;
 
-            var ab = abilities[index];
-            if (ab == null)
-                return;
+            ability = abilities[index];
+            if (ability == null)
+                return false;
 
-            service.TryCast(ab, index);
+            bool ok = service.TryCast(ability, index);
+            if (!ok)
+                return false;
+
+            // контекст берём из сервиса
+            ctx = ability.castType == AbilityCastType.Instant
+                ? service.LastInstantContext
+                : service.LastChannelContext;
+
+            return true;
         }
+
+        /// <summary>
+        /// Клиентский вызов из ObserversRpc: проиграть уже подтверждённый каст.
+        /// </summary>
+        // в AbilityCaster.PlayRemoteCast
+        public void PlayRemoteCast(AbilitySO ability, int slot, AbilityContext ctx)
+        {
+            if (!IsReady || ability == null)
+                return;
+
+            // перезаписываем owner локальным объектом игрока
+            ctx = new AbilityContext(
+                owner: gameObject,
+                targetPoint: ctx.TargetPoint,
+                direction: ctx.Direction,
+                slotIndex: slot,
+                yaw: ctx.Yaw,
+                pitch: ctx.Pitch
+            );
+
+            OnAbilityCast?.Invoke(ability);
+            executor.Execute(ability, ctx);
+        }
+
 
         public float GetCooldown(int index)
         {
@@ -131,6 +172,14 @@ namespace Features.Abilities.Application
                 return 0f;
 
             return service.GetCooldownRemaining(abilities[index]);
+        }
+
+        public AbilitySO FindAbilityById(string id)
+        {
+            if (abilityLibrary == null || string.IsNullOrEmpty(id))
+                return null;
+
+            return abilityLibrary.FindById(id);
         }
 
         public bool IsChanneling => service?.IsChanneling ?? false;

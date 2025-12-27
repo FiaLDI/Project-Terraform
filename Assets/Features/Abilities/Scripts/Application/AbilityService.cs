@@ -12,6 +12,9 @@ namespace Features.Abilities.Application
     public class AbilityService
     {
         private readonly object _owner;
+        public AbilityContext LastInstantContext { get; private set; }
+        public AbilityContext LastChannelContext { get; private set; }
+
 
         private IEnergyStats _energy;
         private AbilityExecutor _executor;
@@ -123,6 +126,9 @@ namespace Features.Abilities.Application
 
             if (ability.castType == AbilityCastType.Instant)
             {
+                // сохраняем последний контекст мгновенного каста
+                LastInstantContext = ctx;
+
                 OnAbilityCast?.Invoke(ability);
                 _executor.Execute(ability, ctx);
                 _cooldowns[ability] = ability.cooldown;
@@ -131,6 +137,9 @@ namespace Features.Abilities.Application
 
             if (ability.castType == AbilityCastType.Channel)
             {
+                // сохраняем стартовый контекст канала
+                LastChannelContext = ctx;
+
                 StartChannel(ability, ctx);
                 return true;
             }

@@ -1,6 +1,7 @@
+using Features.Abilities.Application;
+using Features.Abilities.Domain;
 using FishNet.Object;
 using UnityEngine;
-using Features.Abilities.Application;
 
 [RequireComponent(typeof(AbilityCaster))]
 public sealed class AbilityCasterNetAdapter : NetworkBehaviour
@@ -15,40 +16,45 @@ public sealed class AbilityCasterNetAdapter : NetworkBehaviour
     public override void OnStartClient()
     {
         caster = GetComponent<AbilityCaster>();
-        caster.enabled = Owner.IsLocalClient;
     }
 
-    public override void OnStopClient()
-    {
-        if (caster != null)
-            caster.enabled = false;
-    }
-
-    // ================= INPUT =================
-
+    // ===== INPUT от владельца =====
     public void Cast(int index)
     {
-        if (caster == null || !caster.IsReady)
+        if (caster == null || !caster.IsReady || !Owner.IsLocalClient)
             return;
 
-        // Host
-        if (IsServerInitialized && Owner.IsLocalClient)
-        {
-            caster.TryCast(index);
-            return;
-        }
-
-        // Client → Server
-        if (Owner.IsLocalClient)
-            Cast_Server(index);
+        Cast_Server(index);
     }
 
+    // ===== SERVER =====
     [ServerRpc]
     private void Cast_Server(int index)
     {
         if (caster == null || !caster.IsReady)
             return;
 
-        caster.TryCast(index);
+        if (!caster.TryCastWithContext(index, out AbilitySO ability, out AbilityContext ctx))
+            return;
+
+        string abilityId = ability.id;   // поле id в AbilitySO
+        Cast_Client(index, abilityId, ctx);
+    }
+
+    // ===== CLIENTS (визуал) =====
+    [ObserversRpc]
+    private void Cast_Client(int index, string abilityId, AbilityContext ctx)
+    {
+        if (caster == null || !caster.IsReady)
+            return;
+
+        var ability = caster.FindAbilityById(abilityId);
+        if (ability == null)
+        {
+            Debug.LogWarning($"[AbilityCasterNetAdapter] Ability {abilityId} not found in library");
+            return;
+        }
+
+        caster.PlayRemoteCast(ability, index, ctx);
     }
 }
