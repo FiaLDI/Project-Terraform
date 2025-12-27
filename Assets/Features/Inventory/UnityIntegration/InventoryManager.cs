@@ -199,5 +199,63 @@ namespace Features.Inventory.UnityIntegration
 
             return new ItemInstance(def, net.quantity, net.level);
         }
+
+        public List<InventorySlotRef> GetUpgradableSlots()
+        {
+            var result = new List<InventorySlotRef>();
+
+            if (Model == null)
+                return result;
+
+            // ===== BAG =====
+            for (int i = 0; i < Model.main.Count; i++)
+            {
+                var slot = Model.main[i];
+                var inst = slot.item;
+                if (IsUpgradable(inst))
+                {
+                    result.Add(new InventorySlotRef(
+                        InventorySection.Bag,
+                        i,
+                        inst
+                    ));
+                }
+            }
+
+            // ===== LEFT HAND =====
+            if (IsUpgradable(Model.leftHand.item))
+            {
+                result.Add(new InventorySlotRef(
+                    InventorySection.LeftHand,
+                    0,
+                    Model.leftHand.item
+                ));
+            }
+
+            // ===== RIGHT HAND =====
+            if (IsUpgradable(Model.rightHand.item))
+            {
+                result.Add(new InventorySlotRef(
+                    InventorySection.RightHand,
+                    0,
+                    Model.rightHand.item
+                ));
+            }
+
+            return result;
+        }
+
+        private bool IsUpgradable(ItemInstance inst)
+        {
+            if (inst == null || inst.IsEmpty || inst.itemDefinition == null)
+                return false;
+
+            var upgrades = inst.itemDefinition.upgrades;
+            if (upgrades == null || upgrades.Length == 0)
+                return false;
+
+            // есть ли ещё уровни выше текущего
+            return inst.level < upgrades.Length;
+        }
     }
 }

@@ -1,20 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.InputSystem;
 using Features.Items.Domain;
-using Features.Items.Data;
 using Features.Abilities.Domain;
-using Features.Player.UnityIntegration;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
 
 namespace Features.Menu.Tooltip
 {
-    public class TooltipController : MonoBehaviour
+    public sealed class TooltipController : MonoBehaviour
     {
         public static TooltipController Instance;
-        private Object currentOwner;
+
+        private object currentOwner;
 
         [Header("UI")]
         [SerializeField] private CanvasGroup group;
@@ -25,8 +23,10 @@ namespace Features.Menu.Tooltip
 
         private RectTransform rect;
         private Canvas canvas;
-
         private bool isVisible;
+
+        // последняя позиция указателя в экранных координатах
+        private Vector2? lastPointerPosition;
 
         // =====================================================
         // LIFECYCLE
@@ -35,8 +35,10 @@ namespace Features.Menu.Tooltip
         private void Awake()
         {
             Instance = this;
+
             rect = GetComponent<RectTransform>();
             canvas = GetComponentInParent<Canvas>();
+
             Hide(true);
         }
 
@@ -51,50 +53,57 @@ namespace Features.Menu.Tooltip
                 return;
             }
 
-            if (Mouse.current == null)
+            if (lastPointerPosition == null)
                 return;
 
-            UpdatePosition();
+            UpdatePosition(lastPointerPosition.Value);
         }
 
         // =====================================================
-        // POSITION
+        // POINTER POSITION
         // =====================================================
 
-        private void UpdatePosition()
+        public void SetPointerPosition(Vector2 screenPos)
         {
-            Vector2 mousePos = Mouse.current.position.ReadValue();
-            RectTransform canvasRect = canvas.transform as RectTransform;
+            lastPointerPosition = screenPos;
+        }
+
+        private void UpdatePosition(Vector2 screenPos)
+        {
+            if (canvas == null || rect == null)
+                return;
+
+            var canvasRect = canvas.transform as RectTransform;
 
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvasRect,
-                mousePos,
+                screenPos,
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay
                     ? null
                     : canvas.worldCamera,
                 out Vector2 localPos
             );
 
-            float width = rect.rect.width;
+            float width  = rect.rect.width;
             float height = rect.rect.height;
 
-            Vector2 offset = new Vector2(20, height * 0.5f + 20);
+            Vector2 offset    = new Vector2(20f, height * 0.5f + 20f);
             Vector2 targetPos = localPos + offset;
 
             Vector2 canvasSize = canvasRect.rect.size;
-            float halfW = width * 0.5f;
+            float halfW = width  * 0.5f;
             float halfH = height * 0.5f;
 
             targetPos.x = Mathf.Clamp(
                 targetPos.x,
-                -canvasSize.x / 2 + halfW + 10,
-                canvasSize.x / 2 - halfW - 10
+                -canvasSize.x / 2f + halfW + 10f,
+                canvasSize.x  / 2f - halfW - 10f
             );
 
             targetPos.y = Mathf.Clamp(
                 targetPos.y,
-                -canvasSize.y / 2 + halfH + 10,
-                canvasSize.y / 2 - halfH - 10
+                -canvasSize.y / 2f + halfH + 10f,
+                canvasSize.y  / 2f - halfH - 10f
             );
 
             rect.anchoredPosition = targetPos;
@@ -104,21 +113,22 @@ namespace Features.Menu.Tooltip
         // ITEM TOOLTIP
         // =====================================================
 
-        public void ShowForItemInstance(ItemInstance inst, Object owner)
+        public void ShowForItemInstance(ItemInstance inst, object owner)
         {
             if (inst == null || inst.itemDefinition == null)
             {
                 Hide();
                 return;
             }
+            Debug.Log($"[Tooltip] Show item={inst.itemDefinition.id} lvl={inst.level} qty={inst.quantity}");
 
             currentOwner = owner;
 
-            Item def = inst.itemDefinition;
-            icon.sprite = def.icon;
-            title.text = def.itemName;
+            var def = inst.itemDefinition;
+            icon.sprite      = def.icon;
+            title.text       = def.itemName;
             description.text = def.description;
-            stats.text = "";
+            stats.text       = "";
 
             // Level
             if (inst.level > 0 && def.upgrades != null &&
@@ -153,10 +163,12 @@ namespace Features.Menu.Tooltip
                 return;
             }
 
-            icon.sprite = ability.icon;
-            title.text = ability.displayName;
+            currentOwner = ability;
+
+            icon.sprite      = ability.icon;
+            title.text       = ability.displayName;
             description.text = ability.description;
-            stats.text = "";
+            stats.text       = "";
 
             stats.text += $"Energy: {ability.energyCost}\n";
             stats.text += $"Cooldown: {ability.cooldown:0.0}s\n";
@@ -176,10 +188,12 @@ namespace Features.Menu.Tooltip
                 return;
             }
 
+            currentOwner = buff;
+
             var cfg = buff.Config;
 
-            icon.sprite = cfg.icon;
-            title.text = cfg.displayName;
+            icon.sprite      = cfg.icon;
+            title.text       = cfg.displayName;
             description.text = cfg.description;
 
             stats.text =
@@ -196,15 +210,16 @@ namespace Features.Menu.Tooltip
         private void Show()
         {
             isVisible = true;
-            group.alpha = 1;
+            group.alpha = 1f;
             group.blocksRaycasts = false;
         }
 
         public void Hide(bool instant = false)
         {
             isVisible = false;
-            group.alpha = 0;
+            group.alpha = 0f;
             group.blocksRaycasts = false;
+            currentOwner = null;
         }
     }
 }

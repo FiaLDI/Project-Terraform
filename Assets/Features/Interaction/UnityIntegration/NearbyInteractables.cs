@@ -27,19 +27,24 @@ public class NearbyInteractables : MonoBehaviour, INearbyInteractables
             if (item == null)
                 continue;
 
-            // важно: не предлагать “пустые” предметы
             if (!item.IsPickupAvailable)
+            {
                 continue;
+            }
 
             Vector3 toItem = item.transform.position - camPos;
             float distance = toItem.magnitude;
             float angle = Vector3.Angle(camForward, toItem);
 
             if (distance > maxDistance)
+            {
                 continue;
+            }
 
             if (angle > maxAngle)
+            {
                 continue;
+            }
 
             float score = distance + angle * 0.03f;
             if (score < bestScore)
@@ -54,7 +59,6 @@ public class NearbyInteractables : MonoBehaviour, INearbyInteractables
 
     public void Register(WorldItemNetwork item)
     {
-        Debug.Log("[Nearby] Register: " + item.name);
         if (item == null)
             return;
 

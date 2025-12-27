@@ -5,6 +5,8 @@ using UnityEngine.UI;
 using Features.Items.Domain;
 using Features.Items.Data;
 using Features.Inventory;
+using Features.Inventory.UnityIntegration;
+using Features.Inventory.Domain;
 
 public class RecipePanelUI : MonoBehaviour
 {
@@ -24,6 +26,8 @@ public class RecipePanelUI : MonoBehaviour
     [SerializeField] private CraftingProgressUI progressUI;
 
     private IInventoryContext inventory;
+    private InventorySlotRef? currentSlot;
+
 
     private RecipeSO currentRecipe;
     private ItemInstance currentInstance;
@@ -86,10 +90,10 @@ public class RecipePanelUI : MonoBehaviour
     // UPGRADE VIEW
     // ========================================================
 
-    public void ShowUpgradeRecipe(ItemInstance inst, RecipeSO recipe)
+    public void ShowUpgradeRecipe(ItemInstance inst, RecipeSO recipe, InventorySlotRef slotRef)
     {
         currentRecipe = recipe;
-        currentInstance = inst;
+        currentSlot   = slotRef;
 
         gameObject.SetActive(true);
 
@@ -178,7 +182,7 @@ public class RecipePanelUI : MonoBehaviour
     public void Clear()
     {
         currentRecipe = null;
-        currentInstance = null;
+        currentSlot   = null;
         currentAction = null;
 
         Close();
@@ -186,24 +190,45 @@ public class RecipePanelUI : MonoBehaviour
 
     public void RefreshUpgradeInfo()
     {
-        if (currentInstance == null || currentRecipe == null)
+        if (currentSlot == null || currentRecipe == null)
             return;
 
-        var def = currentInstance.itemDefinition;
+        var slotRef = currentSlot.Value;
+
+        // ← ДОБАВИТь: достаём инвентарь
+        var invMgr = inventory as InventoryManager;
+        if (invMgr == null || invMgr.Model == null)
+            return;
+
+        // ← ДОБАВИТь: читаем свежий слот из модели
+        InventorySlot slot = slotRef.Section switch
+        {
+            InventorySection.Bag       => invMgr.Model.main[slotRef.Index],
+            InventorySection.LeftHand  => invMgr.Model.leftHand,
+            InventorySection.RightHand => invMgr.Model.rightHand,
+            _ => null
+        };
+
+        if (slot == null || slot.item == null || slot.item.IsEmpty)
+            return;
+
+        var inst = slot.item;  // ← ВСЕГДА актуальный
+
+        var def = inst.itemDefinition;
         if (def == null || def.upgrades == null)
             return;
 
-        if (currentInstance.level >= def.upgrades.Length)
+        if (inst.level >= def.upgrades.Length)
         {
             Clear();
             return;
         }
 
-        var next = def.upgrades[currentInstance.level];
+        var next = def.upgrades[inst.level];
 
         upgradeInfoText.text =
-            $"Current: Lv {currentInstance.level}\n" +
-            $"Next: Lv {currentInstance.level + 1}\n" +
+            $"Current: Lv {inst.level}\n" +
+            $"Next: Lv {inst.level + 1}\n" +
             next.ToStatsText();
 
         upgradePreviewIcon.sprite =

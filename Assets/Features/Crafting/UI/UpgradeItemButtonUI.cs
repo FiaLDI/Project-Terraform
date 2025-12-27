@@ -1,8 +1,8 @@
+using Features.Items.Data;
+using Features.Items.Domain;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using Features.Items.Domain;
-using Features.Items.Data;
 
 public class UpgradeItemButtonUI : MonoBehaviour
 {
@@ -12,18 +12,25 @@ public class UpgradeItemButtonUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private Button button;
 
-    private ItemInstance instance;
+    private InventorySlotRef slotRef;
+    private ItemInstance inst;
     private UpgradeRecipeSO recipe;
-    private UpgradeStationUIController controller;
+    private UpgradeStationUIController ui;
+
+    // ======================================================
+    // INIT
+    // ======================================================
 
     public void Init(
         ItemInstance inst,
         UpgradeRecipeSO recipe,
-        UpgradeStationUIController controller)
+        UpgradeStationUIController ui,
+        InventorySlotRef slotRef)
     {
-        this.instance = inst;
-        this.recipe = recipe;
-        this.controller = controller;
+        this.inst    = inst;
+        this.recipe  = recipe;
+        this.ui      = ui;
+        this.slotRef = slotRef;
 
         RefreshVisuals();
 
@@ -35,12 +42,12 @@ public class UpgradeItemButtonUI : MonoBehaviour
     // VISUALS
     // ======================================================
 
-    private void RefreshVisuals()
+    public void RefreshVisuals()
     {
-        if (instance == null || instance.itemDefinition == null)
+        if (inst == null || inst.itemDefinition == null)
             return;
 
-        Item def = instance.itemDefinition;
+        Item def = inst.itemDefinition;
 
         // ICON
         if (icon != null)
@@ -55,14 +62,14 @@ public class UpgradeItemButtonUI : MonoBehaviour
         // LEVEL TEXT
         if (levelText != null)
         {
-            if (instance.level >= maxLv)
+            if (inst.level >= maxLv && maxLv > 0)
                 levelText.text = "MAX";
             else
-                levelText.text = $"Lv {instance.level}/{maxLv}";
+                levelText.text = $"Lv {inst.level}/{maxLv}";
         }
 
         // INTERACTABLE
-        bool canUpgrade = instance.level < maxLv;
+        bool canUpgrade = maxLv > 0 && inst.level < maxLv;
         if (button != null)
             button.interactable = canUpgrade;
     }
@@ -73,15 +80,18 @@ public class UpgradeItemButtonUI : MonoBehaviour
 
     private void OnClick()
     {
-        if (instance == null || recipe == null || controller == null)
+        if (inst == null || recipe == null || ui == null)
             return;
 
-        var def = instance.itemDefinition;
+        var def = inst.itemDefinition;
         int maxLv = def?.upgrades?.Length ?? 0;
 
-        if (instance.level >= maxLv)
+        Debug.Log($"[UpgradeItemButtonUI] Click item={def?.id} lvl={inst.level}/{maxLv}");
+
+        if (inst.level >= maxLv)
             return;
 
-        controller.OnUpgradeItemSelected(instance, recipe);
+        ui.OnUpgradeItemSelected(inst, recipe, slotRef);
     }
+
 }

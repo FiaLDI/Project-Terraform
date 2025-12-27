@@ -2,32 +2,37 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Features.Equipment.Domain;
 using Features.Player;
+using Features.Game;
 
 namespace Features.Equipment.UnityIntegration
 {
+    /// <summary>
+    /// Глобальный контроллер использования (стрельба, вторичное, перезарядка),
+    /// который читает input и прокидывает его на PlayerUsageNetAdapter локального игрока.
+    /// </summary>
     public class PlayerUsageController : MonoBehaviour, IInputContextConsumer
     {
         private PlayerInputContext input;
 
-        private IUsable rightHand;
-        private IUsable leftHand;
-        private bool isTwoHanded;
-
         private bool usingPrimary;
         private bool usingSecondary;
-
         private bool bound;
 
-        private PlayerUsageNetAdapter net;
+        // Локальный адаптер с игрока, берём через BootstrapRoot
+        private PlayerUsageNetAdapter Net
+        {
+            get
+            {
+                var player = BootstrapRoot.I?.LocalPlayer;
+                return player != null
+                    ? player.GetComponent<PlayerUsageNetAdapter>()
+                    : null;
+            }
+        }
 
         // ======================================================
         // INPUT BIND
         // ======================================================
-        
-        private void Awake()
-        {
-            net = GetComponent<PlayerUsageNetAdapter>();
-        }
 
         public void BindInput(PlayerInputContext ctx)
         {
@@ -36,13 +41,15 @@ namespace Features.Equipment.UnityIntegration
 
             if (input != null)
                 UnbindInput(input);
-            input = ctx;
 
+            input = ctx;
             if (input == null)
                 return;
 
             BindActions();
             bound = true;
+
+            Debug.Log("[PlayerUsageController] BindInput OK", this);
         }
 
         public void UnbindInput(PlayerInputContext ctx)
@@ -52,11 +59,13 @@ namespace Features.Equipment.UnityIntegration
 
             UnbindActions();
 
-            usingPrimary = false;
+            usingPrimary   = false;
             usingSecondary = false;
 
             input = null;
             bound = false;
+
+            Debug.Log("[PlayerUsageController] UnbindInput", this);
         }
 
         // ======================================================
@@ -69,13 +78,13 @@ namespace Features.Equipment.UnityIntegration
 
             Enable(p, "Use", "SecondaryUse", "Reload");
 
-            p.FindAction("Use").performed += OnPrimaryStart;
-            p.FindAction("Use").canceled += OnPrimaryStop;
+            p.FindAction("Use").performed        += OnPrimaryStart;
+            p.FindAction("Use").canceled         += OnPrimaryStop;
 
             p.FindAction("SecondaryUse").performed += OnSecondaryStart;
-            p.FindAction("SecondaryUse").canceled += OnSecondaryStop;
+            p.FindAction("SecondaryUse").canceled  += OnSecondaryStop;
 
-            p.FindAction("Reload").performed += OnReload;
+            p.FindAction("Reload").performed     += OnReload;
         }
 
         private void UnbindActions()
@@ -85,26 +94,15 @@ namespace Features.Equipment.UnityIntegration
 
             var p = input.Actions.Player;
 
-            p.FindAction("Use").performed -= OnPrimaryStart;
-            p.FindAction("Use").canceled -= OnPrimaryStop;
+            p.FindAction("Use").performed        -= OnPrimaryStart;
+            p.FindAction("Use").canceled         -= OnPrimaryStop;
 
             p.FindAction("SecondaryUse").performed -= OnSecondaryStart;
-            p.FindAction("SecondaryUse").canceled -= OnSecondaryStop;
+            p.FindAction("SecondaryUse").canceled  -= OnSecondaryStop;
 
-            p.FindAction("Reload").performed -= OnReload;
+            p.FindAction("Reload").performed     -= OnReload;
 
             Disable(p, "Use", "SecondaryUse", "Reload");
-        }
-
-        // ======================================================
-        // CALLED BY EquipmentManager
-        // ======================================================
-
-        public void OnHandsUpdated(IUsable left, IUsable right, bool twoHanded)
-        {
-            leftHand = left;
-            rightHand = right;
-            isTwoHanded = twoHanded;
         }
 
         // ======================================================
@@ -115,13 +113,20 @@ namespace Features.Equipment.UnityIntegration
         {
             usingPrimary = true;
 
-            net?.PrimaryStart();
+            var net = Net;
+            if (net != null)
+                net.PrimaryStart();
+            else
+                Debug.LogWarning("[PlayerUsageController] PrimaryStart: Net adapter not found on LocalPlayer", this);
         }
 
         private void OnPrimaryStop(InputAction.CallbackContext _)
         {
             usingPrimary = false;
-            net?.PrimaryStop();
+
+            var net = Net;
+            if (net != null)
+                net.PrimaryStop();
         }
 
         // ======================================================
@@ -132,13 +137,20 @@ namespace Features.Equipment.UnityIntegration
         {
             usingSecondary = true;
 
-            net?.SecondaryStart();
+            var net = Net;
+            if (net != null)
+                net.SecondaryStart();
+            else
+                Debug.LogWarning("[PlayerUsageController] SecondaryStart: Net adapter not found on LocalPlayer", this);
         }
 
         private void OnSecondaryStop(InputAction.CallbackContext _)
         {
             usingSecondary = false;
-            net?.SecondaryStop();
+
+            var net = Net;
+            if (net != null)
+                net.SecondaryStop();
         }
 
         // ======================================================
@@ -147,7 +159,11 @@ namespace Features.Equipment.UnityIntegration
 
         private void OnReload(InputAction.CallbackContext _)
         {
-            net?.Reload();
+            var net = Net;
+            if (net != null)
+                net.Reload();
+            else
+                Debug.LogWarning("[PlayerUsageController] Reload: Net adapter not found on LocalPlayer", this);
         }
 
         // ======================================================
@@ -171,12 +187,12 @@ namespace Features.Equipment.UnityIntegration
             var cam = UnityEngine.Camera.main;
             if (cam == null)
             {
-                pos = default;
+                pos     = default;
                 forward = Vector3.forward;
                 return false;
             }
 
-            pos = cam.transform.position;
+            pos     = cam.transform.position;
             forward = cam.transform.forward;
             return true;
         }

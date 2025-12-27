@@ -5,46 +5,45 @@ using Features.Inventory;
 using Features.Items.Domain;
 using Features.Inventory.Domain;
 using Features.Items.Data;
+using Features.Inventory.UnityIntegration;
 
 public class UpgradeStationUIController : BaseStationUI
 {
     private UpgradeStation station;
     private UpgradeProcessor processor;
-    private IInventoryContext inventory;
+    private InventoryManager inventory;
 
     [Header("Upgrade UI")]
     [SerializeField] private UpgradeGlowButtonUI upgradeGlowButtonPrefab;
 
-    private ItemInstance selectedInstance;
-    private UpgradeRecipeSO selectedRecipe;
+    private ItemInstance     selectedInstance;
+    private UpgradeRecipeSO  selectedRecipe;
+    private InventorySlotRef selectedSlot;
 
     // ======================================================
     // INIT
     // ======================================================
 
-    public void Init(
-        UpgradeStation station,
-        UpgradeProcessor processor,
-        IInventoryContext inventory)
+    public void Init(UpgradeStation station, UpgradeProcessor processor, IInventoryContext inventory)
     {
-        this.station = station;
+        this.station   = station;
         this.processor = processor;
-        this.inventory = inventory;
+        this.inventory = inventory as InventoryManager; // (1)
 
         recipePanel.Init(inventory);
 
         processor.OnStart    += HandleStart;
         processor.OnProgress += HandleProgress;
         processor.OnComplete += HandleComplete;
+
+        if (this.inventory != null)
+            this.inventory.OnInventoryChanged += OnInventoryChanged;
     }
 
     // ======================================================
-    // UI LIFECYCLE (КЛЮЧЕВО)
+    // UI LIFECYCLE
     // ======================================================
 
-    /// <summary>
-    /// Вызывается UIStackManager'ом при Push(this)
-    /// </summary>
     public override void Show()
     {
         base.Show();
@@ -55,6 +54,12 @@ public class UpgradeStationUIController : BaseStationUI
     {
         ClearSelection();
         BuildUpgradeList();
+    }
+
+    private void OnDestroy()
+    {
+        if (inventory != null)
+            inventory.OnInventoryChanged -= OnInventoryChanged;
     }
 
     // ======================================================
@@ -74,61 +79,93 @@ public class UpgradeStationUIController : BaseStationUI
             .OfType<UpgradeRecipeSO>()
             .ToArray();
 
-        var allSlots = inventory.Model.GetAllSlots();
         var seen = new HashSet<string>();
 
-        foreach (var slot in allSlots)
+        // ---- BAG ----
+        for (int i = 0; i < inventory.Model.main.Count; i++)
         {
-            var inst = slot.item;
-            if (inst == null)
-                continue;
-
-            var def = inst.itemDefinition;
-            if (def == null || def.upgrades == null)
-                continue;
-
-            // 🔹 предмет уже максимального уровня — не показываем
-            if (inst.level >= def.upgrades.Length)
-                continue;
-
-            // 🔹 один пункт на тип предмета
-            if (!seen.Add(def.id))
-                continue;
-
-            var recipe = upgradeRecipes.FirstOrDefault(r =>
-                r.upgradeBaseItem != null &&
-                r.upgradeBaseItem.id == def.id);
-
-            if (recipe == null)
-                continue;
-
-            var btn = Instantiate(
-                upgradeGlowButtonPrefab,
-                recipeListContainer);
-
-            btn.Init(inst, recipe, this);
+            var slot = inventory.Model.main[i];
+            AddSlotIfUpgradable(
+                slot.item,
+                new InventorySlotRef(InventorySection.Bag, i),
+                upgradeRecipes,
+                seen);
         }
+
+        // ---- LEFT HAND ----
+        AddSlotIfUpgradable(
+            inventory.Model.leftHand.item,
+            new InventorySlotRef(InventorySection.LeftHand, 0),
+            upgradeRecipes,
+            seen);
+
+        // ---- RIGHT HAND ----
+        AddSlotIfUpgradable(
+            inventory.Model.rightHand.item,
+            new InventorySlotRef(InventorySection.RightHand, 0),
+            upgradeRecipes,
+            seen);
+    }
+
+    private void AddSlotIfUpgradable(
+        ItemInstance inst,
+        InventorySlotRef slotRef,
+        UpgradeRecipeSO[] upgradeRecipes,
+        HashSet<string> seen)
+    {
+        if (inst == null || inst.IsEmpty)
+            return;
+
+        var def = inst.itemDefinition;
+        if (def == null || def.upgrades == null || def.upgrades.Length == 0)
+            return;
+
+        if (inst.level >= def.upgrades.Length)
+            return;
+
+        // один пункт на тип предмета
+        if (!seen.Add(def.id))
+            return;
+
+        var recipe = upgradeRecipes.FirstOrDefault(r =>
+            r.upgradeBaseItem != null &&
+            r.upgradeBaseItem.id == def.id);
+
+        if (recipe == null)
+            return;
+
+        var btn = Instantiate(
+            upgradeGlowButtonPrefab,
+            recipeListContainer);
+
+        // передаём и слот, и инстанс
+        btn.Init(inst, recipe, this, slotRef);
     }
 
     // ======================================================
     // UI CALLBACKS
     // ======================================================
-
     public void OnUpgradeItemSelected(
         ItemInstance inst,
-        RecipeSO recipeBase)
+        RecipeSO recipeBase,
+        InventorySlotRef slotRef)
     {
         var recipe = recipeBase as UpgradeRecipeSO;
         if (recipe == null)
             return;
 
         selectedInstance = inst;
-        selectedRecipe = recipe;
+        selectedRecipe   = recipe;
+        selectedSlot     = slotRef;
 
-        recipePanel.ShowUpgradeRecipe(inst, recipe);
+        Debug.Log($"[UpgradeUI] Selected item={inst.itemDefinition.id} lvl={inst.level}, slot={slotRef.Section}[{slotRef.Index}], recipe={recipe.recipeId}");
+
+        recipePanel.ShowUpgradeRecipe(inst, recipe, slotRef);
 
         recipePanel.SetAction(() =>
         {
+            Debug.Log($"[UpgradeUI] Action pressed for item={selectedInstance.itemDefinition.id} lvl={selectedInstance.level}");
+
             if (selectedInstance == null || selectedRecipe == null)
                 return;
 
@@ -137,14 +174,22 @@ public class UpgradeStationUIController : BaseStationUI
                 return;
 
             if (selectedInstance.level >= def.upgrades.Length)
+            {
+                Debug.Log("[UpgradeUI] Already max level, cancel");
                 return;
+            }
 
             if (!processor.IsProcessing)
+            {
+                Debug.Log($"[UpgradeUI] BeginUpgrade send, slot={selectedSlot.Section}[{selectedSlot.Index}]");
                 processor.BeginUpgrade(
                     selectedRecipe,
-                    selectedInstance);
+                    selectedInstance,
+                    selectedSlot);
+            }
         });
     }
+
 
     // ======================================================
     // PROCESSOR EVENTS
@@ -161,8 +206,6 @@ public class UpgradeStationUIController : BaseStationUI
         recipePanel.ProcessComplete();
         recipePanel.RefreshIngredients();
         recipePanel.RefreshUpgradeInfo();
-
-        // 🔹 обновляем список после апгрейда
         BuildUpgradeList();
     }
 
@@ -173,12 +216,23 @@ public class UpgradeStationUIController : BaseStationUI
     private void ClearSelection()
     {
         selectedInstance = null;
-        selectedRecipe = null;
+        selectedRecipe   = null;
+        selectedSlot     = default;
         recipePanel.Clear();
     }
 
     public override void Open()
     {
         base.Open();
+    }
+
+    private void OnInventoryChanged()
+    {
+        if (gameObject.activeInHierarchy)
+        {
+            BuildUpgradeList();
+
+            recipePanel.RefreshUpgradeInfo();
+        }
     }
 }

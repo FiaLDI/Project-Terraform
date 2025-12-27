@@ -5,6 +5,7 @@ using Features.Resources.Application;
 using Features.Resources.Data;
 using Features.Resources.Domain;
 using UnityEngine;
+using System.Linq;
 
 namespace Features.Resources.UnityIntegration
 {
@@ -17,6 +18,9 @@ namespace Features.Resources.UnityIntegration
         private ResourceNodeModel _model;
         private MiningService _mining;
         private ResourceDropService _drops;
+
+        // Для сети: считаем что нода мертва при здоровье <= 0
+        public bool IsDepleted() => _model?.CurrentHp <= 0f;
 
         private void Awake()
         {
@@ -32,9 +36,20 @@ namespace Features.Resources.UnityIntegration
             _drops  = new ResourceDropService();
         }
 
-        // -------------------------
-        //   Mining Interaction
-        // -------------------------
+        // =========================
+        //  VFX при полном разрушении
+        // =========================
+        public void OnDepletedVisual()
+        {
+            PlayDestroyVFX();   // VFX для всех клиентов
+
+            // Только визуальное уничтожение объекта на сцене
+            Destroy(gameObject, 0.5f); // небольшая задержка под VFX
+        }
+
+        // =========================
+        //  Mining Interaction
+        // =========================
 
         public void ApplyMining(float amount)
         {
@@ -44,19 +59,22 @@ namespace Features.Resources.UnityIntegration
         public void ApplyMining(float amount, float toolMultiplier)
         {
             bool depleted = _mining.Mine(_model, amount, toolMultiplier);
-            if (depleted)
-                OnDepleted();
-            else
+
+            // Если не исчерпан — просто hit VFX
+            if (!depleted)
                 PlayHitVFX();
+
+            // Если исчерпан — логика дропа и VFX обрабатывается снаружи (через ResourceNodeNetwork)
         }
 
-        // -------------------------
-        //   VFX
-        // -------------------------
+        // =========================
+        //  VFX
+        // =========================
 
         private void PlayHitVFX()
         {
-            if (config.hitEffect == null) return;
+            if (config.hitEffect == null) 
+                return;
 
             Instantiate(
                 config.hitEffect,
@@ -67,7 +85,8 @@ namespace Features.Resources.UnityIntegration
 
         private void PlayDestroyVFX()
         {
-            if (config.destroyEffect == null) return;
+            if (config.destroyEffect == null) 
+                return;
 
             Instantiate(
                 config.destroyEffect,
@@ -76,28 +95,28 @@ namespace Features.Resources.UnityIntegration
             );
         }
 
-        // -------------------------
-        //   On Depletion (Drops + VFX)
-        // -------------------------
+        // =========================
+        //  Drops (для сервера)
+        // =========================
 
-        private void OnDepleted()
+        /// <summary>
+        /// Раскатывает таблицу дропа и возвращает массив инстансов.
+        /// Вызывать только на сервере (через ResourceNodeNetwork.ServerSpawnDrops).
+        /// </summary>
+        public ItemInstance[] RollDrops()
         {
-            PlayDestroyVFX();
+            if (config.drops == null || config.drops.Length == 0)
+                return new ItemInstance[0];
 
-            if (config.drops != null && config.drops.Length > 0)
-            {
-                var items = _drops.RollDrops(config.drops);
-                foreach (var item in items)
-                    SpawnItem(item);
-            }
+            var items = _drops.RollDrops(config.drops); // IEnumerable<Item>
 
-            Destroy(gameObject);
+            return items
+                .Where(i => i != null)
+                .Select(i => new ItemInstance(i, 1))   // ← создаём ItemInstance
+                .ToArray();
         }
 
-        // -------------------------
-        //   Spawning Dropped Items
-        // -------------------------
-
+        // Если где-то понадобится локальный спавн (НЕ для сети)
         private void SpawnItem(Item item)
         {
             if (item == null || item.worldPrefab == null)
@@ -115,8 +134,31 @@ namespace Features.Resources.UnityIntegration
             var inst = new ItemInstance(item, 1);
 
             var holder = go.GetComponent<ItemRuntimeHolder>()
-                         ?? go.AddComponent<ItemRuntimeHolder>();
+                       ?? go.AddComponent<ItemRuntimeHolder>();
             holder.SetInstance(inst);
+        }
+
+        // =========================
+        //  Health API для сети
+        // =========================
+
+        public float GetCurrentHealth()
+        {
+            return _model?.CurrentHp ?? 0f;
+        }
+
+        /// <summary>
+        /// Обновление визуала здоровья на клиентах (цвет, хп-бар и т.п.).
+        /// Вызывается из ResourceNodeNetwork.OnMined_Clients().
+        /// </summary>
+        public void SetHealthVisual(float health)
+        {
+            var renderer = GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                float healthPct = Mathf.Clamp01(health / config.maxHealth);
+                renderer.material.color = Color.Lerp(Color.red, Color.green, healthPct);
+            }
         }
     }
 }

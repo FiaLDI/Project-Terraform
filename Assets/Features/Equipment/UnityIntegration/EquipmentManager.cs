@@ -1,13 +1,14 @@
-﻿using UnityEngine;
-using FishNet.Object;
-using Features.Camera.UnityIntegration;
+﻿using Features.Camera.UnityIntegration;
 using Features.Equipment.Domain;
+using Features.Game;
 using Features.Inventory;
 using Features.Inventory.UnityIntegration;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player.UnityIntegration;
 using Features.Weapons.UnityIntegration;
+using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Equipment.UnityIntegration
 {
@@ -105,7 +106,7 @@ namespace Features.Equipment.UnityIntegration
         // INVENTORY → EQUIPMENT
         // ======================================================
 
-        private void EquipFromInventory()
+        public void EquipFromInventory()
         {
             if (!initialized || inventory == null)
                 return;
@@ -130,7 +131,8 @@ namespace Features.Equipment.UnityIntegration
             UpdateWeaponPose(model.rightHand.item);
 
             // ---------- USAGE (LOCAL + NET) ----------
-            usageLocal?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
+            var player = BootstrapRoot.I?.LocalPlayer;
+            var usageNet = player != null ? player.GetComponent<PlayerUsageNetAdapter>() : null;
             usageNet?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
         }
 

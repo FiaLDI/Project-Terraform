@@ -101,10 +101,23 @@ public sealed class WorldItemNetwork : NetworkBehaviour
     [Server]
     public void ServerConsume()
     {
+        Debug.Log(
+            $"[WorldItemNetwork] ServerConsume called | ItemId={itemId.Value}, Qty={quantity.Value}, NetId={NetworkObject.ObjectId}",
+            this
+        );
+
         if (!IsPickupAvailable)
+        {
+            Debug.LogWarning(
+                $"[WorldItemNetwork] ServerConsume: IsPickupAvailable = FALSE | " +
+                $"itemId='{itemId.Value}', qty={quantity.Value}",
+                this
+            );
             return;
+        }
 
         quantity.Value = 0;
         Despawn();
     }
+
 }

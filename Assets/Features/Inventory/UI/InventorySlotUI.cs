@@ -10,7 +10,7 @@ namespace Features.Inventory.UI
 {
     public class InventorySlotUI : MonoBehaviour,
         IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler,
-        IPointerEnterHandler, IPointerExitHandler
+        IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
     {
         [Header("UI")]
         [SerializeField] private Image icon;
@@ -23,6 +23,7 @@ namespace Features.Inventory.UI
 
         private InventorySlot boundSlot;
         private InventoryDragController drag;
+        private bool isPointerOver;
 
         // =====================================================
         // BIND
@@ -58,6 +59,9 @@ namespace Features.Inventory.UI
                 boundSlot.item.quantity > 1
                     ? boundSlot.item.quantity.ToString()
                     : "";
+            
+            if (isPointerOver)
+                TooltipController.Instance?.ShowForItemInstance(boundSlot.item, this);
         }
 
         public void SetHighlight(bool value)
@@ -96,11 +100,14 @@ namespace Features.Inventory.UI
                 return;
 
             TooltipController.Instance?.Hide();
+            TooltipController.Instance?.SetPointerPosition(eventData.position);
+
             Drag.BeginDrag(this, boundSlot, eventData);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
+            TooltipController.Instance?.SetPointerPosition(eventData.position);
             Drag?.UpdateDrag(eventData);
         }
 
@@ -127,16 +134,24 @@ namespace Features.Inventory.UI
         {
             if (boundSlot == null || boundSlot.item == null || boundSlot.item.IsEmpty)
                 return;
+            
+            isPointerOver = true;
 
             Drag?.SetHovered(this);
             Drag?.SetLastInteracted(this);
 
-            TooltipController.Instance
-                ?.ShowForItemInstance(boundSlot.item, this);
+            TooltipController.Instance?.SetPointerPosition(eventData.position);
+            TooltipController.Instance?.ShowForItemInstance(boundSlot.item, this);
+        }
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            TooltipController.Instance?.SetPointerPosition(eventData.position);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            isPointerOver = false;
             Drag?.ClearHovered(this);
             TooltipController.Instance?.Hide();
         }

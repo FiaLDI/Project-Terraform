@@ -1,13 +1,11 @@
-﻿using Features.Input;
+﻿using Features.Game;
+using Features.Input;
 using Features.Interaction.Application;
 using Features.Interaction.Domain;
 using Features.Interaction.UnityIntegration;
 using Features.Inventory.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player;
-using FishNet;
-using FishNet.Connection;
-using FishNet.Object;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,17 +22,19 @@ public sealed class PlayerInteractionController :
     private bool interactionBlocked;
     private bool subscribed;
     private double lastInteractTime = 0;
-    private double lastPickupTime = 0;
     private const double INTERACT_COOLDOWN = 0.2;
-    private WorldItemNetwork lastPickedUpItem;
 
-    // ======================================================
-    // UNITY
-    // ======================================================
+    // ================= UNITY =================
 
     private void Start()
     {
-        nearby = GetComponentInChildren<INearbyInteractables>();
+        // сразу пробуем взять player и nearby
+        var player = BootstrapRoot.I?.LocalPlayer;
+        if (player != null)
+        {
+            nearby = player.GetComponentInChildren<INearbyInteractables>(true);
+            Debug.Log($"[PIC] Start: nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
+        }
 
         if (InteractionServiceProvider.Ray != null)
             InitResolver(InteractionServiceProvider.Ray);
@@ -42,24 +42,11 @@ public sealed class PlayerInteractionController :
             InteractionServiceProvider.OnRayInitialized += InitResolver;
     }
 
-    private void OnEnable()
-    {
-        TrySubscribe();
-    }
+    private void OnEnable()  => TrySubscribe();
+    private void OnDisable() => Unsubscribe();
+    private void OnDestroy() => Unsubscribe();
 
-    private void OnDisable()
-    {
-        Unsubscribe();
-    }
-
-    private void OnDestroy()
-    {
-        Unsubscribe();
-    }
-
-    // ======================================================
-    // INPUT BIND
-    // ======================================================
+    // ================= INPUT BIND =================
 
     public void BindInput(PlayerInputContext ctx)
     {
@@ -67,12 +54,12 @@ public sealed class PlayerInteractionController :
         if (input == null)
             return;
 
-        var player = input.Actions.Player;
-        interactAction = player.FindAction("Interact", true);
+        var playerMap = input.Actions.Player;
+        interactAction = playerMap.FindAction("Interact", true);
 
         TrySubscribe();
 
-        Debug.Log("[PlayerInteractionController] BindInput OK");
+        Debug.Log("[PlayerInteractionController] BindInput OK", this);
     }
 
     public void UnbindInput(PlayerInputContext ctx)
@@ -81,14 +68,11 @@ public sealed class PlayerInteractionController :
             return;
 
         Unsubscribe();
-
         interactAction = null;
         input = null;
     }
 
-    // ======================================================
-    // SUBSCRIBE
-    // ======================================================
+    // ================= SUBSCRIBE =================
 
     private void TrySubscribe()
     {
@@ -110,21 +94,35 @@ public sealed class PlayerInteractionController :
         subscribed = false;
     }
 
-    // ======================================================
-    // ACTIONS
-    // ======================================================
+    // ================= ACTIONS =================
 
     private void OnInteract(InputAction.CallbackContext _)
     {
         TryInteract();
     }
 
-    // ======================================================
-    // INTERACTION
-    // ======================================================
+    // ================= INTERACTION =================
 
     private void TryInteract()
     {
+        var player = BootstrapRoot.I?.LocalPlayer;
+        if (player == null)
+        {
+            Debug.LogWarning("[PlayerInteractionController] TryInteract: LocalPlayer is NULL", this);
+            return;
+        }
+
+        // гарантированно есть nearby
+        if (nearby == null)
+        {
+            nearby = player.GetComponentInChildren<INearbyInteractables>(true);
+            Debug.Log($"[PIC] TryInteract: reacquired nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
+
+            // если резолвер уже был создан с null-nearby – пересоздаём
+            if (resolver != null && nearby != null)
+                resolver = new InteractionResolver(InteractionServiceProvider.Ray, nearby);
+        }
+
         double currentTime = Time.realtimeSinceStartup;
         if (currentTime - lastInteractTime < INTERACT_COOLDOWN)
         {
@@ -132,33 +130,38 @@ public sealed class PlayerInteractionController :
             return;
         }
         lastInteractTime = currentTime;
-        if (interactionBlocked || resolver == null)
-            return;
 
-        var cam = Camera.main;
-        if (cam == null)
+        if (interactionBlocked || resolver == null || nearby == null)
+        {
+            Debug.Log("[PlayerInteractionController] TryInteract: resolver or nearby is NULL", this);
             return;
+        }
+
+        var cam = UnityEngine.Camera.main;
+        if (cam == null)
+        {
+            Debug.LogWarning("[PlayerInteractionController] TryInteract: Camera.main is NULL", this);
+            return;
+        }
 
         var target = resolver.Resolve(cam);
-        
-        // ✅ ЗАЩИТА: Логируй что было разрешено
         Debug.Log($"[PlayerInteractionController] TryInteract resolved: {target.Type}", this);
 
         switch (target.Type)
         {
             case InteractionTargetType.Pickup:
                 Debug.Log($"[PlayerInteractionController] PICKUP action triggered, item={target.WorldItem?.name}", this);
-                PickupWorldItem(target.WorldItem);
+                PickupWorldItem(player, target.WorldItem);
                 break;
 
             case InteractionTargetType.Interactable:
-                Debug.Log($"[PlayerInteractionController] INTERACTABLE action triggered", this);
+                Debug.Log("[PlayerInteractionController] INTERACTABLE action triggered", this);
                 target.Interactable?.Interact();
                 break;
         }
     }
 
-    private void PickupWorldItem(WorldItemNetwork worldItem)
+    private void PickupWorldItem(GameObject player, WorldItemNetwork worldItem)
     {
         if (worldItem == null)
         {
@@ -166,56 +169,49 @@ public sealed class PlayerInteractionController :
             return;
         }
 
-        // ✅ ЗАЩИТА от дублирования: проверь что это не тот же предмет за одну секунду
-        if (worldItem == lastPickedUpItem && (Time.realtimeSinceStartup - lastPickupTime) < 0.5f)
+        var invNet = player.GetComponent<InventoryStateNetwork>();
+        if (invNet == null)
         {
-            Debug.Log($"[PlayerInteractionController] Duplicate pickup attempt blocked: {worldItem.name}", this);
+            Debug.LogError("[PlayerInteractionController] PickupWorldItem: InventoryStateNetwork NOT FOUND on player", this);
             return;
         }
-        
-        lastPickedUpItem = worldItem;
-        lastPickupTime = Time.realtimeSinceStartup;
 
-        var invNet = GetComponent<InventoryStateNetwork>();
-        if (invNet == null)
-            return;
+        // берем данные из синхронизированных свойств
+        string itemId = worldItem.ItemId;
+        int qty       = worldItem.Quantity;
+        int lvl       = worldItem.Level;
 
-        // ✅ Получи кэшированный экземпляр
-        var cachedInst = worldItem.GetCachedInstance();
-        
-        string itemId = cachedInst?.itemDefinition?.id ?? "UNKNOWN";
-        int qty = cachedInst?.quantity ?? worldItem.Quantity;
-        int lvl = cachedInst?.level ?? worldItem.Level;
+        Debug.Log(
+            $"[PlayerInteractionController] PickupWorldItem → send command | " +
+            $"ItemId={itemId}, Qty={qty}, Level={lvl}, NetId={worldItem.NetworkObject.ObjectId}",
+            this
+        );
 
-        Debug.Log($"[PlayerInteractionController] PickupWorldItem: ItemId={itemId}, Qty={qty}, Level={lvl}, NetId={worldItem.NetworkObject.ObjectId}", this);
-
-        invNet.RequestInventoryCommand(new InventoryCommandData
+        var cmd = new InventoryCommandData
         {
-            Command = InventoryCommand.PickupWorldItem,
+            Command        = InventoryCommand.PickupWorldItem,
             WorldItemNetId = (uint)worldItem.NetworkObject.ObjectId,
-            ItemId = itemId,
+            ItemId         = itemId,
             PickupQuantity = qty,
-            PickupLevel = lvl
-        });
-}
+            PickupLevel    = lvl
+        };
 
+        invNet.RequestInventoryCommand(cmd);
+    }
 
-    // ======================================================
-    // EXTERNAL
-    // ======================================================
+    // ================= EXTERNAL =================
 
     public void SetInteractionBlocked(bool blocked)
     {
         interactionBlocked = blocked;
     }
 
-    // ======================================================
-    // RESOLVER
-    // ======================================================
+    // ================= RESOLVER =================
 
     private void InitResolver(InteractionRayService ray)
     {
+        // здесь nearby уже должен быть установлен
         resolver = new InteractionResolver(ray, nearby);
-        Debug.Log("[INTERACTION] Resolver initialized");
+        Debug.Log($"[INTERACTION] Resolver initialized, nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
     }
 }

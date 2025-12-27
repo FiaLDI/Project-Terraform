@@ -5,6 +5,7 @@ using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
 using Features.Items.Domain;
 using System.Collections;
+using Features.Equipment.UnityIntegration;
 
 public sealed class InventoryStateNetwork : NetworkBehaviour
 {
@@ -69,6 +70,12 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     [ServerRpc(RequireOwnership = true)]
     public void RequestInventoryCommand(InventoryCommandData cmd)
     {
+        Debug.Log(
+            $"[InventoryStateNetwork] RequestInventoryCommand from client={Owner.ClientId} | " +
+            $"Command={cmd.Command}, WorldItemNetId={cmd.WorldItemNetId}, ItemId={cmd.ItemId}, Qty={cmd.PickupQuantity}",
+            this
+        );
+
         if (inventory == null || inventory.Service == null)
         {
             Debug.LogError("[InventoryStateNetwork] RequestInventoryCommand: inventory or Service is null", this);
@@ -77,6 +84,10 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
 
         switch (cmd.Command)
         {
+            case InventoryCommand.PickupWorldItem:
+                HandlePickup(cmd);
+                break;
+
             case InventoryCommand.MoveItem:
                 HandleMove(cmd);
                 break;
@@ -93,12 +104,12 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
                 HandleCraft(cmd);
                 break;
 
-            case InventoryCommand.PickupWorldItem:
-                HandlePickup(cmd);
+            default:
+                Debug.LogWarning($"[InventoryStateNetwork] Unknown command: {cmd.Command}", this);
                 break;
         }
-        // state sync пойдёт через OnInventoryChanged
     }
+
 
     [ServerRpc(RequireOwnership = true)]
     private void RequestFullState_Server()
@@ -170,6 +181,13 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             applyCount++;
             Debug.Log($"[InventoryStateNetwork] TargetReceiveInventoryState #{applyCount}", this);
             inventory.ApplyNetState(bag, left, right);
+            
+            var equipmentMgr = GetComponent<EquipmentManager>();
+            if (equipmentMgr != null)
+            {
+                Debug.Log("[InventoryStateNetwork] Force EquipFromInventory after state sync", this);
+                equipmentMgr.EquipFromInventory();
+            }
         }
         finally
         {
@@ -192,6 +210,12 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         try
         {
             inventory.ApplyHandsNetState(left, right);
+            
+            var equipmentMgr = GetComponent<EquipmentManager>();
+            if (equipmentMgr != null)
+            {
+                equipmentMgr.EquipFromInventory();
+            }
         }
         finally
         {
@@ -393,39 +417,25 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
 
     private void HandleUpgrade(InventoryCommandData cmd)
     {
-        if (inventory?.Service == null)
+        if (inventory?.Service == null) return;
+
+        var recipe = RecipeDatabase.Instance?.GetRecipeById(cmd.RecipeId);
+        if (recipe == null) return;
+
+        if (!inventory.Service.HasIngredients(recipe.ingredients)) return;
+
+        inventory.Service.ConsumeIngredients(recipe.ingredients);
+
+        var slot = GetSlot(cmd.Section, cmd.Index);
+        if (slot != null && !slot.item.IsEmpty)
         {
-            Debug.LogWarning("[InventoryStateNetwork] HandleUpgrade: inventory or Service is null");
-            return;
-        }
+            slot.item.level++;
+            Debug.Log($"[Server] Upgrade success: {slot.item.itemDefinition.id} lvl -> {slot.item.level}");
 
-        try
-        {
-            var recipe = RecipeDatabase.Instance?.GetRecipeById(cmd.RecipeId);
-            if (recipe == null)
-            {
-                Debug.LogWarning($"[InventoryStateNetwork] Recipe {cmd.RecipeId} not found");
-                return;
-            }
-
-            if (!inventory.Service.HasIngredients(recipe.ingredients))
-            {
-                Debug.LogWarning("[InventoryStateNetwork] Missing ingredients for upgrade");
-                return;
-            }
-
-            inventory.Service.ExtractFromSlot(cmd.Section, cmd.Index, 0);
-            inventory.Service.ConsumeIngredients(recipe.ingredients);
-
-            var inst = GetSlot(cmd.Section, cmd.Index)?.item;
-            if (inst != null)
-                inst.level++;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[InventoryStateNetwork] HandleUpgrade error: {ex}", this);
+            ServerOnInventoryChanged();
         }
     }
+
 
     private void HandleCraft(InventoryCommandData cmd)
     {
@@ -494,91 +504,130 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     }
 
     private void HandlePickup(InventoryCommandData cmd)
-{
-    Debug.Log($"[InventoryStateNetwork] HandlePickup START - WorldItemNetId={cmd.WorldItemNetId}, ItemId={cmd.ItemId}, Qty={cmd.PickupQuantity}", this);
-
-    if (inventory?.Service == null)
     {
-        Debug.LogWarning("[InventoryStateNetwork] HandlePickup: inventory or Service is null");
-        return;
-    }
+        Debug.Log(
+            $"[InventoryStateNetwork] HandlePickup START | " +
+            $"WorldItemNetId={cmd.WorldItemNetId}, ItemId='{cmd.ItemId}', Qty={cmd.PickupQuantity}, Lvl={cmd.PickupLevel}",
+            this
+        );
 
-    try
-    {
-        // 0. Проверяем, что есть что подбирать
-        if (cmd.WorldItemNetId > 0 &&
-            !NetworkManager.ServerManager.Objects.Spawned.ContainsKey((int)cmd.WorldItemNetId))
+        if (inventory?.Service == null)
         {
-            Debug.LogWarning($"[InventoryStateNetwork] HandlePickup: WorldItem {cmd.WorldItemNetId} already consumed, ignoring pickup");
+            Debug.LogWarning("[InventoryStateNetwork] HandlePickup: inventory or Service is null", this);
             return;
         }
 
-        // 1. Проверки ItemId и количества
-        if (string.IsNullOrEmpty(cmd.ItemId) || cmd.ItemId == "UNKNOWN" || cmd.ItemId == "0")
+        try
         {
-            Debug.LogError($"[InventoryStateNetwork] HandlePickup: INVALID ItemId='{cmd.ItemId}'!");
-            return;
-        }
-
-        if (cmd.PickupQuantity <= 0)
-        {
-            Debug.LogError("[InventoryStateNetwork] HandlePickup: PickupQuantity is 0 or negative!");
-            return;
-        }
-
-        // 2. Ищем дефинишн
-        var def = ItemRegistrySO.Instance?.Get(cmd.ItemId);
-        if (def == null)
-        {
-            Debug.LogError($"[InventoryStateNetwork] HandlePickup: ItemDefinition for '{cmd.ItemId}' not found in registry");
-            return;
-        }
-
-        // 3. Пытаемся найти мировой объект и сразу же его съесть
-        if (cmd.WorldItemNetId > 0 &&
-            NetworkManager.ServerManager.Objects.Spawned.TryGetValue((int)cmd.WorldItemNetId, out var netObj))
-        {
-            var worldItem = netObj.GetComponent<WorldItemNetwork>();
-            if (worldItem != null)
+            // 0. Проверяем, существует ли объект
+            if (cmd.WorldItemNetId > 0 &&
+                !NetworkManager.ServerManager.Objects.Spawned.ContainsKey((int)cmd.WorldItemNetId))
             {
+                Debug.LogWarning(
+                    $"[InventoryStateNetwork] HandlePickup: WorldItem {cmd.WorldItemNetId} " +
+                    $"NOT in Spawned (already consumed or invalid)",
+                    this
+                );
+                return;
+            }
+
+            // 1. Валидация ItemId / Qty
+            if (string.IsNullOrEmpty(cmd.ItemId) || cmd.ItemId == "UNKNOWN" || cmd.ItemId == "0")
+            {
+                Debug.LogError($"[InventoryStateNetwork] HandlePickup: INVALID ItemId='{cmd.ItemId}'", this);
+                return;
+            }
+
+            if (cmd.PickupQuantity <= 0)
+            {
+                Debug.LogError($"[InventoryStateNetwork] HandlePickup: PickupQuantity={cmd.PickupQuantity} <= 0", this);
+                return;
+            }
+
+            // 2. Ищем дефинишн
+            var def = ItemRegistrySO.Instance?.Get(cmd.ItemId);
+            if (def == null)
+            {
+                Debug.LogError(
+                    $"[InventoryStateNetwork] HandlePickup: ItemDefinition '{cmd.ItemId}' NOT found in ItemRegistrySO",
+                    this
+                );
+                return;
+            }
+
+            Debug.Log($"[InventoryStateNetwork] HandlePickup: ItemDefinition OK ({def.id})", this);
+
+            // 3. Находим WorldItemNetwork и съедаем
+            WorldItemNetwork worldItem = null;
+
+            if (cmd.WorldItemNetId > 0 &&
+                NetworkManager.ServerManager.Objects.Spawned.TryGetValue((int)cmd.WorldItemNetId, out var netObj))
+            {
+                worldItem = netObj.GetComponent<WorldItemNetwork>();
+                if (worldItem == null)
+                {
+                    Debug.LogWarning(
+                        $"[InventoryStateNetwork] HandlePickup: NetObject {cmd.WorldItemNetId} " +
+                        "has NO WorldItemNetwork component",
+                        this
+                    );
+                    return;
+                }
+
+                Debug.Log($"[InventoryStateNetwork] HandlePickup: WorldItemNetwork found, calling ServerConsume()", this);
+
                 try
                 {
                     worldItem.ServerConsume();
-                    Debug.Log($"[InventoryStateNetwork] HandlePickup: Item consumed successfully (NetId={cmd.WorldItemNetId})", this);
+                    Debug.Log(
+                        $"[InventoryStateNetwork] HandlePickup: ServerConsume OK (NetId={cmd.WorldItemNetId})",
+                        this
+                    );
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogError($"[InventoryStateNetwork] HandlePickup: ServerConsume threw exception: {ex}", this);
-                    return; // если не смогли съесть — не добавляем в инвентарь
+                    Debug.LogError(
+                        $"[InventoryStateNetwork] HandlePickup: ServerConsume EXCEPTION: {ex}",
+                        this
+                    );
+                    return;
                 }
             }
             else
             {
-                Debug.LogWarning($"[InventoryStateNetwork] HandlePickup: WorldItemNetwork not found on {cmd.WorldItemNetId}");
+                Debug.LogWarning(
+                    $"[InventoryStateNetwork] HandlePickup: WorldItem {cmd.WorldItemNetId} " +
+                    "not found in Spawned, skip AddItem",
+                    this
+                );
                 return;
             }
-        }
-        else
-        {
-            Debug.LogWarning($"[InventoryStateNetwork] HandlePickup: WorldItem {cmd.WorldItemNetId} not found, skipping add");
-            return;
-        }
 
-        // 4. Теперь безопасно добавляем в инвентарь
-        if (!inventory.Service.AddItem(new ItemInstance(def, cmd.PickupQuantity, cmd.PickupLevel)))
-        {
-            Debug.LogWarning("[InventoryStateNetwork] HandlePickup: Failed to add item to inventory", this);
-            return;
-        }
+            // 4. Добавляем в инвентарь
+            var inst = new ItemInstance(def, cmd.PickupQuantity, cmd.PickupLevel);
+            Debug.Log(
+                $"[InventoryStateNetwork] HandlePickup: Try AddItem {def.id} x{cmd.PickupQuantity} L{cmd.PickupLevel}",
+                this
+            );
 
-        int total = inventory.Service.GetItemCount(def);
-        Debug.Log($"[InventoryStateNetwork] HandlePickup: ✅ Added '{def.id}' x{cmd.PickupQuantity} L{cmd.PickupLevel}, total now = {total}", this);
+            if (!inventory.Service.AddItem(inst))
+            {
+                Debug.LogWarning("[InventoryStateNetwork] HandlePickup: AddItem returned FALSE", this);
+                return;
+            }
+
+            int total = inventory.Service.GetItemCount(def);
+            Debug.Log(
+                $"[InventoryStateNetwork] HandlePickup: ✅ SUCCESS, now have total={total} of '{def.id}'",
+                this
+            );
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[InventoryStateNetwork] HandlePickup EXCEPTION: {ex}", this);
+        }
     }
-    catch (System.Exception ex)
-    {
-        Debug.LogError($"[InventoryStateNetwork] HandlePickup error: {ex}", this);
-    }
-}
+
 
 
     private InventorySlot GetSlot(InventorySection section, int index)

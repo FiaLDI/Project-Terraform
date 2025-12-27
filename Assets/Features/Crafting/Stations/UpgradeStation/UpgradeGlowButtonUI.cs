@@ -14,22 +14,23 @@ public class UpgradeGlowButtonUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI title;
     [SerializeField] private TextMeshProUGUI levelText;
 
-    private ItemInstance instance;
+    private InventorySlotRef slotRef;
+
+    private ItemInstance inst;
     private UpgradeRecipeSO recipe;
-    private UpgradeStationUIController controller;
+    private UpgradeStationUIController ui;
 
     // ======================================================
     // INIT
     // ======================================================
 
-    public void Init(
-        ItemInstance inst,
-        UpgradeRecipeSO recipe,
-        UpgradeStationUIController controller)
+    public void Init(ItemInstance inst, UpgradeRecipeSO recipe, UpgradeStationUIController ui, InventorySlotRef slotRef)
     {
-        this.instance = inst;
+        this.inst = inst;
         this.recipe = recipe;
-        this.controller = controller;
+        this.ui = ui;
+        this.slotRef = slotRef;
+    
 
         RefreshVisuals();
 
@@ -44,10 +45,10 @@ public class UpgradeGlowButtonUI : MonoBehaviour
 
     public void RefreshVisuals()
     {
-        if (instance == null || instance.itemDefinition == null)
+        if (inst == null || inst.itemDefinition == null)
             return;
 
-        Item def = instance.itemDefinition;
+        Item def = inst.itemDefinition;
 
         if (icon != null)
             icon.sprite = def.icon;
@@ -57,10 +58,10 @@ public class UpgradeGlowButtonUI : MonoBehaviour
 
         int maxLv = def.upgrades?.Length ?? 0;
         if (levelText != null)
-            levelText.text = $"Lv {instance.level}/{maxLv}";
+            levelText.text = $"Lv {inst.level}/{maxLv}";
 
         // если уже максимум — выключаем кнопку
-        bool canUpgrade = instance.level < maxLv;
+        bool canUpgrade = inst.level < maxLv;
         SetInteractable(canUpgrade);
     }
 
@@ -70,10 +71,10 @@ public class UpgradeGlowButtonUI : MonoBehaviour
 
     private void OnClick()
     {
-        if (instance == null || recipe == null || controller == null)
+        if (inst == null || recipe == null || ui == null)
             return;
 
-        controller.OnUpgradeItemSelected(instance, recipe);
+        ui.OnUpgradeItemSelected(inst, recipe, slotRef);
     }
 
     // ======================================================

@@ -95,30 +95,34 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
             return;
         }
 
-        // FX можно и на клиенте, и на хосте
         fx?.Play(hit.point, hit.normal);
 
         heat += Time.deltaTime;
         fx?.SetOverheat(heat > heatMax);
-
-        // ===== ГЕЙМПЛЕЙ-ЭФФЕКТ ТОЛЬКО НА СЕРВЕРЕ =====
-        if (!InstanceFinder.IsServerStarted)
-            return;
-
         float mining = stats[ToolStat.MiningSpeed] * toolMultiplier * Time.deltaTime;
         float dmg    = stats[ToolStat.Damage]      * toolMultiplier * Time.deltaTime;
 
-        var node = hit.collider.GetComponent<ResourceNodePresenter>();
-        if (node != null)
+        var nodeNet = hit.collider.GetComponent<ResourceNodeNetwork>();
+        if (nodeNet != null)
         {
-            node.ApplyMining(mining);
+            nodeNet.Mine_Server(mining, 1f);
             return;
         }
 
-        var dmgTarget = hit.collider.GetComponentInParent<IDamageable>();
-        if (dmgTarget != null)
+        if (InstanceFinder.IsServerStarted)
         {
-            dmgTarget.TakeDamage(dmg, DamageType.Mining);
+            var node = hit.collider.GetComponent<ResourceNodePresenter>();
+            if (node != null)
+            {
+                node.ApplyMining(mining);
+                return;
+            }
+
+            var dmgTarget = hit.collider.GetComponentInParent<IDamageable>();
+            if (dmgTarget != null)
+            {
+                dmgTarget.TakeDamage(dmg, DamageType.Mining);
+            }
         }
     }
 }

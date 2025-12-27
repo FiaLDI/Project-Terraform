@@ -340,13 +340,10 @@ GameObject:
   - component: {fileID: 5031338854518875698}
   - component: {fileID: 7022724963732028029}
   - component: {fileID: 5819680935717294758}
-  - component: {fileID: 6046908101144590067}
   - component: {fileID: 283238272492682892}
-  - component: {fileID: 5666035054648912853}
   - component: {fileID: 5530530445021933545}
   - component: {fileID: 217312396618154767}
   - component: {fileID: 7104529458777332987}
-  - component: {fileID: 2124617729700347530}
   - component: {fileID: 2751139509848182196}
   - component: {fileID: 2364264481245977081}
   - component: {fileID: 4130661444078387841}
@@ -368,6 +365,7 @@ GameObject:
   - component: {fileID: 9015480268040883364}
   - component: {fileID: 2293977598168238193}
   - component: {fileID: 7407599192339855080}
+  - component: {fileID: 4243781917691856348}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -439,6 +437,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   executor: {fileID: 0}
+  abilityLibrary: {fileID: 0}
 --- !u!114 &2889153697471037876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -598,18 +597,6 @@ MonoBehaviour:
   crouchTransitionSpeed: 10
   airControl: 0.3
   moveInput: {x: 0, y: 0}
---- !u!114 &6046908101144590067
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feaf1b3cdc716a54e9c9b2bb5abf7885, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractionController
 --- !u!114 &283238272492682892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -624,18 +611,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerVisualController
   visualLibrary: {fileID: 11400000, guid: 92992d9b3b0baee4aac268ab4ac09620, type: 2}
   modelRoot: {fileID: 5017748270277261448}
---- !u!114 &5666035054648912853
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0066e41d35fdd5f4d9a8b22e83d0d254, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.PlayerUsageController
 --- !u!114 &5530530445021933545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -677,18 +652,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.UnityIntegration.Adapters.InventoryQuestEventsAdapter
   questManager: {fileID: 0}
---- !u!114 &2124617729700347530
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0066e41d35fdd5f4d9a8b22e83d0d254, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.PlayerUsageController
 --- !u!114 &2751139509848182196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1073,3 +1036,19 @@ MonoBehaviour:
   _overrideType: 1
   _updateHostVisibility: 1
   _observerConditions: []
+--- !u!114 &4243781917691856348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5cc106ff18c5b44b7520bb7cee5f7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUsageNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+  aimSendRate: 20

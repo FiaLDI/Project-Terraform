@@ -172,6 +172,8 @@ namespace Features.Inventory.UI
             var model = inventory.Model;
             if (model == null)
                 return;
+            
+            Debug.Log("[InventoryUIView] Refresh()");
 
             for (int i = 0; i < bagSlots.Length && i < model.main.Count; i++)
                 bagSlots[i].Bind(model.main[i], InventorySection.Bag, i);
