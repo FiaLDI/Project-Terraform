@@ -202,24 +202,21 @@ namespace Features.Inventory.UnityIntegration
 
         private void DropFromHands()
         {
-            Debug.Log("[InventoryInputHandler] DropFromHands called");
-
-
             var net = GetNet();
             if (net == null)
             {
                 Debug.LogWarning("[InventoryInputHandler] DropFromHands: net is NULL");
                 return;
             }
+            
+            var player = LocalPlayerContext.Player;
+            if (player == null) return;
 
+            var playerTransform = player.transform;
+            if (playerTransform == null) return;
 
-            var cam = UnityEngine.Camera.main;
-            if (cam == null)
-            {
-                Debug.LogWarning("[InventoryInputHandler] DropFromHands: Camera.main is NULL");
-                return;
-            }
-
+            var dropPos = playerTransform.position + playerTransform.forward * 1.5f;
+            var dropForward = playerTransform.forward;
 
             net.RequestInventoryCommand(new InventoryCommandData
             {
@@ -227,8 +224,8 @@ namespace Features.Inventory.UnityIntegration
                 Section = InventorySection.RightHand,
                 Index = 0,
                 Amount = int.MaxValue,
-                WorldPos = cam.transform.position,
-                WorldForward = cam.transform.forward
+                WorldPos = dropPos,
+                WorldForward = dropForward
             });
         }
 

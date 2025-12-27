@@ -3,43 +3,71 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Features.Inventory.Domain;
 using Features.Inventory.UI;
+using Features.Player.UnityIntegration;
 
 namespace Features.Inventory.UnityIntegration
 {
     public sealed class InventoryDragController : MonoBehaviour
     {
         [SerializeField] private float snapRadius = 50f;
-
         private InventoryManager inventory;
         private GameObject player;
-
         private readonly List<InventorySlotUI> slots = new();
-
         private InventorySlotUI draggedUI;
         private InventorySlot draggedSlot;
         private InventorySlotUI highlightedSlot;
-
         private bool droppedOnSlot;
-
         public InventorySlotUI HoveredSlot { get; private set; }
         public InventorySlotUI LastInteractedSlot { get; private set; }
+
 
         // =====================================================
         // INIT
         // =====================================================
-
         public bool IsReady => inventory != null;
 
-        public void BindPlayer(GameObject player)
+        private void Start()
         {
-            this.player = player;
-            inventory = player.GetComponent<InventoryManager>();
+            // Подписываемся на появление игрока (на случай если BindPlayer еще не вызывалась)
+            PlayerRegistry.SubscribeLocalPlayerReady(OnLocalPlayerReady);
+            
+            // Проверяем, может игрок уже готов
+            if (PlayerRegistry.Instance != null && PlayerRegistry.Instance.LocalPlayer != null)
+            {
+                OnLocalPlayerReady(PlayerRegistry.Instance);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            PlayerRegistry.UnsubscribeLocalPlayerReady(OnLocalPlayerReady);
+        }
+
+        private void OnLocalPlayerReady(PlayerRegistry registry)
+        {
+            if (registry.LocalPlayer != null)
+            {
+                BindPlayer(registry.LocalPlayer);
+                RegisterSlots(GetComponentsInChildren<InventorySlotUI>(true));
+                Debug.Log("[InventoryDragController] Auto-bound to local player", this);
+            }
+        }
+
+        public void BindPlayer(GameObject playerObj)
+        {
+            this.player = playerObj;
+            inventory = playerObj.GetComponent<InventoryManager>();
+
 
             if (inventory == null)
             {
                 Debug.LogError(
                     "[InventoryDragController] InventoryManager not found on player",
-                    player);
+                    playerObj);
+            }
+            else
+            {
+                Debug.Log("[InventoryDragController] BindPlayer succeeded", this);
             }
         }
 
@@ -47,6 +75,7 @@ namespace Features.Inventory.UnityIntegration
         {
             slots.Clear();
             slots.AddRange(uiSlots);
+            Debug.Log($"[InventoryDragController] Registered {slots.Count} slots", this);
         }
 
         // =====================================================
@@ -58,6 +87,18 @@ namespace Features.Inventory.UnityIntegration
             InventorySlot slot,
             PointerEventData eventData)
         {
+            if (!IsReady)
+            {
+                if (PlayerRegistry.Instance?.LocalPlayer != null)
+                {
+                    BindPlayer(PlayerRegistry.Instance.LocalPlayer);
+                    if (slots.Count == 0)
+                    {
+                        RegisterSlots(GetComponentsInChildren<InventorySlotUI>(true));
+                    }
+                }
+            }
+            
             if (!IsReady || ui == null || slot == null)
                 return;
 

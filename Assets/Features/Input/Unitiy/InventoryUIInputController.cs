@@ -1,5 +1,4 @@
 using Features.Inventory.Domain;
-using Features.Inventory.UI;
 using Features.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -12,6 +11,18 @@ namespace Features.Inventory.UnityIntegration
     {
         private PlayerInputContext input;
         private bool subscribed;
+
+        private InventoryDragController drag;
+        private InputAction dropOneAction;
+        private InputAction dropAllAction;
+        private System.Action<InputAction.CallbackContext> dropOneHandler;
+        private System.Action<InputAction.CallbackContext> dropAllHandler;
+
+        public void SetContext(InventoryDragController dragCtrl)
+        {
+            Debug.LogWarning("IS DRAGFFFFF");
+            drag = dragCtrl;
+        }
 
         public void BindInput(PlayerInputContext ctx)
         {
@@ -38,8 +49,21 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             var ui = input.Actions.UI;
-            ui.FindAction("DropOne", true).performed += _ => TryDrop(false);
-            ui.FindAction("DropAll", true).performed += _ => TryDrop(true);
+
+            dropOneAction = ui.FindAction("DropOne", false);
+            dropAllAction = ui.FindAction("DropAll", false);
+
+            if (dropOneAction == null || dropAllAction == null)
+            {
+                UnityEngine.Debug.LogError("[InventoryUIInputController] DropOne/DropAll not found in UI map", this);
+                return;
+            }
+
+            dropOneHandler = _ => TryDrop(false);
+            dropAllHandler = _ => TryDrop(true);
+
+            dropOneAction.performed += dropOneHandler;
+            dropAllAction.performed += dropAllHandler;
 
             subscribed = true;
         }
@@ -49,18 +73,25 @@ namespace Features.Inventory.UnityIntegration
             if (!subscribed || input == null)
                 return;
 
-            var ui = input.Actions.UI;
-            ui.FindAction("DropOne", true).performed -= _ => TryDrop(false);
-            ui.FindAction("DropAll", true).performed -= _ => TryDrop(true);
+            if (dropOneAction != null && dropOneHandler != null)
+                dropOneAction.performed -= dropOneHandler;
+            if (dropAllAction != null && dropAllHandler != null)
+                dropAllAction.performed -= dropAllHandler;
 
+            dropOneAction = null;
+            dropAllAction = null;
+            dropOneHandler = null;
+            dropAllHandler = null;
             subscribed = false;
         }
 
         private void TryDrop(bool dropAll)
         {
-            var drag = GetComponentInParent<InventoryDragController>();
             if (drag == null)
+            {
+                UnityEngine.Debug.LogError("NOT DRUG");
                 return;
+            }
 
             var slotUI =
                 drag.HoveredSlot ??

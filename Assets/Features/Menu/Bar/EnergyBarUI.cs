@@ -24,25 +24,38 @@ public class EnergyBarUI : PlayerBoundUIView
 
     protected override void OnPlayerBound(GameObject player)
     {
+        Debug.Log("[EnergyBarUI] OnPlayerBound called", this);
+
         boundStats = player.GetComponent<PlayerStats>();
         if (boundStats == null)
+        {
+            Debug.LogError("[EnergyBarUI] PlayerStats not found on player", this);
             return;
+        }
 
+        // КЛЮЧЕВОЙ ФИХ: Проверяем готовность адаптера
         var adapter = boundStats.Adapter;
         if (adapter == null)
-            return;
-
-        if (!adapter.IsReady)
         {
+            Debug.LogWarning("[EnergyBarUI] Adapter is null, waiting for ready event", this);
             PlayerStats.OnStatsReady += HandleStatsReady;
             return;
         }
 
+        if (!adapter.IsReady)
+        {
+            Debug.LogWarning("[EnergyBarUI] Adapter not ready yet, waiting...", this);
+            PlayerStats.OnStatsReady += HandleStatsReady;
+            return;
+        }
+
+        Debug.Log("[EnergyBarUI] Adapter ready, binding energy stats", this);
         Bind(adapter.EnergyStats);
     }
 
     protected override void OnPlayerUnbound(GameObject player)
     {
+        Debug.Log("[EnergyBarUI] OnPlayerUnbound called", this);
         PlayerStats.OnStatsReady -= HandleStatsReady;
         Unbind();
     }
@@ -53,13 +66,21 @@ public class EnergyBarUI : PlayerBoundUIView
 
     private void HandleStatsReady(PlayerStats stats)
     {
+        Debug.Log("[EnergyBarUI] HandleStatsReady called", this);
+
         if (stats != boundStats)
+        {
+            Debug.Log("[EnergyBarUI] Stats mismatch, ignoring", this);
             return;
+        }
 
         PlayerStats.OnStatsReady -= HandleStatsReady;
 
-        if (stats.Adapter != null)
+        if (stats.Adapter != null && stats.Adapter.IsReady)
+        {
+            Debug.Log("[EnergyBarUI] Now binding energy stats", this);
             Bind(stats.Adapter.EnergyStats);
+        }
     }
 
     // =====================================================
@@ -68,10 +89,15 @@ public class EnergyBarUI : PlayerBoundUIView
 
     private void Bind(IEnergyView view)
     {
-        energy = view;
-        if (energy == null)
+        if (view == null)
+        {
+            Debug.LogError("[EnergyBarUI] Cannot bind null view", this);
             return;
+        }
 
+        Debug.Log("[EnergyBarUI] Successfully bound to energy view", this);
+
+        energy = view;
         energy.OnEnergyChanged += UpdateView;
         UpdateView(energy.CurrentEnergy, energy.MaxEnergy);
     }

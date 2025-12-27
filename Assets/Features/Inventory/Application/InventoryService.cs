@@ -196,16 +196,12 @@ namespace Features.Inventory.Domain
                 InventorySection.Bag =>
                     ExtractFromBag(index, amount),
 
-
                 InventorySection.LeftHand or InventorySection.RightHand =>
                     DropFromHands(),
-
 
                 _ => ItemInstance.Empty
             };
         }
-
-
 
         private ItemInstance ExtractFromBag(int index, int amount)
         {
@@ -242,27 +238,38 @@ namespace Features.Inventory.Domain
 
 
         public ItemInstance DropFromHands()
-        {
-            if (!model.rightHand.item.IsEmpty)
-            {
-                var dropped = model.rightHand.item;
-                model.rightHand.item = ItemInstance.Empty;
-                OnChanged?.Invoke();
-                return dropped;
-            }
+{
+    if (!model.rightHand.item.IsEmpty)
+    {
+        var item = model.rightHand.item;
+        UnityEngine.Debug.Log(
+            $"[InventoryService] DropFromHands RIGHT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
+            $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
+        );
 
+        var dropped = model.rightHand.item;
+        model.rightHand.item = ItemInstance.Empty;
+        OnChanged?.Invoke();
+        return dropped;
+    }
 
-            if (!model.leftHand.item.IsEmpty)
-            {
-                var dropped = model.leftHand.item;
-                model.leftHand.item = ItemInstance.Empty;
-                OnChanged?.Invoke();
-                return dropped;
-            }
+    if (!model.leftHand.item.IsEmpty)
+    {
+        var item = model.leftHand.item;
+        UnityEngine.Debug.Log(
+            $"[InventoryService] DropFromHands LEFT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
+            $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
+        );
 
+        var dropped = model.leftHand.item;
+        model.leftHand.item = ItemInstance.Empty;
+        OnChanged?.Invoke();
+        return dropped;
+    }
 
-            return ItemInstance.Empty;
-        }
+    return ItemInstance.Empty;
+}
+
 
 
         // =====================================================

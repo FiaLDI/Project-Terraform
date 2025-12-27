@@ -1,8 +1,9 @@
-using UnityEngine;
+using Features.Input;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
-using Features.Input;
 using Features.Player.UI;
+using GLTFast.Schema;
+using UnityEngine;
 
 namespace Features.Inventory.UI
 {
@@ -56,7 +57,7 @@ namespace Features.Inventory.UI
                 Debug.LogWarning("[InventoryUIView] PlayerUIRoot is null! TRYING BOUND", this);
                 OnPlayerBound(root.BoundPlayer);
             }
-            
+                        
             root.OnPlayerBound += OnPlayerBound;
             Debug.Log("[InventoryUIView] Subscribed to OnPlayerBound");
         }
@@ -96,6 +97,16 @@ namespace Features.Inventory.UI
                 return;
             }
 
+            inventoryInput = player.GetComponent<InventoryUIInputController>();
+            if (inventoryInput == null)
+            {
+                Debug.LogError(
+                    "[InventoryUIView] InventoryUIInputController not found on player",
+                    player
+                );
+                return;
+            }
+
             InitDrag(player);
 
             inventory.OnInventoryChanged += Refresh;
@@ -125,6 +136,15 @@ namespace Features.Inventory.UI
             foreach (var slot in GetComponentsInChildren<InventorySlotUI>(true))
             {
                 slot.SetDragController(drag);
+            }
+
+            if (inventoryInput != null)
+            {
+                inventoryInput.SetContext(drag);
+            }
+            else
+            {
+                Debug.LogError("inventoryInput IS NULL");
             }
         }
 

@@ -15,16 +15,18 @@ public sealed class WorldItemNetwork : NetworkBehaviour
 
     private ItemRuntimeHolder runtimeHolder;
     private bool runtimeApplied;
-
-    // ================= PUBLIC API =================
+    private ItemInstance cachedInstance;
 
     public bool IsPickupAvailable =>
         !string.IsNullOrEmpty(itemId.Value) &&
         quantity.Value > 0;
 
+
     public string ItemId => itemId.Value;
     public int Quantity => quantity.Value;
     public int Level => level.Value;
+
+    public ItemInstance GetCachedInstance() => cachedInstance;
 
     // ================= SERVER INIT =================
 
@@ -33,6 +35,10 @@ public sealed class WorldItemNetwork : NetworkBehaviour
     {
         if (inst == null || inst.IsEmpty || inst.itemDefinition == null)
             return;
+
+        cachedInstance = inst;
+        
+        Debug.Log($"[WorldItemNetwork] Init called: ItemId={inst.itemDefinition.id}, Qty={inst.quantity}, Level={inst.level}", this);
 
         itemId.Value   = inst.itemDefinition.id;
         quantity.Value = inst.quantity;

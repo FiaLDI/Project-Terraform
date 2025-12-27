@@ -112,7 +112,7 @@ namespace Features.Player.UnityIntegration
 
         private float GetSpeedFromStats()
         {
-            if (stats != null)
+            if (stats != null && stats.IsReady)
             {
                 if (IsCrouching) return stats.CrouchSpeed;
                 if (isSprinting) return stats.SprintSpeed;

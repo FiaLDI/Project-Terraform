@@ -6,7 +6,7 @@ namespace Features.Inventory.Domain
     public struct InventoryCommandData
     {
         public InventoryCommand Command;
-        public int WorldItemNetId;
+        public uint WorldItemNetId;
 
         public InventorySection Section;
         public int Index;
@@ -23,5 +23,9 @@ namespace Features.Inventory.Domain
         public Vector3 WorldForward;
 
         public string RecipeId;
+
+        public string ItemId;
+        public int PickupQuantity;
+        public int PickupLevel; 
     }
 }
