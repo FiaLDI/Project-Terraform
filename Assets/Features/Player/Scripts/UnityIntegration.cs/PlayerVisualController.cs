@@ -15,6 +15,7 @@ public class PlayerVisualController : MonoBehaviour
 
     public void ApplyVisual(string presetId)
     {
+        Debug.Log($"ApplyVisual {presetId}", this);
         var preset = visualLibrary.Find(presetId);
         if (preset == null)
             return;

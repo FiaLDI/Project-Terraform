@@ -82,6 +82,7 @@ public sealed class NetworkPlayerService : MonoBehaviour
         Debug.Log($"[PlayerService] Spawned player for conn {conn.ClientId}");
     }
 
+
     // ==========================================================
     // DESPAWN
     // ==========================================================

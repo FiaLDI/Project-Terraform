@@ -26,9 +26,7 @@ public sealed class LocalPlayerController : MonoBehaviour
 
         inputContext = GetComponent<PlayerInputContext>();
         if (inputContext == null)
-        {
             Debug.LogError("[LocalPlayerController] PlayerInputContext missing");
-        }
     }
 
     private void OnEnable()
@@ -47,19 +45,34 @@ public sealed class LocalPlayerController : MonoBehaviour
 
     public void Bind(NetworkPlayer player)
     {
+        // Защита: вдруг по ошибке прилетит не-owner
+        if (!player.IsOwner)
+        {
+            Debug.LogWarning("[LocalPlayerController] Bind called for non-owner player, ignoring", player);
+            return;
+        }
+
         if (boundPlayer == player)
             return;
 
-        Unbind(boundPlayer);
+        Debug.Log($"[LocalPlayerController] Bind to {player.name}");
+
+        // unbind старого локального
+        if (boundPlayer != null)
+            Unbind(boundPlayer);
+
         boundPlayer = player;
 
-        inputContext.Enable();
-        InputModeManager.I.Bind(inputContext);
-        InputModeManager.I.SetMode(InputMode.Gameplay);
+        if (inputContext != null)
+        {
+            inputContext.Enable();
+            InputModeManager.I.Bind(inputContext);
+            InputModeManager.I.SetMode(InputMode.Gameplay);
+        }
 
         player.Controller.BindInput(inputContext);
 
-        var consumers = player.GetComponents<IInputContextConsumer>();
+        var consumers = this.GetComponents<IInputContextConsumer>();
         foreach (var c in consumers)
             c.BindInput(inputContext);
 
@@ -86,39 +99,41 @@ public sealed class LocalPlayerController : MonoBehaviour
             Debug.LogError("[LocalPlayerController] Camera.main NOT FOUND");
         }
 
-        // ===== INIT STATS =====
+        // Статы можно инициализировать тут, но у тебя они уже Init в NetworkPlayer.
         var stats = player.GetComponent<PlayerStats>();
         if (stats != null)
-        {
             stats.Init();
-        }
         else
-        {
             Debug.LogError("[LocalPlayerController] PlayerStats not found on player!");
-        }
 
-
-        PlayerUIRoot.I.Bind(player.gameObject);
+        if (PlayerUIRoot.I != null)
+            PlayerUIRoot.I.Bind(player.gameObject);
 
         Debug.Log($"[LocalPlayerController] Bound to {player.name}");
     }
 
     public void Unbind(NetworkPlayer player)
     {
-        if (boundPlayer != player || boundPlayer == null)
+        if (boundPlayer == null || boundPlayer != player)
             return;
 
-        var consumers = boundPlayer.GetComponents<IInputContextConsumer>();
+        var consumers = this.GetComponents<IInputContextConsumer>();
         foreach (var c in consumers)
             c.UnbindInput(inputContext);
+
         boundPlayer.Controller.UnbindInput(inputContext);
 
         var cam = boundPlayer.GetComponent<PlayerCameraController>();
         if (cam != null)
             cam.SetLocal(false);
 
-        inputContext.Disable();
+        if (inputContext != null)
+            inputContext.Disable();
+
         boundPlayer = null;
+
+        if (PlayerUIRoot.I != null)
+            PlayerUIRoot.I.Unbind();
 
         Debug.Log("[LocalPlayerController] Unbound");
     }

@@ -665,6 +665,7 @@ GameObject:
   - component: {fileID: 7706181940771707130}
   - component: {fileID: 4459986023033783815}
   - component: {fileID: 8569830652582562370}
+  - component: {fileID: 7461453766968472451}
   m_Layer: 0
   m_Name: InventoryUIRoot
   m_TagString: Untagged
@@ -762,7 +763,7 @@ MonoBehaviour:
   - {fileID: 8433262453340298880}
   leftHandSlot: {fileID: 2616253479953918566}
   rightHandSlot: {fileID: 2735017754305288789}
-  inventoryInput: {fileID: 0}
+  inventoryInput: {fileID: 7461453766968472451}
 --- !u!114 &8569830652582562370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -776,6 +777,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryDragController
   snapRadius: 50
+--- !u!114 &7461453766968472451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 543819503921123991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 372c92c3b2a4ba946aa194349b3ec3fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryUIInputController
 --- !u!1 &553673032857220639
 GameObject:
   m_ObjectHideFlags: 0

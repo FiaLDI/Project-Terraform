@@ -2,7 +2,6 @@ using FishNet.Object;
 using UnityEngine;
 using Features.Stats.UnityIntegration;
 
-
 namespace Features.Player.UnityIntegration
 {
     [RequireComponent(typeof(PlayerController))]
@@ -11,10 +10,13 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private PlayerController playerController;
         public PlayerController Controller => playerController;
 
-        /// <summary>
-        /// Вызывается ТОЛЬКО для локального игрока
-        /// </summary>
         public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
+
+        private void Awake()
+        {
+            if (playerController == null)
+                playerController = GetComponent<PlayerController>();
+        }
 
         public override void OnStartServer()
         {
@@ -30,43 +32,39 @@ namespace Features.Player.UnityIntegration
 
             Debug.Log($"[NetworkPlayer] OnStartClient: {gameObject.name}, IsOwner={IsOwner}", this);
 
-            // Регистрируем игрока в реестре
-            if (PlayerRegistry.Instance == null)
+            var registry = PlayerRegistry.Instance;
+            if (registry == null)
             {
-                Debug.LogError("[NetworkPlayer] PlayerRegistry not found!", this);
+                Debug.LogError("[NetworkPlayer] PlayerRegistry not found (Instance == null)!", this);
                 return;
             }
 
-            PlayerRegistry.Instance.RegisterPlayer(gameObject);
+            registry.RegisterPlayer(gameObject);
             Debug.Log($"[NetworkPlayer] Player registered: {gameObject.name}", this);
 
-            // Проверяем что это локальный игрок
+            // Если не локальный владелец — дальше ничего не делаем
             if (!IsOwner || !Owner.IsLocalClient)
             {
                 Debug.Log($"[NetworkPlayer] This is REMOTE player: {gameObject.name}", this);
                 return;
             }
 
-            // ✅ Инициализируем статы ТОЛЬКО для локального игрока
+            // Инициализируем статы только для локального игрока
             InitializePlayerStats();
 
-            // Устанавливаем как локального игрока в реестре
-            PlayerRegistry.Instance.SetLocalPlayer(gameObject);
+            // Устанавливаем локального игрока в реестре
+            registry.SetLocalPlayer(gameObject);
 
-            // Уведомляем что локальный игрок готов
+            // Уведомляем слушателей (LocalPlayerController, и т.п.)
             OnLocalPlayerSpawned?.Invoke(this);
 
             Debug.Log($"[NetworkPlayer] Local player fully initialized: {gameObject.name} ✅", this);
         }
 
-        /// <summary>
-        /// Инициализирует статы игрока.
-        /// </summary>
         private void InitializePlayerStats()
         {
             Debug.Log("[NetworkPlayer] Initializing player stats...", this);
 
-            // Получаем компонент PlayerStats
             var playerStats = GetComponent<PlayerStats>();
             if (playerStats == null)
             {
@@ -74,7 +72,6 @@ namespace Features.Player.UnityIntegration
                 return;
             }
 
-            // Инициализируем статы
             playerStats.Init();
 
             if (!playerStats.IsReady)
@@ -91,12 +88,11 @@ namespace Features.Player.UnityIntegration
             base.OnStopClient();
 
             if (IsOwner && Owner.IsLocalClient)
-            {
                 Debug.Log($"[NetworkPlayer] Local player despawned: {gameObject.name}", this);
-            }
 
-            if (PlayerRegistry.Instance != null)
-                PlayerRegistry.Instance.UnregisterPlayer(gameObject);
+            var registry = PlayerRegistry.Instance;
+            if (registry != null)
+                registry.UnregisterPlayer(gameObject);
         }
     }
 }

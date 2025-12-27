@@ -4,6 +4,7 @@ using UnityEngine;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
 using Features.Items.Domain;
+using System.Collections;
 
 public sealed class InventoryStateNetwork : NetworkBehaviour
 {
@@ -31,7 +32,13 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         if (inventory != null)
             inventory.OnInventoryChanged += ServerOnInventoryChanged;
 
-        // initial snapshot (host / early owner)
+        StartCoroutine(InitialSnapshotRoutine());
+    }
+
+    [Server]
+    private IEnumerator InitialSnapshotRoutine()
+    {
+        yield return null;
         ServerOnInventoryChanged();
     }
 
@@ -119,6 +126,8 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             var owner = Owner;
             if (owner != null)
             {
+                if (!NetworkObject.Observers.Contains(owner))
+                Debug.LogWarning($"[InventoryStateNetwork] Owner {owner.ClientId} is NOT observer of {NetworkObject.ObjectId}");
                 var bag = new InventorySlotNet[m.main.Count];
                 for (int i = 0; i < m.main.Count; i++)
                     bag[i] = ToNet(m.main[i].item);

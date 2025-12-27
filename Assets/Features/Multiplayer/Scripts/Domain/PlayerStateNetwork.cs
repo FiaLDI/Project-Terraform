@@ -16,12 +16,23 @@ namespace Features.Player.UnityIntegration
 
         /* ================= LIFECYCLE ================= */
 
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            // Клиент только что подключился – применяем текущий снапшот
+            if (!string.IsNullOrEmpty(_visualId.Value))
+                visualController?.ApplyVisual(_visualId.Value);
+        }
+
         public override void OnStartNetwork()
         {
             base.OnStartNetwork();
 
             classController = GetComponent<PlayerClassController>();
             visualController = GetComponent<PlayerVisualController>();
+
+            Debug.Log($"[PlayerStateNetwork] OnStartNetwork, visualId={_visualId.Value}", this);
 
             _classId.OnChange += OnClassChanged;
             _visualId.OnChange += OnVisualChanged;
@@ -41,21 +52,18 @@ namespace Features.Player.UnityIntegration
         {
             base.OnStartServer();
 
-            if (classController == null)
-            {
-                Debug.LogError("[PlayerStateNetwork] PlayerClassController missing", this);
-                return;
-            }
+            classController = GetComponent<PlayerClassController>();
+            visualController = GetComponent<PlayerVisualController>();
 
-            // Сервер инициализирует snapshot
+            // Сервер тоже должен выбрать класс, чтобы currentClass заполнился
+            classController.ApplyClass(classController.CurrentClassId);
+
             _classId.Value = classController.CurrentClassId;
             _visualId.Value = classController.CurrentVisualId;
 
-            Debug.Log(
-                $"[PlayerStateNetwork] Init state class={_classId.Value}, visual={_visualId.Value}",
-                this
-            );
+            Debug.Log($"[PlayerStateNetwork] Init state class={_classId.Value}, visual={_visualId.Value}", this);
         }
+
 
         /// <summary>
         /// Единственная серверная точка смены класса
@@ -90,11 +98,14 @@ namespace Features.Player.UnityIntegration
 
         private void OnVisualChanged(string oldValue, string newValue, bool asServer)
         {
-            if (asServer)
-                return;
-
             if (string.IsNullOrEmpty(newValue))
                 return;
+
+            // Чистый сервер – без скинов
+            if (asServer && !IsHostInitialized)
+                return;
+
+            Debug.Log($"OnVisualChanged {oldValue} -> {newValue}, asServer={asServer}, IsHost={IsHostInitialized}, IsOwner={IsOwner}", this);
 
             visualController?.ApplyVisual(newValue);
         }

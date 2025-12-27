@@ -2,7 +2,6 @@ using Features.Input;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
 using Features.Player.UI;
-using GLTFast.Schema;
 using UnityEngine;
 
 namespace Features.Inventory.UI
@@ -19,18 +18,14 @@ namespace Features.Inventory.UI
         [SerializeField] private InventorySlotUI leftHandSlot;
         [SerializeField] private InventorySlotUI rightHandSlot;
 
-        [SerializeField]
-        private InventoryUIInputController inventoryInput;
+        [Header("Input")]
+        [SerializeField] private InventoryUIInputController inventoryInput; // ВИСИТ НА UI, НЕ НА PLAYER
 
         public InputMode Mode => InputMode.Inventory;
 
         private InventoryManager inventory;
         private bool initialized;
         private bool pendingShow;
-
-        // ======================================================
-        // LIFECYCLE
-        // ======================================================
 
         private void Awake()
         {
@@ -40,24 +35,22 @@ namespace Features.Inventory.UI
 
         private void Start()
         {
-            Debug.Log("[InventoryUIView] OnEnable", this);
-            
+            Debug.Log("[InventoryUIView] Start", this);
+
             var root = PlayerUIRoot.I;
             Debug.Log($"[InventoryUIView] PlayerUIRoot.I = {root}", this);
-            
+
             if (root == null)
             {
                 Debug.LogWarning("[InventoryUIView] PlayerUIRoot is null!", this);
                 return;
             }
-            
+
             Debug.Log($"[InventoryUIView] root.BoundPlayer = {root.BoundPlayer}", this);
-            
-            if (root.BoundPlayer != null) {
-                Debug.LogWarning("[InventoryUIView] PlayerUIRoot is null! TRYING BOUND", this);
+
+            if (root.BoundPlayer != null)
                 OnPlayerBound(root.BoundPlayer);
-            }
-                        
+
             root.OnPlayerBound += OnPlayerBound;
             Debug.Log("[InventoryUIView] Subscribed to OnPlayerBound");
         }
@@ -78,7 +71,8 @@ namespace Features.Inventory.UI
             {
                 initialized = false;
                 inventory = null;
-                bagWindow.SetActive(false);
+                if (bagWindow != null)
+                    bagWindow.SetActive(false);
                 return;
             }
 
@@ -90,20 +84,7 @@ namespace Features.Inventory.UI
             inventory = player.GetComponent<InventoryManager>();
             if (inventory == null)
             {
-                Debug.LogError(
-                    "[InventoryUIView] InventoryManager not found on player",
-                    player
-                );
-                return;
-            }
-
-            inventoryInput = player.GetComponent<InventoryUIInputController>();
-            if (inventoryInput == null)
-            {
-                Debug.LogError(
-                    "[InventoryUIView] InventoryUIInputController not found on player",
-                    player
-                );
+                Debug.LogError("[InventoryUIView] InventoryManager not found on player", player);
                 return;
             }
 
@@ -134,18 +115,12 @@ namespace Features.Inventory.UI
             drag.RegisterSlots(GetComponentsInChildren<InventorySlotUI>(true));
 
             foreach (var slot in GetComponentsInChildren<InventorySlotUI>(true))
-            {
                 slot.SetDragController(drag);
-            }
 
             if (inventoryInput != null)
-            {
                 inventoryInput.SetContext(drag);
-            }
             else
-            {
-                Debug.LogError("inventoryInput IS NULL");
-            }
+                Debug.LogError("[InventoryUIView] inventoryInput IS NULL", this);
         }
 
         // ======================================================
@@ -160,7 +135,8 @@ namespace Features.Inventory.UI
                 return;
             }
 
-            bagWindow.SetActive(true);
+            if (bagWindow != null)
+                bagWindow.SetActive(true);
 
             if (inventoryInput != null)
                 inventoryInput.enabled = true;
@@ -170,7 +146,8 @@ namespace Features.Inventory.UI
 
         public void Hide()
         {
-            bagWindow.SetActive(false);
+            if (bagWindow != null)
+                bagWindow.SetActive(false);
 
             if (inventoryInput != null)
                 inventoryInput.enabled = false;
@@ -189,7 +166,6 @@ namespace Features.Inventory.UI
 
         public void Refresh()
         {
-            
             if (!initialized || inventory == null)
                 return;
 
@@ -197,14 +173,9 @@ namespace Features.Inventory.UI
             if (model == null)
                 return;
 
-            // ==== BAG ====
             for (int i = 0; i < bagSlots.Length && i < model.main.Count; i++)
-            {
                 bagSlots[i].Bind(model.main[i], InventorySection.Bag, i);
-            }
 
-
-            // ==== HANDS ====
             leftHandSlot.Bind(model.leftHand, InventorySection.LeftHand, 0);
             rightHandSlot.Bind(model.rightHand, InventorySection.RightHand, 0);
         }

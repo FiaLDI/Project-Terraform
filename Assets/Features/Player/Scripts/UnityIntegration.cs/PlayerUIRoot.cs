@@ -1,31 +1,16 @@
 using System;
 using Features.Inventory.UnityIntegration;
 using UnityEngine;
+using Features.Player.UnityIntegration;
 
 namespace Features.Player.UI
 {
-    /// <summary>
-    /// Единственная stateful-точка привязки UI к локальному Player.
-    /// НЕ источник данных.
-    /// НЕ сервис.
-    /// ТОЛЬКО bootstrap / context.
-    /// </summary>
     public sealed class PlayerUIRoot : MonoBehaviour
     {
         public static PlayerUIRoot I { get; private set; }
 
-        /// <summary>
-        /// Текущий привязанный Player (stateful).
-        /// Может быть null (например, до спавна или после despawn).
-        /// </summary>
         public GameObject BoundPlayer { get; private set; }
 
-        /// <summary>
-        /// Событие привязки Player к UI.
-        /// Вызывается:
-        /// - при первом Bind
-        /// - при перепривязке (respawn)
-        /// </summary>
         public event Action<GameObject> OnPlayerBound;
 
         private void Awake()
@@ -40,34 +25,44 @@ namespace Features.Player.UI
             DontDestroyOnLoad(gameObject);
         }
 
+        private void OnEnable()
+        {
+            PlayerRegistry.SubscribeLocalPlayerReady(OnLocalPlayerReady);
+        }
+
+        private void OnDisable()
+        {
+            PlayerRegistry.UnsubscribeLocalPlayerReady(OnLocalPlayerReady);
+        }
+
+        private void OnLocalPlayerReady(PlayerRegistry reg)
+        {
+            if (BoundPlayer == null && reg.LocalPlayer != null)
+                Bind(reg.LocalPlayer);
+        }
+
         /// <summary>
-        /// Единственная точка привязки UI к локальному Player.
-        /// Вызывается ТОЛЬКО из LocalPlayerController.
+        /// Вызывается из LocalPlayerController.Bind.
         /// </summary>
         public void Bind(GameObject player)
         {
             Debug.Log($"[PlayerUIRoot] Bind called with player={player?.name}");
 
             BoundPlayer = player;
-            
-            // Важно: убедись, что Inventory висит на корне Player, а не на дочернем объекте
+
             var inv = player.GetComponent<InventoryManager>();
             Debug.Log($"[PlayerUIRoot] Found InventoryManager: {inv}");
-            
+
             if (inv == null)
             {
                 Debug.LogError("[PlayerUIRoot] InventoryManager NOT FOUND on " + player.name);
-                return; // Не вызываем OnPlayerBound, если инвентаря нет
+                return;
             }
-            
+
             Debug.Log("[PlayerUIRoot] Invoking OnPlayerBound");
             OnPlayerBound?.Invoke(player);
         }
 
-
-        /// <summary>
-        /// Явный unbind (на будущее: despawn / spectator / disconnect).
-        /// </summary>
         public void Unbind()
         {
             if (BoundPlayer == null)
