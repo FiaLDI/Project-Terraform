@@ -27,9 +27,12 @@ namespace Features.Input
                 Destroy(gameObject);
                 return;
             }
+            if (transform.parent == null)  // Только root объекты!
+            {
+                DontDestroyOnLoad(gameObject);
+            }
 
             I = this;
-            DontDestroyOnLoad(gameObject);
         }
 
         // ======================================================

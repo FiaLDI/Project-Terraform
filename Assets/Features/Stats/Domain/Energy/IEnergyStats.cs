@@ -33,5 +33,7 @@ namespace Features.Stats.Domain
         bool HasEnergy(float amount);
         bool TrySpend(float amount);
         void Recover(float amount);
+        void SetCurrentEnergy(float value);
+        void SetMaxEnergyDirect(float max);
     }
 }

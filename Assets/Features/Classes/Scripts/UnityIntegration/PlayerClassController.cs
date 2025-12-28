@@ -8,89 +8,155 @@ using Features.Stats.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Buffs.UnityIntegration;
 
+
 [RequireComponent(typeof(PlayerVisualController))]
 public sealed class PlayerClassController : MonoBehaviour
 {
     [Header("Classes Library")]
     [SerializeField] private PlayerClassLibrarySO library;
 
+
     [Header("Default Class ID")]
     [SerializeField] private string defaultClassId = "engineer";
 
+
     /* ================= COMPONENTS ================= */
+
 
     private PlayerVisualController visualController;
     private PassiveSystem passiveSystem;
     private AbilityCaster abilityCaster;
     private PlayerBuffTarget buffTarget;
 
+
     /* ================= DOMAIN ================= */
+
 
     private PlayerClassService classService;
     private IStatsFacade stats;
 
+
     private PlayerClassConfigSO currentClass;
+    public PlayerClassConfigSO GetCurrentClass() => currentClass;
+
 
     /* ================= PUBLIC STATE ================= */
 
+
     public string CurrentClassId =>
         currentClass != null ? currentClass.id : defaultClassId;
+
 
     public string CurrentVisualId =>
         currentClass != null && currentClass.visualPreset != null
             ? currentClass.visualPreset.id
             : null;
 
+
+    // 🟢 EVENT: когда класс полностью применён (с баффами)
+    public event System.Action OnClassApplied;
+
+
     /* ================= LIFECYCLE ================= */
+
 
     private void Awake()
     {
+        // 🟢 Получаем все компоненты
         visualController = GetComponent<PlayerVisualController>();
-        passiveSystem   = GetComponent<PassiveSystem>();
-        abilityCaster   = GetComponent<AbilityCaster>();
-        buffTarget      = GetComponent<PlayerBuffTarget>();
+        passiveSystem = GetComponent<PassiveSystem>();
+        abilityCaster = GetComponent<AbilityCaster>();
+        buffTarget = GetComponent<PlayerBuffTarget>();
+
+        if (visualController == null)
+            Debug.LogError("[PlayerClassController] PlayerVisualController not found!", this);
+        if (passiveSystem == null)
+            Debug.LogError("[PlayerClassController] PassiveSystem not found!", this);
+        if (abilityCaster == null)
+            Debug.LogError("[PlayerClassController] AbilityCaster not found!", this);
+        if (buffTarget == null)
+            Debug.LogError("[PlayerClassController] PlayerBuffTarget not found!", this);
+
+        // 🟢 Инициализируем сервис классов
+        if (library == null)
+        {
+            Debug.LogError("[PlayerClassController] PlayerClassLibrarySO not assigned!", this);
+            return;
+        }
 
         classService = new PlayerClassService(
             library.classes,
             defaultClassId
         );
+
+        Debug.Log("[PlayerClassController] Initialized", this);
     }
+
 
     private void OnEnable()
     {
         PlayerStats.OnStatsReady += OnStatsReady;
     }
 
+
     private void OnDisable()
     {
         PlayerStats.OnStatsReady -= OnStatsReady;
     }
 
+
     /* ================= STATS ================= */
+
 
     private void OnStatsReady(PlayerStats ps)
     {
+        Debug.Log("[PlayerClassController] Stats ready event received", this);
+
         stats = ps.Facade;
+        if (stats == null)
+        {
+            Debug.LogError("[PlayerClassController] Stats facade is null!", this);
+            return;
+        }
+
         buffTarget?.SetStats(stats);
 
-        // если класс уже был назначен ранее — применяем
+        // Если класс уже был назначен ранее — применяем его
         if (currentClass != null)
+        {
+            Debug.Log($"[PlayerClassController] Stats ready, applying queued class: {currentClass.id}", this);
             StartCoroutine(ApplyDeferred(currentClass));
+        }
+        else
+        {
+            Debug.Log("[PlayerClassController] Stats ready, no class queued yet", this);
+        }
     }
 
-    /* ================= API ================= */
+
+    /* ================= PUBLIC API ================= */
+
 
     /// <summary>
-    /// Единственный публичный способ применить класс
+    /// 🟢 Применить класс по ID
+    /// Может быть вызван до инициализации статов - класс будет применен когда статы будут готовы
     /// </summary>
     public void ApplyClass(string classId)
     {
+        if (string.IsNullOrEmpty(classId))
+        {
+            Debug.LogWarning("[PlayerClassController] ApplyClass called with empty classId", this);
+            return;
+        }
+
+        Debug.Log($"[PlayerClassController] ApplyClass called: {classId}", this);
+
         var cfg = library.FindById(classId);
 
         if (cfg == null)
         {
             Debug.LogWarning(
-                $"[PlayerClassController] Class {classId} not found, using default",
+                $"[PlayerClassController] Class '{classId}' not found in library, using default '{defaultClassId}'",
                 this
             );
             cfg = library.FindById(defaultClassId);
@@ -98,31 +164,62 @@ public sealed class PlayerClassController : MonoBehaviour
 
         currentClass = cfg;
 
+        // Если статы уже готовы - применяем сразу, иначе ждем события OnStatsReady
         if (stats != null)
+        {
+            Debug.Log($"[PlayerClassController] Stats ready, applying class immediately: {classId}", this);
             StartCoroutine(ApplyDeferred(cfg));
+        }
+        else
+        {
+            Debug.Log($"[PlayerClassController] Stats not ready yet, queuing class: {classId}", this);
+        }
     }
+
+
 
     /* ================= APPLY ================= */
 
+
+    /// <summary>
+    /// Отложенное применение класса (на следующий фрейм)
+    /// Позволяет синхронизировать применение с другими системами
+    /// </summary>
     private IEnumerator ApplyDeferred(PlayerClassConfigSO cfg)
     {
         yield return null;
         ApplyInternal(cfg);
     }
 
+
+    /// <summary>
+    /// 🟢 Основной метод применения класса
+    /// Применяет статы, пассивки, абилити и визуал
+    /// </summary>
     private void ApplyInternal(PlayerClassConfigSO cfg)
     {
-        if (cfg == null || stats == null)
+        if (cfg == null)
+        {
+            Debug.LogError("[PlayerClassController] ApplyInternal called with null config", this);
             return;
+        }
+
+        if (stats == null)
+        {
+            Debug.LogError("[PlayerClassController] ApplyInternal called but stats is null", this);
+            return;
+        }
 
         Debug.Log($"[PlayerClassController] Applying class: {cfg.displayName}", this);
 
+        // 🟢 Обновляем сервис текущего класса
         classService.SelectClass(cfg);
 
         var p = cfg.preset;
 
         // ===== BASE STATS =====
-
+        Debug.Log($"[PlayerClassController] Applying base stats for {cfg.displayName}", this);
+        
         stats.Health.ApplyBase(p.health.baseHp);
         stats.Health.ApplyRegenBase(p.health.baseRegen);
 
@@ -147,14 +244,34 @@ public sealed class PlayerClassController : MonoBehaviour
             p.mining.baseMining
         );
 
-        // ===== PASSIVES / ABILITIES =====
 
+        // ===== PASSIVES / ABILITIES =====
+        Debug.Log($"[PlayerClassController] Applying passives and abilities", this);
+        
+        // 🟢 Пассивки накладывают бафы локально
         passiveSystem?.SetPassives(cfg.passives.ToArray());
+        
+        // 🟢 Абилити устанавливаются (на локальном клиенте или при синхронизации с сервера)
         abilityCaster?.SetAbilities(cfg.abilities.ToArray());
 
-        // ===== VISUAL =====
 
+        // ===== VISUAL =====
+        Debug.Log($"[PlayerClassController] Applying visual", this);
+        
         if (cfg.visualPreset != null)
-            visualController.ApplyVisual(cfg.visualPreset.id);
+        {
+            visualController?.ApplyVisual(cfg.visualPreset.id);
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerClassController] Class {cfg.displayName} has no visual preset", this);
+        }
+
+
+        // 🟢 Уведомляем что всё применено
+        // Это событие может быть обработано PlayerStateNetAdapter для синхронизации
+        OnClassApplied?.Invoke();
+
+        Debug.Log($"[PlayerClassController] ✅ Class applied completely: {cfg.displayName}", this);
     }
 }

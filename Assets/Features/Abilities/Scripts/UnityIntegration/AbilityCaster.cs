@@ -5,11 +5,13 @@ using Features.Abilities.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using UnityEngine;
+using FishNet.Object;
+
 
 namespace Features.Abilities.Application
 {
     [DefaultExecutionOrder(-150)]
-    public class AbilityCaster : MonoBehaviour
+    public class AbilityCaster : NetworkBehaviour
     {
         [Header("Ability slots")]
         [SerializeField] private AbilitySO[] abilities = new AbilitySO[5];
@@ -21,6 +23,9 @@ namespace Features.Abilities.Application
 
         [Header("Library")]
         [SerializeField] private AbilityLibrarySO abilityLibrary;
+
+        // 🟢 ИСПРАВЛЕНИЕ: простые float массивы вместо NetworkVariable
+        private float[] cooldownValues = new float[5];
 
         private IEnergyStats energy;
         private AbilityService service;
@@ -40,13 +45,24 @@ namespace Features.Abilities.Application
 
         /* ================= LIFECYCLE ================= */
 
+        private void Awake()
+        {
+            // Инициализируем массив cooldown значений
+            for (int i = 0; i < cooldownValues.Length; i++)
+            {
+                cooldownValues[i] = 0f;
+            }
+        }
+
         private void OnEnable()
         {
+            Debug.Log($"[AbilityCaster] OnEnable() - {gameObject.name}", this);
             PlayerStats.OnStatsReady += HandleStatsReady;
         }
 
         private void OnDisable()
         {
+            Debug.Log($"[AbilityCaster] OnDisable() - {gameObject.name}", this);
             PlayerStats.OnStatsReady -= HandleStatsReady;
         }
 
@@ -71,12 +87,12 @@ namespace Features.Abilities.Application
                 executor: executor
             );
 
-            service.OnAbilityCast       += a => OnAbilityCast?.Invoke(a);
-            service.OnCooldownChanged   += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
-            service.OnChannelStarted    += a => OnChannelStarted?.Invoke(a);
-            service.OnChannelProgress   += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
-            service.OnChannelCompleted  += a => OnChannelCompleted?.Invoke(a);
-            service.OnChannelInterrupted+= a => OnChannelInterrupted?.Invoke(a);
+            service.OnAbilityCast += OnAbilityCastHandler;
+            service.OnCooldownChanged += OnCooldownChangedHandler;
+            service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
+            service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
+            service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
+            service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
 
             if (abilityLibrary == null)
             {
@@ -101,6 +117,54 @@ namespace Features.Abilities.Application
             }
 
             service.Tick(Time.deltaTime);
+
+            // 🟢 ИСПРАВЛЕНИЕ: обновляем cooldowns локально и синхронизируем через RPC
+            if (IsServer)
+            {
+                for (int i = 0; i < abilities.Length; i++)
+                {
+                    if (abilities[i] != null)
+                    {
+                        float newCooldown = service.GetCooldownRemaining(abilities[i]);
+
+                        // Отправляем RPC если cooldown изменился на >0.01 (чтобы не спамить сетевые пакеты)
+                        if (Mathf.Abs(cooldownValues[i] - newCooldown) > 0.01f)
+                        {
+                            cooldownValues[i] = newCooldown;
+                            RpcSyncCooldown(i, newCooldown);
+                        }
+                    }
+                }
+            }
+        }
+
+        /* ================= HANDLERS ================= */
+
+        private void OnAbilityCastHandler(AbilitySO ability)
+        {
+            OnAbilityCast?.Invoke(ability);
+
+            // 🟢 ИСПРАВЛЕНИЕ: синхронизируем через RPC
+            if (IsServer)
+            {
+                int slotIndex = System.Array.IndexOf(abilities, ability);
+                if (slotIndex >= 0)
+                {
+                    RpcNotifyAbilityCast(slotIndex);
+                }
+            }
+        }
+
+        private void OnCooldownChangedHandler(AbilitySO ability, float remaining, float max)
+        {
+            OnCooldownChanged?.Invoke(ability, remaining, max);
+
+            int slotIndex = System.Array.IndexOf(abilities, ability);
+            if (IsServer && slotIndex >= 0)
+            {
+                cooldownValues[slotIndex] = remaining;
+                RpcSyncCooldown(slotIndex, remaining);
+            }
         }
 
         /* ================= PUBLIC API ================= */
@@ -121,7 +185,7 @@ namespace Features.Abilities.Application
         public bool TryCastWithContext(int index, out AbilitySO ability, out AbilityContext ctx)
         {
             ability = null;
-            ctx     = default;
+            ctx = default;
 
             if (!IsReady || index < 0 || index >= abilities.Length)
                 return false;
@@ -134,7 +198,6 @@ namespace Features.Abilities.Application
             if (!ok)
                 return false;
 
-            // контекст берём из сервиса
             ctx = ability.castType == AbilityCastType.Instant
                 ? service.LastInstantContext
                 : service.LastChannelContext;
@@ -145,13 +208,11 @@ namespace Features.Abilities.Application
         /// <summary>
         /// Клиентский вызов из ObserversRpc: проиграть уже подтверждённый каст.
         /// </summary>
-        // в AbilityCaster.PlayRemoteCast
         public void PlayRemoteCast(AbilitySO ability, int slot, AbilityContext ctx)
         {
             if (!IsReady || ability == null)
                 return;
 
-            // перезаписываем owner локальным объектом игрока
             ctx = new AbilityContext(
                 owner: gameObject,
                 targetPoint: ctx.TargetPoint,
@@ -165,12 +226,21 @@ namespace Features.Abilities.Application
             executor.Execute(ability, ctx);
         }
 
-
+        /// <summary>
+        /// 🟢 ИСПРАВЛЕНИЕ: получить cooldown синхронизированный через сеть
+        /// </summary>
         public float GetCooldown(int index)
         {
             if (!IsReady || index < 0 || index >= abilities.Length)
                 return 0f;
 
+            // Используем локальное значение которое синхронизируется через RPC
+            if (cooldownValues[index] > 0)
+            {
+                return cooldownValues[index];
+            }
+
+            // Fallback на локальный сервис
             return service.GetCooldownRemaining(abilities[index]);
         }
 
@@ -184,5 +254,30 @@ namespace Features.Abilities.Application
 
         public bool IsChanneling => service?.IsChanneling ?? false;
         public AbilitySO CurrentChannelAbility => service?.CurrentChannelAbility;
+
+        /* ================= RPC ================= */
+
+        [ObserversRpc]
+        private void RpcNotifyAbilityCast(int slotIndex)
+        {
+            Debug.Log($"[AbilityCaster] Ability cast notification for slot {slotIndex}", this);
+            if (slotIndex >= 0 && slotIndex < abilities.Length && abilities[slotIndex] != null)
+            {
+                OnAbilityCast?.Invoke(abilities[slotIndex]);
+            }
+        }
+
+        /// <summary>
+        /// 🟢 ИСПРАВЛЕНИЕ: синхронизируем cooldown значение через RPC
+        /// </summary>
+        [ObserversRpc]
+        private void RpcSyncCooldown(int slotIndex, float cooldownValue)
+        {
+            if (slotIndex >= 0 && slotIndex < cooldownValues.Length)
+            {
+                cooldownValues[slotIndex] = cooldownValue;
+                Debug.Log($"[AbilityCaster] Cooldown synced for slot {slotIndex}: {cooldownValue}s", this);
+            }
+        }
     }
 }

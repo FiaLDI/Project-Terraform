@@ -33,11 +33,9 @@ namespace Features.Stats.UnityIntegration
                 return;
             }
 
-            // Создаём фасад статов
             Facade = new StatsFacade(isTurret: false);
             Debug.Log("[PlayerStats] StatsFacade created", this);
 
-            // Получаем или создаём адаптер
             Adapter = GetComponent<StatsFacadeAdapter>();
             if (Adapter == null)
             {
@@ -45,15 +43,32 @@ namespace Features.Stats.UnityIntegration
                 Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
             }
 
-            // Инициализируем адаптер
             Adapter.Init(Facade);
             Debug.Log("[PlayerStats] StatsFacadeAdapter initialized", this);
 
             IsReady = true;
             Debug.Log("[PlayerStats] PlayerStats is READY ✅", this);
 
-            // Уведомляем подписчиков
             OnStatsReady?.Invoke(this);
+        }
+
+        public void ResetToDefaults()
+        {
+            if (!IsReady)
+            {
+                Debug.LogError("[PlayerStats] ResetToDefaults called but not ready!", this);
+                return;
+            }
+
+            // Сбрасываем в нейтральное состояние
+            Facade.Health.ApplyBase(100);
+            Facade.Health.ApplyRegenBase(5);
+            Facade.Energy.ApplyBase(100, 5);
+            Facade.Combat.ApplyBase(1f);
+            Facade.Movement.ApplyBase(5f, 3.5f, 6.5f, 2.5f, 180f);
+            Facade.Mining.ApplyBase(1f);
+
+            Debug.Log("[PlayerStats] Reset to defaults", this);
         }
 
         /// <summary>

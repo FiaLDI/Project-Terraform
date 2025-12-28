@@ -148,5 +148,18 @@ namespace Features.Stats.Domain
 
         private void Notify() =>
             OnEnergyChanged?.Invoke(CurrentEnergy, MaxEnergy);
+
+        public void SetCurrentEnergy(float value)
+        {
+            CurrentEnergy = Math.Clamp(value, 0, MaxEnergy);
+            Notify();
+        }
+
+        public void SetMaxEnergyDirect(float max)
+        {
+            _baseMax = max;
+            CurrentEnergy = Math.Clamp(CurrentEnergy, 0, MaxEnergy);
+            Notify();
+        }
     }
 }

@@ -4,52 +4,226 @@ using System.Collections.Generic;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
 using Features.Stats.Domain;
+using FishNet.Object;
 
-public class BuffExecutor : MonoBehaviour
+
+public class BuffExecutor : NetworkBehaviour
 {
-    private readonly Dictionary<BuffStat, Action<BuffInstance, bool>> handlers =
-        new();
+    private readonly Dictionary<BuffStat, Action<BuffInstance, bool>> handlers = new();
+
+    public static BuffExecutor Instance { get; private set; }
 
     private void Awake()
     {
-        RegisterHandlers();
+        if (Instance == null)
+        {
+            Instance = this;
+            RegisterHandlers();
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
     }
 
     public void Apply(BuffInstance inst)
     {
-        if (!IsValid(inst)) return;
+        // 🟢 ИСПРАВЛЕНИЕ: Проверяем все нужные поля перед использованием
+        if (!IsValid(inst))
+        {
+            Debug.LogWarning($"[BuffExecutor] Invalid buff instance: {inst?.Config?.buffId}", this);
+            return;
+        }
 
-        if (handlers.TryGetValue(inst.Config.stat, out var h))
-            h(inst, true);
+        // 🟢 ИСПРАВЛЕНИЕ: Проверяем что handler существует
+        if (!handlers.TryGetValue(inst.Config.stat, out var h))
+        {
+            Debug.LogWarning($"[BuffExecutor] No handler for stat: {inst.Config.stat}", this);
+            return;
+        }
+
+        Debug.Log($"[BuffExecutor] Applying buff: {inst.Config.buffId} to {inst.Target}", this);
+        
+        try
+        {
+            h?.Invoke(inst, true);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[BuffExecutor] Error applying buff: {ex.Message}", this);
+        }
+
+        // 🟢 ИСПРАВЛЕНИЕ: RPC только если это сервер
+        if (IsServer)
+        {
+            RpcApplyBuff(inst.Config.buffId, inst.Target.GameObject.name);
+        }
     }
 
     public void Expire(BuffInstance inst)
     {
-        if (!IsValid(inst)) return;
+        // 🟢 ИСПРАВЛЕНИЕ: Проверяем что instance валиден
+        if (!IsValid(inst))
+        {
+            Debug.LogWarning($"[BuffExecutor] Cannot expire invalid buff", this);
+            return;
+        }
 
-        if (handlers.TryGetValue(inst.Config.stat, out var h))
-            h(inst, false);
+        // 🟢 ИСПРАВЛЕНИЕ: Проверяем что handler существует
+        if (!handlers.TryGetValue(inst.Config.stat, out var h))
+        {
+            Debug.LogWarning($"[BuffExecutor] No handler for stat: {inst.Config.stat}", this);
+            return;
+        }
+
+        Debug.Log($"[BuffExecutor] Expiring buff: {inst.Config.buffId}", this);
+        
+        try
+        {
+            h?.Invoke(inst, false);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[BuffExecutor] Error expiring buff: {ex.Message}", this);
+        }
+
+        // 🟢 ИСПРАВЛЕНИЕ: RPC только если это сервер
+        if (IsServer)
+        {
+            RpcExpireBuff(inst.Config.buffId, inst.Target.GameObject.name);
+        }
     }
 
     public void Tick(BuffInstance inst, float dt)
     {
-        if (!IsValid(inst)) return;
+        if (!IsValid(inst))
+            return;
 
         if (inst.Config.stat == BuffStat.HealPerSecond)
-            inst.Target.Stats.Health.Heal(inst.Config.value * dt);
+        {
+            // 🟢 ИСПРАВЛЕНИЕ: Проверяем что Health не null
+            if (inst.Target.Stats?.Health != null)
+            {
+                inst.Target.Stats.Health.Heal(inst.Config.value * dt);
+            }
+        }
     }
 
     private bool IsValid(BuffInstance inst)
     {
-        return inst != null &&
-               inst.Config != null &&
-               inst.Target != null &&
-               inst.Target.Stats != null;
+        // 🟢 ИСПРАВЛЕНИЕ: Все проверки перед использованием
+        if (inst == null)
+        {
+            return false;
+        }
+
+        if (inst.Config == null)
+        {
+            Debug.LogWarning($"[BuffExecutor] BuffInstance has null Config", this);
+            return false;
+        }
+
+        if (inst.Target == null)
+        {
+            Debug.LogWarning($"[BuffExecutor] BuffInstance has null Target", this);
+            return false;
+        }
+
+        if (inst.Target.Stats == null)
+        {
+            Debug.LogWarning($"[BuffExecutor] Target {inst.Target} has no Stats", this);
+            return false;
+        }
+
+        if (inst.Target.GameObject == null)
+        {
+            Debug.LogWarning($"[BuffExecutor] Target {inst.Target} has no GameObject", this);
+            return false;
+        }
+
+        return true;
     }
 
-    // --------------------------
-    // REGISTER HANDLERS
-    // --------------------------
+    /* ================= RPC ================= */
+
+    [ObserversRpc]
+    private void RpcApplyBuff(string buffId, string targetName)
+    {
+        Debug.Log($"[BuffExecutor] RPC: Applying buff {buffId} to {targetName}", this);
+        
+        if (IsServer)
+            return; // Сервер уже применил локально
+
+        // На клиенте находим игрока и применяем баф
+        var target = FindTargetByName(targetName);
+        if (target?.GameObject != null)
+        {
+            var buffSystem = target.GameObject.GetComponent<BuffSystem>();
+            if (buffSystem != null && buffSystem.ServiceReady)
+            {
+                var buffSO = FindBuffById(buffId);
+                if (buffSO != null)
+                {
+                    buffSystem.Add(buffSO);
+                }
+            }
+        }
+    }
+
+    [ObserversRpc]
+    private void RpcExpireBuff(string buffId, string targetName)
+    {
+        Debug.Log($"[BuffExecutor] RPC: Expiring buff {buffId} from {targetName}", this);
+
+        var target = FindTargetByName(targetName);
+        if (target?.GameObject != null)
+        {
+            var buffSystem = target.GameObject.GetComponent<BuffSystem>();
+            // 🟢 ИСПРАВЛЕНИЕ: Проверяем что Service и Active не null
+            if (buffSystem?.ServiceReady == true && buffSystem.Service?.Active != null)
+            {
+                var toRemove = new List<BuffInstance>();
+                foreach (var buff in buffSystem.Service.Active)
+                {
+                    if (buff.Config.buffId == buffId)
+                        toRemove.Add(buff);
+                }
+
+                foreach (var buff in toRemove)
+                {
+                    buffSystem.Remove(buff);
+                }
+            }
+        }
+    }
+
+    /* ================= HELPERS ================= */
+
+    private IBuffTarget FindTargetByName(string targetName)
+    {
+        var obj = GameObject.Find(targetName);
+        if (obj != null)
+        {
+            return obj.GetComponent<IBuffTarget>();
+        }
+        
+        Debug.LogWarning($"[BuffExecutor] Target not found: {targetName}", this);
+        return null;
+    }
+
+    private BuffSO FindBuffById(string buffId)
+    {
+        var allBuffs = Resources.LoadAll<BuffSO>("Buffs");
+        foreach (var buff in allBuffs)
+        {
+            if (buff.buffId == buffId)
+                return buff;
+        }
+        
+        Debug.LogWarning($"[BuffExecutor] Buff not found: {buffId}", this);
+        return null;
+    }
+
     private void RegisterHandlers()
     {
         // PLAYER
@@ -101,12 +275,11 @@ public class BuffExecutor : MonoBehaviour
         Register(BuffStat.PlayerMiningSpeed,
             (inst, apply) => inst.Target.Stats.Mining.ApplyBuff(inst.Config, apply));
         
-         Register(BuffStat.RotationSpeed,
+        Register(BuffStat.RotationSpeed,
             (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
 
         Register(BuffStat.RotationSpeedMult,
             (inst, apply) => inst.Target.Stats.Movement.ApplyBuff(inst.Config, apply));
-
 
         // TURRET
         Register(BuffStat.TurretDamage,

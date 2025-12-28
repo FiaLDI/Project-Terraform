@@ -181,5 +181,18 @@ namespace Features.Stats.Domain
 
         private void NotifyShield() =>
             OnShieldChanged?.Invoke(CurrentShield, MaxShield);
+        
+        public void SetCurrentHp(float value)
+        {
+            CurrentHp = Math.Clamp(value, 0, MaxHp);
+            NotifyHp();
+        }
+
+        public void SetMaxHpDirect(float hp)
+        {
+            _baseHp = hp;
+            CurrentHp = Math.Min(CurrentHp, MaxHp);
+            NotifyHp();
+        }
     }
 }

@@ -656,6 +656,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -1088212961409281892, guid: 1c65827daff56384aa790ac1aa24f793, type: 3}
+      propertyPath: _addedNetworkObject
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: -1088212961409281892, guid: 1c65827daff56384aa790ac1aa24f793, type: 3}
+      propertyPath: _networkObjectCache
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 247592632907288959, guid: 1c65827daff56384aa790ac1aa24f793, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1047,6 +1055,14 @@ PrefabInstance:
     - target: {fileID: 8768723691215676638, guid: 1c65827daff56384aa790ac1aa24f793, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9148270465692345521, guid: 1c65827daff56384aa790ac1aa24f793, type: 3}
+      propertyPath: _addedNetworkObject
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 9148270465692345521, guid: 1c65827daff56384aa790ac1aa24f793, type: 3}
+      propertyPath: _networkObjectCache
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

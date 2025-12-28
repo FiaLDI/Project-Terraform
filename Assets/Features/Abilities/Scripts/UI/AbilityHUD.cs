@@ -71,7 +71,10 @@ namespace Features.Abilities.UI
         {
             caster = stats.GetComponent<AbilityCaster>();
             if (caster == null)
+            {
+                Debug.LogError("[AbilityHUD] AbilityCaster not found!", this);
                 return;
+            }
 
             energy = stats.Adapter.EnergyStats;
 
@@ -83,8 +86,16 @@ namespace Features.Abilities.UI
             caster.OnChannelProgress += HandleChannelProgress;
             caster.OnChannelCompleted += HandleChannelCompleted;
             caster.OnChannelInterrupted += HandleChannelInterrupted;
-
-            RebindAbilities();
+            
+            if (caster.Abilities.Count > 0)
+            {
+                Debug.Log($"[AbilityHUD] Abilities ready: {caster.Abilities.Count}", this);
+                RebindAbilities();
+            }
+            else
+            {
+                Debug.Log("[AbilityHUM] Abilities not ready yet, waiting for OnAbilitiesChanged event", this);
+            }
         }
 
         private void Unbind()
@@ -117,15 +128,25 @@ namespace Features.Abilities.UI
         private void RebindAbilities()
         {
             if (caster == null || slots == null)
+            {
+                Debug.LogError("[AbilityHUD] Caster or slots is null!", this);
                 return;
+            }
 
             var abilities = caster.Abilities;
+            Debug.Log($"[AbilityHUD] RebindAbilities: count={abilities.Count}", this);
+            
             for (int i = 0; i < slots.Length; i++)
             {
                 var ability = (i < abilities.Count) ? abilities[i] : null;
+                
+                // 🟢 ВЫВЕЛИ КАЖДУЮ АБИЛИТИ
+                Debug.Log($"[AbilityHUD] Slot {i}: ability={ability?.name ?? "null"}", this);
+                
                 slots[i].Bind(ability, caster, i);
             }
         }
+
 
         private void UpdateEnergyView(float current, float max)
         {

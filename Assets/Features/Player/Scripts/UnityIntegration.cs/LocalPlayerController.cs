@@ -63,6 +63,12 @@ public sealed class LocalPlayerController : MonoBehaviour
 
         boundPlayer = player;
 
+        Debug.Log("[LocalPlayerController] Binding UI...", this);
+        if (PlayerUIRoot.I != null)
+            PlayerUIRoot.I.Bind(player.gameObject);
+        else
+            Debug.LogError("[LocalPlayerController] PlayerUIRoot.I is null!", this);
+
         if (inputContext != null)
         {
             inputContext.Enable();
@@ -98,16 +104,18 @@ public sealed class LocalPlayerController : MonoBehaviour
         }
 
         var stats = player.GetComponent<PlayerStats>();
-        if (stats != null)
-            stats.Init();
+        if (stats != null && stats.IsReady)
+        {
+            Debug.Log("[LocalPlayerController] PlayerStats already ready ✅", this);
+        }
         else
-            Debug.LogError("[LocalPlayerController] PlayerStats not found on player!");
-
-        if (PlayerUIRoot.I != null)
-            PlayerUIRoot.I.Bind(player.gameObject);
+        {
+            Debug.LogError("[LocalPlayerController] PlayerStats not ready!", this);
+        }
 
         Debug.Log($"[LocalPlayerController] Bound to {player.name}");
     }
+
 
     public void Unbind(NetworkPlayer player)
     {

@@ -3,58 +3,61 @@ using Features.Abilities.Domain;
 using FishNet.Object;
 using UnityEngine;
 
-[RequireComponent(typeof(AbilityCaster))]
-public sealed class AbilityCasterNetAdapter : NetworkBehaviour
+namespace Features.Player.UnityIntegration
 {
-    private AbilityCaster caster;
-
-    public override void OnStartServer()
+    // Гарантирует, что NetworkBehaviour не выключится случайно
+    [DisallowMultipleComponent] 
+    public sealed class AbilityCasterNetAdapter : NetworkBehaviour
     {
-        caster = GetComponent<AbilityCaster>();
-    }
+        private AbilityCaster caster;
 
-    public override void OnStartClient()
-    {
-        caster = GetComponent<AbilityCaster>();
-    }
-
-    // ===== INPUT от владельца =====
-    public void Cast(int index)
-    {
-        if (caster == null || !caster.IsReady || !Owner.IsLocalClient)
-            return;
-
-        Cast_Server(index);
-    }
-
-    // ===== SERVER =====
-    [ServerRpc]
-    private void Cast_Server(int index)
-    {
-        if (caster == null || !caster.IsReady)
-            return;
-
-        if (!caster.TryCastWithContext(index, out AbilitySO ability, out AbilityContext ctx))
-            return;
-
-        string abilityId = ability.id;   // поле id в AbilitySO
-        Cast_Client(index, abilityId, ctx);
-    }
-
-    // ===== CLIENTS (визуал) =====
-    [ObserversRpc]
-    private void Cast_Client(int index, string abilityId, AbilityContext ctx)
-    {
-        if (caster == null || !caster.IsReady)
-            return;
-
-        var ability = caster.FindAbilityById(abilityId);
-        if (ability == null)
+        private void Awake()
         {
-            Debug.LogWarning($"[AbilityCasterNetAdapter] Ability {abilityId} not found in library");
-            return;
+            // 1. ЗАЩИТА: Принудительно включаем компонент
+            this.enabled = true; 
+            caster = GetComponent<AbilityCaster>();
         }
 
-        caster.PlayRemoteCast(ability, index, ctx);
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            // 2. ЗАЩИТА: На сервере тоже включаем
+            this.enabled = true; 
+        }
+
+        // ===== INPUT (Вызывает Клиент) =====
+        public void Cast(int index)
+        {
+            if (!IsOwner) return;
+            // Лог отправки
+            Debug.Log($"[NetAdapter] CLIENT: Sending Cast({index})..."); 
+            Cast_Server(index);
+        }
+
+        // ===== SERVER =====
+        [ServerRpc] // Убрали RequireOwnership = false, вернем как было, если включение поможет
+        public void Cast_Server(int index)
+        {
+            // Если вы видите этот лог - победа
+            Debug.Log($"[NetAdapter] SERVER: RPC Received! Slot: {index}");
+
+            if (caster == null || !caster.IsReady) return;
+
+            if (caster.TryCastWithContext(index, out AbilitySO ability, out AbilityContext ctx))
+            {
+                Cast_Client(index, ability.id, ctx);
+            }
+        }
+
+        // ===== CLIENTS =====
+        [ObserversRpc]
+        public void Cast_Client(int index, string abilityId, AbilityContext ctx)
+        {
+            if (caster != null) 
+            {
+                var ability = caster.FindAbilityById(abilityId);
+                if (ability != null) caster.PlayRemoteCast(ability, index, ctx);
+            }
+        }
     }
 }
