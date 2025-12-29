@@ -4,7 +4,7 @@ using Features.Stats.UnityIntegration;
 using System.Collections;
 using Features.Abilities.Application;
 using Features.Abilities.Domain;
-
+using Features.Buffs.Application; // Добавляем namespace для BuffSystem
 
 namespace Features.Class.Net
 {
@@ -13,11 +13,7 @@ namespace Features.Class.Net
     {
         private PlayerClassController classController;
         private PlayerStats playerStats;
-
-
-        // =====================================================
-        // LIFECYCLE
-        // =====================================================
+        private BuffSystem buffSystem; // Ссылка на систему баффов
 
         public override void OnStartNetwork()
         {
@@ -25,311 +21,127 @@ namespace Features.Class.Net
             Cache();
         }
 
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
-            if (classController == null)
-                Cache();
-        }
-
-        public override void OnStartClient()
-        {
-            base.OnStartClient();
-            if (classController == null)
-                Cache();
-        }
-
         private void Cache()
         {
-            if (classController == null)
-            {
-                classController = GetComponent<PlayerClassController>();
-                if (classController == null)
-                    Debug.LogError("[PlayerStateNetAdapter] PlayerClassController not found on " + gameObject.name, this);
-            }
-
-            if (playerStats == null)
-            {
-                playerStats = GetComponent<PlayerStats>();
-                if (playerStats == null)
-                    Debug.LogError("[PlayerStateNetAdapter] PlayerStats not found on " + gameObject.name, this);
-            }
-
-            Debug.Log($"[PlayerStateNetAdapter] Cache done. classController={classController != null}, playerStats={playerStats != null}", this);
+            if (classController == null) classController = GetComponent<PlayerClassController>();
+            if (playerStats == null) playerStats = GetComponent<PlayerStats>();
+            if (buffSystem == null) buffSystem = GetComponent<BuffSystem>(); // Кэшируем BuffSystem
         }
 
-        private void OnEnable()
-        {
-            if (classController != null)
-                classController.OnClassApplied += HandleClassApplied;
-        }
-
-        private void OnDisable()
-        {
-            if (classController != null)
-                classController.OnClassApplied -= HandleClassApplied;
-        }
-
+        // --- SERVER SIDE ---
 
         [Server]
         public void ApplyClass(string classId)
         {
-            Debug.Log($"[PlayerStateNetAdapter-Server] ApplyClass({classId})", this);
+            if (classController == null) Cache();
 
-            // ✅ Вызов локально на сервере
+            // 1. ФИКС СТАТОВ: ОЧИСТКА ПЕРЕД ПРИМЕНЕНИЕМ
+            // Если мы применим класс поверх старого без очистки, статы удвоятся.
+            if (buffSystem != null && buffSystem.ServiceReady)
+            {
+                Debug.Log("[PlayerStateNetAdapter] Clearing ALL buffs before applying class...", this);
+                buffSystem.Service.ClearAll(); // Сбрасываем все статы в 0/базу
+            }
+
+            // 2. Применяем класс (накладываем баффы заново)
+            Debug.Log($"[PlayerStateNetAdapter] Applying Class '{classId}' on Server", this);
             classController.ApplyClass(classId);
 
-            // ✅ Получение класса после применения
+            // 3. Синхронизируем абилки
             StartCoroutine(WaitAndSyncAbilities(classId));
         }
 
         [Server]
         private IEnumerator WaitAndSyncAbilities(string classId)
         {
-            // Ждем пока класс применится
             yield return new WaitForEndOfFrame();
-
+            
             var appliedClass = classController.GetCurrentClass();
-            if (appliedClass != null && appliedClass.abilities != null && appliedClass.abilities.Count > 0)
-            {
-                string[] abilityIds = new string[appliedClass.abilities.Count];
-                for (int i = 0; i < appliedClass.abilities.Count; i++)
-                {
-                    abilityIds[i] = appliedClass.abilities[i]?.id ?? "";
-                    Debug.Log($"[PlayerStateNetAdapter-Server] Ability[{i}]: {abilityIds[i]}", this);
-                }
+            string[] abilityIds = new string[0];
 
-                Debug.Log($"[PlayerStateNetAdapter-Server] Calling RPC with {abilityIds.Length} abilities", this);
-                
-                // ✅ Вызов RPC на клиентов
-                RpcApplyClassWithAbilities(classId, abilityIds);
-            }
-            else
+            if (appliedClass != null && appliedClass.abilities != null)
             {
-                Debug.LogWarning("[PlayerStateNetAdapter-Server] No abilities in class", this);
-                RpcApplyClassWithAbilities(classId, new string[0]);
+                abilityIds = new string[appliedClass.abilities.Count];
+                for (int i = 0; i < appliedClass.abilities.Count; i++)
+                    abilityIds[i] = appliedClass.abilities[i]?.id ?? "";
             }
+
+            RpcApplyClassWithAbilities(classId, abilityIds);
+            
+            // Заодно форсируем синхронизацию статов, чтобы клиент увидел правильные цифры
+            StartCoroutine(ValidateAndSyncStats());
         }
+
+        // --- CLIENT SIDE ---
 
         [ObserversRpc]
         public void RpcApplyClassWithAbilities(string classId, string[] abilityIds)
         {
-            // На сервере не применяем повторно
-            if (IsServer && !IsClientOnly)
+            if (IsServer && !IsClientOnly) return; // Хост уже все сделал
+
+            Cache();
+            if (playerStats != null && !playerStats.IsReady) playerStats.Init();
+
+            // На клиенте тоже желательно почистить баффы, если система рассинхронизировалась
+            if (buffSystem != null && buffSystem.ServiceReady)
             {
-                Debug.Log($"[PlayerStateNetAdapter-Server] Skipping RPC application (already applied on server)", this);
-                return;
+                buffSystem.Service.ClearAll();
             }
 
-            if (classController == null)
-            {
-                Debug.LogError("[PlayerStateNetAdapter] RpcApplyClass: classController is null", this);
-                Cache();
-                if (classController == null) return;
-            }
+            // Применяем класс
+            if (classController != null) classController.ApplyClass(classId);
 
-            if (playerStats == null)
-            {
-                Debug.LogError("[PlayerStateNetAdapter] RpcApplyClass: playerStats is null", this);
-                Cache();
-                if (playerStats == null) return;
-            }
-
-            if (!playerStats.IsReady)
-            {
-                Debug.LogWarning("[PlayerStateNetAdapter] Stats not ready, initializing", this);
-                playerStats.Init();
-            }
-
-            Debug.Log($"[PlayerStateNetAdapter-Client] RpcApplyClassWithAbilities({classId}), abilities={abilityIds?.Length ?? 0}", this);
-
-            // 🟢 Клиент применяет класс
-            classController.ApplyClass(classId);
-            
-            // 🟢 ВАЖНО: Загружаем абилити по ID и переопределяем
-            var caster = GetComponent<AbilityCaster>();
-            if (caster != null && abilityIds != null && abilityIds.Length > 0)
-            {
-                // Загружаем AbilityLibrary
-                var abilityLibrary = UnityEngine.Resources.Load<AbilityLibrarySO>("Databases/AbilityLibrary");
-                if (abilityLibrary == null)
-                {
-                    Debug.LogError("[PlayerStateNetAdapter] AbilityLibrary not found!", this);
-                    return;
-                }
-
-                // 🟢 Загружаем абилити по ID
-                AbilitySO[] loadedAbilities = new AbilitySO[abilityIds.Length];
-                for (int i = 0; i < abilityIds.Length; i++)
-                {
-                    loadedAbilities[i] = abilityLibrary.FindById(abilityIds[i]);
-                    Debug.Log($"[PlayerStateNetAdapter-Client] Loaded ability[{i}]: {abilityIds[i]} = {loadedAbilities[i]?.name ?? "null"}", this);
-                }
-
-                // 🟢 Устанавливаем загруженные абилити
-                Debug.Log($"[PlayerStateNetAdapter-Client] Setting {loadedAbilities.Length} abilities to caster", this);
-                caster.SetAbilities(loadedAbilities);
-                
-                Debug.Log($"[PlayerStateNetAdapter-Client] ✅ Set {loadedAbilities.Length} abilities to caster", this);
-            }
-            else if (caster != null && (abilityIds == null || abilityIds.Length == 0))
-            {
-                // 🟢 Если абилити пусто - очищаем
-                Debug.LogWarning("[PlayerStateNetAdapter-Client] No abilities in class, clearing caster abilities", this);
-                caster.SetAbilities(new AbilitySO[0]);
-            }
-
-            if (!IsOwner)
-            {
-                var abilityCaster = GetComponent<AbilityCaster>();
-                if (abilityCaster != null)
-                {
-                    abilityCaster.enabled = false;
-                    Debug.Log($"[PlayerStateNetAdapter] Disabled AbilityCaster for remote player", this);
-                }
-            }
-
-            StartCoroutine(VerifyAbilitiesWithDelay());
-        }
-
-        private IEnumerator VerifyAbilitiesWithDelay()
-        {
-            yield return new WaitForEndOfFrame();
-
+            // Абилки...
             var caster = GetComponent<AbilityCaster>();
             if (caster != null)
             {
-                Debug.Log($"[PlayerStateNetAdapter-Client] ✅ Caster has {caster.Abilities.Count} abilities", this);
-                
-                if (caster.Abilities.Count > 0)
+                if (abilityIds != null && abilityIds.Length > 0)
                 {
-                    for (int i = 0; i < caster.Abilities.Count; i++)
+                    var lib = UnityEngine.Resources.Load<AbilityLibrarySO>("Databases/AbilityLibrary");
+                    if (lib != null)
                     {
-                        var ability = caster.Abilities[i];
-                        Debug.Log($"  abilities[{i}] = {ability?.name ?? "null"}", this);
+                        var loaded = new AbilitySO[abilityIds.Length];
+                        for(int i=0; i<abilityIds.Length; i++) loaded[i] = lib.FindById(abilityIds[i]);
+                        caster.SetAbilities(loaded);
                     }
                 }
                 else
                 {
-                    Debug.LogWarning($"[PlayerStateNetAdapter-Client] ⚠️ Caster has NO abilities!", this);
+                    caster.SetAbilities(new AbilitySO[0]);
                 }
-            }
-            else
-            {
-                Debug.LogError("[PlayerStateNetAdapter-Client] ❌ AbilityCaster not found!", this);
+                if (!IsOwner) caster.enabled = false;
             }
         }
-
-
-
-        // =====================================================
-        // EVENT HANDLER: After Class Applied
-        // =====================================================
-
-        private void HandleClassApplied()
-        {
-            Debug.Log("[PlayerStateNetAdapter] Class applied event fired", this);
-
-            if (IsServer)
-            {
-                StartCoroutine(ValidateAndSyncStats());
-            }
-        }
-
-
-        // =====================================================
-        // SERVER: Validate & Sync Stats
-        // =====================================================
 
         [Server]
         private IEnumerator ValidateAndSyncStats()
         {
-            yield return new WaitForSeconds(0.1f);
-
-            if (playerStats?.IsReady != true)
-            {
-                Debug.LogWarning("[PlayerStateNetAdapter] Stats not ready for validation", this);
-                yield break;
-            }
-
-            var facade = playerStats.Facade;
-            if (facade == null)
-                yield break;
-
-            Debug.Log($"[PlayerStateNetAdapter-Server] Validating stats...", this);
-
-            var health = facade.Health;
-            var energy = facade.Energy;
-
-            Debug.Log(
-                $"[Server Stats] HP={health.CurrentHp:0.0}/{health.MaxHp:0.0} " +
-                $"EN={energy.CurrentEnergy:0.0}/{energy.MaxEnergy:0.0}",
-                this
-            );
+            yield return new WaitForSeconds(0.2f); // Небольшая задержка, чтобы баффы "устаканились"
+            if (playerStats?.IsReady != true || playerStats.Facade == null) yield break;
 
             RpcSyncStats(
-                health.CurrentHp,
-                health.MaxHp,
-                energy.CurrentEnergy,
-                energy.MaxEnergy
+                playerStats.Facade.Health.CurrentHp,
+                playerStats.Facade.Health.MaxHp,
+                playerStats.Facade.Energy.CurrentEnergy,
+                playerStats.Facade.Energy.MaxEnergy
             );
         }
 
-
-        // =====================================================
-        // CLIENT: Receive & Verify Stats
-        // =====================================================
-
         [ObserversRpc]
-        private void RpcSyncStats(
-            float serverCurrentHp, float serverMaxHp,
-            float serverCurrentEnergy, float serverMaxEnergy)
+        private void RpcSyncStats(float curHp, float maxHp, float curEn, float maxEn)
         {
-            if (playerStats?.IsReady != true)
-            {
-                Debug.LogWarning("[PlayerStateNetAdapter] Stats not ready in RpcSyncStats", this);
-                return;
-            }
+            if (IsServer && !IsClientOnly) return;
+            if (playerStats?.IsReady != true) return;
 
-            var facade = playerStats.Facade;
-            if (facade == null)
-                return;
+            // Жесткая синхронизация
+            var health = playerStats.Facade.Health;
+            var energy = playerStats.Facade.Energy;
 
-            var health = facade.Health;
-            var energy = facade.Energy;
+            if (Mathf.Abs(health.MaxHp - maxHp) > 0.1f) health.SetMaxHpDirect(maxHp);
+            health.SetCurrentHp(curHp);
 
-            bool hpMismatch = Mathf.Abs(health.MaxHp - serverMaxHp) > 0.01f;
-            bool enMismatch = Mathf.Abs(energy.MaxEnergy - serverMaxEnergy) > 0.01f;
-
-            if (hpMismatch)
-            {
-                Debug.LogWarning(
-                    $"[PlayerStateNetAdapter-Client] HP MISMATCH! " +
-                    $"Client={health.MaxHp:0.0} vs Server={serverMaxHp:0.0}",
-                    this
-                );
-
-                health.SetCurrentHp(serverCurrentHp);
-                health.SetMaxHpDirect(serverMaxHp);
-            }
-
-            if (enMismatch)
-            {
-                Debug.LogWarning(
-                    $"[PlayerStateNetAdapter-Client] ENERGY MISMATCH! " +
-                    $"Client={energy.MaxEnergy:0.0} vs Server={serverMaxEnergy:0.0}",
-                    this
-                );
-
-                energy.SetCurrentEnergy(serverCurrentEnergy);
-                energy.SetMaxEnergyDirect(serverMaxEnergy);
-            }
-
-            Debug.Log(
-                $"[Client Stats] HP={health.CurrentHp:0.0}/{health.MaxHp:0.0} " +
-                $"EN={energy.CurrentEnergy:0.0}/{energy.MaxEnergy:0.0}",
-                this
-            );
+            if (Mathf.Abs(energy.MaxEnergy - maxEn) > 0.1f) energy.SetMaxEnergyDirect(maxEn);
+            energy.SetCurrentEnergy(curEn);
         }
     }
 }

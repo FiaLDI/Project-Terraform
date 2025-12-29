@@ -366,6 +366,7 @@ GameObject:
   - component: {fileID: 7407599192339855080}
   - component: {fileID: 4243781917691856348}
   - component: {fileID: 5527670935517867940}
+  - component: {fileID: 3902377743731741677}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -441,6 +442,7 @@ MonoBehaviour:
     m_Bits: 256
   executor: {fileID: 0}
   abilityLibrary: {fileID: 0}
+  cooldownSyncInterval: 0.5
 --- !u!114 &2889153697471037876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -591,6 +593,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60a78536e79750a4ba559b1cbafab3e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerMovement
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
   movementReference: {fileID: 5017748270277261448}
   cameraReference: {fileID: 2683651113482784269}
   fallbackBaseSpeed: 5
@@ -1060,6 +1065,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fa84b807ef77744fa402fa2fbbcb9b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Net.PassiveNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &3902377743731741677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 776a824eb2635da48a2342e62ea3d8e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Net.BuffSystemNetAdapter
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}

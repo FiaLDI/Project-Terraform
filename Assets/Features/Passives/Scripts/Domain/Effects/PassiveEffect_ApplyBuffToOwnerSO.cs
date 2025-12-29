@@ -1,7 +1,8 @@
 using UnityEngine;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
-using Features.Buffs.UnityIntegration;
+using FishNet.Object;
+
 
 namespace Features.Passives.Domain
 {
@@ -12,6 +13,7 @@ namespace Features.Passives.Domain
 
         private BuffInstance _instance;
 
+
         public override void Apply(GameObject owner)
         {
             if (buff == null) return;
@@ -19,8 +21,17 @@ namespace Features.Passives.Domain
             var system = owner.GetComponent<BuffSystem>();
             if (system == null) return;
 
+            var netObj = owner.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsServer)
+            {
+                Debug.Log($"[PassiveEffect_ApplyBuffToOwnerSO] On client - skipping buff add (will sync via SyncList)");
+                return;
+            }
+
             _instance = system.Add(buff);
+            Debug.Log($"[PassiveEffect_ApplyBuffToOwnerSO] Applied buff '{buff.buffId}' to {owner.name}");
         }
+
 
         public override void Remove(GameObject owner)
         {
@@ -31,6 +42,7 @@ namespace Features.Passives.Domain
 
             system.Remove(_instance);
             _instance = null;
+            Debug.Log($"[PassiveEffect_ApplyBuffToOwnerSO] Removed buff");
         }
     }
 }

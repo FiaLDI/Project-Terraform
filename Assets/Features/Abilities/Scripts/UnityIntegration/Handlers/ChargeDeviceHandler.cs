@@ -1,7 +1,8 @@
 using UnityEngine;
 using Features.Abilities.Domain;
-using Features.Buffs.UnityIntegration;
+using Features.Buffs.Application;
 using Features.Combat.Devices;
+using FishNet.Object;
 
 namespace Features.Abilities.UnityIntegration
 {
@@ -14,7 +15,7 @@ namespace Features.Abilities.UnityIntegration
             var ability = (ChargeDeviceAbilitySO)abilityBase;
 
             // ================================
-            // ADAPTATION: ctx.Owner is NOW object � not GameObject
+            // ADAPTATION: ctx.Owner is NOW object – not GameObject
             // ================================
             GameObject ownerGO = null;
 
@@ -24,9 +25,11 @@ namespace Features.Abilities.UnityIntegration
                     ownerGO = go;
                     break;
 
+
                 case Component comp:
                     ownerGO = comp.gameObject;
                     break;
+
 
                 default:
                     Debug.LogError("[ChargeDeviceHandler] AbilityContext.Owner is not GameObject or Component.");
@@ -35,6 +38,14 @@ namespace Features.Abilities.UnityIntegration
 
             if (ownerGO == null)
                 return;
+
+            // ✅ ТОЛЬКО НА СЕРВЕРЕ - предотвращаем двойное применение на клиенте
+            var netObj = ownerGO.GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.IsServer)
+            {
+                // На клиенте: баффы синхронизируются через SyncList от сервера
+                return;
+            }
 
             // ================================
             // BUFF DURATION
@@ -45,15 +56,22 @@ namespace Features.Abilities.UnityIntegration
                 duration = ability.areaBuff.buff.duration;
 
             // ================================
-            // APPLY AREA BUFF ON OWNER
+            // APPLY BUFF DIRECTLY TO OWNER (ТОЛЬКО НА СЕРВЕРЕ)
             // ================================
-            if (ability.areaBuff != null)
+            if (ability.areaBuff != null && ability.areaBuff.buff != null)
             {
-                var emitter = ownerGO.AddComponent<AreaBuffEmitter>();
-                emitter.area = ability.areaBuff;
-
-                if (duration > 0f)
-                    Object.Destroy(emitter, duration);
+                var buffSystem = ownerGO.GetComponent<BuffSystem>();
+                if (buffSystem != null)
+                {
+                    // ✅ Добавляем бафф ТОЛЬКО владельцу (только на сервере!)
+                    buffSystem.Add(ability.areaBuff.buff);
+                    
+                    Debug.Log($"[ChargeDeviceHandler] Buff '{ability.areaBuff.buff.buffId}' applied to owner: {ownerGO.name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[ChargeDeviceHandler] Owner {ownerGO.name} has no BuffSystem component");
+                }
             }
 
             // ================================

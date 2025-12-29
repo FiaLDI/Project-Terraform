@@ -15,22 +15,17 @@ public sealed class PlayerClassController : MonoBehaviour
     [Header("Classes Library")]
     [SerializeField] private PlayerClassLibrarySO library;
 
-
     [Header("Default Class ID")]
     [SerializeField] private string defaultClassId = "engineer";
 
-
     /* ================= COMPONENTS ================= */
-
 
     private PlayerVisualController visualController;
     private PassiveSystem passiveSystem;
     private AbilityCaster abilityCaster;
     private PlayerBuffTarget buffTarget;
 
-
     /* ================= DOMAIN ================= */
-
 
     private PlayerClassService classService;
     private IStatsFacade stats;
@@ -62,7 +57,6 @@ public sealed class PlayerClassController : MonoBehaviour
 
     private void Awake()
     {
-        // 🟢 Получаем все компоненты
         visualController = GetComponent<PlayerVisualController>();
         passiveSystem = GetComponent<PassiveSystem>();
         abilityCaster = GetComponent<AbilityCaster>();
@@ -77,7 +71,6 @@ public sealed class PlayerClassController : MonoBehaviour
         if (buffTarget == null)
             Debug.LogError("[PlayerClassController] PlayerBuffTarget not found!", this);
 
-        // 🟢 Инициализируем сервис классов
         if (library == null)
         {
             Debug.LogError("[PlayerClassController] PlayerClassLibrarySO not assigned!", this);
@@ -92,21 +85,17 @@ public sealed class PlayerClassController : MonoBehaviour
         Debug.Log("[PlayerClassController] Initialized", this);
     }
 
-
     private void OnEnable()
     {
         PlayerStats.OnStatsReady += OnStatsReady;
     }
-
 
     private void OnDisable()
     {
         PlayerStats.OnStatsReady -= OnStatsReady;
     }
 
-
     /* ================= STATS ================= */
-
 
     private void OnStatsReady(PlayerStats ps)
     {
@@ -121,7 +110,6 @@ public sealed class PlayerClassController : MonoBehaviour
 
         buffTarget?.SetStats(stats);
 
-        // Если класс уже был назначен ранее — применяем его
         if (currentClass != null)
         {
             Debug.Log($"[PlayerClassController] Stats ready, applying queued class: {currentClass.id}", this);
@@ -133,9 +121,7 @@ public sealed class PlayerClassController : MonoBehaviour
         }
     }
 
-
     /* ================= PUBLIC API ================= */
-
 
     /// <summary>
     /// 🟢 Применить класс по ID
@@ -164,7 +150,6 @@ public sealed class PlayerClassController : MonoBehaviour
 
         currentClass = cfg;
 
-        // Если статы уже готовы - применяем сразу, иначе ждем события OnStatsReady
         if (stats != null)
         {
             Debug.Log($"[PlayerClassController] Stats ready, applying class immediately: {classId}", this);
@@ -175,8 +160,6 @@ public sealed class PlayerClassController : MonoBehaviour
             Debug.Log($"[PlayerClassController] Stats not ready yet, queuing class: {classId}", this);
         }
     }
-
-
 
     /* ================= APPLY ================= */
 
@@ -190,7 +173,6 @@ public sealed class PlayerClassController : MonoBehaviour
         yield return null;
         ApplyInternal(cfg);
     }
-
 
     /// <summary>
     /// 🟢 Основной метод применения класса
@@ -212,14 +194,11 @@ public sealed class PlayerClassController : MonoBehaviour
 
         Debug.Log($"[PlayerClassController] Applying class: {cfg.displayName}", this);
 
-        // 🟢 Обновляем сервис текущего класса
         classService.SelectClass(cfg);
 
         var p = cfg.preset;
 
-        // ===== BASE STATS =====
         Debug.Log($"[PlayerClassController] Applying base stats for {cfg.displayName}", this);
-        
         stats.Health.ApplyBase(p.health.baseHp);
         stats.Health.ApplyRegenBase(p.health.baseRegen);
 
@@ -245,17 +224,12 @@ public sealed class PlayerClassController : MonoBehaviour
         );
 
 
-        // ===== PASSIVES / ABILITIES =====
         Debug.Log($"[PlayerClassController] Applying passives and abilities", this);
         
-        // 🟢 Пассивки накладывают бафы локально
         passiveSystem?.SetPassives(cfg.passives.ToArray());
         
-        // 🟢 Абилити устанавливаются (на локальном клиенте или при синхронизации с сервера)
         abilityCaster?.SetAbilities(cfg.abilities.ToArray());
 
-
-        // ===== VISUAL =====
         Debug.Log($"[PlayerClassController] Applying visual", this);
         
         if (cfg.visualPreset != null)
@@ -267,9 +241,6 @@ public sealed class PlayerClassController : MonoBehaviour
             Debug.LogWarning($"[PlayerClassController] Class {cfg.displayName} has no visual preset", this);
         }
 
-
-        // 🟢 Уведомляем что всё применено
-        // Это событие может быть обработано PlayerStateNetAdapter для синхронизации
         OnClassApplied?.Invoke();
 
         Debug.Log($"[PlayerClassController] ✅ Class applied completely: {cfg.displayName}", this);

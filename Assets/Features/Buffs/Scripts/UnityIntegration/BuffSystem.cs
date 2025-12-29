@@ -1,10 +1,13 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Features.Buffs.Domain;
 using Features.Stats.Domain;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using Features.Buffs.Data;
+
 
 namespace Features.Buffs.Application
 {
@@ -12,6 +15,11 @@ namespace Features.Buffs.Application
     {
         [Header("Debug")]
         [SerializeField] private bool _debugMode;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // СИНХРОНИЗАЦИЯ: SyncList для ID активных баффов
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        public readonly SyncList<string> ActiveBuffIds = new SyncList<string>();
 
         private IBuffTarget _target;
         private BuffExecutor _executor;
@@ -24,7 +32,6 @@ namespace Features.Buffs.Application
         public BuffService Service => _service;
         public IReadOnlyList<BuffInstance> Active => _service?.Active;
         public bool ServiceReady => _service != null;
-
         public IBuffTarget Target => _target;
 
         public event System.Action<BuffInstance> OnBuffAdded;
@@ -38,13 +45,19 @@ namespace Features.Buffs.Application
         public override void OnStartClient()
         {
             base.OnStartClient();
+            ActiveBuffIds.OnChange += OnBuffIdsChanged;
             StartCoroutine(InitRoutine());
+        }
+
+        public override void OnStopClient()
+        {
+            base.OnStopClient();
+            ActiveBuffIds.OnChange -= OnBuffIdsChanged;
         }
 
         private IEnumerator InitRoutine()
         {
-            // Ждем 1 кадр, чтобы точно все синглтоны проснулись
-            yield return null; 
+            yield return null;
             TryInit();
         }
 
@@ -77,37 +90,29 @@ namespace Features.Buffs.Application
                 return;
             }
 
-            // 1. Находим Executor (теперь через Singleton, это надежно)
             if (_executor == null)
             {
                 _executor = BuffExecutor.Instance;
 
-                // Если вдруг Instance еще null (очень странно, но бывает), пробуем найти
                 if (_executor == null)
                 {
                     _executor = FindObjectOfType<BuffExecutor>();
                 }
-                
+
                 if (_executor == null)
                 {
-                    // Не кричим Error, а ждем следующей попытки (InitRoutine или Add вызовет повторно)
                     if (_debugMode) Debug.LogWarning("[BuffSystem] BuffExecutor not found yet. Waiting...", this);
                     return;
                 }
             }
 
-            // 2. Инициализируем сервис
             if (_service == null)
             {
                 _service = new BuffService(_executor);
-                
-                // Подписки на события сервиса
                 _service.OnAdded += HandleBuffAdded;
                 _service.OnRemoved += HandleBuffRemoved;
-                
-                if (_debugMode) Debug.Log("[BuffSystem] BuffService initialized successfully", this);
 
-                // 3. Применяем отложенные баффы
+                if (_debugMode) Debug.Log("[BuffSystem] BuffService initialized successfully", this);
                 ProcessPendingBuffs();
             }
         }
@@ -119,21 +124,21 @@ namespace Features.Buffs.Application
                 if (_debugMode) Debug.Log($"[BuffSystem] Processing {_pendingBuffs.Count} pending buffs...", this);
                 foreach (var buffCfg in _pendingBuffs)
                 {
-                    Add(buffCfg); // Рекурсивно вызовет Add, но теперь ServiceReady = true
+                    Add(buffCfg);
                 }
                 _pendingBuffs.Clear();
             }
         }
 
-        // Обработчики событий (вынесены для чистоты)
         private void HandleBuffAdded(BuffInstance inst)
         {
             try
             {
                 OnBuffAdded?.Invoke(inst);
-                if (IsServer)
+
+                if (IsServerInitialized)
                 {
-                    RpcNotifyBuffAdded(inst.Config.buffId);
+                    UpdateActivBuffsSync();
                 }
             }
             catch (System.Exception ex)
@@ -147,9 +152,10 @@ namespace Features.Buffs.Application
             try
             {
                 OnBuffRemoved?.Invoke(inst);
-                if (IsServer)
+
+                if (IsServerInitialized)
                 {
-                    RpcNotifyBuffRemoved(inst.Config.buffId);
+                    UpdateActivBuffsSync();
                 }
             }
             catch (System.Exception ex)
@@ -157,7 +163,6 @@ namespace Features.Buffs.Application
                 Debug.LogError($"[BuffSystem] Error in OnBuffRemoved event: {ex.Message}", this);
             }
         }
-
 
         public BuffInstance Add(BuffSO cfg)
         {
@@ -167,18 +172,16 @@ namespace Features.Buffs.Application
                 return null;
             }
 
-            // Если сервис еще не готов — пробуем инициализировать
             if (!ServiceReady)
             {
                 TryInit();
             }
-            
-            // Если все еще не готов (например, нет Executor в сцене)
+
             if (!ServiceReady)
             {
-                if (_debugMode) Debug.LogWarning($"[BuffSystem] Service not ready. Queueing buff {cfg.buffId}", this);
+                Debug.LogWarning($"[BuffSystem] Service not ready. Queueing buff {cfg.buffId}", this);
                 _pendingBuffs.Add(cfg);
-                return null; // Вернем null, но бафф применится позже
+                return null;
             }
 
             if (_target == null)
@@ -190,12 +193,6 @@ namespace Features.Buffs.Application
             try
             {
                 var buff = _service.AddBuff(cfg, _target);
-                
-                if (IsServer && buff != null)
-                {
-                    RpcApplyBuffToAll(cfg.buffId);
-                }
-                
                 return buff;
             }
             catch (System.Exception ex)
@@ -214,11 +211,6 @@ namespace Features.Buffs.Application
                 try
                 {
                     _service.RemoveBuff(inst);
-                    
-                    if (IsServer)
-                    {
-                        RpcRemoveBuffFromAll(inst.Config.buffId);
-                    }
                 }
                 catch (System.Exception ex)
                 {
@@ -242,75 +234,137 @@ namespace Features.Buffs.Application
             _stats = stats;
         }
 
-        /* ================= RPC ================= */
+        /* ================= СИНХРОНИЗАЦИЯ ЧЕРЕЗ SYNCLIST ================= */
 
-        [ObserversRpc]
-        private void RpcApplyBuffToAll(string buffId)
+        /// <summary>
+        /// Обновляет SyncList состояния активных баффов на сервере.
+        /// Автоматически отправляет на клиентов через FishNet.
+        /// </summary>
+        private void UpdateActivBuffsSync()
         {
-            if (IsServer) return; // Сервер уже применил
+            if (!IsServerInitialized || _service?.Active == null) return;
 
-            // Если система еще не готова на клиенте — пробуем инициализировать
-            if (!ServiceReady) TryInit();
-
-            if (_target?.GameObject != null && ServiceReady)
+            var currentIds = new HashSet<string>();
+            foreach (var buff in _service.Active)
             {
-                var buffSO = FindBuffById(buffId);
-                if (buffSO != null)
+                if (buff?.Config != null)
+                {
+                    currentIds.Add(buff.Config.buffId);
+                }
+            }
+
+            ActiveBuffIds.Clear();
+            foreach (var id in currentIds)
+            {
+                ActiveBuffIds.Add(id);
+            }
+
+            if (_debugMode)
+                Debug.Log($"[BuffSystem] Synced {ActiveBuffIds.Count} active buffs to clients", this);
+        }
+
+        /// <summary>
+        /// Вызывается на клиентах когда SyncList изменяется.
+        /// </summary>
+        private void OnBuffIdsChanged(SyncListOperation op, int index, string oldItem, string newItem, bool asServer)
+        {
+            if (asServer) return;
+
+            if (_debugMode)
+                Debug.Log($"[BuffSystem] Buff state changed on client. Op={op}", this);
+
+            // Откладываем синхронизацию до конца кадра
+            if (gameObject.activeInHierarchy)
+            {
+                StartCoroutine(SyncNextFrame());
+            }
+        }
+
+        private IEnumerator SyncNextFrame()
+        {
+            yield return new WaitForEndOfFrame();
+            SyncBuffStateWithServer();
+        }
+
+        /// <summary>
+        /// ПУЛЕНЕПРОБИВАЕМАЯ синхронизация без foreach/Enumerator
+        /// Использует индексный доступ вместо foreach для избежания InvalidOperationException
+        /// </summary>
+        private void SyncBuffStateWithServer()
+        {
+            if (!ServiceReady) return;
+
+            // 1. БЕЗОПАСНО копируем ЛОКАЛЬНЫЕ баффы через индекс (без foreach)
+            var currentBuffs = new List<BuffInstance>();
+            var sourceList = _service.Active;
+
+            if (sourceList != null)
+            {
+                int count = sourceList.Count;
+                for (int i = 0; i < count; i++)
                 {
                     try
                     {
-                        // На клиенте просто добавляем в локальный сервис
-                        // Executor сам применит эффекты
-                        _service.AddBuff(buffSO, _target);
+                        if (i < sourceList.Count)
+                        {
+                            var b = sourceList[i];
+                            if (b != null) currentBuffs.Add(b);
+                        }
                     }
-                    catch (System.Exception ex)
-                    {
-                        Debug.LogError($"[BuffSystem] Error in RPC ApplyBuff: {ex.Message}", this);
-                    }
+                    catch { /* Игнорируем ошибки доступа при гонке */ }
                 }
             }
-            else
-            {
-                 // Если все еще не готовы — можно добавить в pending, но для RPC это сложнее (нужен конфиг)
-                 // Обычно клиент успевает инициализироваться раньше, чем прилетит первый бафф
-            }
-        }
 
-        [ObserversRpc]
-        private void RpcRemoveBuffFromAll(string buffId)
-        {
-            if (_service?.Active == null) return;
+            // 2. БЕЗОПАСНО копируем СЕРВЕРНЫЕ ID через индекс
+            var serverIds = new List<string>();
+            var syncList = ActiveBuffIds;
 
-            try
+            if (syncList != null)
             {
-                var toRemove = new List<BuffInstance>();
-                foreach (var buff in _service.Active)
+                int count = syncList.Count;
+                for (int i = 0; i < count; i++)
                 {
-                    if (buff?.Config != null && buff.Config.buffId == buffId)
-                        toRemove.Add(buff);
+                    try
+                    {
+                        if (i < syncList.Count)
+                        {
+                            serverIds.Add(syncList[i]);
+                        }
+                    }
+                    catch { /* Игнорируем */ }
                 }
+            }
 
-                foreach (var buff in toRemove)
+            // 3. Логика синхронизации (работаем только с локальными копиями)
+            var clientBuffIds = new HashSet<string>();
+            foreach (var buff in currentBuffs)
+            {
+                if (buff?.Config != null) clientBuffIds.Add(buff.Config.buffId);
+            }
+
+            // === УДАЛЕНИЕ (есть локально, нет на сервере) ===
+            foreach (var buff in currentBuffs)
+            {
+                if (buff?.Config != null && !serverIds.Contains(buff.Config.buffId))
                 {
                     _service.RemoveBuff(buff);
+                    if (_debugMode) Debug.Log($"[BuffSystem] Removed buff {buff.Config.buffId} (not on server)", this);
                 }
             }
-            catch (System.Exception ex)
+
+            // === ДОБАВЛЕНИЕ (есть на сервере, нет локально) ===
+            foreach (var serverId in serverIds)
             {
-                Debug.LogError($"[BuffSystem] Error in RPC RemoveBuff: {ex.Message}", this);
+                if (!clientBuffIds.Contains(serverId))
+                {
+                    var buffSO = FindBuffById(serverId);
+                    if (buffSO != null && _target != null)
+                    {
+                        _service.AddBuff(buffSO, _target);
+                        if (_debugMode) Debug.Log($"[BuffSystem] Added buff {serverId} (from server)", this);
+                    }
+                }
             }
-        }
-
-        [ObserversRpc]
-        private void RpcNotifyBuffAdded(string buffId)
-        {
-            if (_debugMode) Debug.Log($"[BuffSystem] Buff added (notification): {buffId}", this);
-        }
-
-        [ObserversRpc]
-        private void RpcNotifyBuffRemoved(string buffId)
-        {
-            if (_debugMode) Debug.Log($"[BuffSystem] Buff removed (notification): {buffId}", this);
         }
 
         /* ================= HELPERS ================= */
@@ -320,12 +374,12 @@ namespace Features.Buffs.Application
             try
             {
                 var buff = BuffRegistrySO.Instance.GetById(buffId);
-                
+
                 if (buff == null)
                 {
                     Debug.LogWarning($"[BuffSystem] Buff ID '{buffId}' not found in Registry!", this);
                 }
-                
+
                 return buff;
             }
             catch (System.Exception ex)
