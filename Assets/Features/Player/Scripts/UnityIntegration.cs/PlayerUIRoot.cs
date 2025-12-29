@@ -5,6 +5,8 @@ using Features.Player.UnityIntegration;
 
 namespace Features.Player.UI
 {
+    
+    [DefaultExecutionOrder(-150)]
     public sealed class PlayerUIRoot : MonoBehaviour
     {
         public static PlayerUIRoot I { get; private set; }

@@ -32,7 +32,7 @@ public sealed class PlayerInteractionController :
         var player = BootstrapRoot.I?.LocalPlayer;
         if (player != null)
         {
-            nearby = player.GetComponentInChildren<INearbyInteractables>(true);
+            nearby = player.GetComponent<INearbyInteractables>();
             Debug.Log($"[PIC] Start: nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
         }
 
@@ -115,7 +115,7 @@ public sealed class PlayerInteractionController :
         // гарантированно есть nearby
         if (nearby == null)
         {
-            nearby = player.GetComponentInChildren<INearbyInteractables>(true);
+            nearby = player.GetComponent<INearbyInteractables>();
             Debug.Log($"[PIC] TryInteract: reacquired nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
 
             // если резолвер уже был создан с null-nearby – пересоздаём

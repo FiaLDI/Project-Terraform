@@ -2,6 +2,7 @@ using FishNet.Object;
 using UnityEngine;
 using Features.Stats.UnityIntegration;
 using Features.Abilities.Application;
+using Features.Interaction.UnityIntegration;
 
 
 
@@ -60,11 +61,6 @@ namespace Features.Player.UnityIntegration
 
             registry.RegisterPlayer(gameObject);
             InitializePlayerStats();
-
-
-            // 🟢 ГЛАВНОЕ: НЕ отключаем AbilityCaster здесь!
-            // Отключение будет в PlayerStateNetAdapter.RpcApplyClassWithAbilities()
-            // когда абилити уже загружены с сервера
             
             
             if (!IsOwner)
@@ -74,19 +70,20 @@ namespace Features.Player.UnityIntegration
                 var controller = GetComponent<PlayerController>();
                 if (controller != null)
                     controller.enabled = false;
-                
-                // ❌ НЕ отключаем AbilityCaster здесь - это сделает PlayerStateNetAdapter
+                if (GetComponent<NearbyInteractables>() != null)
+                    GetComponent<NearbyInteractables>().enabled = false;
                 return;
             }
 
 
-            // 🟢 Для ЛОКАЛЬНОГО игрока
             Debug.Log($"[NetworkPlayer] LOCAL player detected: {gameObject.name}", this);
-
 
             if (GetComponent<PlayerController>() != null)
                 GetComponent<PlayerController>().enabled = true;
-
+            
+            var nearby = GetComponent<NearbyInteractables>(); 
+            if (nearby != null)
+                nearby.Initialize(base.IsOwner);
 
             var localAbilities = GetComponent<AbilityCaster>();
             if (localAbilities != null)

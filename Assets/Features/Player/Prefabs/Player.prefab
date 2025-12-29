@@ -363,9 +363,9 @@ GameObject:
   - component: {fileID: 3522764533794228268}
   - component: {fileID: 368187022757258266}
   - component: {fileID: 9015480268040883364}
-  - component: {fileID: 2293977598168238193}
   - component: {fileID: 7407599192339855080}
   - component: {fileID: 4243781917691856348}
+  - component: {fileID: 5527670935517867940}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -456,6 +456,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
+  _debugMode: 0
 --- !u!114 &7420869319970409758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -672,6 +673,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NearbyInteractables
   maxDistance: 3
   maxAngle: 45
+  cleanupInterval: 60
 --- !u!95 &2364264481245977081
 Animator:
   serializedVersion: 7
@@ -765,9 +767,9 @@ MonoBehaviour:
   _enableStateForwarding: 1
   _networkTransform: {fileID: 0}
   _ownerInterpolation: 1
-  _ownerSmoothedProperties: 255
+  _ownerSmoothedProperties: 4294967295
   _adaptiveInterpolation: 3
-  _spectatorSmoothedProperties: 255
+  _spectatorSmoothedProperties: 4294967295
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
@@ -1015,18 +1017,6 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
---- !u!114 &2293977598168238193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e271473a25124bd48bd07d828d867056, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIBackInputHandler
 --- !u!114 &7407599192339855080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1058,3 +1048,18 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
   aimSendRate: 20
+--- !u!114 &5527670935517867940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fa84b807ef77744fa402fa2fbbcb9b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Net.PassiveNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}

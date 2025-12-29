@@ -1,5 +1,3 @@
-// BuffHUD.cs - ИСПРАВЛЕННЫЙ
-
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +19,16 @@ namespace Features.Buffs.UI
         private Coroutine waitCoroutine;
 
         // ======================================================
+        // LIFECYCLE
+        // ======================================================
+
+        private void Awake()
+        {
+            // Проверка жизни UI
+            Debug.Log($"[BuffHUD] AWAKE on {gameObject.name}", this);
+        }
+
+        // ======================================================
         // PLAYER BIND (FROM BASE)
         // ======================================================
 
@@ -28,45 +36,58 @@ namespace Features.Buffs.UI
         {
             Debug.Log("[BuffHUD] OnPlayerBound called for " + player.name, this);
 
-            var bs = player.GetComponent<BuffSystem>();
+            // 1. Ищем BuffSystem ГЛУБОКО (на случай если он в дочерних объектах)
+            var bs = player.GetComponentInChildren<BuffSystem>(includeInactive: true);
+
             if (bs == null)
             {
-                Debug.LogError("[BuffHUD] BuffSystem not found on player!", this);
+                Debug.LogError($"[BuffHUD] BuffSystem NOT FOUND on player {player.name} (checked children)!", this);
                 return;
             }
 
-            Debug.Log($"[BuffHUD] Found BuffSystem, ServiceReady={bs.ServiceReady}", this);
+            Debug.Log($"[BuffHUD] Found BuffSystem. ServiceReady={bs.ServiceReady}", this);
 
-            // 🟢 ИСПРАВЛЕНИЕ: ждём инициализацию BuffSystem
+            // 2. Если система не готова - ждём (как в AbilityHUD)
             if (!bs.ServiceReady)
             {
-                Debug.Log("[BuffHUD] BuffSystem not ready, waiting...", this);
+                Debug.Log("[BuffHUD] BuffSystem found but NOT READY. Waiting...", this);
+                
+                // Если ты добавил event OnSystemReady в BuffSystem - лучше использовать его!
+                // bs.OnSystemReady += HandleSystemReady;
+                
+                // Если нет - используем корутину (fallback)
+                if (waitCoroutine != null) StopCoroutine(waitCoroutine);
                 waitCoroutine = StartCoroutine(WaitForBuffSystem(bs));
                 return;
             }
 
+            // 3. Если готова - биндимся сразу
             Bind(bs);
         }
 
         protected override void OnPlayerUnbound(GameObject player)
         {
             Debug.Log("[BuffHUD] OnPlayerUnbound called", this);
+            
+            // Если была подписка на event - отписываемся здесь
+            // if (buffSystem != null) buffSystem.OnSystemReady -= HandleSystemReady;
+            
             Unbind();
         }
 
         // ======================================================
-        // WAIT FOR READY
+        // WAIT FOR READY (Fallback logic)
         // ======================================================
 
         private System.Collections.IEnumerator WaitForBuffSystem(BuffSystem bs)
         {
-            int maxWait = 100; // максимум 10 кадров
+            int maxWait = 200; // Ждем до 2-3 секунд (при 60 fps)
             int waited = 0;
 
+            // Ждем пока ServiceReady станет true
             while (bs != null && !bs.ServiceReady && waited < maxWait)
             {
-                Debug.Log($"[BuffHUD] Waiting for BuffSystem... ({waited})", this);
-                yield return null;
+                yield return null; 
                 waited++;
             }
 
@@ -74,17 +95,17 @@ namespace Features.Buffs.UI
 
             if (bs == null)
             {
-                Debug.LogError("[BuffHUD] BuffSystem was destroyed while waiting", this);
+                Debug.LogWarning("[BuffHUD] BuffSystem destroyed while waiting", this);
                 yield break;
             }
 
             if (!bs.ServiceReady)
             {
-                Debug.LogError("[BuffHUD] BuffSystem still not ready after waiting!", this);
+                Debug.LogError($"[BuffHUD] BuffSystem timed out after {maxWait} frames!", this);
                 yield break;
             }
 
-            Debug.Log("[BuffHUD] BuffSystem is ready, binding...", this);
+            Debug.Log($"[BuffHUD] BuffSystem became ready after {waited} frames. Binding...", this);
             Bind(bs);
         }
 
@@ -94,37 +115,35 @@ namespace Features.Buffs.UI
 
         private void Bind(BuffSystem bs)
         {
-            Debug.Log("[BuffHUD] Binding to BuffSystem", this);
+            Debug.Log("[BuffHUD] Binding to BuffSystem instance", this);
 
             buffSystem = bs;
 
-            // 🟢 ВАЖНО: подписываемся на события
+            // Подписываемся на изменения
             buffSystem.OnBuffAdded += HandleAdd;
             buffSystem.OnBuffRemoved += HandleRemove;
 
-            Debug.Log($"[BuffHUD] Subscribed. Current buffs count: {buffSystem.Active?.Count ?? 0}", this);
+            // Отображаем существующие бафы (Синхронизация стейта)
+            var activeBuffs = buffSystem.Active; // Используем свойство
+            int count = activeBuffs?.Count ?? 0;
+            
+            Debug.Log($"[BuffHUD] Subscribed. Current active buffs: {count}", this);
 
-            // 🟢 ИСПРАВЛЕНИЕ: отобразить уже активные бафы
-            if (buffSystem.Active != null && buffSystem.Active.Count > 0)
+            if (count > 0)
             {
-                Debug.Log($"[BuffHUD] Found {buffSystem.Active.Count} existing buffs, adding icons...", this);
-                
-                foreach (var inst in buffSystem.Active)
+                foreach (var inst in activeBuffs)
                 {
-                    Debug.Log($"[BuffHUD] Adding existing buff icon: {inst.Config?.buffId}", this);
-                    HandleAdd(inst);
+                    // Пропускаем дубликаты (на случай гонки)
+                    if (!icons.ContainsKey(inst))
+                    {
+                        HandleAdd(inst);
+                    }
                 }
-            }
-            else
-            {
-                Debug.Log("[BuffHUD] No existing buffs found", this);
             }
         }
 
         private void Unbind()
         {
-            Debug.Log("[BuffHUD] Unbinding", this);
-
             if (waitCoroutine != null)
             {
                 StopCoroutine(waitCoroutine);
@@ -135,6 +154,7 @@ namespace Features.Buffs.UI
             {
                 buffSystem.OnBuffAdded -= HandleAdd;
                 buffSystem.OnBuffRemoved -= HandleRemove;
+                Debug.Log("[BuffHUD] Unbound from BuffSystem", this);
             }
 
             buffSystem = null;
@@ -142,105 +162,74 @@ namespace Features.Buffs.UI
         }
 
         // ======================================================
-        // ADD / REMOVE
+        // ADD / REMOVE HANDLERS
         // ======================================================
 
         private void HandleAdd(BuffInstance inst)
         {
-            Debug.Log($"[BuffHUD] HandleAdd: {inst?.Config?.buffId}", this);
+            if (inst == null || inst.Config == null) return;
 
-            if (inst == null || inst.Config == null)
+            if (icons.ContainsKey(inst)) return; // Уже есть
+
+            if (container == null || iconPrefab == null)
             {
-                Debug.LogWarning("[BuffHUD] Invalid buff instance", this);
+                Debug.LogError("[BuffHUD] References missing (Container or Prefab)!", this);
                 return;
             }
 
-            if (icons.ContainsKey(inst))
-            {
-                Debug.LogWarning($"[BuffHUD] Buff {inst.Config.buffId} already has icon", this);
-                return;
-            }
-
-            if (iconPrefab == null)
-            {
-                Debug.LogError("[BuffHUD] iconPrefab is null!", this);
-                return;
-            }
-
-            if (container == null)
-            {
-                Debug.LogError("[BuffHUD] container is null!", this);
-                return;
-            }
-
+            // Создаем иконку
             var ui = Instantiate(iconPrefab, container);
             ui.name = $"BuffIcon_{inst.Config.buffId}";
             ui.Bind(inst);
 
+            // Настраиваем тултип (опционально)
             var tt = ui.GetComponent<BuffTooltipTrigger>();
-            if (tt != null)
-            {
-                tt.Bind(inst);
-                Debug.Log($"[BuffHUD] Bound tooltip trigger for {inst.Config.buffId}", this);
-            }
-            else
-            {
-                Debug.LogWarning("[BuffHUD] BuffTooltipTrigger not found on icon prefab", this);
-            }
+            if (tt != null) tt.Bind(inst);
 
             icons[inst] = ui;
             Resort();
-
-            Debug.Log($"[BuffHUD] Added buff icon. Total icons: {icons.Count}", this);
+            
+            Debug.Log($"[BuffHUD] Added icon: {inst.Config.buffId}", this);
         }
 
         private void HandleRemove(BuffInstance inst)
         {
-            Debug.Log($"[BuffHUD] HandleRemove: {inst?.Config?.buffId}", this);
+            if (inst == null) return;
 
-            if (!icons.TryGetValue(inst, out var ui))
+            if (icons.TryGetValue(inst, out var ui))
             {
-                Debug.LogWarning($"[BuffHUD] No icon found for buff {inst?.Config?.buffId}", this);
-                return;
+                if (ui != null) Destroy(ui.gameObject);
+                icons.Remove(inst);
+                Resort();
+                Debug.Log($"[BuffHUD] Removed icon: {inst.Config.buffId}", this);
             }
-
-            if (ui != null)
-            {
-                Destroy(ui.gameObject);
-                Debug.Log($"[BuffHUD] Destroyed buff icon", this);
-            }
-
-            icons.Remove(inst);
-            Resort();
         }
 
         // ======================================================
-        // SORT / CLEAR
+        // HELPERS
         // ======================================================
 
         private void Resort()
         {
+            if (icons.Count <= 1) return;
+
             var sorted = icons
-                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1) // дебаффы первыми
-                .ThenByDescending(kv => kv.Key.Remaining)       // потом по оставшемуся времени
+                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1) // Дебаффы (красные) слева
+                .ThenByDescending(kv => kv.Key.Remaining)       // Долгие слева
                 .ToList();
 
             for (int i = 0; i < sorted.Count; i++)
+            {
                 sorted[i].Value.transform.SetSiblingIndex(i);
-
-            Debug.Log($"[BuffHUD] Resorted {sorted.Count} buff icons", this);
+            }
         }
 
         private void ClearAll()
         {
-            Debug.Log("[BuffHUD] Clearing all buff icons", this);
-
             foreach (var ui in icons.Values)
             {
-                if (ui != null)
-                    Destroy(ui.gameObject);
+                if (ui != null) Destroy(ui.gameObject);
             }
-
             icons.Clear();
         }
     }

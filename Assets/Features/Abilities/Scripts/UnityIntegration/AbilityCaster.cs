@@ -276,7 +276,6 @@ namespace Features.Abilities.Application
             if (slotIndex >= 0 && slotIndex < cooldownValues.Length)
             {
                 cooldownValues[slotIndex] = cooldownValue;
-                Debug.Log($"[AbilityCaster] Cooldown synced for slot {slotIndex}: {cooldownValue}s", this);
             }
         }
     }

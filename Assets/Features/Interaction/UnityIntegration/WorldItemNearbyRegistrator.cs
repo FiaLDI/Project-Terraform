@@ -1,5 +1,6 @@
 using UnityEngine;
 using Features.Items.UnityIntegration;
+using Features.Interaction.UnityIntegration;
 
 [RequireComponent(typeof(WorldItemNetwork))]
 [RequireComponent(typeof(Collider))]
