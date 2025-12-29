@@ -19,19 +19,8 @@ namespace Features.Player.UnityIntegration
             base.OnStartNetwork();
             movement = GetComponent<PlayerMovement>();
             movementState = GetComponent<MovementStateNetwork>();
-        }
-
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
-            movement.AllowMovement = true;
-        }
-
-        public override void OnStopServer()
-        {
-            base.OnStopServer();
-            if (movement != null)
-            movement.AllowMovement = false;
+            
+            Debug.Log($"[PlayerMovementNetAdapter] OnStartNetwork - IsOwner={base.Owner.IsLocalClient}", this);
         }
 
         private void Update()
@@ -50,7 +39,7 @@ namespace Features.Player.UnityIntegration
         }
 
         // ======================================================
-        // INPUT (CLIENT → SERVER)
+        // INPUT (CLIENT → LOCAL, NetworkTransform синхронизирует)
         // ======================================================
 
         public void SendMoveInput(Vector2 input)
@@ -58,15 +47,7 @@ namespace Features.Player.UnityIntegration
             if (!IsOwner)
                 return;
 
-            if (IsServerInitialized)
-                movement.SetMoveInput(input);
-            else
-                SendMoveInput_Server(input);
-        }
-
-        [ServerRpc]
-        private void SendMoveInput_Server(Vector2 input)
-        {
+            // Client Authoritative: применяем локально, NetworkTransform синхронизирует
             movement.SetMoveInput(input);
         }
 
@@ -75,15 +56,6 @@ namespace Features.Player.UnityIntegration
             if (!IsOwner)
                 return;
 
-            if (IsServerInitialized)
-                movement.SetSprint(value);
-            else
-                SetSprint_Server(value);
-        }
-
-        [ServerRpc]
-        private void SetSprint_Server(bool value)
-        {
             movement.SetSprint(value);
         }
 
@@ -92,15 +64,6 @@ namespace Features.Player.UnityIntegration
             if (!IsOwner)
                 return;
 
-            if (IsServerInitialized)
-                movement.SetWalk(value);
-            else
-                SetWalk_Server(value);
-        }
-
-        [ServerRpc]
-        private void SetWalk_Server(bool value)
-        {
             movement.SetWalk(value);
         }
 
@@ -109,15 +72,6 @@ namespace Features.Player.UnityIntegration
             if (!IsOwner)
                 return;
 
-            if (IsServerInitialized)
-                movement.ToggleCrouch();
-            else
-                ToggleCrouch_Server();
-        }
-
-        [ServerRpc]
-        private void ToggleCrouch_Server()
-        {
             movement.ToggleCrouch();
         }
 
@@ -126,15 +80,6 @@ namespace Features.Player.UnityIntegration
             if (!IsOwner)
                 return;
 
-            if (IsServerInitialized)
-                movement.TryJump();
-            else
-                Jump_Server();
-        }
-
-        [ServerRpc]
-        private void Jump_Server()
-        {
             movement.TryJump();
         }
 
@@ -143,15 +88,6 @@ namespace Features.Player.UnityIntegration
             if (!IsOwner)
                 return;
 
-            if (IsServerInitialized)
-                movement.SetBodyYaw(yaw);
-            else
-                SetBodyRotation_Server(yaw);
-        }
-
-        [ServerRpc]
-        private void SetBodyRotation_Server(float yaw)
-        {
             movement.SetBodyYaw(yaw);
         }
     }

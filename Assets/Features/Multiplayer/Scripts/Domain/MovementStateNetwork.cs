@@ -7,7 +7,7 @@ namespace Features.Player.UnityIntegration
     [RequireComponent(typeof(PlayerAnimationController))]
     public sealed class MovementStateNetwork : NetworkBehaviour
     {
-        // ================= SYNC =================
+        // ================= SYNC VARIABLES =================
         private readonly SyncVar<float> _planarSpeed = new();
         private readonly SyncVar<bool> _isGrounded = new();
         private readonly SyncVar<bool> _isCrouching = new();
@@ -49,7 +49,7 @@ namespace Features.Player.UnityIntegration
             if (!IsServerInitialized)
                 return;
 
-            // 🔑 не спамим сеть
+            // Не спамим сеть
             if (Mathf.Abs(_planarSpeed.Value - speed) > SPEED_EPSILON)
                 _planarSpeed.Value = speed;
 
@@ -64,17 +64,18 @@ namespace Features.Player.UnityIntegration
 
         private void OnSpeedChanged(float oldVal, float newVal, bool asServer)
         {
-            // ❗ только сохраняем цель, НЕ трогаем Animator
             _targetSpeed = newVal;
         }
 
         private void OnGroundedChanged(bool oldVal, bool newVal, bool asServer)
         {
+            if (IsOwner) return;
             anim?.SetGrounded(newVal);
         }
 
         private void OnCrouchChanged(bool oldVal, bool newVal, bool asServer)
         {
+            if (IsOwner) return;
             anim?.SetCrouch(newVal);
         }
 
@@ -82,9 +83,13 @@ namespace Features.Player.UnityIntegration
 
         private void Update()
         {
+            // Если это мой персонаж, анимацией управляет PlayerMovement локально
+            if (IsOwner) return;
+
             if (anim == null)
                 return;
 
+            // Интерполяция скорости для плавности анимации чужих игроков
             _currentSpeed = Mathf.Lerp(
                 _currentSpeed,
                 _targetSpeed,
