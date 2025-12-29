@@ -126,7 +126,7 @@ namespace Features.Abilities.Application
 
             if (ability.castType == AbilityCastType.Instant)
             {
-                // сохраняем последний контекст мгновенного каста
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
                 LastInstantContext = ctx;
 
                 OnAbilityCast?.Invoke(ability);
@@ -137,7 +137,7 @@ namespace Features.Abilities.Application
 
             if (ability.castType == AbilityCastType.Channel)
             {
-                // сохраняем стартовый контекст канала
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                 LastChannelContext = ctx;
 
                 StartChannel(ability, ctx);

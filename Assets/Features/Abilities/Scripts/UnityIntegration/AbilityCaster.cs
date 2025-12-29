@@ -4,9 +4,9 @@ using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
-using UnityEngine;
+using FishNet.Managing.Server;
 using FishNet.Object;
-
+using UnityEngine;
 
 namespace Features.Abilities.Application
 {
@@ -24,8 +24,12 @@ namespace Features.Abilities.Application
         [Header("Library")]
         [SerializeField] private AbilityLibrarySO abilityLibrary;
 
-        // 🟢 ИСПРАВЛЕНИЕ: простые float массивы вместо NetworkVariable
+        [Header("Network Sync")]
+        [SerializeField] private float cooldownSyncInterval = 0.5f; // раз в 0.5 сек (4-8 игроков - оптимально)
+
         private float[] cooldownValues = new float[5];
+        private float[] lastSyncedCooldowns = new float[5]; // Отслеживаем что уже отправили
+        private float syncTimer = 0f;
 
         private IEnergyStats energy;
         private AbilityService service;
@@ -47,10 +51,10 @@ namespace Features.Abilities.Application
 
         private void Awake()
         {
-            // Инициализируем массив cooldown значений
             for (int i = 0; i < cooldownValues.Length; i++)
             {
                 cooldownValues[i] = 0f;
+                lastSyncedCooldowns[i] = 0f;
             }
         }
 
@@ -80,6 +84,7 @@ namespace Features.Abilities.Application
 
             executor ??= AbilityExecutor.I;
 
+            // 🎯 Теперь не передаём ServerManager в конструктор
             service = new AbilityService(
                 owner: gameObject,
                 energy: energy,
@@ -99,7 +104,7 @@ namespace Features.Abilities.Application
                 abilityLibrary = UnityEngine.Resources.Load<AbilityLibrarySO>(
                     "Databases/AbilityLibrary");
                 if (abilityLibrary == null)
-                    Debug.LogError("[AbilityCaster] AbilityLibrary not found in Resources/Databases/AbilityLibrary", this);
+                    Debug.LogError("[AbilityCaster] AbilityLibrary not found", this);
             }
 
             IsReady = true;
@@ -118,22 +123,40 @@ namespace Features.Abilities.Application
 
             service.Tick(Time.deltaTime);
 
-            // 🟢 ИСПРАВЛЕНИЕ: обновляем cooldowns локально и синхронизируем через RPC
-            if (IsServer)
+            // 🎯 ОПТИМИЗАЦИЯ: Синхронизируем раз в X секунд (0.5s для 4-8 игроков)
+            if (IsServerInitialized)
             {
-                for (int i = 0; i < abilities.Length; i++)
-                {
-                    if (abilities[i] != null)
-                    {
-                        float newCooldown = service.GetCooldownRemaining(abilities[i]);
+                syncTimer += Time.deltaTime;
 
-                        // Отправляем RPC если cooldown изменился на >0.01 (чтобы не спамить сетевые пакеты)
-                        if (Mathf.Abs(cooldownValues[i] - newCooldown) > 0.01f)
-                        {
-                            cooldownValues[i] = newCooldown;
-                            RpcSyncCooldown(i, newCooldown);
-                        }
-                    }
+                if (syncTimer >= cooldownSyncInterval)
+                {
+                    syncTimer = 0f;
+                    SyncCooldownsIfChanged();
+                }
+            }
+        }
+
+        /* ================= SYNC LOGIC ================= */
+
+        /// <summary>
+        /// 🎯 Отправляем только изменившиеся CD (экономим трафик)
+        /// </summary>
+        private void SyncCooldownsIfChanged()
+        {
+            for (int i = 0; i < abilities.Length; i++)
+            {
+                if (abilities[i] == null)
+                    continue;
+
+                float newCooldown = service.GetCooldownRemaining(abilities[i]);
+                cooldownValues[i] = newCooldown;
+
+                // Отправляем только если CD значимо изменился (>0.1 сек разницы)
+                // Это фильтрует мелкие изменения и экономит трафик
+                if (Mathf.Abs(lastSyncedCooldowns[i] - newCooldown) > 0.1f)
+                {
+                    lastSyncedCooldowns[i] = newCooldown;
+                    RpcSyncCooldown(i, newCooldown);
                 }
             }
         }
@@ -144,13 +167,17 @@ namespace Features.Abilities.Application
         {
             OnAbilityCast?.Invoke(ability);
 
-            // 🟢 ИСПРАВЛЕНИЕ: синхронизируем через RPC
-            if (IsServer)
+            if (IsServerInitialized)
             {
                 int slotIndex = System.Array.IndexOf(abilities, ability);
                 if (slotIndex >= 0)
                 {
+                    // 🎯 Сразу же отправляем: способность кастнута (CD стартует)
                     RpcNotifyAbilityCast(slotIndex);
+                    
+                    // Обновляем последний синхронизированный CD
+                    float newCd = service.GetCooldownRemaining(abilities[slotIndex]);
+                    lastSyncedCooldowns[slotIndex] = newCd;
                 }
             }
         }
@@ -160,10 +187,17 @@ namespace Features.Abilities.Application
             OnCooldownChanged?.Invoke(ability, remaining, max);
 
             int slotIndex = System.Array.IndexOf(abilities, ability);
-            if (IsServer && slotIndex >= 0)
+            if (IsServerInitialized && slotIndex >= 0)
             {
                 cooldownValues[slotIndex] = remaining;
-                RpcSyncCooldown(slotIndex, remaining);
+                
+                // 🎯 Важный момент: CD закончился (remaining == 0)
+                // Отправляем сразу, не ждём siguiente синхро
+                if (remaining <= 0.01f && lastSyncedCooldowns[slotIndex] > 0.05f)
+                {
+                    lastSyncedCooldowns[slotIndex] = 0f;
+                    RpcSyncCooldown(slotIndex, 0f);
+                }
             }
         }
 
@@ -179,9 +213,6 @@ namespace Features.Abilities.Application
             OnAbilitiesChanged?.Invoke();
         }
 
-        /// <summary>
-        /// Серверный вызов: пытается кастануть и, если успех, возвращает AbilityContext.
-        /// </summary>
         public bool TryCastWithContext(int index, out AbilitySO ability, out AbilityContext ctx)
         {
             ability = null;
@@ -205,9 +236,6 @@ namespace Features.Abilities.Application
             return true;
         }
 
-        /// <summary>
-        /// Клиентский вызов из ObserversRpc: проиграть уже подтверждённый каст.
-        /// </summary>
         public void PlayRemoteCast(AbilitySO ability, int slot, AbilityContext ctx)
         {
             if (!IsReady || ability == null)
@@ -226,22 +254,12 @@ namespace Features.Abilities.Application
             executor.Execute(ability, ctx);
         }
 
-        /// <summary>
-        /// 🟢 ИСПРАВЛЕНИЕ: получить cooldown синхронизированный через сеть
-        /// </summary>
         public float GetCooldown(int index)
         {
             if (!IsReady || index < 0 || index >= abilities.Length)
                 return 0f;
 
-            // Используем локальное значение которое синхронизируется через RPC
-            if (cooldownValues[index] > 0)
-            {
-                return cooldownValues[index];
-            }
-
-            // Fallback на локальный сервис
-            return service.GetCooldownRemaining(abilities[index]);
+            return cooldownValues[index] > 0 ? cooldownValues[index] : 0f;
         }
 
         public AbilitySO FindAbilityById(string id)
@@ -257,10 +275,13 @@ namespace Features.Abilities.Application
 
         /* ================= RPC ================= */
 
+        /// <summary>
+        /// 🎯 Отправляем всем: способность была кастнута (критично сразу же)
+        /// </summary>
         [ObserversRpc]
         private void RpcNotifyAbilityCast(int slotIndex)
         {
-            Debug.Log($"[AbilityCaster] Ability cast notification for slot {slotIndex}", this);
+            Debug.Log($"[AbilityCaster] Ability cast at slot {slotIndex}");
             if (slotIndex >= 0 && slotIndex < abilities.Length && abilities[slotIndex] != null)
             {
                 OnAbilityCast?.Invoke(abilities[slotIndex]);
@@ -268,7 +289,7 @@ namespace Features.Abilities.Application
         }
 
         /// <summary>
-        /// 🟢 ИСПРАВЛЕНИЕ: синхронизируем cooldown значение через RPC
+        /// 🎯 Периодическая синхронизация CD (раз в 0.5 сек, только изменившиеся)
         /// </summary>
         [ObserversRpc]
         private void RpcSyncCooldown(int slotIndex, float cooldownValue)
@@ -276,6 +297,12 @@ namespace Features.Abilities.Application
             if (slotIndex >= 0 && slotIndex < cooldownValues.Length)
             {
                 cooldownValues[slotIndex] = cooldownValue;
+                
+                if (slotIndex < abilities.Length && abilities[slotIndex] != null)
+                {
+                    OnCooldownChanged?.Invoke(abilities[slotIndex], cooldownValue, 
+                                            abilities[slotIndex].cooldown);
+                }
             }
         }
     }
