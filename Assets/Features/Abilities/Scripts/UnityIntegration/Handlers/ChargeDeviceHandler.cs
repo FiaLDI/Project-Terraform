@@ -2,6 +2,8 @@ using UnityEngine;
 using Features.Abilities.Domain;
 using Features.Combat.Devices;
 using FishNet.Object;
+using FishNet.Managing;
+using FishNet;
 
 namespace Features.Abilities.UnityIntegration
 {
@@ -16,33 +18,44 @@ namespace Features.Abilities.UnityIntegration
             if (!TryResolveOwner(ctx.Owner, out var ownerGO))
                 return;
 
-            var netObj = ownerGO.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsServer)
-                return;
+            var ownerNO = ownerGO.GetComponent<NetworkObject>();
+            if (ownerNO == null || !ownerNO.IsServer)
+                return; // 🔒 только сервер
 
             if (ability.chargeFxPrefab == null || ability.areaBuff == null)
                 return;
 
+            var prefabNO = ability.chargeFxPrefab.GetComponent<NetworkObject>();
+            if (prefabNO == null)
+            {
+                Debug.LogError("[ChargeDeviceHandler] chargeFxPrefab has no NetworkObject");
+                return;
+            }
+
             float duration = ability.areaBuff.buff.duration;
 
-            // 🟢 СПАВНИМ FX + AURA
+            // 🔥 SERVER SPAWN
             var fx = Object.Instantiate(
                 ability.chargeFxPrefab,
                 ownerGO.transform.position,
                 Quaternion.identity
             );
 
-            // lifetime + follow
+            var fxNO = fx.GetComponent<NetworkObject>();
+            InstanceFinder.ServerManager.Spawn(fxNO);
+
+            // follow + lifetime
             if (fx.TryGetComponent(out ChargeDeviceBehaviour beh))
                 beh.Init(ownerGO.transform, duration);
 
-            // на префабе УЖЕ должен быть AreaBuffEmitter
+            // 🔥 AURA (уже на активном NetworkObject)
             if (fx.TryGetComponent(out Features.Buffs.UnityIntegration.AreaBuffEmitter emitter))
             {
                 emitter.area = ability.areaBuff;
+                emitter.enabled = true;
             }
 
-            Object.Destroy(fx, duration + 0.2f);
+            Object.Destroy(fx, duration + 0.25f);
         }
 
         private bool TryResolveOwner(object owner, out GameObject go)

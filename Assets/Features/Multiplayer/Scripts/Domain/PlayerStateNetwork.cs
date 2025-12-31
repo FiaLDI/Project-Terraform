@@ -7,16 +7,45 @@ using UnityEngine;
 
 namespace Features.Player.UnityIntegration
 {
+    /// <summary>
+    /// Сетевое состояние игрока.
+    ///
+    /// ОТВЕТСТВЕННОСТЬ:
+    /// - хранит SyncVar состояния (classId, visualId)
+    /// - инициирует серверное применение класса
+    /// - применяет визуал на клиентах
+    ///
+    /// НЕ:
+    /// - считает статы
+    /// - применяет бафы
+    /// - управляет способностями
+    /// </summary>
     public sealed class PlayerStateNetwork : NetworkBehaviour
     {
+        // =====================================================
+        // NETWORK STATE
+        // =====================================================
+
         private readonly SyncVar<string> _classId = new();
         private readonly SyncVar<string> _visualId = new();
+
+        // =====================================================
+        // COMPONENTS
+        // =====================================================
 
         private PlayerVisualController visualController;
         private PlayerStateNetAdapter netAdapter;
 
+        // =====================================================
+        // DATA
+        // =====================================================
+
         private PlayerClassLibrarySO classLibrary;
         private string _preInitClass;
+
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
 
         private void Awake()
         {
@@ -27,20 +56,31 @@ namespace Features.Player.UnityIntegration
                 "Databases/PlayerClassLibrary");
 
             if (classLibrary == null)
+            {
                 Debug.LogError(
-                    "[PSN] PlayerClassLibrary not found in Resources/Databases");
+                    "[PlayerStateNetwork] PlayerClassLibrary not found in Resources/Databases",
+                    this
+                );
+            }
         }
 
-        // вызывается ИЗ NetworkPlayerService ДО Spawn
+        /// <summary>
+        /// Вызывается сервером ДО Spawn (из NetworkPlayerService).
+        /// </summary>
         public void PreInitClass(string classId)
         {
             _preInitClass = classId;
         }
 
+        // =====================================================
+        // SERVER
+        // =====================================================
+
         public override void OnSpawnServer(NetworkConnection conn)
         {
             base.OnSpawnServer(conn);
 
+            // 1️⃣ Определяем класс (гарантированно)
             string classId = string.IsNullOrEmpty(_preInitClass)
                 ? "0" // дефолтный класс
                 : _preInitClass;
@@ -48,17 +88,29 @@ namespace Features.Player.UnityIntegration
             var cls = classLibrary.FindById(classId);
             if (cls == null)
             {
-                Debug.LogError($"[PSN] Class '{classId}' not found", this);
+                Debug.LogError(
+                    $"[PlayerStateNetwork] Class '{classId}' not found in library",
+                    this
+                );
                 return;
             }
 
+            // 2️⃣ Записываем сетевое состояние
             _classId.Value = classId;
             _visualId.Value = cls.visualPreset.id;
 
-            netAdapter.ApplyClass(classId);
+            // 3️⃣ ИНИЦИИРУЕМ серверный pipeline
+            netAdapter.ApplyClassWhenReady(classId);
 
-            Debug.Log($"[PSN] Spawn class={classId} visual={_visualId.Value}", this);
+            Debug.Log(
+                $"[PlayerStateNetwork] Spawned with class='{classId}' visual='{_visualId.Value}'",
+                this
+            );
         }
+
+        // =====================================================
+        // NETWORK EVENTS
+        // =====================================================
 
         public override void OnStartNetwork()
         {
@@ -71,12 +123,25 @@ namespace Features.Player.UnityIntegration
             _visualId.OnChange -= OnVisualChanged;
         }
 
+        // =====================================================
+        // VISUAL (CLIENT + HOST)
+        // =====================================================
+
         private void OnVisualChanged(string oldVal, string newVal, bool _)
         {
-            if (!string.IsNullOrEmpty(newVal))
-                visualController.ApplyVisual(newVal);
+            if (string.IsNullOrEmpty(newVal))
+                return;
+
+            visualController.ApplyVisual(newVal);
         }
 
+        // =====================================================
+        // SERVER API
+        // =====================================================
+
+        /// <summary>
+        /// Серверная смена класса в рантайме.
+        /// </summary>
         [Server]
         public void SetClass(string classId)
         {
@@ -87,7 +152,7 @@ namespace Features.Player.UnityIntegration
             _classId.Value = classId;
             _visualId.Value = cls.visualPreset.id;
 
-            netAdapter.ApplyClass(classId);
+            netAdapter.ApplyClassWhenReady(classId);
         }
     }
 }

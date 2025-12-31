@@ -2,17 +2,20 @@ using UnityEngine;
 using FishNet.Object;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
+using Features.Stats.Application;
 
 namespace Features.Stats.UnityIntegration
 {
     /// <summary>
     /// ЕДИНСТВЕННАЯ точка инициализации статов игрока.
+    ///
     /// SERVER:
     ///  - создаёт StatsFacade
-    ///  - применяет класс / дефолты
+    ///  - НЕ применяет класс
+    ///  - предоставляет Reset + Defaults
     ///
     /// CLIENT:
-    ///  - создаёт ТОЛЬКО адаптеры (view)
+    ///  - создаёт ТОЛЬКО view (Adapter)
     ///  - получает значения ТОЛЬКО через StatsNetSync
     /// </summary>
     [DefaultExecutionOrder(-400)]
@@ -27,6 +30,9 @@ namespace Features.Stats.UnityIntegration
 
         public bool IsReady { get; private set; }
 
+        /// <summary>
+        /// Событие только для биндинга (НЕ для применения класса).
+        /// </summary>
         public static event System.Action<PlayerStats> OnStatsReady;
 
         // =====================================================
@@ -44,15 +50,18 @@ namespace Features.Stats.UnityIntegration
             if (IsReady)
                 return;
 
+            // 1️⃣ Создаём фасад
             Facade = new StatsFacade(isTurret: false);
 
+            // 2️⃣ СБРОС + БАЗОВЫЕ ЗНАЧЕНИЯ
             Facade.ResetAll();
-
             ApplyClassDefaults();
 
             IsReady = true;
 
             Debug.Log("[PlayerStats] SERVER ready (StatsFacade created)", this);
+
+            // ❗ ТОЛЬКО сигнал готовности
             OnStatsReady?.Invoke(this);
         }
 
@@ -69,35 +78,32 @@ namespace Features.Stats.UnityIntegration
         private void InitClient()
         {
             // Клиент НЕ создаёт StatsFacade
-            // Он только отображает данные, пришедшие по сети
+            // Он только отображает значения, полученные по сети
 
             Adapter = GetComponent<StatsFacadeAdapter>();
             if (Adapter == null)
-            {
                 Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
-            }
 
             Debug.Log("[PlayerStats] CLIENT ready (view only)", this);
         }
 
         // =====================================================
-        // CLASS / DEFAULTS (SERVER ONLY)
+        // BASE DEFAULTS (SERVER ONLY)
         // =====================================================
 
+        /// <summary>
+        /// Базовые значения игрока БЕЗ класса.
+        /// Вызывается ТОЛЬКО сервером.
+        /// </summary>
         private void ApplyClassDefaults()
         {
-            // ❗ ЭТО ТОЛЬКО ПРИМЕР
-            // Здесь ты применяешь:
-            // - класс игрока
-            // - стартовые перки
-            // - балансные значения
-
             Facade.Health.ApplyBase(120f);
             Facade.Health.ApplyRegenBase(5f);
 
             Facade.Energy.ApplyBase(150f, 8f);
 
             Facade.Combat.ApplyBase(1f);
+
             Facade.Movement.ApplyBase(
                 baseSpeed: 0f,
                 walk: 5f,
@@ -108,7 +114,56 @@ namespace Features.Stats.UnityIntegration
 
             Facade.Mining.ApplyBase(1f);
 
-            Debug.Log("[PlayerStats] SERVER class defaults applied", this);
+            Debug.Log("[PlayerStats] SERVER defaults applied", this);
+        }
+
+        // =====================================================
+        // SERVER API
+        // =====================================================
+
+        /// <summary>
+        /// Полный сброс + дефолты.
+        /// ЕДИНСТВЕННАЯ точка для NetAdapter.
+        /// </summary>
+        [Server]
+        public void ResetAndApplyDefaults()
+        {
+            if (!IsReady)
+                return;
+
+            Facade.ResetAll();
+            ApplyClassDefaults();
+        }
+
+        [Server]
+        public void ApplyPreset(StatsPresetSO preset)
+        {
+            if (!IsReady || preset == null)
+                return;
+
+            Facade.Health.ApplyBase(preset.health.baseHp);
+            Facade.Health.ApplyRegenBase(preset.health.baseRegen);
+
+            Facade.Energy.ApplyBase(
+                preset.energy.baseMaxEnergy,
+                preset.energy.baseRegen
+            );
+
+            Facade.Combat.ApplyBase(
+                preset.combat.baseDamageMultiplier
+            );
+
+            Facade.Movement.ApplyBase(
+                preset.movement.baseSpeed,
+                preset.movement.walkSpeed,
+                preset.movement.sprintSpeed,
+                preset.movement.crouchSpeed,
+                preset.movement.rotationSpeed
+            );
+
+            Facade.Mining.ApplyBase(
+                preset.mining.baseMining
+            );
         }
 
         // =====================================================
@@ -119,7 +174,10 @@ namespace Features.Stats.UnityIntegration
         {
             if (!IsReady)
             {
-                Debug.LogError("[PlayerStats] GetFacadeSafe called before ready!", this);
+                Debug.LogError(
+                    "[PlayerStats] GetFacadeSafe called before ready!",
+                    this
+                );
                 return null;
             }
 

@@ -1,12 +1,14 @@
 using UnityEngine;
 using Features.Abilities.Domain;
-using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
 using Features.Combat.Devices;
+using FishNet.Object;
+using FishNet.Managing;
+using FishNet;
 
 namespace Features.Abilities.UnityIntegration
 {
-    public class RepairDroneHandler : IAbilityHandler
+    public sealed class RepairDroneHandler : IAbilityHandler
     {
         public System.Type AbilityType => typeof(RepairDroneAbilitySO);
 
@@ -14,54 +16,69 @@ namespace Features.Abilities.UnityIntegration
         {
             var ability = (RepairDroneAbilitySO)abilityBase;
 
-            // ==== ADAPTATION: ctx.Owner is NOW object ====
-            GameObject ownerGO = null;
+            if (!TryResolveOwner(ctx.Owner, out var ownerGO))
+                return;
 
-            switch (ctx.Owner)
-            {
-                case GameObject go:
-                    ownerGO = go;
-                    break;
-
-                case Component comp:
-                    ownerGO = comp.gameObject;
-                    break;
-
-                default:
-                    Debug.LogError("[RepairDroneHandler] AbilityContext.Owner is not GameObject or Component.");
-                    return;
-            }
-
-            if (ownerGO == null)
+            var ownerNO = ownerGO.GetComponent<NetworkObject>();
+            if (ownerNO == null || !ownerNO.IsServer)
                 return;
 
             if (!ability.dronePrefab)
+                return;
+
+            var prefabNO = ability.dronePrefab.GetComponent<NetworkObject>();
+            if (prefabNO == null)
             {
-                Debug.LogError("[RepairDroneHandler] dronePrefab is null.");
+                Debug.LogError("[RepairDroneHandler] dronePrefab has no NetworkObject");
                 return;
             }
 
-            GameObject droneObj = Object.Instantiate(
+            // 🔥 SERVER SPAWN
+            var drone = Object.Instantiate(
                 ability.dronePrefab,
                 ownerGO.transform.position,
                 Quaternion.identity
             );
 
-            // === Heal Aura Buff ===
+            var droneNO = drone.GetComponent<NetworkObject>();
+            InstanceFinder.ServerManager.Spawn(droneNO);
+
+            // === Heal Aura ===
             if (ability.healAura != null)
             {
-                var emitter = droneObj.AddComponent<AreaBuffEmitter>();
+                var emitter = drone.GetComponent<AreaBuffEmitter>();
+                if (emitter == null)
+                    emitter = drone.AddComponent<AreaBuffEmitter>();
+
                 emitter.area = ability.healAura;
-                Object.Destroy(emitter, ability.lifetime);
+                emitter.enabled = true;
             }
 
-            // === Behaviour Init ===
-            if (droneObj.TryGetComponent<RepairDroneBehaviour>(out var drone))
+            // === Behaviour ===
+            if (drone.TryGetComponent(out RepairDroneBehaviour beh))
             {
-                drone.Init(ownerGO, ability.lifetime, ability.followSpeed);
+                beh.Init(ownerGO, ability.lifetime, ability.followSpeed);
             }
 
-            Object.Destroy(droneObj, ability.lifetime + 0.3f);
+            Object.Destroy(drone, ability.lifetime + 0.3f);
+        }
+
+        private bool TryResolveOwner(object owner, out GameObject go)
+        {
+            go = owner switch
+            {
+                GameObject g => g,
+                Component c => c.gameObject,
+                _ => null
+            };
+
+            if (go == null)
+            {
+                Debug.LogError("[RepairDroneHandler] Invalid AbilityContext.Owner");
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -1,79 +1,71 @@
 ﻿using UnityEngine;
-using System.Collections;
 using Features.Classes.Data;
 using Features.Classes.Application;
 using Features.Passives.UnityIntegration;
 using Features.Abilities.Application;
-using Features.Stats.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Buffs.UnityIntegration;
-
+using Features.Stats.UnityIntegration;
 
 [RequireComponent(typeof(PlayerVisualController))]
 public sealed class PlayerClassController : MonoBehaviour
 {
+    // =====================================================
+    // CONFIG
+    // =====================================================
+
     [Header("Classes Library")]
     [SerializeField] private PlayerClassLibrarySO library;
 
     [Header("Default Class ID")]
     [SerializeField] private string defaultClassId = "engineer";
 
-    /* ================= COMPONENTS ================= */
+    // =====================================================
+    // COMPONENTS
+    // =====================================================
 
-    private PlayerVisualController visualController;
     private PassiveSystem passiveSystem;
     private AbilityCaster abilityCaster;
     private PlayerBuffTarget buffTarget;
 
-    /* ================= DOMAIN ================= */
+    // =====================================================
+    // DOMAIN
+    // =====================================================
 
     private PlayerClassService classService;
     private IStatsFacade stats;
-
-
     private PlayerClassConfigSO currentClass;
+
     public PlayerClassConfigSO GetCurrentClass() => currentClass;
-
-
-    /* ================= PUBLIC STATE ================= */
-
 
     public string CurrentClassId =>
         currentClass != null ? currentClass.id : defaultClassId;
-
 
     public string CurrentVisualId =>
         currentClass != null && currentClass.visualPreset != null
             ? currentClass.visualPreset.id
             : null;
 
-
-    // 🟢 EVENT: когда класс полностью применён (с баффами)
+    /// <summary>
+    /// Вызывается, когда класс полностью применён
+    /// (пассивки, способности, регистрация бафов).
+    /// </summary>
     public event System.Action OnClassApplied;
 
-
-    /* ================= LIFECYCLE ================= */
-
+    // =====================================================
+    // LIFECYCLE
+    // =====================================================
 
     private void Awake()
     {
-        visualController = GetComponent<PlayerVisualController>();
         passiveSystem = GetComponent<PassiveSystem>();
         abilityCaster = GetComponent<AbilityCaster>();
         buffTarget = GetComponent<PlayerBuffTarget>();
 
-        if (visualController == null)
-            Debug.LogError("[PlayerClassController] PlayerVisualController not found!", this);
-        if (passiveSystem == null)
-            Debug.LogError("[PlayerClassController] PassiveSystem not found!", this);
-        if (abilityCaster == null)
-            Debug.LogError("[PlayerClassController] AbilityCaster not found!", this);
-        if (buffTarget == null)
-            Debug.LogError("[PlayerClassController] PlayerBuffTarget not found!", this);
-
         if (library == null)
         {
             Debug.LogError("[PlayerClassController] PlayerClassLibrarySO not assigned!", this);
+            enabled = false;
             return;
         }
 
@@ -95,89 +87,55 @@ public sealed class PlayerClassController : MonoBehaviour
         PlayerStats.OnStatsReady -= OnStatsReady;
     }
 
-    /* ================= STATS ================= */
+    // =====================================================
+    // STATS BINDING
+    // =====================================================
 
     private void OnStatsReady(PlayerStats ps)
     {
-        Debug.Log("[PlayerClassController] Stats ready event received", this);
-
         stats = ps.Facade;
-        if (stats == null)
-        {
-            Debug.LogError("[PlayerClassController] Stats facade is null!", this);
-            return;
-        }
-
         buffTarget?.SetStats(stats);
 
-        if (currentClass != null)
-        {
-            Debug.Log($"[PlayerClassController] Stats ready, applying queued class: {currentClass.id}", this);
-            StartCoroutine(ApplyDeferred(currentClass));
-        }
-        else
-        {
-            Debug.Log("[PlayerClassController] Stats ready, no class queued yet", this);
-        }
+        Debug.Log("[PlayerClassController] Stats bound", this);
     }
 
-    /* ================= PUBLIC API ================= */
+    // =====================================================
+    // PUBLIC API (SERVER ONLY)
+    // =====================================================
 
     /// <summary>
-    /// 🟢 Применить класс по ID
-    /// Может быть вызван до инициализации статов - класс будет применен когда статы будут готовы
+    /// Применить класс.
+    /// Вызывается ТОЛЬКО сервером из PlayerStateNetAdapter,
+    /// ТОЛЬКО когда PlayerStats уже готов.
     /// </summary>
     public void ApplyClass(string classId)
     {
-        if (string.IsNullOrEmpty(classId))
+        if (stats == null)
         {
-            Debug.LogWarning("[PlayerClassController] ApplyClass called with empty classId", this);
+            Debug.LogError(
+                "[PlayerClassController] ApplyClass called before stats ready!",
+                this
+            );
             return;
         }
 
-        Debug.Log($"[PlayerClassController] ApplyClass called: {classId}", this);
-
         var cfg = library.FindById(classId);
-
         if (cfg == null)
         {
             Debug.LogWarning(
-                $"[PlayerClassController] Class '{classId}' not found in library, using default '{defaultClassId}'",
+                $"[PlayerClassController] Class '{classId}' not found, using default '{defaultClassId}'",
                 this
             );
             cfg = library.FindById(defaultClassId);
         }
 
-        currentClass = cfg;
-
-        if (stats != null)
-        {
-            Debug.Log($"[PlayerClassController] Stats ready, applying class immediately: {classId}", this);
-            StartCoroutine(ApplyDeferred(cfg));
-        }
-        else
-        {
-            Debug.Log($"[PlayerClassController] Stats not ready yet, queuing class: {classId}", this);
-        }
-    }
-
-    /* ================= APPLY ================= */
-
-
-    /// <summary>
-    /// Отложенное применение класса (на следующий фрейм)
-    /// Позволяет синхронизировать применение с другими системами
-    /// </summary>
-    private IEnumerator ApplyDeferred(PlayerClassConfigSO cfg)
-    {
-        yield return null;
         ApplyInternal(cfg);
     }
 
-    /// <summary>
-    /// 🟢 Основной метод применения класса
-    /// Применяет статы, пассивки, абилити и визуал
-    /// </summary>
+    // =====================================================
+    // INTERNAL APPLY
+    // =====================================================
+
     private void ApplyInternal(PlayerClassConfigSO cfg)
     {
         if (cfg == null)
@@ -186,52 +144,22 @@ public sealed class PlayerClassController : MonoBehaviour
             return;
         }
 
-        if (stats == null)
-        {
-            Debug.LogError("[PlayerClassController] ApplyInternal called but stats is null", this);
-            return;
-        }
+        currentClass = cfg;
 
-        Debug.Log($"[PlayerClassController] Applying class: {cfg.displayName}", this);
+        Debug.Log($"[PlayerClassController] Applying class '{cfg.displayName}'", this);
 
+        // 1️⃣ Доменные данные (выбранный класс)
         classService.SelectClass(cfg);
 
-        var p = cfg.preset;
-
-        Debug.Log($"[PlayerClassController] Applying base stats for {cfg.displayName}", this);
-        stats.Health.ApplyBase(p.health.baseHp);
-        stats.Health.ApplyRegenBase(p.health.baseRegen);
-
-        stats.Energy.ApplyBase(
-            p.energy.baseMaxEnergy,
-            p.energy.baseRegen
-        );
-
-        stats.Combat.ApplyBase(
-            p.combat.baseDamageMultiplier
-        );
-
-        stats.Movement.ApplyBase(
-            p.movement.baseSpeed,
-            p.movement.walkSpeed,
-            p.movement.sprintSpeed,
-            p.movement.crouchSpeed,
-            p.movement.rotationSpeed
-        );
-
-        stats.Mining.ApplyBase(
-            p.mining.baseMining
-        );
-
-
-        Debug.Log($"[PlayerClassController] Applying passives and abilities", this);
-        
+        // 2️⃣ Пассивки (регистрируют бафы, но НЕ меняют статы напрямую)
         passiveSystem?.SetPassives(cfg.passives.ToArray());
-        
+
+        // 3️⃣ Способности (регистрация, без прямых статов)
         abilityCaster?.SetAbilities(cfg.abilities.ToArray());
 
+        // 4️⃣ Событие завершения
         OnClassApplied?.Invoke();
 
-        Debug.Log($"[PlayerClassController] ✅ Class applied completely: {cfg.displayName}", this);
+        Debug.Log($"[PlayerClassController] ✅ Class '{cfg.displayName}' applied", this);
     }
 }

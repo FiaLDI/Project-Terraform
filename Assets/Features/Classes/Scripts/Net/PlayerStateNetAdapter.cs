@@ -4,25 +4,28 @@ using System.Collections;
 using Features.Abilities.Application;
 using Features.Abilities.Domain;
 using Features.Buffs.Application;
+using Features.Stats.UnityIntegration;
 
 namespace Features.Class.Net
 {
     /// <summary>
-    /// Сетевой адаптер состояния игрока.
+    /// Серверный адаптер состояния игрока.
     ///
-    /// ВАЖНО:
-    /// - НЕ синхронизирует HP / Energy вручную
-    /// - НЕ вызывает PlayerStats.Init()
-    /// - НЕ трогает StatsFacade напрямую на клиенте
-    ///
-    /// Статы синхронизируются ТОЛЬКО через StatsNetSync.
+    /// ГАРАНТИИ:
+    /// - Класс применяется ТОЛЬКО на сервере
+    /// - ТОЛЬКО после готовности PlayerStats
+    /// - В ОДНОМ месте
+    /// - Клиент НЕ трогает статы
     /// </summary>
     [RequireComponent(typeof(PlayerClassController))]
+    [RequireComponent(typeof(PlayerStats))]
     public sealed class PlayerStateNetAdapter : NetworkBehaviour
     {
         private PlayerClassController classController;
-        private BuffSystem buffSystem;
+        private PlayerStats playerStats;
         private AbilityCaster abilityCaster;
+
+        private bool _classApplied;
 
         public override void OnStartNetwork()
         {
@@ -35,49 +38,87 @@ namespace Features.Class.Net
             if (classController == null)
                 classController = GetComponent<PlayerClassController>();
 
-            if (buffSystem == null)
-                buffSystem = GetComponent<BuffSystem>();
+            if (playerStats == null)
+                playerStats = GetComponent<PlayerStats>();
 
             if (abilityCaster == null)
                 abilityCaster = GetComponent<AbilityCaster>();
         }
 
         // =====================================================
-        // SERVER SIDE
+        // SERVER ENTRY POINT (ЕДИНСТВЕННЫЙ)
         // =====================================================
 
         /// <summary>
-        /// Применение класса игрока.
-        /// ВЫЗЫВАЕТСЯ ТОЛЬКО НА СЕРВЕРЕ.
+        /// ЕДИНСТВЕННЫЙ допустимый способ применить класс.
         /// </summary>
         [Server]
-        public void ApplyClass(string classId)
+        public void ApplyClassWhenReady(string classId)
+        {
+            if (_classApplied)
+                return;
+
+            StartCoroutine(WaitAndApply(classId));
+        }
+
+        private IEnumerator WaitAndApply(string classId)
         {
             Cache();
 
-            // 1️⃣ Очищаем баффы ПЕРЕД применением класса
-            if (buffSystem != null && buffSystem.ServiceReady)
-            {
-                Debug.Log("[PlayerStateNetAdapter] Clearing buffs before applying class", this);
-                buffSystem.ClearAll();
-            }
+            while (playerStats == null || !playerStats.IsReady || playerStats.Facade == null)
+                yield return null;
 
-            // 2️⃣ Применяем класс (накладывает баффы на сервере)
-            Debug.Log($"[PlayerStateNetAdapter] Applying class '{classId}' on SERVER", this);
-            classController.ApplyClass(classId);
-
-            // 3️⃣ Синхронизируем способности
-            StartCoroutine(SyncAbilitiesAfterClassApplied(classId));
+            ApplyClassInternal(classId);
         }
 
+        // =====================================================
+        // SERVER PIPELINE
+        // =====================================================
+
         [Server]
-        private IEnumerator SyncAbilitiesAfterClassApplied(string classId)
+        private void ApplyClassInternal(string classId)
         {
-            // Ждём кадр, чтобы класс гарантированно применился
-            yield return new WaitForEndOfFrame();
+            if (_classApplied)
+                return;
+            if (playerStats.Facade == null)
+            {
+                Debug.LogError(
+                    "[PlayerStateNetAdapter] Facade is null despite IsReady == true",
+                    this
+                );
+                return;
+            }
+
+            _classApplied = true;
+
+            var cfg = classController.GetCurrentClass();
+
+            // 1 default
+            playerStats.ResetAndApplyDefaults();
+
+            // 2 preset class
+            playerStats.ApplyPreset(cfg.preset);
+
+            // 3 passive / buff
+            classController.ApplyClass(classId);
+
+            // 4 ability → client
+            StartCoroutine(SyncAbilitiesAfterClassApplied());
+
+            Debug.Log($"[PlayerStateNetAdapter] ✅ Class '{classId}' applied on SERVER", this);
+        }
+
+        // =====================================================
+        // ABILITIES SYNC
+        // =====================================================
+
+        [Server]
+        private IEnumerator SyncAbilitiesAfterClassApplied()
+        {
+            yield return null; // дать всем системам зарегистрироваться
 
             var appliedClass = classController.GetCurrentClass();
-            string[] abilityIds = new string[0];
+            string[] abilityIds = System.Array.Empty<string>();
 
             if (appliedClass != null && appliedClass.abilities != null)
             {
@@ -86,59 +127,44 @@ namespace Features.Class.Net
                     abilityIds[i] = appliedClass.abilities[i]?.id ?? string.Empty;
             }
 
-            RpcApplyClassWithAbilities(classId, abilityIds);
+            RpcApplyAbilities(abilityIds);
         }
 
         // =====================================================
-        // CLIENT SIDE
+        // CLIENT SIDE (VIEW ONLY)
         // =====================================================
 
-        /// <summary>
-        /// Клиент:
-        /// - применяет класс ЛОКАЛЬНО (визуал / пассивки / описания)
-        /// - обновляет способности
-        ///
-        /// ❗ НЕ меняет статы напрямую
-        /// </summary>
         [ObserversRpc]
-        private void RpcApplyClassWithAbilities(string classId, string[] abilityIds)
+        private void RpcApplyAbilities(string[] abilityIds)
         {
             Cache();
 
-            // Хост уже всё сделал на сервере
+            // хост уже применил
             if (IsServerInitialized && !IsClientOnlyInitialized)
                 return;
 
-            Debug.Log($"[PlayerStateNetAdapter] Applying class '{classId}' on CLIENT", this);
+            if (abilityCaster == null)
+                return;
 
-            // Применяем класс локально (без прямого изменения статов)
-            if (classController != null)
-                classController.ApplyClass(classId);
-
-            // Обновляем способности
-            if (abilityCaster != null)
+            if (abilityIds != null && abilityIds.Length > 0)
             {
-                if (abilityIds != null && abilityIds.Length > 0)
+                var lib = UnityEngine.Resources.Load<AbilityLibrarySO>("Databases/AbilityLibrary");
+                if (lib != null)
                 {
-                    var lib = UnityEngine.Resources.Load<AbilityLibrarySO>("Databases/AbilityLibrary");
-                    if (lib != null)
-                    {
-                        var loaded = new AbilitySO[abilityIds.Length];
-                        for (int i = 0; i < abilityIds.Length; i++)
-                            loaded[i] = lib.FindById(abilityIds[i]);
+                    var loaded = new AbilitySO[abilityIds.Length];
+                    for (int i = 0; i < abilityIds.Length; i++)
+                        loaded[i] = lib.FindById(abilityIds[i]);
 
-                        abilityCaster.SetAbilities(loaded);
-                    }
+                    abilityCaster.SetAbilities(loaded);
                 }
-                else
-                {
-                    abilityCaster.SetAbilities(System.Array.Empty<AbilitySO>());
-                }
-
-                // Удалённым игрокам кастер не нужен
-                if (!IsOwner)
-                    abilityCaster.enabled = false;
             }
+            else
+            {
+                abilityCaster.SetAbilities(System.Array.Empty<AbilitySO>());
+            }
+
+            if (!IsOwner)
+                abilityCaster.enabled = false;
         }
     }
 }
