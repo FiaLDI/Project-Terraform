@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 815608043631127767}
   - component: {fileID: 4179956770763471134}
   - component: {fileID: 2630362045978395626}
+  - component: {fileID: 3431308948029755171}
   m_Layer: 0
   m_Name: Charge device
   m_TagString: Untagged
@@ -92,7 +93,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584344244401369605
+  _initializedTimestamp: -8584344100630879546
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -107,7 +108,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 17
+  <PrefabId>k__BackingField: 8
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 12097150125048999235
   SceneId: 0
@@ -116,3 +117,18 @@ MonoBehaviour:
     Rotation: {x: -0, y: -0, z: -0, w: 1}
     Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
+--- !u!114 &3431308948029755171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4592017043821597109}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d026e36cad502c947826ce6ca81ee300, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkAutoDespawn
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 2630362045978395626}
+  _networkObjectCache: {fileID: 0}

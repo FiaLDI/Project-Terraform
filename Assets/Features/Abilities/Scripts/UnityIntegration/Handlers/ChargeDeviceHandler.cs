@@ -4,6 +4,7 @@ using Features.Combat.Devices;
 using FishNet.Object;
 using FishNet.Managing;
 using FishNet;
+using System.Collections;
 
 namespace Features.Abilities.UnityIntegration
 {
@@ -55,8 +56,18 @@ namespace Features.Abilities.UnityIntegration
                 emitter.enabled = true;
             }
 
-            Object.Destroy(fx, duration + 0.25f);
+
+            if (fx.TryGetComponent(out NetworkAutoDespawn auto))
+            {
+                auto.StartDespawn(duration + 0.25f);
+            }
+            else
+            {
+                auto = fx.AddComponent<NetworkAutoDespawn>();
+                auto.StartDespawn(duration + 0.25f);
+            }
         }
+
 
         private bool TryResolveOwner(object owner, out GameObject go)
         {

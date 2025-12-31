@@ -9,24 +9,31 @@ namespace Features.Buffs.UnityIntegration
 {
     /// <summary>
     /// Глобальный серверный тикер баффов.
-    /// В СЦЕНЕ ДОЛЖЕН БЫТЬ РОВНО 1 ЭКЗЕМПЛЯР.
     ///
-    /// Отвечает за:
-    /// - тик всех BuffSystem
-    /// - тик всех AreaBuffEmitter
-    ///
-    /// Работает ТОЛЬКО на сервере.
+    /// ГАРАНТИИ:
+    /// - Ровно 1 экземпляр в сцене
+    /// - Работает ТОЛЬКО на сервере
+    /// - Корректен при любом порядке спавна объектов
+    /// - НЕ теряет регистрацию BuffSystem / AreaBuffEmitter
+    /// - НЕ падает при раннем Register
     /// </summary>
+    [DefaultExecutionOrder(-1000)]
     public sealed class BuffTickSystem : NetworkBehaviour
     {
+        // ================= SINGLETON =================
+
         private static BuffTickSystem _instance;
         public static BuffTickSystem Instance => _instance;
 
-        // Все BuffSystem (игроки, мобы, турели и т.д.)
-        private readonly HashSet<BuffSystem> buffSystems = new();
+        // ================= ACTIVE =================
 
-        // Все AreaBuffEmitter (ауры)
+        private readonly HashSet<BuffSystem> buffSystems = new();
         private readonly HashSet<AreaBuffEmitter> emitters = new();
+
+        // ================= PENDING (early register) =================
+
+        private static readonly HashSet<BuffSystem> pendingSystems = new();
+        private static readonly HashSet<AreaBuffEmitter> pendingEmitters = new();
 
         // =====================================================
         // LIFECYCLE
@@ -36,17 +43,39 @@ namespace Features.Buffs.UnityIntegration
         {
             base.OnStartServer();
 
-            if (_instance != null)
+            if (_instance != null && _instance != this)
             {
-                Debug.LogError("[BuffTickSystem] Multiple instances detected! There must be ONLY ONE.", this);
+                Debug.LogError(
+                    "[BuffTickSystem] Multiple instances detected! There must be ONLY ONE.",
+                    this
+                );
                 return;
             }
 
             _instance = this;
 
+            // 🔥 принять отложенные регистрации
+            foreach (var system in pendingSystems)
+            {
+                if (system != null)
+                    buffSystems.Add(system);
+            }
+
+            foreach (var emitter in pendingEmitters)
+            {
+                if (emitter != null)
+                    emitters.Add(emitter);
+            }
+
+            pendingSystems.Clear();
+            pendingEmitters.Clear();
+
             TimeManager.OnTick += OnServerTick;
 
-            Debug.Log("[BuffTickSystem] SERVER started", this);
+            Debug.Log(
+                $"[BuffTickSystem] SERVER started | BuffSystems={buffSystems.Count} Emitters={emitters.Count}",
+                this
+            );
         }
 
         public override void OnStopServer()
@@ -55,12 +84,15 @@ namespace Features.Buffs.UnityIntegration
 
             TimeManager.OnTick -= OnServerTick;
 
+            buffSystems.Clear();
+            emitters.Clear();
+
             if (_instance == this)
                 _instance = null;
         }
 
         // =====================================================
-        // REGISTRATION API
+        // REGISTRATION API (SAFE)
         // =====================================================
 
         public static void Register(BuffSystem system)
@@ -68,18 +100,24 @@ namespace Features.Buffs.UnityIntegration
             if (system == null)
                 return;
 
-            if (Instance == null || !Instance.IsServerStarted)
+            if (Instance == null)
+            {
+                pendingSystems.Add(system);
                 return;
+            }
 
             Instance.buffSystems.Add(system);
         }
 
         public static void Unregister(BuffSystem system)
         {
-            if (Instance == null || system == null)
+            if (system == null)
                 return;
 
-            Instance.buffSystems.Remove(system);
+            if (Instance != null)
+                Instance.buffSystems.Remove(system);
+
+            pendingSystems.Remove(system);
         }
 
         public static void RegisterEmitter(AreaBuffEmitter emitter)
@@ -87,18 +125,24 @@ namespace Features.Buffs.UnityIntegration
             if (emitter == null)
                 return;
 
-            if (Instance == null || !Instance.IsServerStarted)
+            if (Instance == null)
+            {
+                pendingEmitters.Add(emitter);
                 return;
+            }
 
             Instance.emitters.Add(emitter);
         }
 
         public static void UnregisterEmitter(AreaBuffEmitter emitter)
         {
-            if (Instance == null || emitter == null)
+            if (emitter == null)
                 return;
 
-            Instance.emitters.Remove(emitter);
+            if (Instance != null)
+                Instance.emitters.Remove(emitter);
+
+            pendingEmitters.Remove(emitter);
         }
 
         // =====================================================
@@ -112,14 +156,14 @@ namespace Features.Buffs.UnityIntegration
 
             float dt = (float)TimeManager.TickDelta;
 
-            // 1️⃣ Тикаем все BuffSystem (длительности, DoT, HoT и т.п.)
+            // 1️⃣ Тик BuffSystem
             foreach (var system in buffSystems)
             {
                 if (system != null && system.ServiceReady)
                     system.Tick(dt);
             }
 
-            // 2️⃣ Тикаем все AreaBuffEmitter (вход / выход из аур)
+            // 2️⃣ Тик AreaBuffEmitter
             foreach (var emitter in emitters)
             {
                 if (emitter != null)

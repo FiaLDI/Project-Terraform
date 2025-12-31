@@ -1,10 +1,11 @@
-using FishNet.Object;
-using UnityEngine;
 using System.Collections;
 using Features.Abilities.Application;
 using Features.Abilities.Domain;
 using Features.Buffs.Application;
+using Features.Classes.Data;
 using Features.Stats.UnityIntegration;
+using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Class.Net
 {
@@ -24,8 +25,15 @@ namespace Features.Class.Net
         private PlayerClassController classController;
         private PlayerStats playerStats;
         private AbilityCaster abilityCaster;
+        [SerializeField]
+        private PlayerClassLibrarySO classLibrary;
 
         private bool _classApplied;
+
+        private void Awake()
+        {
+            classLibrary = UnityEngine.Resources.Load<PlayerClassLibrarySO>("Databases/PlayerClassLibrary");
+        }
 
         public override void OnStartNetwork()
         {
@@ -91,7 +99,12 @@ namespace Features.Class.Net
 
             _classApplied = true;
 
-            var cfg = classController.GetCurrentClass();
+            var cfg = classLibrary.FindById(classId);
+            if (cfg == null)
+            {
+                Debug.LogError($"[PlayerStateNetAdapter] Class '{classId}' not found", this);
+                return;
+            }
 
             // 1 default
             playerStats.ResetAndApplyDefaults();

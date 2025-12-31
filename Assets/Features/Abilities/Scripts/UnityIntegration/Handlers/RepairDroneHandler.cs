@@ -60,7 +60,15 @@ namespace Features.Abilities.UnityIntegration
                 beh.Init(ownerGO, ability.lifetime, ability.followSpeed);
             }
 
-            Object.Destroy(drone, ability.lifetime + 0.3f);
+            if (drone.TryGetComponent(out NetworkAutoDespawn auto))
+            {
+                auto.StartDespawn(ability.lifetime + 0.25f);
+            }
+            else
+            {
+                auto = drone.AddComponent<NetworkAutoDespawn>();
+                auto.StartDespawn(ability.lifetime + 0.25f);
+            }
         }
 
         private bool TryResolveOwner(object owner, out GameObject go)

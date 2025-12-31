@@ -1,64 +1,82 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Features.Buffs.Domain;
 using FishNet.Object;
+using Features.Buffs.Domain;
 using Features.Buffs.Application;
 
 namespace Features.Buffs.UnityIntegration
 {
     /// <summary>
-    /// Серверный эмиттер ауры.
-    /// НЕ тикает сам — вызывается BuffTickSystem.
+    /// Серверный эмиттер ауры (DISTANCE-BASED).
     ///
-    /// Архитектура:
-    /// - сам является BuffSource
-    /// - баффы живут пока цель внутри радиуса
-    /// - удаление строго через RemoveBySource
+    /// ✔ Без Physics
+    /// ✔ Без LayerMask
+    /// ✔ Без Collider
+    /// ✔ Работает одинаково для host и клиентов
+    /// ✔ Единственный источник истины — сервер
     /// </summary>
     public sealed class AreaBuffEmitter : NetworkBehaviour, IBuffSource
     {
         [Header("Config")]
         public AreaBuffSO area;
-        private bool _serverActive;
 
-        // Все цели, которые сейчас внутри ауры
         private readonly HashSet<IBuffTarget> inside = new();
+        private bool _active;
 
         public override void OnStartServer()
         {
             base.OnStartServer();
-            _serverActive = true;
+
+            if (area == null || area.buff == null)
+            {
+                Debug.LogError("[AreaBuffEmitter] Area or Buff is null", this);
+                return;
+            }
+
+            _active = true;
             BuffTickSystem.RegisterEmitter(this);
         }
 
         public override void OnStopServer()
         {
-            _serverActive = false;
+            _active = false;
             CleanupAll();
             BuffTickSystem.UnregisterEmitter(this);
             base.OnStopServer();
         }
 
+        private void OnDestroy()
+        {
+            if (_active)
+                CleanupAll();
+        }
+
         // =====================================================
-        // SERVER TICK (ВЫЗЫВАЕТ BuffTickSystem)
+        // SERVER TICK
         // =====================================================
 
         public void Tick()
         {
-            if (!IsServerStarted || area == null || area.buff == null)
+            if (!_active || !IsServerStarted || area == null || area.buff == null)
                 return;
 
-            Collider[] hits = Physics.OverlapSphere(
-                transform.position,
-                area.radius,
-                area.targetMask
-            );
+            Vector3 pos = transform.position;
+            float radiusSqr = area.radius * area.radius;
 
             var current = new HashSet<IBuffTarget>();
 
-            foreach (var h in hits)
+            foreach (var target in ServerBuffTargetRegistry.All)
             {
-                if (!h.TryGetComponent(out IBuffTarget target))
+                if (target == null)
+                    continue;
+
+                if (!(target is Component comp))
+                    continue;
+
+                float distSqr =
+                    (comp.transform.position - pos).sqrMagnitude;
+
+                if (distSqr > radiusSqr)
                     continue;
 
                 current.Add(target);
@@ -107,12 +125,6 @@ namespace Features.Buffs.UnityIntegration
             }
 
             inside.Clear();
-        }
-
-        private void OnDestroy()
-        {
-            if (_serverActive)
-                CleanupAll();
         }
     }
 }

@@ -1,11 +1,12 @@
 using UnityEngine;
+using FishNet.Object;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
-using Features.Stats.UnityIntegration;
 using Features.Stats.Domain;
+using Features.Stats.UnityIntegration;
 
 [RequireComponent(typeof(BuffSystem))]
-public class TurretBuffTarget : MonoBehaviour, IBuffTarget
+public sealed class TurretBuffTarget : NetworkBehaviour, IBuffTarget
 {
     public Transform Transform => transform;
     public GameObject GameObject => gameObject;
@@ -32,7 +33,18 @@ public class TurretBuffTarget : MonoBehaviour, IBuffTarget
         }
 
         Stats = _stats.Facade;
+    }
 
-        Debug.Log("[TurretBuffTarget] Bound successfully.", this);
+    // 🔥 КЛЮЧЕВОЕ МЕСТО
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        ServerBuffTargetRegistry.Register(this);
+    }
+
+    public override void OnStopServer()
+    {
+        ServerBuffTargetRegistry.Unregister(this);
+        base.OnStopServer();
     }
 }
