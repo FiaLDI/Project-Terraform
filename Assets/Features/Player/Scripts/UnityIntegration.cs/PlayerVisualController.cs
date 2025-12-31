@@ -13,9 +13,19 @@ public class PlayerVisualController : MonoBehaviour
     public Animator Animator => _animator;
     public CharacterSockets Sockets { get; private set; }
 
+    private void Awake()
+    {
+        Debug.Log("[PSN-PVC] Awake", this);
+    }
+
+    private void Start()
+    {
+        Debug.Log("[PSN-PVC] Start (READY)", this);
+    }
+
     public void ApplyVisual(string presetId)
     {
-        Debug.Log($"[PlayerVisualController] ApplyVisual({presetId}), parent={gameObject.name}", this);
+        Debug.Log($"[PSN-PlayerVisualController] ApplyVisual({presetId}), parent={gameObject.name}", this);
         
         var preset = visualLibrary.Find(presetId);
         if (preset == null)

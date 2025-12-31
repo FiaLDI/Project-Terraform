@@ -1,10 +1,7 @@
 using FishNet.Object;
 using UnityEngine;
-using Features.Stats.UnityIntegration;
 using Features.Abilities.Application;
 using Features.Interaction.UnityIntegration;
-
-
 
 namespace Features.Player.UnityIntegration
 {
@@ -14,11 +11,7 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private PlayerController playerController;
         public PlayerController Controller => playerController;
 
-
-
         public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
-
-
 
         private void Awake()
         {
@@ -26,30 +19,31 @@ namespace Features.Player.UnityIntegration
                 playerController = GetComponent<PlayerController>();
         }
 
-
+        // =====================================================
+        // SERVER
+        // =====================================================
 
         public override void OnStartServer()
         {
             base.OnStartServer();
 
-
             if (playerController == null)
                 playerController = GetComponent<PlayerController>();
-            
-            InitializePlayerStats();
         }
 
+        // =====================================================
+        // CLIENT
+        // =====================================================
 
         public override void OnStartClient()
         {
             base.OnStartClient();
 
-
-            Debug.Log($"[NetworkPlayer] OnStartClient: {gameObject.name}, IsOwner={IsOwner}", this);
-
+            Debug.Log(
+                $"[NetworkPlayer] OnStartClient: {gameObject.name}, IsOwner={IsOwner}",
+                this);
 
             gameObject.SetActive(true);
-
 
             var registry = PlayerRegistry.Instance;
             if (registry == null)
@@ -58,79 +52,55 @@ namespace Features.Player.UnityIntegration
                 return;
             }
 
-
+            // -------- register --------
             registry.RegisterPlayer(gameObject);
-            InitializePlayerStats();
-            
-            
+
+            // -------- remote --------
             if (!IsOwner)
             {
                 Debug.Log($"[NetworkPlayer] REMOTE player: {gameObject.name}", this);
-                
-                var controller = GetComponent<PlayerController>();
-                if (controller != null)
-                    controller.enabled = false;
-                if (GetComponent<NearbyInteractables>() != null)
-                    GetComponent<NearbyInteractables>().enabled = false;
+
+                if (playerController != null)
+                    playerController.enabled = false;
+
+                var nearby = GetComponent<NearbyInteractables>();
+                if (nearby != null)
+                    nearby.enabled = false;
+
                 return;
             }
 
-
+            // -------- local --------
             Debug.Log($"[NetworkPlayer] LOCAL player detected: {gameObject.name}", this);
 
-            if (GetComponent<PlayerController>() != null)
-                GetComponent<PlayerController>().enabled = true;
-            
-            var nearby = GetComponent<NearbyInteractables>(); 
-            if (nearby != null)
-                nearby.Initialize(base.IsOwner);
+            if (playerController != null)
+                playerController.enabled = true;
 
-            var localAbilities = GetComponent<AbilityCaster>();
-            if (localAbilities != null)
-                localAbilities.enabled = true;
+            var nearbyLocal = GetComponent<NearbyInteractables>();
+            if (nearbyLocal != null)
+                nearbyLocal.Initialize(IsOwner);
 
+            var abilities = GetComponent<AbilityCaster>();
+            if (abilities != null)
+                abilities.enabled = true;
 
             registry.SetLocalPlayer(gameObject);
-            
+
             OnLocalPlayerSpawned?.Invoke(this);
         }
 
-
-        private void InitializePlayerStats()
-        {
-            Debug.Log("[NetworkPlayer] Initializing player stats...", this);
-
-
-            var playerStats = GetComponent<PlayerStats>();
-            if (playerStats == null)
-            {
-                Debug.LogError("[NetworkPlayer] PlayerStats component not found!", gameObject);
-                return;
-            }
-
-
-            playerStats.Init();
-
-
-            if (!playerStats.IsReady)
-            {
-                Debug.LogError("[NetworkPlayer] PlayerStats initialization failed!", gameObject);
-                return;
-            }
-
-
-            Debug.Log("[NetworkPlayer] PlayerStats initialized successfully ✅", this);
-        }
-
+        // =====================================================
+        // CLEANUP
+        // =====================================================
 
         public override void OnStopClient()
         {
             base.OnStopClient();
 
-
             if (IsOwner && Owner.IsLocalClient)
-                Debug.Log($"[NetworkPlayer] Local player despawned: {gameObject.name}", this);
-
+                Debug.Log(
+                    $"[NetworkPlayer] Local player despawned: {gameObject.name}",
+                    this);
 
             var registry = PlayerRegistry.Instance;
             if (registry != null)

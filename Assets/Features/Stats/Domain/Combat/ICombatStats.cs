@@ -8,5 +8,8 @@ namespace Features.Stats.Domain
 
         void ApplyBase(float dmg);
         void ApplyBuff(BuffSO cfg, bool apply);
+
+        
+        void Reset();
     }
 }

@@ -7,5 +7,7 @@ namespace Features.Stats.Domain
         IHealthStats Health { get; }
         IMovementStats Movement { get; }
         IMiningStats Mining { get; }
+
+        void ResetAll();
     }
 }

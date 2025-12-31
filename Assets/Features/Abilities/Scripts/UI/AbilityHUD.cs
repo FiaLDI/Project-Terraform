@@ -3,8 +3,7 @@ using UnityEngine.UI;
 using Features.Abilities.Application;
 using Features.Abilities.Domain;
 using Features.Stats.Adapter;
-using Features.Stats.UnityIntegration;
-using Features.UI; // PlayerBoundUIView
+using Features.UI;
 
 namespace Features.Abilities.UI
 {
@@ -22,81 +21,59 @@ namespace Features.Abilities.UI
 
         private AbilityCaster caster;
         private EnergyStatsAdapter energy;
-        private PlayerStats boundStats;
         private AbilitySO currentChannelAbility;
 
         // =====================================================
-        // PLAYER BIND (FROM BASE)
+        // PLAYER BIND
         // =====================================================
 
         protected override void OnPlayerBound(GameObject player)
         {
-            boundStats = player.GetComponent<PlayerStats>();
-            if (boundStats == null)
-                return;
-
-            if (boundStats.Adapter == null || !boundStats.Adapter.IsReady)
-            {
-                PlayerStats.OnStatsReady += HandleStatsReady;
-                return;
-            }
-
-            Bind(boundStats);
-        }
-
-        protected override void OnPlayerUnbound(GameObject player)
-        {
-            PlayerStats.OnStatsReady -= HandleStatsReady;
-            Unbind();
-        }
-
-        // =====================================================
-        // STATS READY
-        // =====================================================
-
-        private void HandleStatsReady(PlayerStats stats)
-        {
-            if (stats != boundStats)
-                return;
-
-            PlayerStats.OnStatsReady -= HandleStatsReady;
-            Bind(stats);
-        }
-
-        // =====================================================
-        // BIND / UNBIND
-        // =====================================================
-
-        private void Bind(PlayerStats stats)
-        {
-            caster = stats.GetComponent<AbilityCaster>();
+            // -------- AbilityCaster --------
+            caster = player.GetComponent<AbilityCaster>();
             if (caster == null)
             {
-                Debug.LogError("[AbilityHUD] AbilityCaster not found!", this);
+                Debug.LogError("[AbilityHUD] AbilityCaster not found", this);
                 return;
             }
 
-            energy = stats.Adapter.EnergyStats;
+            // -------- Stats Adapter --------
+            var statsAdapter = player.GetComponent<StatsFacadeAdapter>();
+            if (statsAdapter == null)
+            {
+                Debug.LogError("[AbilityHUD] StatsFacadeAdapter not found", this);
+                return;
+            }
 
+            energy = statsAdapter.EnergyStats;
             if (energy != null)
+            {
                 energy.OnEnergyChanged += UpdateEnergyView;
 
+                // если снапшот уже был — обновим сразу
+                if (energy.IsReady)
+                    UpdateEnergyView(energy.Current, energy.Max);
+            }
+
+            // -------- Ability events --------
             caster.OnAbilitiesChanged += RebindAbilities;
             caster.OnChannelStarted += HandleChannelStarted;
             caster.OnChannelProgress += HandleChannelProgress;
             caster.OnChannelCompleted += HandleChannelCompleted;
             caster.OnChannelInterrupted += HandleChannelInterrupted;
-            
-            if (caster.Abilities.Count > 0)
-            {
-                Debug.Log($"[AbilityHUD] Abilities ready: {caster.Abilities.Count}", this);
-                RebindAbilities();
-            }
-            else
-            {
-                Debug.Log("[AbilityHUM] Abilities not ready yet, waiting for OnAbilitiesChanged event", this);
-            }
+
+            // биндим способности сразу (или дождёмся OnAbilitiesChanged)
+            RebindAbilities();
         }
+
+        protected override void OnPlayerUnbound(GameObject player)
+        {
+            Unbind();
+        }
+
+        // =====================================================
+        // UNBIND
+        // =====================================================
 
         private void Unbind()
         {
@@ -114,7 +91,6 @@ namespace Features.Abilities.UI
 
             energy = null;
             caster = null;
-            boundStats = null;
             currentChannelAbility = null;
 
             if (channelRoot != null)
@@ -122,40 +98,35 @@ namespace Features.Abilities.UI
         }
 
         // =====================================================
-        // VIEW
+        // ABILITIES VIEW
         // =====================================================
 
         private void RebindAbilities()
         {
             if (caster == null || slots == null)
-            {
-                Debug.LogError("[AbilityHUD] Caster or slots is null!", this);
                 return;
-            }
 
             var abilities = caster.Abilities;
-            Debug.Log($"[AbilityHUD] RebindAbilities: count={abilities.Count}", this);
-            
+
             for (int i = 0; i < slots.Length; i++)
             {
                 var ability = (i < abilities.Count) ? abilities[i] : null;
-                
-                // 🟢 ВЫВЕЛИ КАЖДУЮ АБИЛИТИ
-                Debug.Log($"[AbilityHUD] Slot {i}: ability={ability?.name ?? "null"}", this);
-                
                 slots[i].Bind(ability, caster, i);
             }
         }
 
+        // =====================================================
+        // ENERGY VIEW
+        // =====================================================
 
         private void UpdateEnergyView(float current, float max)
         {
             if (energyFill != null)
-                energyFill.fillAmount = max > 0 ? current / max : 0f;
+                energyFill.fillAmount = max > 0f ? current / max : 0f;
         }
 
         // =====================================================
-        // CHANNEL
+        // CHANNEL VIEW
         // =====================================================
 
         private void HandleChannelStarted(AbilitySO ability)

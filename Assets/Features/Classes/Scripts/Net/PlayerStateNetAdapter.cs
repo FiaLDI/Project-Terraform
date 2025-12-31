@@ -1,19 +1,28 @@
 using FishNet.Object;
 using UnityEngine;
-using Features.Stats.UnityIntegration;
 using System.Collections;
 using Features.Abilities.Application;
 using Features.Abilities.Domain;
-using Features.Buffs.Application; // Добавляем namespace для BuffSystem
+using Features.Buffs.Application;
 
 namespace Features.Class.Net
 {
+    /// <summary>
+    /// Сетевой адаптер состояния игрока.
+    ///
+    /// ВАЖНО:
+    /// - НЕ синхронизирует HP / Energy вручную
+    /// - НЕ вызывает PlayerStats.Init()
+    /// - НЕ трогает StatsFacade напрямую на клиенте
+    ///
+    /// Статы синхронизируются ТОЛЬКО через StatsNetSync.
+    /// </summary>
     [RequireComponent(typeof(PlayerClassController))]
     public sealed class PlayerStateNetAdapter : NetworkBehaviour
     {
         private PlayerClassController classController;
-        private PlayerStats playerStats;
-        private BuffSystem buffSystem; // Ссылка на систему баффов
+        private BuffSystem buffSystem;
+        private AbilityCaster abilityCaster;
 
         public override void OnStartNetwork()
         {
@@ -23,39 +32,50 @@ namespace Features.Class.Net
 
         private void Cache()
         {
-            if (classController == null) classController = GetComponent<PlayerClassController>();
-            if (playerStats == null) playerStats = GetComponent<PlayerStats>();
-            if (buffSystem == null) buffSystem = GetComponent<BuffSystem>(); // Кэшируем BuffSystem
+            if (classController == null)
+                classController = GetComponent<PlayerClassController>();
+
+            if (buffSystem == null)
+                buffSystem = GetComponent<BuffSystem>();
+
+            if (abilityCaster == null)
+                abilityCaster = GetComponent<AbilityCaster>();
         }
 
-        // --- SERVER SIDE ---
+        // =====================================================
+        // SERVER SIDE
+        // =====================================================
 
+        /// <summary>
+        /// Применение класса игрока.
+        /// ВЫЗЫВАЕТСЯ ТОЛЬКО НА СЕРВЕРЕ.
+        /// </summary>
         [Server]
         public void ApplyClass(string classId)
         {
-            if (classController == null) Cache();
+            Cache();
 
-            // 1. ФИКС СТАТОВ: ОЧИСТКА ПЕРЕД ПРИМЕНЕНИЕМ
-            // Если мы применим класс поверх старого без очистки, статы удвоятся.
+            // 1️⃣ Очищаем баффы ПЕРЕД применением класса
             if (buffSystem != null && buffSystem.ServiceReady)
             {
-                Debug.Log("[PlayerStateNetAdapter] Clearing ALL buffs before applying class...", this);
-                buffSystem.Service.ClearAll(); // Сбрасываем все статы в 0/базу
+                Debug.Log("[PlayerStateNetAdapter] Clearing buffs before applying class", this);
+                buffSystem.ClearAll();
             }
 
-            // 2. Применяем класс (накладываем баффы заново)
-            Debug.Log($"[PlayerStateNetAdapter] Applying Class '{classId}' on Server", this);
+            // 2️⃣ Применяем класс (накладывает баффы на сервере)
+            Debug.Log($"[PlayerStateNetAdapter] Applying class '{classId}' on SERVER", this);
             classController.ApplyClass(classId);
 
-            // 3. Синхронизируем абилки
-            StartCoroutine(WaitAndSyncAbilities(classId));
+            // 3️⃣ Синхронизируем способности
+            StartCoroutine(SyncAbilitiesAfterClassApplied(classId));
         }
 
         [Server]
-        private IEnumerator WaitAndSyncAbilities(string classId)
+        private IEnumerator SyncAbilitiesAfterClassApplied(string classId)
         {
+            // Ждём кадр, чтобы класс гарантированно применился
             yield return new WaitForEndOfFrame();
-            
+
             var appliedClass = classController.GetCurrentClass();
             string[] abilityIds = new string[0];
 
@@ -63,37 +83,40 @@ namespace Features.Class.Net
             {
                 abilityIds = new string[appliedClass.abilities.Count];
                 for (int i = 0; i < appliedClass.abilities.Count; i++)
-                    abilityIds[i] = appliedClass.abilities[i]?.id ?? "";
+                    abilityIds[i] = appliedClass.abilities[i]?.id ?? string.Empty;
             }
 
             RpcApplyClassWithAbilities(classId, abilityIds);
-            
-            // Заодно форсируем синхронизацию статов, чтобы клиент увидел правильные цифры
-            StartCoroutine(ValidateAndSyncStats());
         }
 
-        // --- CLIENT SIDE ---
+        // =====================================================
+        // CLIENT SIDE
+        // =====================================================
 
+        /// <summary>
+        /// Клиент:
+        /// - применяет класс ЛОКАЛЬНО (визуал / пассивки / описания)
+        /// - обновляет способности
+        ///
+        /// ❗ НЕ меняет статы напрямую
+        /// </summary>
         [ObserversRpc]
-        public void RpcApplyClassWithAbilities(string classId, string[] abilityIds)
+        private void RpcApplyClassWithAbilities(string classId, string[] abilityIds)
         {
-            if (IsServer && !IsClientOnly) return; // Хост уже все сделал
-
             Cache();
-            if (playerStats != null && !playerStats.IsReady) playerStats.Init();
 
-            // На клиенте тоже желательно почистить баффы, если система рассинхронизировалась
-            if (buffSystem != null && buffSystem.ServiceReady)
-            {
-                buffSystem.Service.ClearAll();
-            }
+            // Хост уже всё сделал на сервере
+            if (IsServerInitialized && !IsClientOnlyInitialized)
+                return;
 
-            // Применяем класс
-            if (classController != null) classController.ApplyClass(classId);
+            Debug.Log($"[PlayerStateNetAdapter] Applying class '{classId}' on CLIENT", this);
 
-            // Абилки...
-            var caster = GetComponent<AbilityCaster>();
-            if (caster != null)
+            // Применяем класс локально (без прямого изменения статов)
+            if (classController != null)
+                classController.ApplyClass(classId);
+
+            // Обновляем способности
+            if (abilityCaster != null)
             {
                 if (abilityIds != null && abilityIds.Length > 0)
                 {
@@ -101,47 +124,21 @@ namespace Features.Class.Net
                     if (lib != null)
                     {
                         var loaded = new AbilitySO[abilityIds.Length];
-                        for(int i=0; i<abilityIds.Length; i++) loaded[i] = lib.FindById(abilityIds[i]);
-                        caster.SetAbilities(loaded);
+                        for (int i = 0; i < abilityIds.Length; i++)
+                            loaded[i] = lib.FindById(abilityIds[i]);
+
+                        abilityCaster.SetAbilities(loaded);
                     }
                 }
                 else
                 {
-                    caster.SetAbilities(new AbilitySO[0]);
+                    abilityCaster.SetAbilities(System.Array.Empty<AbilitySO>());
                 }
-                if (!IsOwner) caster.enabled = false;
+
+                // Удалённым игрокам кастер не нужен
+                if (!IsOwner)
+                    abilityCaster.enabled = false;
             }
-        }
-
-        [Server]
-        private IEnumerator ValidateAndSyncStats()
-        {
-            yield return new WaitForSeconds(0.2f); // Небольшая задержка, чтобы баффы "устаканились"
-            if (playerStats?.IsReady != true || playerStats.Facade == null) yield break;
-
-            RpcSyncStats(
-                playerStats.Facade.Health.CurrentHp,
-                playerStats.Facade.Health.MaxHp,
-                playerStats.Facade.Energy.CurrentEnergy,
-                playerStats.Facade.Energy.MaxEnergy
-            );
-        }
-
-        [ObserversRpc]
-        private void RpcSyncStats(float curHp, float maxHp, float curEn, float maxEn)
-        {
-            if (IsServer && !IsClientOnly) return;
-            if (playerStats?.IsReady != true) return;
-
-            // Жесткая синхронизация
-            var health = playerStats.Facade.Health;
-            var energy = playerStats.Facade.Energy;
-
-            if (Mathf.Abs(health.MaxHp - maxHp) > 0.1f) health.SetMaxHpDirect(maxHp);
-            health.SetCurrentHp(curHp);
-
-            if (Mathf.Abs(energy.MaxEnergy - maxEn) > 0.1f) energy.SetMaxEnergyDirect(maxEn);
-            energy.SetCurrentEnergy(curEn);
         }
     }
 }

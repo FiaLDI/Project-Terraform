@@ -1,15 +1,12 @@
 using UnityEngine;
+using FishNet.Object;
+using FishNet.Managing.Timing;
 using Features.Stats.Domain;
-using Features.Stats.UnityIntegration;
 
 namespace Features.Stats.UnityIntegration
 {
-    /// <summary>
-    /// Единая система обновления статов сущности.
-    /// Обновляет энергию, хп, регенерацию и тики бафов.
-    /// Работает ТОЛЬКО после PlayerStats.Init().
-    /// </summary>
-    public class StatsUpdateSystem : MonoBehaviour
+    [DefaultExecutionOrder(-200)]
+    public sealed class StatsUpdateSystem : NetworkBehaviour
     {
         [SerializeField] private bool useUnscaledTime = false;
 
@@ -19,90 +16,60 @@ namespace Features.Stats.UnityIntegration
 
         private bool isReady;
 
-        // =====================================================
-        // LIFECYCLE
-        // =====================================================
-
-        private void Awake()
+        public override void OnStartServer()
         {
-            // Awake намеренно пуст
+            base.OnStartServer();
+            TryInitServer();
+
+            TimeManager.OnTick += OnServerTick;
         }
 
-        private void OnEnable()
+        public override void OnStopServer()
         {
-            PlayerStats.OnStatsReady += HandleStatsReady;
+            base.OnStopServer();
+            TimeManager.OnTick -= OnServerTick;
         }
 
-        private void OnDisable()
-        {
-            PlayerStats.OnStatsReady -= HandleStatsReady;
-        }
-
-        // =====================================================
-        // INIT
-        // =====================================================
-
-        private void HandleStatsReady(PlayerStats ps)
+        private void TryInitServer()
         {
             if (isReady)
                 return;
 
-            // Этот StatsUpdateSystem должен работать
-            // ТОЛЬКО со статами этого же объекта
-            if (ps.gameObject != gameObject)
+            var ps = GetComponent<PlayerStats>();
+            if (ps == null || !ps.IsReady || ps.Facade == null)
                 return;
 
-            var facade = ps.Facade;
-            if (facade == null)
-            {
-                Debug.LogError("[StatsUpdateSystem] StatsFacade is null", this);
-                return;
-            }
-
-            stats = facade as IStatsCollection;
+            stats = ps.Facade as IStatsCollection;
             if (stats == null)
-            {
-                Debug.LogError(
-                    "[StatsUpdateSystem] StatsFacade does not implement IStatsCollection",
-                    this
-                );
                 return;
-            }
 
             energy = stats.Energy;
             health = stats.Health;
 
             isReady = true;
+
+            Debug.Log("[StatsUpdateSystem] SERVER initialized ✅", this);
         }
 
-        // =====================================================
-        // UPDATE
-        // =====================================================
-
-        private void Update()
+        private void OnServerTick()
         {
-            if (!isReady || stats == null)
+            if (!IsServerStarted)
                 return;
 
-            float dt = useUnscaledTime
-                ? Time.unscaledDeltaTime
-                : Time.deltaTime;
+            if (!isReady)
+            {
+                TryInitServer();
+                return;
+            }
 
-            // ================================
-            // ENERGY REGEN
-            // ================================
+            float dt = (float)TimeManager.TickDelta;
+
             if (energy != null && energy.Regen > 0f)
                 energy.Recover(energy.Regen * dt);
 
-            // ================================
-            // HEALTH REGEN
-            // ================================
             if (health != null && health.FinalRegen > 0f)
                 health.Recover(health.FinalRegen * dt);
 
-            // ================================
-            // BUFF / PASSIVE TICK UPDATE
-            // ================================
             stats.Tick(dt);
         }
     }

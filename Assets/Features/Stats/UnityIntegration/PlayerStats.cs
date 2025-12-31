@@ -1,17 +1,27 @@
 using UnityEngine;
+using FishNet.Object;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
-
 
 namespace Features.Stats.UnityIntegration
 {
     /// <summary>
-    /// Инициализирует Stats для игрока.
-    /// Вызывается ТОЛЬКО из NetworkPlayer.OnStartClient() для локального игрока.
+    /// ЕДИНСТВЕННАЯ точка инициализации статов игрока.
+    /// SERVER:
+    ///  - создаёт StatsFacade
+    ///  - применяет класс / дефолты
+    ///
+    /// CLIENT:
+    ///  - создаёт ТОЛЬКО адаптеры (view)
+    ///  - получает значения ТОЛЬКО через StatsNetSync
     /// </summary>
     [DefaultExecutionOrder(-400)]
-    public class PlayerStats : MonoBehaviour
+    public sealed class PlayerStats : NetworkBehaviour
     {
+        // =====================================================
+        // PUBLIC API
+        // =====================================================
+
         public IStatsFacade Facade { get; private set; }
         public StatsFacadeAdapter Adapter { get; private set; }
 
@@ -19,68 +29,100 @@ namespace Features.Stats.UnityIntegration
 
         public static event System.Action<PlayerStats> OnStatsReady;
 
-        /// <summary>
-        /// Инициализирует статы игрока.
-        /// ВАЖНО: Должна быть вызвана из NetworkPlayer.OnStartClient()!
-        /// </summary>
-        public void Init()
-        {
-            Debug.Log("[PlayerStats] Init() called", this);
+        // =====================================================
+        // SERVER INIT (AUTHORITATIVE)
+        // =====================================================
 
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            InitServer();
+        }
+
+        private void InitServer()
+        {
             if (IsReady)
-            {
-                Debug.LogWarning("[PlayerStats] Already initialized, skipping", this);
                 return;
-            }
 
             Facade = new StatsFacade(isTurret: false);
-            Debug.Log("[PlayerStats] StatsFacade created", this);
+
+            Facade.ResetAll();
+
+            ApplyClassDefaults();
+
+            IsReady = true;
+
+            Debug.Log("[PlayerStats] SERVER ready (StatsFacade created)", this);
+            OnStatsReady?.Invoke(this);
+        }
+
+        // =====================================================
+        // CLIENT INIT (VIEW ONLY)
+        // =====================================================
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            InitClient();
+        }
+
+        private void InitClient()
+        {
+            // Клиент НЕ создаёт StatsFacade
+            // Он только отображает данные, пришедшие по сети
 
             Adapter = GetComponent<StatsFacadeAdapter>();
             if (Adapter == null)
             {
-                Debug.Log("[PlayerStats] StatsFacadeAdapter not found, adding component", this);
                 Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
             }
 
-            Adapter.Init(Facade);
-            Debug.Log("[PlayerStats] StatsFacadeAdapter initialized", this);
-
-            IsReady = true;
-            Debug.Log("[PlayerStats] PlayerStats is READY ✅", this);
-
-            OnStatsReady?.Invoke(this);
+            Debug.Log("[PlayerStats] CLIENT ready (view only)", this);
         }
 
-        public void ResetToDefaults()
-        {
-            if (!IsReady)
-            {
-                Debug.LogError("[PlayerStats] ResetToDefaults called but not ready!", this);
-                return;
-            }
+        // =====================================================
+        // CLASS / DEFAULTS (SERVER ONLY)
+        // =====================================================
 
-            // Сбрасываем в нейтральное состояние
-            Facade.Health.ApplyBase(100);
-            Facade.Health.ApplyRegenBase(5);
-            Facade.Energy.ApplyBase(100, 5);
+        private void ApplyClassDefaults()
+        {
+            // ❗ ЭТО ТОЛЬКО ПРИМЕР
+            // Здесь ты применяешь:
+            // - класс игрока
+            // - стартовые перки
+            // - балансные значения
+
+            Facade.Health.ApplyBase(120f);
+            Facade.Health.ApplyRegenBase(5f);
+
+            Facade.Energy.ApplyBase(150f, 8f);
+
             Facade.Combat.ApplyBase(1f);
-            Facade.Movement.ApplyBase(5f, 3.5f, 6.5f, 2.5f, 180f);
+            Facade.Movement.ApplyBase(
+                baseSpeed: 0f,
+                walk: 5f,
+                sprint: 6.5f,
+                crouch: 3.5f,
+                rotation: 180f
+            );
+
             Facade.Mining.ApplyBase(1f);
 
-            Debug.Log("[PlayerStats] Reset to defaults", this);
+            Debug.Log("[PlayerStats] SERVER class defaults applied", this);
         }
 
-        /// <summary>
-        /// Получить текущие статы (безопасно).
-        /// </summary>
-        public IStatsFacade GetFacade()
+        // =====================================================
+        // SAFE ACCESS
+        // =====================================================
+
+        public IStatsFacade GetFacadeSafe()
         {
             if (!IsReady)
             {
-                Debug.LogError("[PlayerStats] GetFacade called but stats not ready!", this);
+                Debug.LogError("[PlayerStats] GetFacadeSafe called before ready!", this);
                 return null;
             }
+
             return Facade;
         }
     }

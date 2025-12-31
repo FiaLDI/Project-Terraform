@@ -137,5 +137,7 @@ namespace Features.Stats.Domain
             CrouchSpeed = (_baseCrouch + _crouchAdd) * _crouchMult;
             RotationSpeed  = (_baseRotation + _rotationAdd) * _rotationMult;
         }
+
+        public void Reset() { }
     }
 }

@@ -84,7 +84,6 @@ namespace Features.Abilities.Application
 
             executor ??= AbilityExecutor.I;
 
-            // 🎯 Теперь не передаём ServerManager в конструктор
             service = new AbilityService(
                 owner: gameObject,
                 energy: energy,
@@ -115,19 +114,11 @@ namespace Features.Abilities.Application
             if (!IsReady || service == null)
                 return;
 
-            if (executor == null && AbilityExecutor.I != null)
-            {
-                executor = AbilityExecutor.I;
-                service.SetExecutor(executor);
-            }
-
-            service.Tick(Time.deltaTime);
-
-            // 🎯 ОПТИМИЗАЦИЯ: Синхронизируем раз в X секунд (0.5s для 4-8 игроков)
             if (IsServerInitialized)
             {
-                syncTimer += Time.deltaTime;
+                service.Tick(Time.deltaTime);
 
+                syncTimer += Time.deltaTime;
                 if (syncTimer >= cooldownSyncInterval)
                 {
                     syncTimer = 0f;

@@ -27,40 +27,28 @@ namespace Features.Buffs.Application
         // =====================================================================
         // ADD
         // =====================================================================
-        public BuffInstance AddBuff(BuffSO config, IBuffTarget target)
+        public BuffInstance AddBuff(
+            BuffSO cfg,
+            IBuffTarget target,
+            IBuffSource source,
+            BuffLifetimeMode lifetimeMode)
         {
-            if (config == null || target == null)
-                return null;
-
-            var existing = FindExisting(config, target);
-
-            // если уже есть бафф с таким stat+modType на этом таргете
-            if (existing != null)
-            {
-                if (config.isStackable)
-                {
-                    existing.StackCount++;
-                    existing.Refresh();
-                    executor.Apply(existing);
-                }
-                else
-                {
-                    // нестакаемый — только продлеваем
-                    existing.Refresh();
-                }
-
-                OnAdded?.Invoke(existing);
-                return existing;
-            }
-
-            // создаём новый
-            var inst = new BuffInstance(config, target);
+            var inst = new BuffInstance(cfg, target, source, lifetimeMode);
             active.Add(inst);
 
             executor.Apply(inst);
             OnAdded?.Invoke(inst);
 
             return inst;
+        }
+
+        public void RemoveBySource(IBuffSource source)
+        {
+            for (int i = active.Count - 1; i >= 0; i--)
+            {
+                if (active[i].Source == source)
+                    RemoveBuff(active[i]);
+            }
         }
 
         private BuffInstance FindExisting(BuffSO cfg, IBuffTarget target)
@@ -98,27 +86,25 @@ namespace Features.Buffs.Application
         // =====================================================================
         public void Tick(float dt)
         {
-            if (active.Count == 0)
-                return;
-
             for (int i = active.Count - 1; i >= 0; i--)
             {
                 var inst = active[i];
 
-                // уменьшаем таймер
+                // ⏱ уменьшаем время
                 inst.Tick(dt);
 
-                // тики по времени (HealPerSecond и прочее)
+                // 🔥 тиковые эффекты (HoT / DoT)
                 executor.Tick(inst, dt);
 
+                // ❌ истёк по времени
                 if (inst.IsExpired)
                 {
-                    executor.Expire(inst);
-                    OnRemoved?.Invoke(inst);
-                    active.RemoveAt(i);
+                    RemoveBuff(inst);
                 }
             }
         }
+
+
 
         // =====================================================================
         // CLEAR

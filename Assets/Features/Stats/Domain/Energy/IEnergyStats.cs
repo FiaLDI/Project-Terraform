@@ -35,5 +35,6 @@ namespace Features.Stats.Domain
         void Recover(float amount);
         void SetCurrentEnergy(float value);
         void SetMaxEnergyDirect(float max);
+        void Reset();
     }
 }

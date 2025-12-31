@@ -20,6 +20,15 @@ public class StatsFacade : IStatsFacade, IStatsCollection
         Mining = new MiningStats();
     }
 
+    public void ResetAll()
+    {
+        Health.Reset();
+        Energy.Reset();
+        Combat.Reset();
+        Movement.Reset();
+        Mining.Reset();
+    }
+
     public void Tick(float dt)
     {
         // сюда помещаются тики бафов/пассивов

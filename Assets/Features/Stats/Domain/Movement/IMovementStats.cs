@@ -12,5 +12,6 @@ namespace Features.Stats.Domain
 
         void ApplyBase(float baseSpeed, float walk, float sprint, float crouch, float rotation);
         void ApplyBuff(BuffSO cfg, bool apply);
+        void Reset();
     }
 }

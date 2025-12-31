@@ -161,5 +161,23 @@ namespace Features.Stats.Domain
             CurrentEnergy = Math.Clamp(CurrentEnergy, 0, MaxEnergy);
             Notify();
         }
+
+        public void Reset()
+        {
+            _baseMax = 0f;
+            _baseRegen = 0f;
+
+            _maxAdd = 0f;
+            _maxMult = 1f;
+
+            _regenAdd = 0f;
+            _regenMult = 1f;
+
+            _costMult = 1f;
+
+            CurrentEnergy = 0f;
+
+            Notify();
+        }
     }
 }

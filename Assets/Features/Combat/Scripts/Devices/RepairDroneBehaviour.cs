@@ -6,17 +6,17 @@ using Features.Player.UnityIntegration;
 
 namespace Features.Combat.Devices
 {
-    public class RepairDroneBehaviour : MonoBehaviour
+    public sealed class RepairDroneBehaviour : MonoBehaviour, IBuffSource
     {
         private GameObject owner;
         private float lifetime;
         private float speed;
 
         [Header("Healing Aura")]
-        public BuffSO healBuff; 
+        public BuffSO healBuff;
         public float healRadius = 6f;
 
-        private Dictionary<IBuffTarget, BuffInstance> active = new();
+        private readonly HashSet<IBuffTarget> inside = new();
         private float elapsed;
 
         public void Init(GameObject owner, float lifetime, float speed)
@@ -28,7 +28,6 @@ namespace Features.Combat.Devices
 
         private void Update()
         {
-            // fallback: use PlayerRegistry if owner lost
             if (!owner)
                 owner = PlayerRegistry.Instance.LocalPlayer;
 
@@ -43,70 +42,52 @@ namespace Features.Combat.Devices
                 Destroy(gameObject);
         }
 
-        // ============================================================
-        // FOLLOW OWNER
-        // ============================================================
         private void FollowOwner()
         {
             Vector3 target = owner.transform.position + new Vector3(2f, 3f, 0);
             transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * speed);
         }
 
-        // ============================================================
-        // HEAL AURA
-        // ============================================================
         private void UpdateHealAura()
         {
             if (!healBuff) return;
 
-            // NEW: wider search — not only Player layer
             Collider[] hits = Physics.OverlapSphere(transform.position, healRadius);
-
-            HashSet<IBuffTarget> inside = new();
+            var current = new HashSet<IBuffTarget>();
 
             foreach (var h in hits)
             {
-                if (!h.TryGetComponent<IBuffTarget>(out var target))
+                if (!h.TryGetComponent(out IBuffTarget target))
                     continue;
 
-                inside.Add(target);
+                current.Add(target);
 
-                // NEW: Don't heal enemies or self unless desired
-                // If needed — uncomment:
-                // if (target.GameObject == this.gameObject) continue;
-
-                // Already buffed?
-                if (!active.ContainsKey(target))
+                if (!inside.Contains(target))
                 {
-                    var inst = target.BuffSystem.Add(healBuff);
-                    if (inst != null)
-                        active[target] = inst;
+                    target.BuffSystem?.Add(
+                        healBuff,
+                        source: this,
+                        lifetimeMode: BuffLifetimeMode.WhileSourceAlive
+                    );
                 }
             }
 
-            // remove buffs from those who left radius
-            List<IBuffTarget> toRemove = new();
-
-            foreach (var kv in active)
+            foreach (var target in inside)
             {
-                if (!inside.Contains(kv.Key))
-                    toRemove.Add(kv.Key);
+                if (!current.Contains(target))
+                    target.BuffSystem?.RemoveBySource(this);
             }
 
-            foreach (var t in toRemove)
-            {
-                t.BuffSystem.Remove(active[t]);
-                active.Remove(t);
-            }
+            inside.Clear();
+            inside.UnionWith(current);
         }
 
         private void OnDestroy()
         {
-            // cleanup
-            foreach (var kv in active)
-                kv.Key.BuffSystem?.Remove(kv.Value);
+            foreach (var target in inside)
+                target.BuffSystem?.RemoveBySource(this);
 
-            active.Clear();
+            inside.Clear();
         }
     }
 }

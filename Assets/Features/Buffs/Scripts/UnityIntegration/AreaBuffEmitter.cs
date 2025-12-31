@@ -1,21 +1,52 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Features.Buffs.Domain;
+using FishNet.Object;
 using Features.Buffs.Application;
 
 namespace Features.Buffs.UnityIntegration
 {
-    public class AreaBuffEmitter : MonoBehaviour
+    /// <summary>
+    /// Серверный эмиттер ауры.
+    /// НЕ тикает сам — вызывается BuffTickSystem.
+    ///
+    /// Архитектура:
+    /// - сам является BuffSource
+    /// - баффы живут пока цель внутри радиуса
+    /// - удаление строго через RemoveBySource
+    /// </summary>
+    public sealed class AreaBuffEmitter : NetworkBehaviour, IBuffSource
     {
+        [Header("Config")]
         public AreaBuffSO area;
+        private bool _serverActive;
 
-        private readonly Dictionary<IBuffTarget, BuffInstance> _active = new();
+        // Все цели, которые сейчас внутри ауры
+        private readonly HashSet<IBuffTarget> inside = new();
 
-        private void Update()
+        public override void OnStartServer()
         {
-            if (area == null || area.buff == null)
-                return;
+            base.OnStartServer();
+            _serverActive = true;
+            BuffTickSystem.RegisterEmitter(this);
+        }
 
+        public override void OnStopServer()
+        {
+            _serverActive = false;
+            CleanupAll();
+            BuffTickSystem.UnregisterEmitter(this);
+            base.OnStopServer();
+        }
+
+        // =====================================================
+        // SERVER TICK (ВЫЗЫВАЕТ BuffTickSystem)
+        // =====================================================
+
+        public void Tick()
+        {
+            if (!IsServerStarted || area == null || area.buff == null)
+                return;
 
             Collider[] hits = Physics.OverlapSphere(
                 transform.position,
@@ -23,102 +54,65 @@ namespace Features.Buffs.UnityIntegration
                 area.targetMask
             );
 
-            var inside = new HashSet<IBuffTarget>();
+            var current = new HashSet<IBuffTarget>();
 
             foreach (var h in hits)
             {
-                if (!h.TryGetComponent<IBuffTarget>(out var target))
+                if (!h.TryGetComponent(out IBuffTarget target))
                     continue;
 
+                current.Add(target);
 
-                inside.Add(target);
-
-
-                if (!_active.ContainsKey(target))
+                // ➕ ВХОД В АУРУ
+                if (!inside.Contains(target))
                 {
-                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    // НОВОЕ: Проверяем есть ли уже этот бафф
-                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    var existingBuff = FindExistingBuff(target);
-                    
-                    if (existingBuff != null)
+                    var bs = target.BuffSystem;
+                    if (bs != null)
                     {
-                        // Бафф уже есть (например, от пассивов) - просто отслеживаем его
-                        _active[target] = existingBuff;
-                        if (!area.buff.isStackable)
-                            existingBuff.Refresh();
-                    }
-                    else
-                    {
-                        // Баффа нет - добавляем новый
-                        var inst = target.BuffSystem.Add(area.buff);
-                        if (inst != null)
-                            _active[target] = inst;
+                        bs.Add(
+                            area.buff,
+                            source: this,
+                            lifetimeMode: BuffLifetimeMode.WhileSourceAlive
+                        );
                     }
                 }
-                else
+            }
+
+            // ➖ ВЫХОД ИЗ АУРЫ
+            foreach (var target in inside)
+            {
+                if (!current.Contains(target))
                 {
-                    // Для НЕ-стакающихся баффов просто обновляем таймер
-                    if (!area.buff.isStackable)
-                        _active[target].Refresh();
+                    var bs = target?.BuffSystem;
+                    if (bs != null)
+                        bs.RemoveBySource(this);
                 }
             }
 
-            // выходим из радиуса
-            var toRemove = new List<IBuffTarget>();
-
-            foreach (var kv in _active)
-            {
-                if (!inside.Contains(kv.Key))
-                    toRemove.Add(kv.Key);
-            }
-
-
-            foreach (var t in toRemove)
-            {
-                if (t.BuffSystem != null)
-                    t.BuffSystem.Remove(_active[t]);
-
-
-                _active.Remove(t);
-            }
+            inside.Clear();
+            inside.UnionWith(current);
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // НОВОЕ: Когда AreaBuffEmitter удаляется, удаляем все его баффы
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // =====================================================
+        // CLEANUP
+        // =====================================================
+
+        private void CleanupAll()
+        {
+            foreach (var target in inside)
+            {
+                var bs = target?.BuffSystem;
+                if (bs != null)
+                    bs.RemoveBySource(this);
+            }
+
+            inside.Clear();
+        }
+
         private void OnDestroy()
         {
-            // Удаляем все баффы которые мы добавили
-            var toRemove = new List<IBuffTarget>(_active.Keys);
-            
-            foreach (var target in toRemove)
-            {
-                if (target?.BuffSystem != null && _active.TryGetValue(target, out var buff))
-                {
-                    target.BuffSystem.Remove(buff);
-                }
-                _active.Remove(target);
-            }
-        }
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // Проверяет есть ли уже этот бафф в BuffSystem
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        private BuffInstance FindExistingBuff(IBuffTarget target)
-        {
-            if (target?.BuffSystem?.Active == null)
-                return null;
-
-            var buffId = area.buff.buffId;
-
-            foreach (var buff in target.BuffSystem.Active)
-            {
-                if (buff?.Config?.buffId == buffId)
-                    return buff;
-            }
-
-            return null;
+            if (_serverActive)
+                CleanupAll();
         }
     }
 }

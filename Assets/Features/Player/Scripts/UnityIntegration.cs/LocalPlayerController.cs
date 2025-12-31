@@ -1,11 +1,9 @@
 using UnityEngine;
 using Features.Input;
 using Features.Player.UnityIntegration;
-using Features.Camera.UnityIntegration;
 using Features.Player;
 using Features.Player.UI;
 using Features.Interaction.UnityIntegration;
-using Features.Stats.UnityIntegration;
 
 public sealed class LocalPlayerController : MonoBehaviour
 {
@@ -102,17 +100,6 @@ public sealed class LocalPlayerController : MonoBehaviour
         {
             Debug.LogError("[LocalPlayerController] Camera.main NOT FOUND");
         }
-
-        var stats = player.GetComponent<PlayerStats>();
-        if (stats != null && stats.IsReady)
-        {
-            Debug.Log("[LocalPlayerController] PlayerStats already ready ✅", this);
-        }
-        else
-        {
-            Debug.LogError("[LocalPlayerController] PlayerStats not ready!", this);
-        }
-
         Debug.Log($"[LocalPlayerController] Bound to {player.name}");
     }
 

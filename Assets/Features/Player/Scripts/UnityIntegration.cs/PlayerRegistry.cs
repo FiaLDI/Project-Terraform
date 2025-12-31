@@ -5,51 +5,45 @@ using Features.Abilities.Application;
 using Features.Inventory.UnityIntegration;
 using Features.Stats.UnityIntegration;
 
-
 namespace Features.Player.UnityIntegration
 {
     /// <summary>
     /// Глобальный реестр игроков.
+    /// Не отвечает за готовность статов.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
     public sealed class PlayerRegistry : MonoBehaviour
     {
-        public static PlayerRegistry Instance 
-        { 
-            get 
+        public static PlayerRegistry Instance
+        {
+            get
             {
                 if (_instance == null)
-                {
                     _instance = FindObjectOfType<PlayerRegistry>();
-                }
                 return _instance;
             }
             private set => _instance = value;
         }
         private static PlayerRegistry _instance;
 
+        // ================= PLAYERS =================
 
-        // Все игроки в сцене
         private readonly List<GameObject> _players = new();
         public IReadOnlyList<GameObject> Players => _players;
 
-        // Локальный игрок (ТОЛЬКО 1)
+        // ================= LOCAL PLAYER =================
+
         public GameObject LocalPlayer { get; private set; }
 
-        // Кэш локальных подсистем
         public InventoryManager LocalInventory { get; private set; }
         public AbilityCaster LocalAbilities { get; private set; }
         public PlayerStats LocalPlayerStats { get; private set; }
-
-        private bool _localPlayerInitialized;
 
         public static event Action<PlayerRegistry> OnLocalPlayerReady;
 
         public bool HasLocalPlayer => LocalPlayer != null;
 
-        // ======================================================
-        // LIFECYCLE
-        // ======================================================
+        // ================= LIFECYCLE =================
 
         private void Awake()
         {
@@ -58,33 +52,22 @@ namespace Features.Player.UnityIntegration
                 Destroy(gameObject);
                 return;
             }
-            _instance = this;
+
             Instance = this;
             Debug.Log("[PlayerRegistry] Initialized as singleton", this);
         }
 
-        // ======================================================
-        // PLAYER REGISTRATION
-        // ======================================================
+        // ================= REGISTRATION =================
 
-        /// <summary>
-        /// Регистрирует игрока (любой: локальный или удалённый)
-        /// </summary>
         public void RegisterPlayer(GameObject player)
         {
-            if (player == null)
-                return;
-
-            if (_players.Contains(player))
+            if (player == null || _players.Contains(player))
                 return;
 
             _players.Add(player);
             Debug.Log($"[PlayerRegistry] Registered player: {player.name}", this);
         }
 
-        /// <summary>
-        /// Удаляет игрока из реестра
-        /// </summary>
         public void UnregisterPlayer(GameObject player)
         {
             if (player == null)
@@ -93,33 +76,16 @@ namespace Features.Player.UnityIntegration
             _players.Remove(player);
 
             if (LocalPlayer == player)
-            {
                 ClearLocalPlayer();
-            }
 
             Debug.Log($"[PlayerRegistry] Unregistered player: {player.name}", this);
         }
 
-        public static void SubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
-        {
-            OnLocalPlayerReady += cb;
-
-            if (Instance != null && Instance.LocalPlayer != null)
-                cb(Instance);
-        }
-
-        public static void UnsubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
-        {
-            OnLocalPlayerReady -= cb;
-        }
-
-        // ======================================================
-        // LOCAL PLAYER
-        // ======================================================
+        // ================= LOCAL PLAYER =================
 
         /// <summary>
-        /// Вызывается из NetworkPlayer.OnStartClient() для локального игрока.
-        /// ВАЖНО: К этому моменту PlayerStats уже инициализирован!
+        /// Вызывается для локального игрока.
+        /// Гарантирует только наличие ссылок, не данных.
         /// </summary>
         public void SetLocalPlayer(GameObject player)
         {
@@ -130,15 +96,12 @@ namespace Features.Player.UnityIntegration
             }
 
             if (LocalPlayer == player)
-            {
-                Debug.LogWarning("[PlayerRegistry] Local player already set to this player!", this);
                 return;
-            }
 
             LocalPlayer = player;
             Debug.Log($"[PlayerRegistry] Local player set: {player.name}", this);
 
-            // Кэшируем ссылки на основные компоненты
+            // -------- cache components --------
             LocalInventory = player.GetComponent<InventoryManager>();
             if (LocalInventory == null)
                 Debug.LogWarning("[PlayerRegistry] InventoryManager not found on local player", player);
@@ -149,22 +112,10 @@ namespace Features.Player.UnityIntegration
 
             LocalPlayerStats = player.GetComponent<PlayerStats>();
             if (LocalPlayerStats == null)
-            {
-                Debug.LogError("[PlayerRegistry] PlayerStats not found on local player!", player);
-            }
-            else if (!LocalPlayerStats.IsReady)
-            {
-                Debug.LogError("[PlayerRegistry] PlayerStats is NOT ready!", player);
-            }
-            else
-            {
-                Debug.Log("[PlayerRegistry] PlayerStats initialized successfully ✅", this);
-            }
+                Debug.LogWarning("[PlayerRegistry] PlayerStats not found on local player", player);
 
-            _localPlayerInitialized = true;
-
-            // Уведомляем подписчиков что локальный игрок готов
-            Debug.Log("[PlayerRegistry] Invoking OnLocalPlayerReady event", this);
+            // -------- notify --------
+            Debug.Log("[PlayerRegistry] Invoking OnLocalPlayerReady", this);
             OnLocalPlayerReady?.Invoke(this);
         }
 
@@ -176,24 +127,37 @@ namespace Features.Player.UnityIntegration
             LocalInventory = null;
             LocalAbilities = null;
             LocalPlayerStats = null;
-            _localPlayerInitialized = false;
         }
 
-        // ======================================================
-        // UTILITIES
-        // ======================================================
+        // ================= UTIL =================
 
         /// <summary>
-        /// Получить статы локального игрока (безопасно).
+        /// Возвращает PlayerStats локального игрока, если есть.
+        /// НЕ проверяет готовность данных.
         /// </summary>
         public PlayerStats GetLocalStats()
         {
-            if (LocalPlayerStats == null || !LocalPlayerStats.IsReady)
+            if (LocalPlayerStats == null)
             {
-                Debug.LogError("[PlayerRegistry] Local player stats not ready!", this);
+                Debug.LogWarning("[PlayerRegistry] LocalPlayerStats is null", this);
                 return null;
             }
+
             return LocalPlayerStats;
+        }
+
+        public static void SubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
+        {
+            OnLocalPlayerReady += cb;
+
+            // если локальный игрок уже есть — вызываем сразу
+            if (Instance != null && Instance.LocalPlayer != null)
+                cb(Instance);
+        }
+
+        public static void UnsubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
+        {
+            OnLocalPlayerReady -= cb;
         }
     }
 }

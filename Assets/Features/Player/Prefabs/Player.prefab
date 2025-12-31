@@ -367,6 +367,7 @@ GameObject:
   - component: {fileID: 4243781917691856348}
   - component: {fileID: 5527670935517867940}
   - component: {fileID: 3902377743731741677}
+  - component: {fileID: 7381832722026141383}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -536,6 +537,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eefe9874e88c6b54fb5f77e2a929969c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsUpdateSystem
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
   useUnscaledTime: 0
 --- !u!114 &3249233337102116910
 MonoBehaviour:
@@ -1083,3 +1087,21 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
+--- !u!114 &7381832722026141383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca61dd7427f810b438512fb1cacdeab5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatsNetSync
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+  syncInterval: 0.1
+  threshold: 0.05
+  lerpSpeed: 12

@@ -126,7 +126,6 @@ namespace Features.Abilities.Application
 
             if (ability.castType == AbilityCastType.Instant)
             {
-                // ��������� ��������� �������� ����������� �����
                 LastInstantContext = ctx;
 
                 OnAbilityCast?.Invoke(ability);
@@ -137,7 +136,6 @@ namespace Features.Abilities.Application
 
             if (ability.castType == AbilityCastType.Channel)
             {
-                // ��������� ��������� �������� ������
                 LastChannelContext = ctx;
 
                 StartChannel(ability, ctx);

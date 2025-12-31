@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Features.Stats.Adapter;
-using Features.Stats.UnityIntegration;
 using Features.UI;
 
 public class HPBarUI : PlayerBoundUIView
@@ -16,109 +15,42 @@ public class HPBarUI : PlayerBoundUIView
 
     private HealthStatsAdapter health;
     private float targetFill;
-    private PlayerStats boundStats;
-
-    // =====================================================
-    // PLAYER BIND (FROM BASE)
-    // =====================================================
 
     protected override void OnPlayerBound(GameObject player)
     {
-        Debug.Log("[HPBarUI] OnPlayerBound called", this);
-
-        boundStats = player.GetComponent<PlayerStats>();
-        if (boundStats == null)
+        var statsAdapter = player.GetComponent<StatsFacadeAdapter>();
+        if (statsAdapter == null)
         {
-            Debug.LogError("[HPBarUI] PlayerStats not found on player", this);
+            Debug.LogError("[HPBarUI] StatsFacadeAdapter not found", this);
             return;
         }
 
-        // ÊËÞ×ÅÂÎÉ ÔÈÕ: Ïðîâåðÿåì ãîòîâíîñòü àäàïòåðà
-        var adapter = boundStats.Adapter;
-        if (adapter == null)
+        health = statsAdapter.HealthStats;
+        if (health == null)
         {
-            Debug.LogWarning("[HPBarUI] Adapter is null, waiting for ready event", this);
-            PlayerStats.OnStatsReady += HandleStatsReady;
+            Debug.LogError("[HPBarUI] HealthStatsAdapter not found", this);
             return;
         }
 
-        if (!adapter.IsReady)
-        {
-            Debug.LogWarning("[HPBarUI] Adapter not ready yet, waiting...", this);
-            PlayerStats.OnStatsReady += HandleStatsReady;
-            return;
-        }
+        health.OnHealthChanged += UpdateHp;
 
-        Debug.Log("[HPBarUI] Adapter ready, binding health stats", this);
-        Bind(adapter.HealthStats);
+        // ÐµÑÐ»Ð¸ ÑÐ½Ð°Ð¿ÑˆÐ¾Ñ‚ ÑƒÐ¶Ðµ Ð¿Ñ€Ð¸Ñ…Ð¾Ð´Ð¸Ð» â€” ÑÑ€Ð°Ð·Ñƒ Ð¾Ð±Ð½Ð¾Ð²Ð¸Ð¼ UI
+        if (health.IsReady)
+            UpdateHp(health.CurrentHp, health.MaxHp);
     }
 
     protected override void OnPlayerUnbound(GameObject player)
-    {
-        Debug.Log("[HPBarUI] OnPlayerUnbound called", this);
-        PlayerStats.OnStatsReady -= HandleStatsReady;
-        Unbind();
-    }
-
-    // =====================================================
-    // STATS READY
-    // =====================================================
-
-    private void HandleStatsReady(PlayerStats stats)
-    {
-        Debug.Log("[HPBarUI] HandleStatsReady called", this);
-
-        if (stats != boundStats)
-        {
-            Debug.Log("[HPBarUI] Stats mismatch, ignoring", this);
-            return;
-        }
-
-        PlayerStats.OnStatsReady -= HandleStatsReady;
-
-        if (stats.Adapter != null && stats.Adapter.IsReady)
-        {
-            Debug.Log("[HPBarUI] Now binding health stats", this);
-            Bind(stats.Adapter.HealthStats);
-        }
-    }
-
-    // =====================================================
-    // BIND / UNBIND
-    // =====================================================
-
-    private void Bind(HealthStatsAdapter adapter)
-    {
-        if (adapter == null)
-        {
-            Debug.LogError("[HPBarUI] Cannot bind null adapter", this);
-            return;
-        }
-
-        Debug.Log("[HPBarUI] Successfully bound to health adapter", this);
-
-        health = adapter;
-        health.OnHealthChanged += UpdateHp;
-        UpdateHp(health.CurrentHp, health.MaxHp);
-    }
-
-    private void Unbind()
     {
         if (health != null)
             health.OnHealthChanged -= UpdateHp;
 
         health = null;
-        boundStats = null;
         targetFill = 0f;
     }
 
-    // =====================================================
-    // VIEW
-    // =====================================================
-
     private void UpdateHp(float current, float max)
     {
-        targetFill = max > 0 ? current / max : 0f;
+        targetFill = max > 0f ? current / max : 0f;
 
         if (label != null)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";

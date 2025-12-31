@@ -1,33 +1,76 @@
 using UnityEngine;
+using FishNet.Object;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
 
 namespace Features.Stats.UnityIntegration
 {
+    /// <summary>
+    /// Server-authoritative статы турели.
+    /// </summary>
     [DefaultExecutionOrder(-400)]
-    public class TurretStats : MonoBehaviour
+    public sealed class TurretStats : NetworkBehaviour
     {
         [Header("Preset")]
-        public TurretPresetSO preset;
+        [SerializeField] private TurretPresetSO preset;
 
         public IStatsFacade Facade { get; private set; }
         public StatsFacadeAdapter Adapter { get; private set; }
 
-        private void Awake()
+        public bool IsReady { get; private set; }
+
+        // =========================
+        // SERVER
+        // =========================
+
+        public override void OnStartServer()
         {
+            base.OnStartServer();
+            InitServer();
+        }
+
+        private void InitServer()
+        {
+            if (IsReady)
+                return;
+
             Facade = new StatsFacade(isTurret: true);
 
-            Adapter = GetComponent<StatsFacadeAdapter>();
-            Adapter.Init(Facade);
-
             ApplyBaseStats();
+
+            IsReady = true;
+
+            Debug.Log("[TurretStats] SERVER ready", this);
         }
+
+        // =========================
+        // CLIENT
+        // =========================
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            InitClient();
+        }
+
+        private void InitClient()
+        {
+            Adapter = GetComponent<StatsFacadeAdapter>();
+            if (Adapter == null)
+                Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
+
+            Debug.Log("[TurretStats] CLIENT ready (view only)", this);
+        }
+
+        // =========================
+        // BASE STATS (SERVER ONLY)
+        // =========================
 
         private void ApplyBaseStats()
         {
             if (!preset)
             {
-                Debug.LogError("[TurretStats] Missing preset asset on turret!", this);
+                Debug.LogError("[TurretStats] Missing preset asset!", this);
                 return;
             }
 
@@ -42,8 +85,7 @@ namespace Features.Stats.UnityIntegration
             Facade.Health.ApplyBase(preset.baseHp);
             Facade.Health.ApplyRegenBase(preset.baseRegen);
 
-            // MOVEMENT / ROTATION SPEED
-            // Теперь MovementStats принимает rotationSpeed как 5-й аргумент.
+            // MOVEMENT / ROTATION
             Facade.Movement.ApplyBase(
                 baseSpeed: 0,
                 walk: 0,
@@ -52,18 +94,28 @@ namespace Features.Stats.UnityIntegration
                 rotation: preset.rotationSpeed
             );
 
-            Debug.Log("[TurretStats] Base stats applied.");
+            Debug.Log("[TurretStats] Base stats applied (SERVER)");
         }
 
-        // ============================================================
-        // FINAL VALUES — API для TurretBehaviour
-        // ============================================================
+        // =========================
+        // SAFE ACCESS (SERVER)
+        // =========================
 
-        // DAMAGE
+        public IStatsFacade GetFacadeSafe()
+        {
+            if (!IsReady)
+            {
+                Debug.LogError("[TurretStats] GetFacadeSafe called before ready!", this);
+                return null;
+            }
+
+            return Facade;
+        }
+
         public float FinalDamage =>
             Facade?.Combat?.DamageMultiplier ?? 0f;
 
-        // ROTATION SPEED (ТЕПЕРЬ ПРАВИЛЬНО)
+        // ROTATION SPEED
         public float FinalRotationSpeed =>
             Facade?.Movement?.RotationSpeed ?? 0f;
 
@@ -79,15 +131,5 @@ namespace Features.Stats.UnityIntegration
 
         public float MaxHp =>
             Facade?.Health?.MaxHp ?? 0f;
-
-        // DEBUG INSPECTOR FIELDS
-        public float Debug_HP => CurrentHp;
-        public float Debug_MaxHP => MaxHp;
-
-        public float Debug_DamageMultiplier => FinalDamage;
-
-        public float Debug_RotationSpeed => FinalRotationSpeed;
-
-        public float Debug_FireRate => FinalFireRate;
     }
 }

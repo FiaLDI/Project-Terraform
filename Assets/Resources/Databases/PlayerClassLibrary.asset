@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 37640d8d1cd5fcd409d750be1719390f, type: 3}
-  m_Name: Library
+  m_Name: PlayerClassLibrary
   m_EditorClassIdentifier: Assembly-CSharp::Features.Classes.Data.PlayerClassLibrarySO
   classes:
   - {fileID: 11400000, guid: 166429277b235e449bf169d6bc90a2ee, type: 2}

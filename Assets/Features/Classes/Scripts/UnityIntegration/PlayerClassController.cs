@@ -230,17 +230,6 @@ public sealed class PlayerClassController : MonoBehaviour
         
         abilityCaster?.SetAbilities(cfg.abilities.ToArray());
 
-        Debug.Log($"[PlayerClassController] Applying visual", this);
-        
-        if (cfg.visualPreset != null)
-        {
-            visualController?.ApplyVisual(cfg.visualPreset.id);
-        }
-        else
-        {
-            Debug.LogWarning($"[PlayerClassController] Class {cfg.displayName} has no visual preset", this);
-        }
-
         OnClassApplied?.Invoke();
 
         Debug.Log($"[PlayerClassController] ✅ Class applied completely: {cfg.displayName}", this);

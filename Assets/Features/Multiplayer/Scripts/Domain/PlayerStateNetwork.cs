@@ -1,165 +1,93 @@
 ﻿using Features.Class.Net;
+using Features.Classes.Data;
+using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
-using System.Collections;
 
 namespace Features.Player.UnityIntegration
 {
-    [RequireComponent(typeof(PlayerClassController))]
-    [RequireComponent(typeof(PlayerVisualController))]
-    [RequireComponent(typeof(PlayerStateNetAdapter))]
     public sealed class PlayerStateNetwork : NetworkBehaviour
     {
-        // Обязательно Hook, чтобы ловить изменения в реальном времени
         private readonly SyncVar<string> _classId = new();
-
-        // Hook для визуала
         private readonly SyncVar<string> _visualId = new();
 
-        private PlayerClassController classController;
         private PlayerVisualController visualController;
         private PlayerStateNetAdapter netAdapter;
 
-        private void Awake() => InitializeComponents();
+        private PlayerClassLibrarySO classLibrary;
+        private string _preInitClass;
+
+        private void Awake()
+        {
+            visualController = GetComponent<PlayerVisualController>();
+            netAdapter = GetComponent<PlayerStateNetAdapter>();
+
+            classLibrary = UnityEngine.Resources.Load<PlayerClassLibrarySO>(
+                "Databases/PlayerClassLibrary");
+
+            if (classLibrary == null)
+                Debug.LogError(
+                    "[PSN] PlayerClassLibrary not found in Resources/Databases");
+        }
+
+        // вызывается ИЗ NetworkPlayerService ДО Spawn
+        public void PreInitClass(string classId)
+        {
+            _preInitClass = classId;
+        }
+
+        public override void OnSpawnServer(NetworkConnection conn)
+        {
+            base.OnSpawnServer(conn);
+
+            string classId = string.IsNullOrEmpty(_preInitClass)
+                ? "0" // дефолтный класс
+                : _preInitClass;
+
+            var cls = classLibrary.FindById(classId);
+            if (cls == null)
+            {
+                Debug.LogError($"[PSN] Class '{classId}' not found", this);
+                return;
+            }
+
+            _classId.Value = classId;
+            _visualId.Value = cls.visualPreset.id;
+
+            netAdapter.ApplyClass(classId);
+
+            Debug.Log($"[PSN] Spawn class={classId} visual={_visualId.Value}", this);
+        }
 
         public override void OnStartNetwork()
         {
             base.OnStartNetwork();
-            InitializeComponents();
-            _classId.OnChange += OnClassChanged;
             _visualId.OnChange += OnVisualChanged;
         }
 
         public override void OnStopNetwork()
         {
-            base.OnStopNetwork();
-            _classId.OnChange -= OnClassChanged;
             _visualId.OnChange -= OnVisualChanged;
         }
 
-        // === CLIENT: LATE JOIN FIX ===
-        public override void OnStartClient()
+        private void OnVisualChanged(string oldVal, string newVal, bool _)
         {
-            base.OnStartClient();
-
-            // 1. Subscribe to SyncVar changes for future updates
-            _visualId.OnChange += OnVisualIdChanged;
-
-            // 2. LATE JOIN CHECK:
-            // If we join late, the SyncVar is already populated by the server.
-            // We must apply it immediately because the OnChange event won't fire for the initial value.
-            if (!string.IsNullOrEmpty(_visualId.Value))
-            {
-                Debug.Log($"[PlayerStateNetwork] Late Join: Found existing Visual ID '{_visualId.Value}'. Applying now.");
-                ApplyVisual(_visualId.Value);
-            }
-
-            if (!string.IsNullOrEmpty(_classId.Value))
-            {
-                Debug.Log($"[PlayerStateNetwork] Late Join: Found existing Class ID '{_classId.Value}'.");
-                // Optional: Ensure class is applied if the RPC missed it, 
-                // though the RPC usually handles this well.
-            }
-        }
-
-        private void ApplyVisual(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return;
-
-            // Forward to your visual controller
-            GetComponent<PlayerVisualController>().ApplyVisual(id);
-        }
-
-        public override void OnStopClient()
-        {
-            base.OnStopClient();
-            _visualId.OnChange -= OnVisualIdChanged;
-        }
-
-        private void OnVisualIdChanged(string prev, string next, bool asServer)
-        {
-            if (asServer) return; // Client only
-            ApplyVisual(next);
-        }
-
-        private IEnumerator ApplyDataWithDelay()
-        {
-            // Ждем конца кадра, чтобы все Awake/Start отработали
-            yield return new WaitForEndOfFrame();
-
-            // Если это Late Join (мы подключились, а переменные уже заполнены сервером)
-            if (!string.IsNullOrEmpty(_visualId.Value))
-            {
-                Debug.Log($"[PlayerStateNetwork] LateJoin: Force Applying Visual '{_visualId.Value}'", this);
-                if (visualController != null)
-                    visualController.ApplyVisual(_visualId.Value);
-            }
-        }
-
-        // === SERVER ===
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
-            if (classController == null) return;
-
-            // Логика подбора дефолтного класса
-            string cid = classController.CurrentClassId;
-            string vid = string.Empty;
-
-            var cls = classController.GetCurrentClass();
-            if (cls != null)
-            {
-                cid = cls.id;
-                if (cls.visualPreset != null) vid = cls.visualPreset.id;
-            }
-
-            if (!string.IsNullOrEmpty(cid))
-            {
-                SetClass(cid, vid);
-            }
+            if (!string.IsNullOrEmpty(newVal))
+                visualController.ApplyVisual(newVal);
         }
 
         [Server]
-        public void SetClass(string classId, string visualId)
+        public void SetClass(string classId)
         {
-            if (string.IsNullOrEmpty(classId)) return;
+            var cls = classLibrary.FindById(classId);
+            if (cls == null)
+                return;
 
-            // Обновляем данные сети
             _classId.Value = classId;
-            _visualId.Value = visualId;
+            _visualId.Value = cls.visualPreset.id;
 
-            // 1. Применяем логику класса через адаптер (он там почистит баффы)
-            if (netAdapter != null)
-                netAdapter.ApplyClass(classId);
-
-            // 2. Применяем визуал на сервере (хосте) вручную, т.к. SyncVar Hook не срабатывает для сервера
-            if (visualController != null && !string.IsNullOrEmpty(visualId))
-                visualController.ApplyVisual(visualId);
-        }
-
-        // === HOOKS ===
-        private void OnClassChanged(string oldVal, string newVal, bool asServer)
-        {
-            if (asServer) return;
-            // Логика UI если нужна
-        }
-
-        private void OnVisualChanged(string oldVal, string newVal, bool asServer)
-        {
-            if (asServer) return; // Сервер сам применяет в SetClass
-
-            if (!string.IsNullOrEmpty(newVal) && visualController != null)
-            {
-                visualController.ApplyVisual(newVal);
-            }
-        }
-
-        private void InitializeComponents()
-        {
-            if (classController == null) classController = GetComponent<PlayerClassController>();
-            if (visualController == null) visualController = GetComponent<PlayerVisualController>();
-            if (netAdapter == null) netAdapter = GetComponent<PlayerStateNetAdapter>();
+            netAdapter.ApplyClass(classId);
         }
     }
 }

@@ -194,5 +194,27 @@ namespace Features.Stats.Domain
             CurrentHp = Math.Min(CurrentHp, MaxHp);
             NotifyHp();
         }
+
+        public void Reset()
+        {
+            _baseHp = 0f;
+            _baseShield = 0f;
+
+            _hpAdd = 0f;
+            _hpMult = 1f;
+
+            _shieldAdd = 0f;
+            _shieldMult = 1f;
+
+            _regen = 0f;
+            _regenAdd = 0f;
+            _regenMult = 1f;
+
+            CurrentHp = 0f;
+            CurrentShield = 0f;
+
+            NotifyHp();
+            NotifyShield();
+        }
     }
 }

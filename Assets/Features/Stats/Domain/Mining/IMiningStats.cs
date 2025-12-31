@@ -10,5 +10,6 @@ namespace Features.Stats.Domain
 
         /// <summary>Бафф на майнинг (BuffStat.PlayerMiningSpeed).</summary>
         void ApplyBuff(BuffSO cfg, bool apply);
+        void Reset();
     }
 }

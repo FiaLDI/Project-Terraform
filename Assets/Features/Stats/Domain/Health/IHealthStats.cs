@@ -34,5 +34,6 @@ namespace Features.Stats.Domain
         void ApplyBuff(BuffSO cfg, bool apply);
         void SetCurrentHp(float value);
         void SetMaxHpDirect(float hp);
+        void Reset();
     }
 }

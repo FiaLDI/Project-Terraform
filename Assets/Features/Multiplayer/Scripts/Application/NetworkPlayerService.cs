@@ -5,6 +5,7 @@ using FishNet.Object;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Features.Player.UnityIntegration;
 
 public sealed class NetworkPlayerService : MonoBehaviour
 {
@@ -13,6 +14,10 @@ public sealed class NetworkPlayerService : MonoBehaviour
     [SerializeField] private NetworkObject playerPrefab;
 
     private readonly Dictionary<int, NetworkObject> _playersByConn = new();
+    private readonly Dictionary<int, string> _classByConn = new();
+
+    [SerializeField] private string defaultClassId = "0";
+
     private NetworkManager _nm;
 
     private void Awake()
@@ -64,10 +69,12 @@ public sealed class NetworkPlayerService : MonoBehaviour
         if (_playersByConn.ContainsKey(conn.ClientId))
             return;
 
-        SpawnPlayer(conn);
+        string classId = GetOrCreateClass(conn);
+
+        SpawnPlayer(conn, classId);
     }
 
-    private void SpawnPlayer(NetworkConnection conn)
+    private void SpawnPlayer(NetworkConnection conn, string classId)
     {
         ScenePlayerSpawnPoint sp = GetSpawnPoint();
 
@@ -75,13 +82,16 @@ public sealed class NetworkPlayerService : MonoBehaviour
         Quaternion rot = sp ? sp.transform.rotation : Quaternion.identity;
 
         NetworkObject player = Instantiate(playerPrefab, pos, rot);
+
+        var psn = player.GetComponent<PlayerStateNetwork>();
+        psn.PreInitClass(classId); // 🔥 ключевая строка
+
         _nm.ServerManager.Spawn(player, conn);
 
         _playersByConn[conn.ClientId] = player;
 
-        Debug.Log($"[PlayerService] Spawned player for conn {conn.ClientId}");
+        Debug.Log($"[PlayerService] Spawned player {conn.ClientId} with class '{classId}'");
     }
-
 
     // ==========================================================
     // DESPAWN
@@ -152,4 +162,17 @@ public sealed class NetworkPlayerService : MonoBehaviour
         // пока простой рандом
         return points[Random.Range(0, points.Length)];
     }
+
+    private string GetOrCreateClass(NetworkConnection conn)
+    {
+        if (_classByConn.TryGetValue(conn.ClientId, out var classId))
+            return classId;
+
+        classId = defaultClassId;
+        _classByConn[conn.ClientId] = classId;
+
+        Debug.Log($"[PlayerService] Assign default class '{classId}' to {conn.ClientId}");
+        return classId;
+    }
+
 }

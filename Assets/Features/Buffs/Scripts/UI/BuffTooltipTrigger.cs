@@ -9,7 +9,7 @@ namespace Features.Buffs.UI
         MonoBehaviour,
         IPointerEnterHandler,
         IPointerExitHandler,
-        IPointerMoveHandler  // 🟢 ДОБАВИТЬ
+        IPointerMoveHandler
     {
         private BuffInstance inst;
 
@@ -20,7 +20,9 @@ namespace Features.Buffs.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            #if UNITY_EDITOR
             Debug.Log("[BuffTooltipTrigger] OnPointerEnter", this);
+            #endif
 
             if (inst == null)
             {
@@ -34,10 +36,8 @@ namespace Features.Buffs.UI
                 return;
             }
 
-            // 🟢 Показать tooltip
             TooltipController.Instance.ShowBuff(inst);
 
-            // 🟢 КРИТИЧНО: передать позицию указателя
             if (eventData != null)
             {
                 TooltipController.Instance.SetPointerPosition(eventData.position);
@@ -47,11 +47,12 @@ namespace Features.Buffs.UI
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            #if UNITY_EDITOR
             Debug.Log("[BuffTooltipTrigger] OnPointerExit", this);
+            #endif
             TooltipController.Instance?.Hide();
         }
 
-        // 🟢 ДОБАВИТЬ: обновлять позицию при движении мыши
         public void OnPointerMove(PointerEventData eventData)
         {
             if (TooltipController.Instance != null && inst != null)

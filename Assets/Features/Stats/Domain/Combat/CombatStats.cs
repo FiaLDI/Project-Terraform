@@ -67,5 +67,10 @@ namespace Features.Stats.Domain
             DamageMultiplier =
                 (_baseDamage + _bonusAdd) * _bonusMult;
         }
+
+        public void Reset()
+        {
+            
+        }
     }
 }
