@@ -5,59 +5,46 @@ using UnityEngine;
 
 namespace Features.Player.UnityIntegration
 {
-    // Гарантирует, что NetworkBehaviour не выключится случайно
-    [DisallowMultipleComponent] 
+    [DisallowMultipleComponent]
     public sealed class AbilityCasterNetAdapter : NetworkBehaviour
     {
         private AbilityCaster caster;
 
         private void Awake()
         {
-            // 1. ЗАЩИТА: Принудительно включаем компонент
-            this.enabled = true; 
+            enabled = true;
             caster = GetComponent<AbilityCaster>();
         }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
-            // 2. ЗАЩИТА: На сервере тоже включаем
-            this.enabled = true; 
+            enabled = true;
         }
 
-        // ===== INPUT (Вызывает Клиент) =====
+        // ================= CLIENT =================
+        // Вызывается ТОЛЬКО локальным игроком
         public void Cast(int index)
         {
-            if (!IsOwner) return;
-            // Лог отправки
-            Debug.Log($"[NetAdapter] CLIENT: Sending Cast({index})..."); 
+            if (!IsOwner)
+                return;
+
+            Debug.Log($"[NetAdapter] CLIENT -> SERVER Cast({index})");
             Cast_Server(index);
         }
 
-        // ===== SERVER =====
-        [ServerRpc] // Убрали RequireOwnership = false, вернем как было, если включение поможет
-        public void Cast_Server(int index)
+        // ================= SERVER =================
+        [ServerRpc]
+        private void Cast_Server(int index)
         {
-            // Если вы видите этот лог - победа
-            Debug.Log($"[NetAdapter] SERVER: RPC Received! Slot: {index}");
+            Debug.Log($"[NetAdapter] SERVER Received Cast({index})");
 
-            if (caster == null || !caster.IsReady) return;
+            if (caster == null || !caster.IsReady)
+                return;
 
-            if (caster.TryCastWithContext(index, out AbilitySO ability, out AbilityContext ctx))
-            {
-                Cast_Client(index, ability.id, ctx);
-            }
-        }
-
-        // ===== CLIENTS =====
-        [ObserversRpc]
-        public void Cast_Client(int index, string abilityId, AbilityContext ctx)
-        {
-            if (caster != null) 
-            {
-                var ability = caster.FindAbilityById(abilityId);
-                if (ability != null) caster.PlayRemoteCast(ability, index, ctx);
-            }
+            // 🎯 ВАЖНО:
+            // Execute произойдёт ТОЛЬКО внутри AbilityService (на сервере)
+            caster.TryCastWithContext(index, out _, out _);
         }
     }
 }

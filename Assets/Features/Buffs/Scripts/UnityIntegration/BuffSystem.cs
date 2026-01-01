@@ -14,9 +14,11 @@ namespace Features.Buffs.Application
         [SerializeField] private bool debugMode;
 
         // ================= NETWORK =================
+
         public readonly SyncList<string> ActiveBuffIds = new();
 
         // ================= RUNTIME =================
+
         private IBuffTarget target;
         private BuffExecutor executor;
         private BuffService service;
@@ -40,15 +42,14 @@ namespace Features.Buffs.Application
         {
             base.OnStartServer();
 
-            TryInit();
+            TryInitServer();
             BuffTickSystem.Register(this);
         }
 
         public override void OnStopServer()
         {
-            base.OnStopServer();
-
             BuffTickSystem.Unregister(this);
+            base.OnStopServer();
         }
 
         public override void OnStartClient()
@@ -56,23 +57,22 @@ namespace Features.Buffs.Application
             base.OnStartClient();
 
             ActiveBuffIds.OnChange += OnBuffIdsChanged;
-            TryInit(); // client view-only service
+            TryInitClient();
         }
 
         public override void OnStopClient()
         {
-            base.OnStopClient();
-
             ActiveBuffIds.OnChange -= OnBuffIdsChanged;
+            base.OnStopClient();
         }
 
         // =====================================================
-        // TICK (CALLED ONLY BY BuffTickSystem)
+        // TICK (SERVER ONLY)
         // =====================================================
 
         public void Tick(float dt)
         {
-            if (!IsServerStarted || !ServiceReady)
+            if (!IsServerStarted || service == null)
                 return;
 
             service.Tick(dt);
@@ -93,30 +93,52 @@ namespace Features.Buffs.Application
                 Debug.LogError("[BuffSystem] IBuffTarget not found!", this);
         }
 
-        private void TryInit()
+        // ---------- SERVER INIT ----------
+
+        private void TryInitServer()
         {
+            if (service != null)
+                return;
+
             if (target == null)
                 ResolveTarget();
 
             if (target == null)
                 return;
 
-            if (executor == null)
+            executor = BuffExecutor.Instance;
+            if (executor == null || !executor.IsServerStarted)
             {
-                executor = BuffExecutor.Instance ?? FindObjectOfType<BuffExecutor>();
-                if (executor == null)
-                    return;
-            }
-
-            if (service != null)
+                if (debugMode)
+                    Debug.Log("[BuffSystem] Waiting for server BuffExecutor", this);
                 return;
+            }
 
             service = new BuffService(executor);
             service.OnAdded += HandleBuffAdded;
             service.OnRemoved += HandleBuffRemoved;
 
             if (debugMode)
-                Debug.Log("[BuffSystem] Service initialized", this);
+                Debug.Log("[BuffSystem] Server service initialized", this);
+        }
+
+        // ---------- CLIENT INIT ----------
+
+        private void TryInitClient()
+        {
+            if (service != null)
+                return;
+
+            if (target == null)
+                ResolveTarget();
+
+            if (target == null)
+                return;
+
+            service = BuffService.CreateViewOnly();
+
+            if (debugMode)
+                Debug.Log("[BuffSystem] Client view-only service initialized", this);
         }
 
         // =====================================================
@@ -131,8 +153,8 @@ namespace Features.Buffs.Application
             if (!IsServerStarted || cfg == null)
                 return null;
 
-            TryInit();
-            if (!ServiceReady)
+            TryInitServer();
+            if (service == null)
                 return null;
 
             return service.AddBuff(cfg, target, source, lifetimeMode);
@@ -140,7 +162,7 @@ namespace Features.Buffs.Application
 
         public void Remove(BuffInstance inst)
         {
-            if (!IsServerStarted || !ServiceReady || inst == null)
+            if (!IsServerStarted || service == null || inst == null)
                 return;
 
             service.RemoveBuff(inst);
@@ -148,7 +170,7 @@ namespace Features.Buffs.Application
 
         public void RemoveBySource(IBuffSource source)
         {
-            if (!IsServerStarted || !ServiceReady || source == null)
+            if (!IsServerStarted || service == null || source == null)
                 return;
 
             service.RemoveBySource(source);
@@ -156,7 +178,7 @@ namespace Features.Buffs.Application
 
         public void ClearAll()
         {
-            if (!IsServerStarted || !ServiceReady)
+            if (!IsServerStarted || service == null)
                 return;
 
             service.ClearAll();
@@ -180,19 +202,30 @@ namespace Features.Buffs.Application
 
         private void SyncActiveBuffs()
         {
-            if (!IsServerStarted || service?.Active == null)
+            if (!IsServerStarted || service == null)
                 return;
 
-            ActiveBuffIds.Clear();
+            var newIds = new HashSet<string>();
 
             foreach (var buff in service.Active)
             {
                 if (buff?.Config != null)
-                    ActiveBuffIds.Add(buff.Config.buffId);
+                    newIds.Add(buff.Config.buffId);
             }
 
-            if (debugMode)
-                Debug.Log($"[BuffSystem] Synced {ActiveBuffIds.Count} buffs", this);
+            // remove obsolete
+            for (int i = ActiveBuffIds.Count - 1; i >= 0; i--)
+            {
+                if (!newIds.Contains(ActiveBuffIds[i]))
+                    ActiveBuffIds.RemoveAt(i);
+            }
+
+            // add new
+            foreach (var id in newIds)
+            {
+                if (!ActiveBuffIds.Contains(id))
+                    ActiveBuffIds.Add(id);
+            }
         }
 
         // =====================================================
@@ -212,9 +245,24 @@ namespace Features.Buffs.Application
             SyncClientState();
         }
 
+        public bool HasBuffFromSource(IBuffSource source)
+        {
+            if (service == null || source == null)
+                return false;
+
+            foreach (var buff in service.Active)
+            {
+                if (buff.Source == source)
+                    return true;
+            }
+
+            return false;
+        }
+
+
         private void SyncClientState()
         {
-            if (!ServiceReady)
+            if (service == null)
                 return;
 
             var local = new List<BuffInstance>(service.Active);
@@ -223,11 +271,14 @@ namespace Features.Buffs.Application
             // REMOVE
             foreach (var buff in local)
             {
-                if (buff?.Config != null && !serverIds.Contains(buff.Config.buffId))
+                if (buff?.Config != null &&
+                    !serverIds.Contains(buff.Config.buffId))
+                {
                     service.RemoveBuff(buff);
+                }
             }
 
-            // ADD (view only, no source)
+            // ADD (view-only)
             foreach (var id in serverIds)
             {
                 bool exists = false;

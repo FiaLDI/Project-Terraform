@@ -5,60 +5,58 @@ using Features.Menu.Tooltip;
 
 namespace Features.Buffs.UI
 {
-    public class BuffTooltipTrigger :
+    public sealed class BuffTooltipTrigger :
         MonoBehaviour,
         IPointerEnterHandler,
         IPointerExitHandler,
         IPointerMoveHandler
     {
-        private BuffInstance inst;
+        private string buffId;
+        private BuffSystem buffSystem;
 
-        public void Bind(BuffInstance inst)
+        public void Bind(string buffId, BuffSystem system)
         {
-            this.inst = inst;
+            this.buffId = buffId;
+            this.buffSystem = system;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            #if UNITY_EDITOR
-            Debug.Log("[BuffTooltipTrigger] OnPointerEnter", this);
-            #endif
+            if (buffSystem == null || string.IsNullOrEmpty(buffId))
+            {
+                Debug.LogWarning("[BuffTooltipTrigger] Not bound");
+                return;
+            }
 
+            var inst = FindInstance();
             if (inst == null)
             {
-                Debug.LogWarning("[BuffTooltipTrigger] Buff instance is null", this);
+                Debug.LogWarning($"[BuffTooltipTrigger] Buff '{buffId}' not found");
                 return;
             }
 
-            if (TooltipController.Instance == null)
-            {
-                Debug.LogError("[BuffTooltipTrigger] TooltipController.Instance is null!", this);
-                return;
-            }
+            TooltipController.Instance.ShowBuff(inst.Config);
+            TooltipController.Instance.SetPointerPosition(eventData.position);
+        }
 
-            TooltipController.Instance.ShowBuff(inst);
-
-            if (eventData != null)
+        private BuffInstance FindInstance()
+        {
+            foreach (var b in buffSystem.Active)
             {
-                TooltipController.Instance.SetPointerPosition(eventData.position);
-                Debug.Log($"[BuffTooltipTrigger] Set tooltip position: {eventData.position}", this);
+                if (b?.Config?.buffId == buffId)
+                    return b;
             }
+            return null;
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            #if UNITY_EDITOR
-            Debug.Log("[BuffTooltipTrigger] OnPointerExit", this);
-            #endif
             TooltipController.Instance?.Hide();
         }
 
         public void OnPointerMove(PointerEventData eventData)
         {
-            if (TooltipController.Instance != null && inst != null)
-            {
-                TooltipController.Instance.SetPointerPosition(eventData.position);
-            }
+            TooltipController.Instance?.SetPointerPosition(eventData.position);
         }
     }
 }

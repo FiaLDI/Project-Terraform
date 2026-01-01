@@ -11,6 +11,6 @@ namespace Features.Buffs.Domain
 
         BuffSystem BuffSystem { get; }
 
-        IStatsFacade Stats { get; }
+        IStatsFacade GetServerStats();
     }
 }

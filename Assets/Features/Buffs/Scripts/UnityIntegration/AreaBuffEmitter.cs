@@ -6,22 +6,19 @@ using Features.Buffs.Application;
 
 namespace Features.Buffs.UnityIntegration
 {
-    /// <summary>
-    /// Серверный эмиттер ауры (DISTANCE-BASED).
-    ///
-    /// ✔ Без Physics
-    /// ✔ Без LayerMask
-    /// ✔ Без Collider
-    /// ✔ Работает одинаково для host и клиентов
-    /// ✔ Единственный источник истины — сервер
-    /// </summary>
     public sealed class AreaBuffEmitter : NetworkBehaviour, IBuffSource
     {
         [Header("Config")]
         public AreaBuffSO area;
+        
+        private readonly HashSet<int> inside = new();
+        private readonly HashSet<IBuffTarget> current = new();
 
-        private readonly HashSet<IBuffTarget> inside = new();
         private bool _active;
+
+        // =====================================================
+        // SERVER LIFECYCLE
+        // =====================================================
 
         public override void OnStartServer()
         {
@@ -39,16 +36,23 @@ namespace Features.Buffs.UnityIntegration
 
         public override void OnStopServer()
         {
-            _active = false;
-            CleanupAll();
-            BuffTickSystem.UnregisterEmitter(this);
+            if (_active)
+            {
+                CleanupAll();
+                BuffTickSystem.UnregisterEmitter(this);
+                _active = false;
+            }
+
             base.OnStopServer();
         }
 
         private void OnDestroy()
         {
             if (_active)
+            {
                 CleanupAll();
+                _active = false;
+            }
         }
 
         // =====================================================
@@ -63,47 +67,47 @@ namespace Features.Buffs.UnityIntegration
             Vector3 pos = transform.position;
             float radiusSqr = area.radius * area.radius;
 
-            var current = new HashSet<IBuffTarget>();
+            var current = new HashSet<int>();
 
             foreach (var target in ServerBuffTargetRegistry.All)
             {
                 if (target == null)
                     continue;
 
-                if (!(target is Component comp))
+                var stats = target.GetServerStats();
+                if (stats == null || target.BuffSystem == null)
                     continue;
 
-                float distSqr =
-                    (comp.transform.position - pos).sqrMagnitude;
-
-                if (distSqr > radiusSqr)
+                if (target is not Component comp)
                     continue;
 
-                current.Add(target);
+                if (!comp.TryGetComponent<NetworkObject>(out var no))
+                    continue;
 
-                // ➕ ВХОД В АУРУ
-                if (!inside.Contains(target))
+                int id = no.ObjectId;
+
+                if ((comp.transform.position - pos).sqrMagnitude > radiusSqr)
+                    continue;
+
+                current.Add(id);
+
+                if (!inside.Contains(id))
                 {
-                    var bs = target.BuffSystem;
-                    if (bs != null)
-                    {
-                        bs.Add(
-                            area.buff,
-                            source: this,
-                            lifetimeMode: BuffLifetimeMode.WhileSourceAlive
-                        );
-                    }
+                    target.BuffSystem.Add(
+                        area.buff,
+                        source: this,
+                        lifetimeMode: BuffLifetimeMode.WhileSourceAlive
+                    );
                 }
             }
 
             // ➖ ВЫХОД ИЗ АУРЫ
-            foreach (var target in inside)
+            foreach (var oldId in inside)
             {
-                if (!current.Contains(target))
+                if (!current.Contains(oldId))
                 {
-                    var bs = target?.BuffSystem;
-                    if (bs != null)
-                        bs.RemoveBySource(this);
+                    var target = ServerBuffTargetRegistry.FindByNetId(oldId);
+                    target?.BuffSystem?.RemoveBySource(this);
                 }
             }
 
@@ -117,14 +121,17 @@ namespace Features.Buffs.UnityIntegration
 
         private void CleanupAll()
         {
-            foreach (var target in inside)
+            foreach (var netId in inside)
             {
+                var target = ServerBuffTargetRegistry.FindByNetId(netId);
                 var bs = target?.BuffSystem;
+
                 if (bs != null)
                     bs.RemoveBySource(this);
             }
 
             inside.Clear();
         }
+
     }
 }

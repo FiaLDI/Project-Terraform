@@ -180,17 +180,15 @@ namespace Features.Menu.Tooltip
         // BUFF TOOLTIP
         // =====================================================
 
-        public void ShowBuff(BuffInstance buff)
+        public void ShowBuff(BuffSO cfg)
         {
-            if (buff == null || buff.Config == null)
+            if (cfg == null)
             {
                 Hide();
                 return;
             }
 
-            currentOwner = buff;
-
-            var cfg = buff.Config;
+            currentOwner = cfg;
 
             icon.sprite      = cfg.icon;
             title.text       = cfg.displayName;

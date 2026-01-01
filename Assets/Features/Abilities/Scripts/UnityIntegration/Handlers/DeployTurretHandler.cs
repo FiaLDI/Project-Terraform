@@ -1,51 +1,29 @@
 using Features.Abilities.Domain;
 using Features.Buffs.Application;
 using Features.Buffs.Domain;
-using Features.Buffs.UnityIntegration;
 using Features.Player.UnityIntegration;
+using FishNet;
 using FishNet.Object;
 using UnityEngine;
 
 namespace Features.Abilities.UnityIntegration
 {
-    public class DeployTurretHandler : IAbilityHandler
+    public sealed class DeployTurretHandler
+        : AbilityHandler<DeployTurretAbilitySO>
     {
-        public System.Type AbilityType => typeof(DeployTurretAbilitySO);
-
         private const float SEARCH_RADIUS = 2.2f;
         private const int SEARCH_POINTS = 6;
         private const float SLOPE_LIMIT = 22f;
         private const float TURRET_RADIUS = 0.5f;
         private const float MIN_TURRET_SPACING = 1.5f;
 
-        public void Execute(AbilitySO abilityBase, AbilityContext ctx)
+        protected override void ExecuteInternal(
+            DeployTurretAbilitySO ability,
+            AbilityContext ctx,
+            GameObject owner)
         {
-            var ability = (DeployTurretAbilitySO)abilityBase;
-
-            GameObject owner = ctx.Owner as GameObject 
-                            ?? (ctx.Owner as Component)?.gameObject;
-
-            if (!owner) return;
-
-            // 🎯 Получаем NetworkObject и ServerManager прямо здесь
-            if (!owner.TryGetComponent<NetworkObject>(out var ownerNetObj))
-            {
-                Debug.LogError("[DeployTurretHandler] Owner has no NetworkObject!");
+            if (!owner.TryGetComponent(out NetworkObject ownerNO))
                 return;
-            }
-
-            if (!ownerNetObj.IsServer)
-            {
-                Debug.LogError("[DeployTurretHandler] Only server can spawn turrets!");
-                return;
-            }
-
-            var serverManager = ownerNetObj.ServerManager;
-            if (serverManager == null)
-            {
-                Debug.LogError("[DeployTurretHandler] ServerManager not available!");
-                return;
-            }
 
             Vector3 spawnPos = FindBestTurretSpawnPoint(
                 owner.transform,
@@ -58,42 +36,42 @@ namespace Features.Abilities.UnityIntegration
                 LayerMask.GetMask("Default", "Environment")
             );
 
-            GameObject turret = Object.Instantiate(
+            var turret = Object.Instantiate(
                 ability.turretPrefab,
                 spawnPos,
                 Quaternion.identity
             );
 
-            if (turret.TryGetComponent<NetworkObject>(out var turretNetObj))
+            if (!turret.TryGetComponent(out NetworkObject turretNO))
             {
-                // 🎯 Спавним турель через ServerManager
-                serverManager.Spawn(turretNetObj.gameObject, ownerNetObj.Owner);
-            }
-            else
-            {
-                Debug.LogError("[DeployTurretHandler] Turret prefab has no NetworkObject!", turret);
                 Object.Destroy(turret);
                 return;
             }
 
-            if (!turret.TryGetComponent(out BuffSystem bs))
-                turret.AddComponent<BuffSystem>();
+            InstanceFinder.ServerManager.Spawn(
+                turretNO.gameObject,
+                ownerNO.Owner
+            );
 
+            // ===== BUFF INFRA =====
             if (!turret.TryGetComponent<IBuffTarget>(out _))
                 turret.AddComponent<TurretBuffTarget>();
 
+            if (!turret.TryGetComponent<BuffSystem>(out _))
+                turret.AddComponent<BuffSystem>();
+
             PlayerDeviceRegistry.Instance?.RegisterDevice(owner, turret);
 
+            // ===== VISUAL =====
             turret.transform.localScale = Vector3.zero;
             turret.AddComponent<TurretSpawnAnimation>();
 
-            if (turret.TryGetComponent<TurretBehaviour>(out var turretBehaviour))
-            {
-                turretBehaviour.ScheduleDestruction(ability.duration);
-            }
+            // ===== LIFETIME =====
+            if (turret.TryGetComponent<TurretBehaviour>(out var beh))
+                beh.ScheduleDestruction(ability.duration);
         }
 
-        private Vector3 FindBestTurretSpawnPoint(
+        private static Vector3 FindBestTurretSpawnPoint(
             Transform player,
             float searchRadius,
             int pointCount,
@@ -109,35 +87,37 @@ namespace Features.Abilities.UnityIntegration
             for (int i = 0; i < pointCount; i++)
             {
                 float angle = i * angleStep * Mathf.Deg2Rad;
-
-                Vector3 dir = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                Vector3 dir = new(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
                 Vector3 horizontalPoint = origin + dir * searchRadius;
 
-                if (!Physics.Raycast(horizontalPoint + Vector3.up * 3f, Vector3.down,
-                                    out var hit, 10f, groundMask))
+                if (!Physics.Raycast(
+                        horizontalPoint + Vector3.up * 3f,
+                        Vector3.down,
+                        out var hit,
+                        10f,
+                        groundMask))
+                    continue;
+
+                if (Vector3.Angle(hit.normal, Vector3.up) > groundSlopeLimit)
                     continue;
 
                 Vector3 groundPos = hit.point;
 
-                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-                if (slopeAngle > groundSlopeLimit)
+                if (Physics.CheckSphere(
+                        groundPos + Vector3.up * 0.5f,
+                        turretRadius,
+                        obstacleMask))
                     continue;
 
-                if (Physics.CheckSphere(groundPos + Vector3.up * 0.5f, turretRadius, obstacleMask))
-                    continue;
-
-                Collider[] nearTurrets = Physics.OverlapSphere(groundPos, spacingBetweenTurrets);
-                foreach (var c in nearTurrets)
+                foreach (var c in Physics.OverlapSphere(groundPos, spacingBetweenTurrets))
                 {
                     if (c.GetComponent<TurretBehaviour>())
-                    {
-                        goto SkipThisPoint;
-                    }
+                        goto Skip;
                 }
 
                 return groundPos;
 
-            SkipThisPoint:
+            Skip:
                 continue;
             }
 

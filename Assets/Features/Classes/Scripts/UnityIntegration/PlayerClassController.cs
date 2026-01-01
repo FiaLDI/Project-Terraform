@@ -3,8 +3,6 @@ using Features.Classes.Data;
 using Features.Classes.Application;
 using Features.Passives.UnityIntegration;
 using Features.Abilities.Application;
-using Features.Stats.Domain;
-using Features.Buffs.UnityIntegration;
 using Features.Stats.UnityIntegration;
 
 [RequireComponent(typeof(PlayerVisualController))]
@@ -26,14 +24,12 @@ public sealed class PlayerClassController : MonoBehaviour
 
     private PassiveSystem passiveSystem;
     private AbilityCaster abilityCaster;
-    private PlayerBuffTarget buffTarget;
 
     // =====================================================
     // DOMAIN
     // =====================================================
 
     private PlayerClassService classService;
-    private IStatsFacade stats;
     private PlayerClassConfigSO currentClass;
 
     public PlayerClassConfigSO GetCurrentClass() => currentClass;
@@ -45,6 +41,7 @@ public sealed class PlayerClassController : MonoBehaviour
         currentClass != null && currentClass.visualPreset != null
             ? currentClass.visualPreset.id
             : null;
+    private PlayerBuffTarget buffTarget;
 
     /// <summary>
     /// Вызывается, когда класс полностью применён
@@ -64,7 +61,10 @@ public sealed class PlayerClassController : MonoBehaviour
 
         if (library == null)
         {
-            Debug.LogError("[PlayerClassController] PlayerClassLibrarySO not assigned!", this);
+            Debug.LogError(
+                "[PlayerClassController] PlayerClassLibrarySO not assigned!",
+                this
+            );
             enabled = false;
             return;
         }
@@ -77,48 +77,17 @@ public sealed class PlayerClassController : MonoBehaviour
         Debug.Log("[PlayerClassController] Initialized", this);
     }
 
-    private void OnEnable()
-    {
-        PlayerStats.OnStatsReady += OnStatsReady;
-    }
-
-    private void OnDisable()
-    {
-        PlayerStats.OnStatsReady -= OnStatsReady;
-    }
-
-    // =====================================================
-    // STATS BINDING
-    // =====================================================
-
-    private void OnStatsReady(PlayerStats ps)
-    {
-        stats = ps.Facade;
-        buffTarget?.SetStats(stats);
-
-        Debug.Log("[PlayerClassController] Stats bound", this);
-    }
-
     // =====================================================
     // PUBLIC API (SERVER ONLY)
     // =====================================================
 
     /// <summary>
     /// Применить класс.
-    /// Вызывается ТОЛЬКО сервером из PlayerStateNetAdapter,
-    /// ТОЛЬКО когда PlayerStats уже готов.
+    /// Вызывается ТОЛЬКО сервером из PlayerStateNetAdapter.
+    /// Предполагается, что PlayerStats уже инициализирован.
     /// </summary>
     public void ApplyClass(string classId)
     {
-        if (stats == null)
-        {
-            Debug.LogError(
-                "[PlayerClassController] ApplyClass called before stats ready!",
-                this
-            );
-            return;
-        }
-
         var cfg = library.FindById(classId);
         if (cfg == null)
         {
@@ -140,26 +109,46 @@ public sealed class PlayerClassController : MonoBehaviour
     {
         if (cfg == null)
         {
-            Debug.LogError("[PlayerClassController] ApplyInternal called with null config", this);
+            Debug.LogError(
+                "[PlayerClassController] ApplyInternal called with null config",
+                this
+            );
             return;
         }
 
         currentClass = cfg;
 
-        Debug.Log($"[PlayerClassController] Applying class '{cfg.displayName}'", this);
+        Debug.Log(
+            $"[PlayerClassController] Applying class '{cfg.displayName}'",
+            this
+        );
 
         // 1️⃣ Доменные данные (выбранный класс)
         classService.SelectClass(cfg);
 
-        // 2️⃣ Пассивки (регистрируют бафы, но НЕ меняют статы напрямую)
-        passiveSystem?.SetPassives(cfg.passives.ToArray());
 
-        // 3️⃣ Способности (регистрация, без прямых статов)
+        // 3️⃣ Способности
         abilityCaster?.SetAbilities(cfg.abilities.ToArray());
+        
+        
+        // 2️⃣ Пассивки
+        if (buffTarget != null)
+        {
+            buffTarget.OnReady -= ApplyPassivesSafe;
+            buffTarget.OnReady += ApplyPassivesSafe;
+        }
 
-        // 4️⃣ Событие завершения
+        // 4️⃣ Сигнал завершения
         OnClassApplied?.Invoke();
 
-        Debug.Log($"[PlayerClassController] ✅ Class '{cfg.displayName}' applied", this);
+        Debug.Log(
+            $"[PlayerClassController] ✅ Class '{cfg.displayName}' applied",
+            this
+        );
+    }
+
+    private void ApplyPassivesSafe()
+    {
+        passiveSystem?.SetPassives(currentClass.passives.ToArray());
     }
 }

@@ -3,20 +3,10 @@ using System.Collections.Generic;
 using FishNet.Object;
 using FishNet.Managing.Timing;
 using Features.Buffs.Application;
-using Features.Buffs.UnityIntegration;
+using System.Linq;
 
 namespace Features.Buffs.UnityIntegration
 {
-    /// <summary>
-    /// Глобальный серверный тикер баффов.
-    ///
-    /// ГАРАНТИИ:
-    /// - Ровно 1 экземпляр в сцене
-    /// - Работает ТОЛЬКО на сервере
-    /// - Корректен при любом порядке спавна объектов
-    /// - НЕ теряет регистрацию BuffSystem / AreaBuffEmitter
-    /// - НЕ падает при раннем Register
-    /// </summary>
     [DefaultExecutionOrder(-1000)]
     public sealed class BuffTickSystem : NetworkBehaviour
     {
@@ -30,7 +20,7 @@ namespace Features.Buffs.UnityIntegration
         private readonly HashSet<BuffSystem> buffSystems = new();
         private readonly HashSet<AreaBuffEmitter> emitters = new();
 
-        // ================= PENDING (early register) =================
+        // ================= PENDING =================
 
         private static readonly HashSet<BuffSystem> pendingSystems = new();
         private static readonly HashSet<AreaBuffEmitter> pendingEmitters = new();
@@ -46,7 +36,7 @@ namespace Features.Buffs.UnityIntegration
             if (_instance != null && _instance != this)
             {
                 Debug.LogError(
-                    "[BuffTickSystem] Multiple instances detected! There must be ONLY ONE.",
+                    "[BuffTickSystem] Multiple instances detected!",
                     this
                 );
                 return;
@@ -54,16 +44,16 @@ namespace Features.Buffs.UnityIntegration
 
             _instance = this;
 
-            // 🔥 принять отложенные регистрации
+            // 🔥 принять отложенные регистрации (ТОЛЬКО серверные)
             foreach (var system in pendingSystems)
             {
-                if (system != null)
+                if (system != null && system.IsServerStarted)
                     buffSystems.Add(system);
             }
 
             foreach (var emitter in pendingEmitters)
             {
-                if (emitter != null)
+                if (emitter != null && emitter.IsServerStarted)
                     emitters.Add(emitter);
             }
 
@@ -80,24 +70,27 @@ namespace Features.Buffs.UnityIntegration
 
         public override void OnStopServer()
         {
-            base.OnStopServer();
-
             TimeManager.OnTick -= OnServerTick;
 
             buffSystems.Clear();
             emitters.Clear();
 
+            pendingSystems.Clear();
+            pendingEmitters.Clear();
+
             if (_instance == this)
                 _instance = null;
+
+            base.OnStopServer();
         }
 
         // =====================================================
-        // REGISTRATION API (SAFE)
+        // REGISTRATION API (SERVER ONLY)
         // =====================================================
 
         public static void Register(BuffSystem system)
         {
-            if (system == null)
+            if (system == null || !system.IsServerStarted)
                 return;
 
             if (Instance == null)
@@ -122,7 +115,7 @@ namespace Features.Buffs.UnityIntegration
 
         public static void RegisterEmitter(AreaBuffEmitter emitter)
         {
-            if (emitter == null)
+            if (emitter == null || !emitter.IsServerStarted)
                 return;
 
             if (Instance == null)
@@ -156,15 +149,14 @@ namespace Features.Buffs.UnityIntegration
 
             float dt = (float)TimeManager.TickDelta;
 
-            // 1️⃣ Тик BuffSystem
-            foreach (var system in buffSystems)
+            // Snapshot — безопасно при unregister во время тика
+            foreach (var system in buffSystems.ToArray())
             {
                 if (system != null && system.ServiceReady)
                     system.Tick(dt);
             }
 
-            // 2️⃣ Тик AreaBuffEmitter
-            foreach (var emitter in emitters)
+            foreach (var emitter in emitters.ToArray())
             {
                 if (emitter != null)
                     emitter.Tick();

@@ -19,18 +19,14 @@ namespace Features.Buffs.UI
         {
             this.inst = inst;
 
-            if (inst == null || inst.Config == null)
-            {
-                Debug.LogError("[BuffIconUI] Invalid buff instance", this);
+            if (inst?.Config == null)
                 return;
-            }
 
             infinite = inst.LifetimeMode == BuffLifetimeMode.WhileSourceAlive;
 
             if (icon != null)
                 icon.sprite = inst.Config.icon;
         }
-
 
         private void Update()
         {

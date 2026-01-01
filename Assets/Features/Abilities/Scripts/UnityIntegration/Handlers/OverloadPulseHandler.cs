@@ -1,34 +1,24 @@
 using UnityEngine;
-using Features.Abilities.Domain;
 using Features.Buffs.Application;
 using Features.Buffs.Domain;
 using Features.Combat.Domain;
-using Features.Buffs.UnityIntegration;
-using FishNet.Object;
+using Features.Abilities.Domain;
 
 namespace Features.Abilities.UnityIntegration
 {
-    public sealed class OverloadPulseHandler : IAbilityHandler
+    public sealed class OverloadPulseHandler
+        : AbilityHandler<OverloadPulseAbilitySO>
     {
-        public System.Type AbilityType => typeof(OverloadPulseAbilitySO);
-
-        public void Execute(AbilitySO abilityBase, AbilityContext ctx)
+        protected override void ExecuteInternal(
+            OverloadPulseAbilitySO ability,
+            AbilityContext ctx,
+            GameObject owner)
         {
-            var ability = (OverloadPulseAbilitySO)abilityBase;
+            EnsureBuffInfrastructure(owner);
 
-            if (!TryResolveOwner(ctx.Owner, out var ownerGO))
-                return;
-
-            var netObj = ownerGO.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsServer)
-                return;
-
-            EnsureBuffInfrastructure(ownerGO);
+            Vector3 origin = owner.transform.position;
 
             // ================= FX =================
-
-            Vector3 origin = ownerGO.transform.position;
-
             if (ability.pulseFxPrefab != null)
             {
                 var fx = Object.Instantiate(
@@ -37,15 +27,14 @@ namespace Features.Abilities.UnityIntegration
                     Quaternion.identity
                 );
 
-                if (fx.TryGetComponent<OverloadPulseBehaviour>(out var pulse))
-                    pulse.Init(ownerGO.transform, ability.radius, ability.fxDuration);
+                if (fx.TryGetComponent(out OverloadPulseBehaviour pulse))
+                    pulse.Init(owner.transform, ability.radius, ability.fxDuration);
 
                 Object.Destroy(fx, ability.fxDuration + 1f);
             }
 
             // ================= PLAYER BUFFS =================
-
-            var buffSys = ownerGO.GetComponent<BuffSystem>();
+            var buffSys = owner.GetComponent<BuffSystem>();
             if (buffSys != null)
             {
                 Apply(buffSys, ability.damageBuff, ability);
@@ -54,27 +43,16 @@ namespace Features.Abilities.UnityIntegration
             }
 
             // ================= DEVICES =================
+            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
+                owner, ability.damageBuff, ability);
 
             PlayerDeviceBuffService.I.BuffAllPlayerDevices(
-                ownerGO,
-                ability.damageBuff,
-                source: ability
-            );
+                owner, ability.fireRateBuff, ability);
 
             PlayerDeviceBuffService.I.BuffAllPlayerDevices(
-                ownerGO,
-                ability.fireRateBuff,
-                source: ability
-            );
-
-            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
-                ownerGO,
-                ability.turretMoveBuff,
-                source: ability
-            );
+                owner, ability.turretMoveBuff, ability);
 
             // ================= DAMAGE =================
-
             foreach (var h in Physics.OverlapSphere(origin, ability.radius))
             {
                 if (!h.CompareTag("Enemy"))
@@ -87,6 +65,7 @@ namespace Features.Abilities.UnityIntegration
                 {
                     Vector3 dir = h.transform.position - origin;
                     dir.y = 0;
+
                     h.attachedRigidbody.AddForce(
                         dir.normalized * ability.knockbackForce,
                         ForceMode.Impulse
@@ -117,17 +96,6 @@ namespace Features.Abilities.UnityIntegration
             if (PlayerDeviceBuffService.I == null)
                 new GameObject("PlayerDeviceBuffService")
                     .AddComponent<PlayerDeviceBuffService>();
-        }
-
-        private static bool TryResolveOwner(object owner, out GameObject go)
-        {
-            go = owner switch
-            {
-                GameObject g => g,
-                Component c => c.gameObject,
-                _ => null
-            };
-            return go != null;
         }
     }
 }

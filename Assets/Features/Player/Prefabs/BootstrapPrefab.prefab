@@ -1382,7 +1382,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8868529999353731622}
   - component: {fileID: 5976742230780520248}
-  - component: {fileID: 5020117649265883183}
   m_Layer: 0
   m_Name: AbilityExecutor
   m_TagString: Untagged
@@ -1417,18 +1416,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e1dfe4cdfab12947a9a10016d626db2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Abilities.UnityIntegration.AbilityExecutor
---- !u!114 &5020117649265883183
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2571091580735681807}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4bec05d125c094499729819a60cb7d5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BuffExecutor
 --- !u!1 &2660816563833235158
 GameObject:
   m_ObjectHideFlags: 0

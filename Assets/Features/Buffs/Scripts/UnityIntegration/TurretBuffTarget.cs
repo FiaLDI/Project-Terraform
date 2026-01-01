@@ -12,30 +12,24 @@ public sealed class TurretBuffTarget : NetworkBehaviour, IBuffTarget
     public GameObject GameObject => gameObject;
 
     public BuffSystem BuffSystem { get; private set; }
-    public IStatsFacade Stats { get; private set; }
 
-    private TurretStats _stats;
+    private TurretStats _turretStats;
+
+    // =====================================================
+    // LIFECYCLE
+    // =====================================================
 
     private void Awake()
     {
-        _stats = GetComponent<TurretStats>();
-        if (_stats == null)
-        {
-            Debug.LogError("[TurretBuffTarget] No TurretStats found!", this);
-            return;
-        }
-
         BuffSystem = GetComponent<BuffSystem>();
         if (BuffSystem == null)
-        {
             Debug.LogError("[TurretBuffTarget] BuffSystem missing!", this);
-            return;
-        }
 
-        Stats = _stats.Facade;
+        _turretStats = GetComponent<TurretStats>();
+        if (_turretStats == null)
+            Debug.LogError("[TurretBuffTarget] TurretStats missing!", this);
     }
 
-    // 🔥 КЛЮЧЕВОЕ МЕСТО
     public override void OnStartServer()
     {
         base.OnStartServer();
@@ -46,5 +40,21 @@ public sealed class TurretBuffTarget : NetworkBehaviour, IBuffTarget
     {
         ServerBuffTargetRegistry.Unregister(this);
         base.OnStopServer();
+    }
+
+    // =====================================================
+    // IBuffTarget
+    // =====================================================
+
+    /// <summary>
+    /// ⚠️ КРИТИЧЕСКИ ВАЖНО
+    /// Возвращает ТОЛЬКО серверные статы турели
+    /// </summary>
+    public IStatsFacade GetServerStats()
+    {
+        if (!IsServerStarted)
+            return null;
+
+        return _turretStats?.Facade;
     }
 }

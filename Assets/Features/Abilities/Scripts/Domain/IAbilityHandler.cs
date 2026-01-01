@@ -4,10 +4,15 @@ namespace Features.Abilities.Domain
 {
     public interface IAbilityHandler
     {
-        /// <summary>Тип AbilitySO, который обрабатывает этот хендлер.</summary>
+        /// <summary>
+        /// Тип AbilitySO, который обрабатывает хендлер.
+        /// </summary>
         Type AbilityType { get; }
 
-        /// <summary>Выполнить способность.</summary>
-        void Execute(AbilitySO ability, AbilityContext ctx);
+        /// <summary>
+        /// Серверное выполнение способности.
+        /// Гарантированно вызывается ТОЛЬКО на сервере.
+        /// </summary>
+        void ExecuteServer(AbilitySO ability, AbilityContext ctx);
     }
 }

@@ -138,9 +138,11 @@ namespace Features.Buffs.UI
             var ui = Instantiate(iconPrefab, container);
             ui.Bind(inst);
 
-            var tt = ui.GetComponent<BuffTooltipTrigger>();
+            var tt = ui.GetComponentInChildren<BuffTooltipTrigger>();
             if (tt != null)
-                tt.Bind(inst);
+                tt.Bind(inst.Config.buffId, buffSystem);
+            else
+                Debug.LogError("[BuffHUD] BuffTooltipTrigger not found");
 
             icons[inst.Config.buffId] = ui;
         }
