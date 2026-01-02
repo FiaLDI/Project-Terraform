@@ -11,6 +11,13 @@ namespace Features.Enemy.Data
         public string displayName;
         public Sprite icon;
 
+        [Header("AI")]
+        public float patrolRadius = 10f;
+        public float aggroRadius = 12f;
+        public float attackRange = 2f;
+        public float attackDamage = 10f;
+        public float attackCooldown = 1.2f;
+
         [Header("Prefab Root (куда добавят компоненты)")]
         public GameObject prefab;
 
@@ -21,8 +28,8 @@ namespace Features.Enemy.Data
         public HitboxProfile[] hitboxes;
 
 
-        [Header("Stats")]
-        public float baseMaxHealth = 100f;
+        [Header("Stats Preset")]
+        public EnemyStatsPresetSO statsPreset;
 
         [Header("LOD Distances")]
         public float lod0Distance = 15f;

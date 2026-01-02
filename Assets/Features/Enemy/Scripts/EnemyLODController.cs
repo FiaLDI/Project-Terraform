@@ -145,12 +145,12 @@ public class EnemyLODController : MonoBehaviour
             var bar = canvasObj.GetComponent<EnemyHealthBarUI>();
             if (bar != null)
             {
-                var health = GetComponent<EnemyHealth>();
-                bar.Target = health;
+                //var health = GetComponent<EnemyHealth>();
+                //bar.Target = health;
 
-                Transform anchor = transform.Find("Anchor");
-                if (anchor != null)
-                    bar.HeadAnchor = anchor;
+                //Transform anchor = transform.Find("Anchor");
+                //if (anchor != null)
+                //    bar.HeadAnchor = anchor;
             }
 
             return;

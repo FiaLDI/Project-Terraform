@@ -52,7 +52,7 @@ namespace Features.Buffs.Application
 
             if (phase == null)
             {
-                Debug.LogError("[BuffSystem] ServerGamePhase missing", this);
+                Debug.LogWarning("[BuffSystem] ServerGamePhase missing", this);
                 return;
             }
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Features.Quests.Domain;
 using Features.Enemy;
+using Features.Enemy.UnityIntegration;
 
 namespace Features.Quests.UnityIntegration.Adapters
 {
@@ -10,20 +11,20 @@ namespace Features.Quests.UnityIntegration.Adapters
 
         private void OnEnable()
         {
-            EnemyHealth.GlobalEnemyKilled += HandleEnemyKilled;
+            //EnemyHealth.GlobalEnemyKilled += HandleEnemyKilled;
         }
 
         private void OnDisable()
         {
-            EnemyHealth.GlobalEnemyKilled -= HandleEnemyKilled;
+            //EnemyHealth.GlobalEnemyKilled -= HandleEnemyKilled;
         }
 
         private void HandleEnemyKilled(EnemyHealth enemy)
         {
             // Отправляем именно enemy.EnemyId
-            questManager?.Service.HandleEvent(
-                new EnemyKilledEvent(enemy.EnemyId)
-            );
+            //questManager?.Service.HandleEvent(
+            //    new EnemyKilledEvent(enemy.EnemyId)
+            //);
         }
     }
 }

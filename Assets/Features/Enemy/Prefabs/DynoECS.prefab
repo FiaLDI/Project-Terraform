@@ -118,9 +118,14 @@ GameObject:
   - component: {fileID: 2271843924293331533}
   - component: {fileID: 5974535545161917795}
   - component: {fileID: 2721067133395966611}
-  - component: {fileID: 322081376013846431}
-  - component: {fileID: 3962502266196523129}
   - component: {fileID: 5928809208972985904}
+  - component: {fileID: 7363443033071884}
+  - component: {fileID: 8354099090800759067}
+  - component: {fileID: 8531581945467715478}
+  - component: {fileID: 3209661115049244770}
+  - component: {fileID: 5031449921048320471}
+  - component: {fileID: 5953923645941207714}
+  - component: {fileID: 1301065148069508600}
   m_Layer: 7
   m_Name: DynoECS
   m_TagString: Enemy
@@ -181,35 +186,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d434e24d7e69594f8a4024b6d5d1b9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
---- !u!114 &322081376013846431
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739330300266458567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9acd1d62394b4044e8e5f034d87ea74b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAuthoring
-  MoveSpeed: 5
---- !u!114 &3962502266196523129
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739330300266458567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68776eb79ef90a84aad8ebd9488b2e7c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.NetworkEnemyHealth
-  _componentIndexCache: 0
-  _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 5928809208972985904}
 --- !u!114 &5928809208972985904
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,7 +205,11 @@ MonoBehaviour:
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
-  - {fileID: 3962502266196523129}
+  - {fileID: 7363443033071884}
+  - {fileID: 8354099090800759067}
+  - {fileID: 8531581945467715478}
+  - {fileID: 5031449921048320471}
+  - {fileID: 5953923645941207714}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -238,9 +218,9 @@ MonoBehaviour:
   _isSpawnable: 1
   _isGlobal: 0
   _initializeOrder: 0
-  _preventDespawnOnDisconnect: 0
+  _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584345880017751040
+  _initializedTimestamp: -8584342321113914606
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -255,7 +235,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 0
+  <PrefabId>k__BackingField: 14
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 15237321690452928042
   SceneId: 0
@@ -264,6 +244,110 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
+--- !u!114 &7363443033071884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea6bfed9602ea5e42948ddbda8aa3f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyStats
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
+  config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
+--- !u!114 &8354099090800759067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49eea77457c855b429df7b73a75fd318, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyStatsNetSync
+  _componentIndexCache: 1
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
+--- !u!114 &8531581945467715478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c557a3b818fa01649bec86d8126ceee2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyStatsUpdateSystem
+  _componentIndexCache: 2
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
+--- !u!114 &3209661115049244770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096cacec036283a439f24afd2613a083, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyActor
+  config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
+--- !u!114 &5031449921048320471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d52ddb8e6359e574d867608296e870b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyBuffTarget
+  _componentIndexCache: 3
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
+--- !u!114 &5953923645941207714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a598ae0d0a239844191a98d1694e1afb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Application.BuffSystem
+  _componentIndexCache: 4
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
+  debugMode: 0
+--- !u!114 &1301065148069508600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb77eaeb4ffebe34da03788b2f945dbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyEcsRuntimeBinder
+  moveSpeed: 3
+  aggroRadius: 8
 --- !u!1 &5882816248013448756
 GameObject:
   m_ObjectHideFlags: 0

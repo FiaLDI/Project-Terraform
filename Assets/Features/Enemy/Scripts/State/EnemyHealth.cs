@@ -1,83 +1,28 @@
+using System.Collections.Generic;
 using UnityEngine;
-using System;
-using Features.Combat.Domain;
-using Features.Enemy.Data;
 
-namespace Features.Enemy
+namespace Features.Enemy.UnityIntegration
 {
     public sealed class EnemyHealth : MonoBehaviour
     {
-        [Header("Config")]
-        public EnemyConfigSO config;
+        private readonly List<EnemyHealthBarUI> views = new();
 
-        public string EnemyId => config.enemyId;
-
-        public float MaxHealth { get; private set; }
-        public float CurrentHealth { get; private set; }
-
-        public event Action<float, float> OnHealthChanged;
-        public static event Action<EnemyHealth> GlobalEnemyKilled;
-
-        private bool isDead;
-
-        private void Awake()
+        public void RegisterHealthView(EnemyHealthBarUI view)
         {
-            MaxHealth = config.baseMaxHealth;
-            CurrentHealth = MaxHealth;
-            isDead = false;
+            if (!views.Contains(view))
+                views.Add(view);
         }
 
-        // =====================================================
-        // SERVER-ONLY LOGIC
-        // =====================================================
-
-        /// <summary>
-        /// Единственный допустимый способ изменить HP.
-        /// Вызывается ТОЛЬКО сервером (через NetworkEnemyHealth).
-        /// </summary>
-        public void ApplyDamageServer(float amount)
+        public void UnregisterHealthView(EnemyHealthBarUI view)
         {
-            if (isDead)
-                return;
-
-            CurrentHealth -= amount;
-
-            if (CurrentHealth <= 0f)
-            {
-                CurrentHealth = 0f;
-                isDead = true;
-
-                OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
-                GlobalEnemyKilled?.Invoke(this);
-            }
-            else
-            {
-                OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
-            }
+            views.Remove(view);
         }
 
-        // =====================================================
-        // CLIENT VISUAL SYNC
-        // =====================================================
-
-        /// <summary>
-        /// Вызывается ТОЛЬКО с клиента при обновлении SyncVar.
-        /// Никакой логики смерти, только визуал.
-        /// </summary>
-        public void SetHealthFromNetwork(float health)
+        // CLIENT ONLY
+        public void SetHealthFromNetwork(float hp, float maxHp)
         {
-            float prev = CurrentHealth;
-            CurrentHealth = Mathf.Clamp(health, 0f, MaxHealth);
-
-            if (Mathf.Abs(prev - CurrentHealth) > 0.01f)
-            {
-                OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
-            }
-
-            if (CurrentHealth <= 0f)
-            {
-                isDead = true;
-            }
+            for (int i = 0; i < views.Count; i++)
+                views[i].SetHealth(hp, maxHp);
         }
     }
 }
