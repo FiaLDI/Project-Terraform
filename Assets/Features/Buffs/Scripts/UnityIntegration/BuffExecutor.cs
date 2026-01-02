@@ -3,29 +3,31 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Features.Buffs.Domain;
-using FishNet.Object;
 using Features.Stats.Domain;
 
 namespace Features.Buffs.Application
 {
     /// <summary>
-    /// Серверный исполнитель баффов.
+    /// ГЛОБАЛЬНЫЙ исполнитель баффов.
     /// ЕДИНСТВЕННЫЙ источник изменения статов.
+    ///
+    /// ❗ Не NetworkBehaviour
+    /// ❗ Не спавнится
+    /// ❗ Инициализируется ДО игроков
     /// </summary>
-    public sealed class BuffExecutor : NetworkBehaviour
+    public sealed class BuffExecutor : MonoBehaviour
     {
         private readonly Dictionary<BuffStat, Action<BuffInstance, IStatsFacade, bool>> handlers = new();
 
         public static BuffExecutor Instance { get; private set; }
+        public static bool IsReady => Instance != null;
 
         // =====================================================
         // LIFECYCLE
         // =====================================================
 
-        public override void OnStartServer()
+        private void Awake()
         {
-            base.OnStartServer();
-
             if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
@@ -33,18 +35,19 @@ namespace Features.Buffs.Application
             }
 
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+
             RegisterHandlers();
 
-            Debug.Log("[BuffExecutor] Server executor ready");
+            Debug.Log("[BuffExecutor] READY (global)");
         }
 
-        public override void OnStopServer()
+        private void OnDestroy()
         {
             if (Instance == this)
                 Instance = null;
 
             handlers.Clear();
-            base.OnStopServer();
         }
 
         // =====================================================
@@ -53,7 +56,7 @@ namespace Features.Buffs.Application
 
         public bool Apply(BuffInstance inst)
         {
-            if (!IsServerStarted || !IsValid(inst))
+            if (!IsValid(inst))
                 return false;
 
             var stats = inst.Target.GetServerStats();
@@ -67,14 +70,13 @@ namespace Features.Buffs.Application
             return true;
         }
 
-
         // =====================================================
         // EXPIRE
         // =====================================================
 
         public void Expire(BuffInstance inst)
         {
-            if (!IsServerStarted || !IsValid(inst))
+            if (!IsValid(inst))
                 return;
 
             var stats = inst.Target.GetServerStats();
@@ -91,7 +93,7 @@ namespace Features.Buffs.Application
 
         public void Tick(BuffInstance inst, float dt)
         {
-            if (!IsServerStarted || inst?.Target == null)
+            if (!IsValid(inst))
                 return;
 
             var stats = inst.Target.GetServerStats();
@@ -134,6 +136,7 @@ namespace Features.Buffs.Application
                 BuffStat.PlayerMoveSpeed,
                 (i, s, apply) => s.Movement.ApplyBuff(i.Config, apply)
             );
+
             Register(
                 BuffStat.PlayerMoveSpeedMult,
                 (i, s, apply) => s.Movement.ApplyBuff(i.Config, apply)
@@ -143,6 +146,7 @@ namespace Features.Buffs.Application
                 BuffStat.PlayerHp,
                 (i, s, apply) => s.Health.ApplyBuff(i.Config, apply)
             );
+
             Register(
                 BuffStat.PlayerHpRegen,
                 (i, s, apply) => s.Health.ApplyBuff(i.Config, apply)
@@ -152,6 +156,7 @@ namespace Features.Buffs.Application
                 BuffStat.PlayerEnergyRegen,
                 (i, s, apply) => s.Energy.ApplyBuff(i.Config, apply)
             );
+
             Register(
                 BuffStat.PlayerMaxEnergy,
                 (i, s, apply) => s.Energy.ApplyBuff(i.Config, apply)
@@ -168,7 +173,7 @@ namespace Features.Buffs.Application
                 BuffStat.TurretFireRate,
                 (i, s, apply) =>
                 {
-                    if (s.Combat is Features.Stats.Domain.ITurretCombatStats tc)
+                    if (s.Combat is ITurretCombatStats tc)
                         tc.ApplyFireRateBuff(i.Config, apply);
                 }
             );

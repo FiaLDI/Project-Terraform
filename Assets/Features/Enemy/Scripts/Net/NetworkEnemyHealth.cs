@@ -8,87 +8,74 @@ namespace Features.Enemy.UnityIntegration
     [RequireComponent(typeof(EnemyHealth))]
     public sealed class NetworkEnemyHealth : NetworkBehaviour, IDamageable
     {
-        private EnemyHealth _logic;
+        private EnemyHealth logic;
 
-        // SyncVar инициализируется здесь и никогда не null
-        public readonly SyncVar<float> CurrentHealth = new SyncVar<float>();
+        public readonly SyncVar<float> CurrentHealth = new();
 
         private void Awake()
         {
-            _logic = GetComponent<EnemyHealth>();
-            _logic.IsNetworkControlled = true;
-            _logic.OnDeathRequest += HandleDeathRequest;
-
-            // Подписываемся на события изменения
-            CurrentHealth.OnChange += OnCurrentHealthChanged;
+            logic = GetComponent<EnemyHealth>();
+            CurrentHealth.OnChange += OnHealthChanged;
         }
 
         private void OnDestroy()
         {
-            // УБРАНА проверка на null, так как CurrentHealth гарантированно существует
-            CurrentHealth.OnChange -= OnCurrentHealthChanged;
-
-            if (_logic != null)
-            {
-                _logic.OnDeathRequest -= HandleDeathRequest;
-            }
+            CurrentHealth.OnChange -= OnHealthChanged;
         }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
-            // Устанавливаем начальное значение
-            CurrentHealth.Value = _logic.MaxHealth;
+            CurrentHealth.Value = logic.MaxHealth;
         }
 
         public override void OnStartClient()
         {
             base.OnStartClient();
-            // Синхронизируем визуальное состояние при входе
-            _logic.SetHealthFromNetwork(CurrentHealth.Value);
+            logic.SetHealthFromNetwork(CurrentHealth.Value);
         }
 
-        // --- IDamageable ---
+        // ================= DAMAGE =================
 
         public void TakeDamage(float amount, DamageType type)
         {
-            if (!base.IsServerInitialized)
+            if (IsServer)
             {
-                ServerTakeDamage(amount, type);
-                return;
+                ApplyDamage(amount, type);
             }
-
-            ApplyDamageOnServer(amount, type);
+            else
+            {
+                TakeDamage_Server(amount, type);
+            }
         }
 
         [ServerRpc(RequireOwnership = false)]
-        private void ServerTakeDamage(float amount, DamageType type)
+        private void TakeDamage_Server(float amount, DamageType type)
         {
-            ApplyDamageOnServer(amount, type);
+            ApplyDamage(amount, type);
         }
 
-        private void ApplyDamageOnServer(float amount, DamageType type)
+        [Server]
+        private void ApplyDamage(float amount, DamageType type)
         {
-            _logic.TakeDamage(amount, type);
-            CurrentHealth.Value = _logic.CurrentHealth;
+            logic.ApplyDamageServer(amount);
+            CurrentHealth.Value = logic.CurrentHealth;
+
+            if (logic.CurrentHealth <= 0f)
+                Despawn(gameObject);
         }
 
-        public void Heal(float amount) { /* ... */ }
+        // ================= SYNC =================
 
-        // --- Callbacks ---
-
-        private void OnCurrentHealthChanged(float prev, float next, bool asServer)
+        private void OnHealthChanged(float prev, float next, bool asServer)
         {
             if (asServer) return;
-            _logic.SetHealthFromNetwork(next);
+            logic.SetHealthFromNetwork(next);
         }
 
-        private void HandleDeathRequest()
+        public void Heal(float healAmount)
         {
-            if (base.IsServerInitialized)
-            {
-                base.Despawn(gameObject);
-            }
+            throw new System.NotImplementedException();
         }
     }
 }

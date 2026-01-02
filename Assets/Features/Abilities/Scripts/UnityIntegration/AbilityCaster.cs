@@ -10,8 +10,14 @@ using UnityEngine;
 namespace Features.Abilities.Application
 {
     [DefaultExecutionOrder(-150)]
-    public class AbilityCaster : NetworkBehaviour
+    [RequireComponent(typeof(ServerGamePhase))]
+    [RequireComponent(typeof(PlayerStats))]
+    public sealed class AbilityCaster : NetworkBehaviour
     {
+        // =====================================================
+        // CONFIG
+        // =====================================================
+
         [Header("Ability slots")]
         [SerializeField] private AbilitySO[] abilities = new AbilitySO[5];
         public IReadOnlyList<AbilitySO> Abilities => abilities;
@@ -26,17 +32,24 @@ namespace Features.Abilities.Application
         [Header("Network Sync")]
         [SerializeField] private float cooldownSyncInterval = 0.5f;
 
+        // =====================================================
+        // STATE
+        // =====================================================
+
         private float[] cooldownValues = new float[5];
         private float[] lastSyncedCooldowns = new float[5];
         private float syncTimer;
 
         private IEnergyStats energy;
         private AbilityService service;
+        private ServerGamePhase phase;
 
         public bool IsReady { get; private set; }
         public IEnergyStats Energy => energy;
 
-        /* ================= EVENTS ================= */
+        // =====================================================
+        // EVENTS
+        // =====================================================
 
         public event Action OnAbilitiesChanged;
         public event Action<AbilitySO> OnAbilityCast;
@@ -46,10 +59,20 @@ namespace Features.Abilities.Application
         public event Action<AbilitySO> OnChannelCompleted;
         public event Action<AbilitySO> OnChannelInterrupted;
 
-        /* ================= LIFECYCLE ================= */
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
 
         private void Awake()
         {
+            phase = GetComponent<ServerGamePhase>();
+            if (phase == null)
+            {
+                Debug.LogError("[AbilityCaster] ServerGamePhase missing", this);
+                enabled = false;
+                return;
+            }
+
             for (int i = 0; i < cooldownValues.Length; i++)
             {
                 cooldownValues[i] = 0f;
@@ -57,29 +80,42 @@ namespace Features.Abilities.Application
             }
         }
 
-        private void OnEnable()
+        public override void OnStartServer()
         {
-            PlayerStats.OnStatsReady += HandleStatsReady;
+            base.OnStartServer();
+            phase.OnPhaseReached += OnPhaseReached;
         }
 
-        private void OnDisable()
+        public override void OnStopServer()
         {
-            PlayerStats.OnStatsReady -= HandleStatsReady;
+            if (phase != null)
+                phase.OnPhaseReached -= OnPhaseReached;
+
+            base.OnStopServer();
         }
 
-        private void HandleStatsReady(PlayerStats ps)
-        {
-            if (IsReady)
-                return;
+        // =====================================================
+        // PHASE
+        // =====================================================
 
-            energy = ps.Facade?.Energy;
+        private void OnPhaseReached(GamePhase p)
+        {
+            if (p == GamePhase.PassivesApplied && !IsReady)
+                InitServer();
+        }
+
+        private void InitServer()
+        {
+            var stats = GetComponent<PlayerStats>();
+            energy = stats?.Facade?.Energy;
+
             if (energy == null)
             {
-                Debug.LogError("[AbilityCaster] IEnergyStats not found", this);
+                Debug.LogError("[AbilityCaster] EnergyStats missing", this);
                 return;
             }
 
-            executor ??= AbilityExecutor.I;
+            executor ??= AbilityExecutor.Instance;
 
             service = new AbilityService(
                 owner: gameObject,
@@ -88,13 +124,7 @@ namespace Features.Abilities.Application
                 executor: executor
             );
 
-            // ===== прокидываем события =====
-            service.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
-            service.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
-            service.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
-            service.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
-            service.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
-            service.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
+            BindServiceEvents(service);
 
             if (abilityLibrary == null)
             {
@@ -104,14 +134,30 @@ namespace Features.Abilities.Application
             }
 
             IsReady = true;
+
+            Debug.Log("[AbilityCaster] READY → AbilitiesReady", this);
+            phase.Reach(GamePhase.AbilitiesReady);
         }
+
+        private void BindServiceEvents(AbilityService s)
+        {
+            s.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
+            s.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
+            s.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
+            s.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
+            s.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
+            s.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
+        }
+
+        // =====================================================
+        // UPDATE
+        // =====================================================
 
         private void LateUpdate()
         {
             if (!IsReady || service == null)
                 return;
 
-            // 🔐 СТРОГО: логика способностей живёт только на сервере
             if (!IsServerInitialized)
                 return;
 
@@ -125,7 +171,9 @@ namespace Features.Abilities.Application
             }
         }
 
-        /* ================= SYNC ================= */
+        // =====================================================
+        // SYNC
+        // =====================================================
 
         private void SyncCooldownsIfChanged()
         {
@@ -145,7 +193,9 @@ namespace Features.Abilities.Application
             }
         }
 
-        /* ================= PUBLIC API ================= */
+        // =====================================================
+        // PUBLIC API
+        // =====================================================
 
         public void SetAbilities(AbilitySO[] newAbilities)
         {
@@ -154,18 +204,25 @@ namespace Features.Abilities.Application
                     ? newAbilities[i]
                     : null;
 
-            OnAbilitiesChanged?.Invoke();
+            if (IsReady)
+                OnAbilitiesChanged?.Invoke();
         }
 
-        /// <summary>
-        /// ❗ Вызывается ТОЛЬКО сервером (через NetAdapter)
-        /// </summary>
-        public bool TryCastWithContext(int index, out AbilitySO ability, out AbilityContext ctx)
+        public bool TryCastWithContext(
+            int index,
+            out AbilitySO ability,
+            out AbilityContext ctx)
         {
             ability = null;
             ctx = default;
 
-            if (!IsReady || index < 0 || index >= abilities.Length)
+            if (!PhaseAssert.Require(phase, GamePhase.AbilitiesReady, this))
+                return false;
+
+            if (!IsReady || !phase.IsAtLeast(GamePhase.AbilitiesReady))
+                return false;
+
+            if (index < 0 || index >= abilities.Length)
                 return false;
 
             ability = abilities[index];
@@ -202,7 +259,9 @@ namespace Features.Abilities.Application
         public bool IsChanneling => service?.IsChanneling ?? false;
         public AbilitySO CurrentChannelAbility => service?.CurrentChannelAbility;
 
-        /* ================= RPC ================= */
+        // =====================================================
+        // RPC
+        // =====================================================
 
         [ObserversRpc]
         private void RpcSyncCooldown(int slotIndex, float cooldownValue)

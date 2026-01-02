@@ -366,8 +366,10 @@ GameObject:
   - component: {fileID: 7407599192339855080}
   - component: {fileID: 4243781917691856348}
   - component: {fileID: 5527670935517867940}
-  - component: {fileID: 3902377743731741677}
   - component: {fileID: 7381832722026141383}
+  - component: {fileID: 189359690574479345}
+  - component: {fileID: 2072067561037810914}
+  - component: {fileID: 211343894895838769}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -459,7 +461,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
-  _debugMode: 0
+  debugMode: 0
 --- !u!114 &7420869319970409758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -472,6 +474,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e43118fc938eeff4292a162e78de4d22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.UnityIntegration.PlayerBuffTarget
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
 --- !u!114 &2322558391178485831
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -525,6 +530,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3774e3cdf29f1134db8c792bf047f2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.PlayerStats
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
 --- !u!114 &5136383045370552025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1026,6 +1034,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
+  classLibrary: {fileID: 0}
 --- !u!114 &7407599192339855080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1072,21 +1081,6 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
---- !u!114 &3902377743731741677
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 776a824eb2635da48a2342e62ea3d8e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Net.BuffSystemNetAdapter
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 6311823513652316802}
-  _networkObjectCache: {fileID: 0}
 --- !u!114 &7381832722026141383
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1105,3 +1099,42 @@ MonoBehaviour:
   syncInterval: 0.1
   threshold: 0.05
   lerpSpeed: 12
+--- !u!114 &189359690574479345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c70612df4d1e2644c90d44d72cf778a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerGamePhase
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &2072067561037810914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16c3a86919e829242953da235f995773, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Abilities.Client.ClientAbilityView
+--- !u!114 &211343894895838769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49b41d04a8a9bba4b9d07d9f32abe863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Client.ClientBuffView

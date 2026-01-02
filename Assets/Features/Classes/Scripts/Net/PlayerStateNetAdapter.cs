@@ -1,150 +1,178 @@
 using System.Collections;
+using UnityEngine;
 using Features.Abilities.Application;
+using Features.Abilities.Client;
 using Features.Abilities.Domain;
-using Features.Buffs.Application;
 using Features.Classes.Data;
 using Features.Stats.UnityIntegration;
 using FishNet.Object;
-using UnityEngine;
 
 namespace Features.Class.Net
 {
-    /// <summary>
-    /// Серверный адаптер состояния игрока.
-    ///
-    /// ГАРАНТИИ:
-    /// - Класс применяется ТОЛЬКО на сервере
-    /// - ТОЛЬКО после готовности PlayerStats
-    /// - В ОДНОМ месте
-    /// - Клиент НЕ трогает статы
-    /// </summary>
     [RequireComponent(typeof(PlayerClassController))]
     [RequireComponent(typeof(PlayerStats))]
+    [RequireComponent(typeof(ServerGamePhase))]
+    [RequireComponent(typeof(AbilityCaster))]
     public sealed class PlayerStateNetAdapter : NetworkBehaviour
     {
         private PlayerClassController classController;
         private PlayerStats playerStats;
         private AbilityCaster abilityCaster;
+        private ServerGamePhase phase;
+
         [SerializeField]
         private PlayerClassLibrarySO classLibrary;
 
-        private bool _classApplied;
+        private bool classApplied;
+        private bool abilitiesSent;
+        private string pendingClassId;
+
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
 
         private void Awake()
         {
-            classLibrary = UnityEngine.Resources.Load<PlayerClassLibrarySO>("Databases/PlayerClassLibrary");
+            classLibrary ??=
+                UnityEngine.Resources.Load<PlayerClassLibrarySO>(
+                    "Databases/PlayerClassLibrary"
+                );
         }
 
-        public override void OnStartNetwork()
+        public override void OnStartServer()
         {
-            base.OnStartNetwork();
+            base.OnStartServer();
             Cache();
+
+            phase.OnPhaseReached += OnPhaseReached;
+        }
+
+        public override void OnStopServer()
+        {
+            if (phase != null)
+                phase.OnPhaseReached -= OnPhaseReached;
+
+            base.OnStopServer();
         }
 
         private void Cache()
         {
-            if (classController == null)
-                classController = GetComponent<PlayerClassController>();
-
-            if (playerStats == null)
-                playerStats = GetComponent<PlayerStats>();
-
-            if (abilityCaster == null)
-                abilityCaster = GetComponent<AbilityCaster>();
+            classController ??= GetComponent<PlayerClassController>();
+            playerStats ??= GetComponent<PlayerStats>();
+            abilityCaster ??= GetComponent<AbilityCaster>();
+            phase ??= GetComponent<ServerGamePhase>();
         }
 
         // =====================================================
-        // SERVER ENTRY POINT (ЕДИНСТВЕННЫЙ)
+        // SERVER ENTRY POINT
         // =====================================================
 
         /// <summary>
-        /// ЕДИНСТВЕННЫЙ допустимый способ применить класс.
+        /// Единственный допустимый способ применить класс.
+        /// Можно вызывать сразу после спавна.
         /// </summary>
         [Server]
-        public void ApplyClassWhenReady(string classId)
+        public void ApplyClass(string classId)
         {
-            if (_classApplied)
+            if (classApplied)
                 return;
 
-            StartCoroutine(WaitAndApply(classId));
-        }
+            pendingClassId = classId;
 
-        private IEnumerator WaitAndApply(string classId)
-        {
-            Cache();
-
-            while (playerStats == null || !playerStats.IsReady || playerStats.Facade == null)
-                yield return null;
-
-            ApplyClassInternal(classId);
+            if (phase.IsAtLeast(GamePhase.StatsReady))
+                ApplyClassInternal();
         }
 
         // =====================================================
-        // SERVER PIPELINE
+        // PHASE
+        // =====================================================
+
+        private void OnPhaseReached(GamePhase p)
+        {
+            if (p == GamePhase.StatsReady && !classApplied)
+                ApplyClassInternal();
+        }
+
+        // =====================================================
+        // PIPELINE
         // =====================================================
 
         [Server]
-        private void ApplyClassInternal(string classId)
+        private void ApplyClassInternal()
         {
-            if (_classApplied)
+            if (classApplied)
                 return;
-            if (playerStats.Facade == null)
+
+            if (string.IsNullOrEmpty(pendingClassId))
             {
                 Debug.LogError(
-                    "[PlayerStateNetAdapter] Facade is null despite IsReady == true",
+                    "[PlayerStateNetAdapter] No classId provided",
                     this
                 );
                 return;
             }
 
-            _classApplied = true;
-
-            var cfg = classLibrary.FindById(classId);
+            var cfg = classLibrary.FindById(pendingClassId);
             if (cfg == null)
             {
-                Debug.LogError($"[PlayerStateNetAdapter] Class '{classId}' not found", this);
+                Debug.LogError(
+                    $"[PlayerStateNetAdapter] Class '{pendingClassId}' not found",
+                    this
+                );
                 return;
             }
 
-            // 1 default
+            classApplied = true;
+
+            // 1️⃣ базовые статы
             playerStats.ResetAndApplyDefaults();
 
-            // 2 preset class
+            // 2️⃣ пресет класса
             playerStats.ApplyPreset(cfg.preset);
 
-            // 3 passive / buff
-            classController.ApplyClass(classId);
+            // 3️⃣ пассивы / бафы / server-side abilities
+            classController.ApplyClass(pendingClassId);
 
-            // 4 ability → client
-            StartCoroutine(SyncAbilitiesAfterClassApplied());
+            // 4️⃣ abilities → clients (РОВНО 1 РАЗ)
+            StartCoroutine(SendAbilitiesOnce(cfg));
 
-            Debug.Log($"[PlayerStateNetAdapter] ✅ Class '{classId}' applied on SERVER", this);
+            Debug.Log(
+                $"[PlayerStateNetAdapter] ✅ Class '{pendingClassId}' applied",
+                this
+            );
         }
 
         // =====================================================
-        // ABILITIES SYNC
+        // ABILITIES SYNC (ONE-SHOT)
         // =====================================================
 
         [Server]
-        private IEnumerator SyncAbilitiesAfterClassApplied()
+        private IEnumerator SendAbilitiesOnce(PlayerClassConfigSO cfg)
         {
-            yield return null; // дать всем системам зарегистрироваться
+            if (abilitiesSent)
+                yield break;
 
-            var appliedClass = classController.GetCurrentClass();
-            string[] abilityIds = System.Array.Empty<string>();
+            abilitiesSent = true;
 
-            if (appliedClass != null && appliedClass.abilities != null)
+            // гарантируем, что клиент уже инициализирован
+            yield return null;
+            yield return null;
+
+            if (cfg.abilities == null || cfg.abilities.Count == 0)
             {
-                abilityIds = new string[appliedClass.abilities.Count];
-                for (int i = 0; i < appliedClass.abilities.Count; i++)
-                    abilityIds[i] = appliedClass.abilities[i]?.id ?? string.Empty;
+                RpcApplyAbilities(System.Array.Empty<string>());
+                yield break;
             }
 
-            RpcApplyAbilities(abilityIds);
+            var ids = new string[cfg.abilities.Count];
+            for (int i = 0; i < cfg.abilities.Count; i++)
+                ids[i] = cfg.abilities[i]?.id ?? string.Empty;
+
+            RpcApplyAbilities(ids);
         }
 
         // =====================================================
-        // CLIENT SIDE (VIEW ONLY)
+        // CLIENT VIEW ONLY
         // =====================================================
 
         [ObserversRpc]
@@ -152,32 +180,42 @@ namespace Features.Class.Net
         {
             Cache();
 
-            // хост уже применил
-            if (IsServerInitialized && !IsClientOnlyInitialized)
-                return;
-
-            if (abilityCaster == null)
-                return;
-
-            if (abilityIds != null && abilityIds.Length > 0)
+            var lib = UnityEngine.Resources.Load<AbilityLibrarySO>(
+                "Databases/AbilityLibrary"
+            );
+            if (lib == null)
             {
-                var lib = UnityEngine.Resources.Load<AbilityLibrarySO>("Databases/AbilityLibrary");
-                if (lib != null)
-                {
-                    var loaded = new AbilitySO[abilityIds.Length];
-                    for (int i = 0; i < abilityIds.Length; i++)
-                        loaded[i] = lib.FindById(abilityIds[i]);
+                Debug.LogError(
+                    "[PlayerStateNetAdapter] AbilityLibrary not found",
+                    this
+                );
+                return;
+            }
 
-                    abilityCaster.SetAbilities(loaded);
-                }
+            var loaded = new AbilitySO[abilityIds.Length];
+            for (int i = 0; i < abilityIds.Length; i++)
+                loaded[i] = lib.FindById(abilityIds[i]);
+
+            // 🔹 CLIENT VIEW (UI DATA ONLY)
+            var view = GetComponent<ClientAbilityView>();
+            if (view != null)
+            {
+                view.SetAbilities(loaded);
             }
             else
             {
-                abilityCaster.SetAbilities(System.Array.Empty<AbilitySO>());
+                Debug.LogError(
+                    "[PlayerStateNetAdapter] ClientAbilityView missing",
+                    this
+                );
             }
 
-            if (!IsOwner)
-                abilityCaster.enabled = false;
+            // 🔹 CLIENT RUNTIME (cooldowns / channel visuals)
+            // ⚠️ НЕ ВЫКЛЮЧАЕМ AbilityCaster!
+            if (abilityCaster != null)
+            {
+                abilityCaster.SetAbilities(loaded);
+            }
         }
     }
 }

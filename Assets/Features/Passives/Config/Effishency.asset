@@ -16,4 +16,4 @@ MonoBehaviour:
   displayName: Effect
   icon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}
   effects:
-  - {fileID: 11400000, guid: be8db1989014e6848a50044f07527cd2, type: 2}
+  - {fileID: 11400000, guid: 1b1d759d2423a3c4a9c27245d1062b6b, type: 2}

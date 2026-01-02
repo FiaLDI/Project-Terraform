@@ -1,49 +1,67 @@
 using Features.Abilities.Application;
-using Features.Abilities.Domain;
 using FishNet.Object;
 using UnityEngine;
 
 namespace Features.Player.UnityIntegration
 {
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(AbilityCaster))]
     public sealed class AbilityCasterNetAdapter : NetworkBehaviour
     {
         private AbilityCaster caster;
 
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
+
         private void Awake()
         {
-            enabled = true;
             caster = GetComponent<AbilityCaster>();
         }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
-            enabled = true;
+
+            if (caster == null)
+                caster = GetComponent<AbilityCaster>();
         }
 
-        // ================= CLIENT =================
-        // Вызывается ТОЛЬКО локальным игроком
+        // =====================================================
+        // CLIENT → SERVER
+        // =====================================================
+
+        /// <summary>
+        /// Вызывается ТОЛЬКО локальным игроком.
+        /// Отправляет намерение каста на сервер.
+        /// </summary>
         public void Cast(int index)
         {
             if (!IsOwner)
                 return;
 
-            Debug.Log($"[NetAdapter] CLIENT -> SERVER Cast({index})");
+            // защита от гонок до инициализации
+            if (!IsClientInitialized)
+                return;
+
             Cast_Server(index);
         }
 
-        // ================= SERVER =================
+        // =====================================================
+        // SERVER (AUTHORITATIVE)
+        // =====================================================
+
         [ServerRpc]
         private void Cast_Server(int index)
         {
-            Debug.Log($"[NetAdapter] SERVER Received Cast({index})");
-
-            if (caster == null || !caster.IsReady)
+            if (caster == null)
                 return;
 
-            // 🎯 ВАЖНО:
-            // Execute произойдёт ТОЛЬКО внутри AbilityService (на сервере)
+            if (!caster.IsReady)
+                return;
+
+            // ❗ ВАЖНО:
+            // Execute происходит ТОЛЬКО на сервере внутри AbilityService
             caster.TryCastWithContext(index, out _, out _);
         }
     }

@@ -3,7 +3,6 @@ using Features.Classes.Data;
 using Features.Classes.Application;
 using Features.Passives.UnityIntegration;
 using Features.Abilities.Application;
-using Features.Stats.UnityIntegration;
 using Features.Passives.Net;
 using Features.Buffs.Application;
 
@@ -26,6 +25,8 @@ public sealed class PlayerClassController : MonoBehaviour
 
     private PassiveSystem passiveSystem;
     private AbilityCaster abilityCaster;
+    private BuffSystem buffSystem;
+    private ServerGamePhase phase;
 
     // =====================================================
     // DOMAIN
@@ -34,22 +35,6 @@ public sealed class PlayerClassController : MonoBehaviour
     private PlayerClassService classService;
     private PlayerClassConfigSO currentClass;
 
-    public PlayerClassConfigSO GetCurrentClass() => currentClass;
-
-    public string CurrentClassId =>
-        currentClass != null ? currentClass.id : defaultClassId;
-
-    public string CurrentVisualId =>
-        currentClass != null && currentClass.visualPreset != null
-            ? currentClass.visualPreset.id
-            : null;
-    private PlayerBuffTarget buffTarget;
-    private BuffSystem buffSystem;
-
-    /// <summary>
-    /// Вызывается, когда класс полностью применён
-    /// (пассивки, способности, регистрация бафов).
-    /// </summary>
     public event System.Action OnClassApplied;
 
     // =====================================================
@@ -60,15 +45,12 @@ public sealed class PlayerClassController : MonoBehaviour
     {
         passiveSystem = GetComponent<PassiveSystem>();
         abilityCaster = GetComponent<AbilityCaster>();
-        buffTarget = GetComponent<PlayerBuffTarget>();
         buffSystem = GetComponent<BuffSystem>();
+        phase = GetComponent<ServerGamePhase>();
 
         if (library == null)
         {
-            Debug.LogError(
-                "[PlayerClassController] PlayerClassLibrarySO not assigned!",
-                this
-            );
+            Debug.LogError("[PlayerClassController] Class library missing", this);
             enabled = false;
             return;
         }
@@ -77,71 +59,53 @@ public sealed class PlayerClassController : MonoBehaviour
             library.classes,
             defaultClassId
         );
-
-        Debug.Log("[PlayerClassController] Initialized", this);
     }
 
     // =====================================================
-    // PUBLIC API (SERVER ONLY)
+    // SERVER API
     // =====================================================
 
-    /// <summary>
-    /// Применить класс.
-    /// Вызывается ТОЛЬКО сервером из PlayerStateNetAdapter.
-    /// Предполагается, что PlayerStats уже инициализирован.
-    /// </summary>
     public void ApplyClass(string classId)
     {
-        var cfg = library.FindById(classId);
-        if (cfg == null)
-        {
-            Debug.LogWarning(
-                $"[PlayerClassController] Class '{classId}' not found, using default '{defaultClassId}'",
-                this
-            );
-            cfg = library.FindById(defaultClassId);
-        }
+        var cfg = library.FindById(classId)
+            ?? library.FindById(defaultClassId);
 
-        ApplyInternal(cfg);
-    }
-
-    // =====================================================
-    // INTERNAL APPLY
-    // =====================================================
-
-    private void ApplyInternal(PlayerClassConfigSO cfg)
-    {
         currentClass = cfg;
 
         classService.SelectClass(cfg);
-        abilityCaster?.SetAbilities(cfg.abilities.ToArray());
+        abilityCaster.SetAbilities(cfg.abilities.ToArray());
 
-        TryApplyPassives();
-    }
-
-    private void TryApplyPassives()
-    {
-        if (buffTarget.IsReady)
+        if (phase.IsAtLeast(GamePhase.BuffsReady))
         {
             ApplyPassives();
         }
         else
         {
-            buffTarget.OnReady -= TryApplyPassives;
-            buffTarget.OnReady += TryApplyPassives;
+            phase.OnPhaseReached += OnPhaseReached;
         }
+    }
+
+    // =====================================================
+    // PHASE
+    // =====================================================
+
+    private void OnPhaseReached(GamePhase p)
+    {
+        if (p == GamePhase.BuffsReady)
+            ApplyPassives();
     }
 
     private void ApplyPassives()
     {
-        buffTarget.OnReady -= TryApplyPassives;
+        phase.OnPhaseReached -= OnPhaseReached;
 
-        Debug.Log("[PASSIVES] ApplyPassives()", this);
+        Debug.Log("[PASSIVES] Apply", this);
 
         var net = GetComponent<PassiveNetAdapter>();
         net.ServerSetPassives(currentClass.passives.ToArray());
 
+        phase.Reach(GamePhase.PassivesApplied);
+
         OnClassApplied?.Invoke();
     }
-
 }

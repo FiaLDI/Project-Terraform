@@ -6,42 +6,28 @@ using Features.Stats.Application;
 
 namespace Features.Stats.UnityIntegration
 {
-    /// <summary>
-    /// ЕДИНСТВЕННАЯ точка инициализации статов игрока.
-    ///
-    /// SERVER:
-    ///  - создаёт StatsFacade
-    ///  - НЕ применяет класс
-    ///  - предоставляет Reset + Defaults
-    ///
-    /// CLIENT:
-    ///  - создаёт ТОЛЬКО view (Adapter)
-    ///  - получает значения ТОЛЬКО через StatsNetSync
-    /// </summary>
     [DefaultExecutionOrder(-400)]
+    [RequireComponent(typeof(ServerGamePhase))]
     public sealed class PlayerStats : NetworkBehaviour
     {
         // =====================================================
-        // PUBLIC API
+        // PUBLIC
         // =====================================================
 
         public IStatsFacade Facade { get; private set; }
         public StatsFacadeAdapter Adapter { get; private set; }
-
         public bool IsReady { get; private set; }
 
-        /// <summary>
-        /// Событие только для биндинга (НЕ для применения класса).
-        /// </summary>
-        public static event System.Action<PlayerStats> OnStatsReady;
+        private ServerGamePhase phase;
 
         // =====================================================
-        // SERVER INIT (AUTHORITATIVE)
+        // SERVER INIT
         // =====================================================
 
         public override void OnStartServer()
         {
             base.OnStartServer();
+            phase = GetComponent<ServerGamePhase>();
             InitServer();
         }
 
@@ -50,30 +36,31 @@ namespace Features.Stats.UnityIntegration
             if (IsReady)
                 return;
 
-            // 1️⃣ Создаём фасад
+            // 1️⃣ Facade
             Facade = new StatsFacade(isTurret: false);
 
-            // 2️⃣ СБРОС + БАЗОВЫЕ ЗНАЧЕНИЯ
+            // 2️⃣ Reset + defaults
             Facade.ResetAll();
             ApplyClassDefaults();
 
+            // 3️⃣ Bind BuffTarget
             var buffTarget = GetComponent<PlayerBuffTarget>();
             if (buffTarget != null)
             {
                 buffTarget.SetStats(Facade);
-                Debug.Log("[PlayerStats] BuffTarget linked with StatsFacade", this);
+                Debug.Log("[PlayerStats] BuffTarget linked", this);
             }
             else
             {
-                Debug.LogWarning("[PlayerStats] PlayerBuffTarget not found", this);
+                Debug.LogWarning("[PlayerStats] PlayerBuffTarget missing", this);
             }
 
             IsReady = true;
 
-            Debug.Log("[PlayerStats] SERVER ready (StatsFacade created)", this);
+            Debug.Log("[PlayerStats] SERVER ready → StatsReady", this);
 
-            // ❗ ТОЛЬКО сигнал готовности
-            OnStatsReady?.Invoke(this);
+            // 🔥 ЕДИНСТВЕННЫЙ сигнал наружу
+            phase.Reach(GamePhase.StatsReady);
         }
 
         // =====================================================
@@ -83,29 +70,18 @@ namespace Features.Stats.UnityIntegration
         public override void OnStartClient()
         {
             base.OnStartClient();
-            InitClient();
-        }
-
-        private void InitClient()
-        {
-            // Клиент НЕ создаёт StatsFacade
-            // Он только отображает значения, полученные по сети
 
             Adapter = GetComponent<StatsFacadeAdapter>();
             if (Adapter == null)
                 Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
 
-            Debug.Log("[PlayerStats] CLIENT ready (view only)", this);
+            Debug.Log("[PlayerStats] CLIENT ready (view)", this);
         }
 
         // =====================================================
-        // BASE DEFAULTS (SERVER ONLY)
+        // DEFAULTS (SERVER ONLY)
         // =====================================================
 
-        /// <summary>
-        /// Базовые значения игрока БЕЗ класса.
-        /// Вызывается ТОЛЬКО сервером.
-        /// </summary>
         private void ApplyClassDefaults()
         {
             Facade.Health.ApplyBase(120f);
@@ -124,18 +100,12 @@ namespace Features.Stats.UnityIntegration
             );
 
             Facade.Mining.ApplyBase(1f);
-
-            Debug.Log("[PlayerStats] SERVER defaults applied", this);
         }
 
         // =====================================================
         // SERVER API
         // =====================================================
 
-        /// <summary>
-        /// Полный сброс + дефолты.
-        /// ЕДИНСТВЕННАЯ точка для NetAdapter.
-        /// </summary>
         [Server]
         public void ResetAndApplyDefaults()
         {
@@ -185,10 +155,7 @@ namespace Features.Stats.UnityIntegration
         {
             if (!IsReady)
             {
-                Debug.LogError(
-                    "[PlayerStats] GetFacadeSafe called before ready!",
-                    this
-                );
+                Debug.LogError("[PlayerStats] Facade not ready", this);
                 return null;
             }
 

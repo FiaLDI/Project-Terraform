@@ -2,32 +2,54 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Features.Abilities.Domain;
 using FishNet;
 using UnityEngine;
 
 namespace Features.Abilities.UnityIntegration
 {
+    /// <summary>
+    /// ГЛОБАЛЬНЫЙ исполнитель способностей.
+    ///
+    /// ❗ Не NetworkBehaviour
+    /// ❗ Не спавнится
+    /// ❗ Singleton + DontDestroyOnLoad
+    /// ❗ Вызывается ТОЛЬКО сервером
+    /// </summary>
     public sealed class AbilityExecutor : MonoBehaviour
     {
-        public static AbilityExecutor I { get; private set; }
+        public static AbilityExecutor Instance { get; private set; }
+        public static bool IsReady => Instance != null;
 
         // AbilitySO TYPE -> HANDLER
         private readonly Dictionary<Type, IAbilityHandler> handlers = new();
 
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
+
         private void Awake()
         {
-            if (I != null && I != this)
+            if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
 
-            I = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
 
             AutoRegisterHandlers();
+
+            Debug.Log("[AbilityExecutor] READY (global)");
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
+
+            handlers.Clear();
         }
 
         // =====================================================
@@ -66,9 +88,11 @@ namespace Features.Abilities.UnityIntegration
                     handlers.Add(abilityType, handler);
                     AbilityHandlerRegistry.Register(handler);
 
+#if UNITY_EDITOR
                     Debug.Log(
                         $"[AbilityExecutor] Registered {type.Name} for {abilityType.Name}"
                     );
+#endif
                 }
                 catch (Exception ex)
                 {
@@ -83,11 +107,17 @@ namespace Features.Abilities.UnityIntegration
         // SERVER ENTRY POINT
         // =====================================================
 
+        /// <summary>
+        /// ЕДИНСТВЕННАЯ точка исполнения способности.
+        /// Вызывается только сервером.
+        /// </summary>
         public void Execute(AbilitySO ability, AbilityContext ctx)
         {
             if (!InstanceFinder.IsServer)
             {
-                Debug.LogError("[AbilityExecutor] Execute called not on server");
+                Debug.LogError(
+                    "[AbilityExecutor] Execute called not on server"
+                );
                 return;
             }
 

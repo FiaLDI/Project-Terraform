@@ -18,6 +18,12 @@ namespace Features.Passives.Domain
                 owner.GetComponentInChildren<BuffSystem>() ??
                 owner.GetComponentInParent<BuffSystem>();
 
+            if (!system.ServiceReady)
+            {
+                system.OnServiceReady += () => Apply(owner);
+                return;
+            }
+
             if (system == null)
             {
                 Debug.LogError("[PASSIVES] BuffSystem not found", owner);

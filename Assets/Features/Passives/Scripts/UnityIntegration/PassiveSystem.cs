@@ -24,7 +24,7 @@ namespace Features.Passives.UnityIntegration
         }
 
         // =====================================================
-        // LOGIC (SERVER / OWNER)
+        // LOGIC (SERVER ONLY)
         // =====================================================
 
         public void SetPassivesLogic(PassiveSO[] passives)
@@ -39,7 +39,6 @@ namespace Features.Passives.UnityIntegration
                 service.ActivateAll(equipped);
         }
 
-
         // =====================================================
         // VISUALS (CLIENT ONLY)
         // =====================================================
@@ -47,7 +46,6 @@ namespace Features.Passives.UnityIntegration
         public void SetPassivesVisuals(PassiveSO[] passives)
         {
             equipped = passives;
-            // ⚠️ сознательно НЕ вызываем Apply / Remove
         }
     }
 }

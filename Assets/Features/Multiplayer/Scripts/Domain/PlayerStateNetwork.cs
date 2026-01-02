@@ -12,14 +12,17 @@ namespace Features.Player.UnityIntegration
     ///
     /// ОТВЕТСТВЕННОСТЬ:
     /// - хранит SyncVar состояния (classId, visualId)
-    /// - инициирует серверное применение класса
+    /// - инициирует серверный pipeline применения класса
     /// - применяет визуал на клиентах
     ///
     /// НЕ:
     /// - считает статы
     /// - применяет бафы
     /// - управляет способностями
+    /// - знает про GamePhase
     /// </summary>
+    [RequireComponent(typeof(PlayerStateNetAdapter))]
+    [RequireComponent(typeof(PlayerVisualController))]
     public sealed class PlayerStateNetwork : NetworkBehaviour
     {
         // =====================================================
@@ -41,7 +44,7 @@ namespace Features.Player.UnityIntegration
         // =====================================================
 
         private PlayerClassLibrarySO classLibrary;
-        private string _preInitClass;
+        private string preInitClassId;
 
         // =====================================================
         // LIFECYCLE
@@ -53,23 +56,24 @@ namespace Features.Player.UnityIntegration
             netAdapter = GetComponent<PlayerStateNetAdapter>();
 
             classLibrary = UnityEngine.Resources.Load<PlayerClassLibrarySO>(
-                "Databases/PlayerClassLibrary");
+                    "Databases/PlayerClassLibrary"
+                );
 
             if (classLibrary == null)
             {
                 Debug.LogError(
-                    "[PlayerStateNetwork] PlayerClassLibrary not found in Resources/Databases",
+                    "[PlayerStateNetwork] PlayerClassLibrary not found",
                     this
                 );
             }
         }
 
         /// <summary>
-        /// Вызывается сервером ДО Spawn (из NetworkPlayerService).
+        /// Вызывается сервером ДО Spawn (NetworkPlayerService).
         /// </summary>
         public void PreInitClass(string classId)
         {
-            _preInitClass = classId;
+            preInitClassId = classId;
         }
 
         // =====================================================
@@ -80,16 +84,17 @@ namespace Features.Player.UnityIntegration
         {
             base.OnSpawnServer(conn);
 
-            // 1️⃣ Определяем класс (гарантированно)
-            string classId = string.IsNullOrEmpty(_preInitClass)
-                ? "0" // дефолтный класс
-                : _preInitClass;
+            // 1️⃣ Определяем класс
+            string classId =
+                string.IsNullOrEmpty(preInitClassId)
+                    ? "0" // default
+                    : preInitClassId;
 
             var cls = classLibrary.FindById(classId);
             if (cls == null)
             {
                 Debug.LogError(
-                    $"[PlayerStateNetwork] Class '{classId}' not found in library",
+                    $"[PlayerStateNetwork] Class '{classId}' not found",
                     this
                 );
                 return;
@@ -99,11 +104,11 @@ namespace Features.Player.UnityIntegration
             _classId.Value = classId;
             _visualId.Value = cls.visualPreset.id;
 
-            // 3️⃣ ИНИЦИИРУЕМ серверный pipeline
-            netAdapter.ApplyClassWhenReady(classId);
+            // 3️⃣ Запускаем серверный pipeline (GamePhase сделает остальное)
+            netAdapter.ApplyClass(classId);
 
             Debug.Log(
-                $"[PlayerStateNetwork] Spawned with class='{classId}' visual='{_visualId.Value}'",
+                $"[PlayerStateNetwork] Spawned with class='{classId}', visual='{_visualId.Value}'",
                 this
             );
         }
@@ -152,7 +157,7 @@ namespace Features.Player.UnityIntegration
             _classId.Value = classId;
             _visualId.Value = cls.visualPreset.id;
 
-            netAdapter.ApplyClassWhenReady(classId);
+            netAdapter.ApplyClass(classId);
         }
     }
 }
