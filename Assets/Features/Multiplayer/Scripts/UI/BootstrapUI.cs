@@ -1,180 +1,68 @@
 using FishNet;
 using FishNet.Managing;
-using FishNet.Transporting;
 using FishNet.Managing.Scened;
+using FishNet.Transporting;
+using FishNet.Connection;
 using UnityEngine;
-
 
 public sealed class BootstrapUI : MonoBehaviour
 {
     [SerializeField] private string hubSceneName = "NetHubScene";
 
-    private NetworkManager NM => InstanceFinder.NetworkManager;
+    private NetworkManager _nm;
 
-    private void OnEnable()
-    {
-        // 🟢 ИСПРАВЛЕНИЕ: проверяем что NetworkManager доступен
-        if (NM == null)
-        {
-            Debug.LogWarning("[BootstrapUI] NetworkManager not found yet, waiting...", this);
-            return;
-        }
-
-        NM.ServerManager.OnServerConnectionState += OnServerState;
-        Debug.Log("[BootstrapUI] Subscribed to server state changes", this);
-    }
-
-    private void OnDisable()
-    {
-        // 🟢 ИСПРАВЛЕНИЕ: безопасное отписание
-        if (NM != null)
-        {
-            NM.ServerManager.OnServerConnectionState -= OnServerState;
-            Debug.Log("[BootstrapUI] Unsubscribed from server state changes", this);
-        }
-    }
-
-    // 🟢 ИСПРАВЛЕНИЕ: Start вместо OnEnable для инициализации при старте игры
     private void Start()
     {
-        // Если не подписались в OnEnable (из-за null NM), подпишемся здесь
-        if (NM != null && !HasSubscribed())
+        _nm = InstanceFinder.NetworkManager;
+
+        if (_nm == null)
         {
-            NM.ServerManager.OnServerConnectionState += OnServerState;
-            Debug.Log("[BootstrapUI] Late subscription to server state changes", this);
+            Debug.LogError("[BootstrapUI] NetworkManager not found");
+            enabled = false;
+            return;
         }
     }
 
-    // =========================
-    // HOST
-    // =========================
     public void Host()
     {
-        Debug.Log("[BootstrapUI] HOST pressed");
-
-        // 🟢 ИСПРАВЛЕНИЕ: проверяем NetworkManager
-        if (NM == null)
-        {
-            Debug.LogError("[BootstrapUI] NetworkManager is null! Cannot host.", this);
+        if (_nm.ServerManager.Started)
             return;
-        }
 
-        // 🟢 ИСПРАВЛЕНИЕ: проверяем что можем стартовать
-        if (NM.ServerManager == null)
-        {
-            Debug.LogError("[BootstrapUI] ServerManager is null!", this);
-            return;
-        }
+        _nm.ServerManager.StartConnection();
+        _nm.ClientManager.StartConnection();
 
-        if (NM.ClientManager == null)
-        {
-            Debug.LogError("[BootstrapUI] ClientManager is null!", this);
-            return;
-        }
-
-        try
-        {
-            NM.ServerManager.StartConnection();
-            NM.ClientManager.StartConnection();
-            Debug.Log("[BootstrapUI] Host started successfully ✅", this);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[BootstrapUI] Error starting host: {ex.Message}", this);
-        }
+        _nm.ServerManager.OnRemoteConnectionState += OnRemoteConnection;
     }
 
-    // =========================
-    // CONNECT
-    // =========================
     public void Connect()
     {
-        Debug.Log("[BootstrapUI] CONNECT pressed");
-
-        // 🟢 ИСПРАВЛЕНИЕ: проверяем NetworkManager
-        if (NM == null)
-        {
-            Debug.LogError("[BootstrapUI] NetworkManager is null! Cannot connect.", this);
+        if (_nm.ClientManager.Started)
             return;
-        }
 
-        // 🟢 ИСПРАВЛЕНИЕ: проверяем ClientManager
-        if (NM.ClientManager == null)
-        {
-            Debug.LogError("[BootstrapUI] ClientManager is null!", this);
-            return;
-        }
-
-        try
-        {
-            NM.ClientManager.StartConnection();
-            Debug.Log("[BootstrapUI] Client connection started ✅", this);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[BootstrapUI] Error starting connection: {ex.Message}", this);
-        }
+        _nm.ClientManager.StartConnection();
     }
 
-    // =========================
-    // SERVER READY CALLBACK
-    // =========================
-    private void OnServerState(ServerConnectionStateArgs args)
+    private void OnRemoteConnection(
+        NetworkConnection conn,
+        RemoteConnectionStateArgs args)
     {
-        Debug.Log($"[BootstrapUI] Server state changed: {args.ConnectionState}", this);
-
-        if (args.ConnectionState != LocalConnectionState.Started)
+        if (args.ConnectionState != RemoteConnectionState.Started)
             return;
 
-        Debug.Log("[BootstrapUI] Server started → loading Hub scene", this);
-
+        _nm.ServerManager.OnRemoteConnectionState -= OnRemoteConnection;
         LoadHubScene();
     }
 
-    // =========================
-    // SCENE LOAD
-    // =========================
     private void LoadHubScene()
     {
-        // 🟢 ИСПРАВЛЕНИЕ: проверяем NetworkManager
-        if (NM == null)
-        {
-            Debug.LogError("[BootstrapUI] NetworkManager is null on scene load!", this);
+        if (!_nm.IsServer)
             return;
-        }
 
-        if (!NM.IsServer)
+        var data = new SceneLoadData(hubSceneName)
         {
-            Debug.LogWarning("[BootstrapUI] LoadHubScene called but not server", this);
-            return;
-        }
+            ReplaceScenes = ReplaceOption.All
+        };
 
-        // 🟢 ИСПРАВЛЕНИЕ: проверяем SceneManager
-        if (NM.SceneManager == null)
-        {
-            Debug.LogError("[BootstrapUI] SceneManager is null!", this);
-            return;
-        }
-
-        try
-        {
-            var data = new SceneLoadData(hubSceneName)
-            {
-                ReplaceScenes = ReplaceOption.All
-            };
-
-            NM.SceneManager.LoadGlobalScenes(data);
-            Debug.Log($"[BootstrapUI] Loading scene: {hubSceneName} ✅", this);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[BootstrapUI] Error loading scene: {ex.Message}", this);
-        }
-    }
-
-    private bool HasSubscribed()
-    {
-        // Проверяем что NM инициализирован
-        return NM != null && NM.ServerManager != null;
+        _nm.SceneManager.LoadGlobalScenes(data);
     }
 }
