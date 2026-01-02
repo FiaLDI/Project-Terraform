@@ -57,6 +57,17 @@ namespace Features.Stats.UnityIntegration
             Facade.ResetAll();
             ApplyClassDefaults();
 
+            var buffTarget = GetComponent<PlayerBuffTarget>();
+            if (buffTarget != null)
+            {
+                buffTarget.SetStats(Facade);
+                Debug.Log("[PlayerStats] BuffTarget linked with StatsFacade", this);
+            }
+            else
+            {
+                Debug.LogWarning("[PlayerStats] PlayerBuffTarget not found", this);
+            }
+
             IsReady = true;
 
             Debug.Log("[PlayerStats] SERVER ready (StatsFacade created)", this);

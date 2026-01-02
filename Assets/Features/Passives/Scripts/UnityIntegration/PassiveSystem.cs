@@ -1,6 +1,7 @@
 using UnityEngine;
 using Features.Passives.Domain;
 using Features.Passives.Application;
+using FishNet.Object;
 
 namespace Features.Passives.UnityIntegration
 {
@@ -28,8 +29,8 @@ namespace Features.Passives.UnityIntegration
 
         public void SetPassivesLogic(PassiveSO[] passives)
         {
-            if (service == null)
-                service = new PassiveService(gameObject);
+            if (!TryGetComponent<NetworkObject>(out var net) || !net.IsServer)
+                return;
 
             service.DeactivateAll();
             equipped = passives;
@@ -37,6 +38,7 @@ namespace Features.Passives.UnityIntegration
             if (equipped != null && equipped.Length > 0)
                 service.ActivateAll(equipped);
         }
+
 
         // =====================================================
         // VISUALS (CLIENT ONLY)
@@ -46,15 +48,6 @@ namespace Features.Passives.UnityIntegration
         {
             equipped = passives;
             // ⚠️ сознательно НЕ вызываем Apply / Remove
-        }
-
-        // =====================================================
-        // UNIFIED ENTRY (через NetAdapter)
-        // =====================================================
-
-        public void SetPassives(PassiveSO[] passives)
-        {
-            SetPassivesLogic(passives);
         }
     }
 }

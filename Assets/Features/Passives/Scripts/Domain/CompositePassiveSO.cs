@@ -9,8 +9,11 @@ namespace Features.Passives.Domain
 
         protected override void ApplyInternal(GameObject owner)
         {
-            if (effects == null)
+            if (effects == null || effects.Length == 0)
+            {
+                Debug.LogError($"[PASSIVES] {name} has NO EFFECTS", this);
                 return;
+            }
 
             foreach (var e in effects)
                 e?.Apply(owner);

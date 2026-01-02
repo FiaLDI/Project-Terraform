@@ -14,19 +14,19 @@ namespace Features.Passives.Domain
             if (aura == null)
                 return;
 
-            // защита от дублей
-            if (owner.GetComponent<AreaBuffEmitter>() != null)
-                return;
-
+            var runtime = new PassiveRuntime();
             var emitter = owner.AddComponent<AreaBuffEmitter>();
             emitter.area = aura;
+
+            runtime.Component = emitter;
+            PassiveRuntimeRegistry.Store(owner, this, runtime);
         }
 
         public override void Remove(GameObject owner)
         {
-            var emitter = owner.GetComponent<AreaBuffEmitter>();
-            if (emitter != null)
-                Object.Destroy(emitter);
+            var runtime = PassiveRuntimeRegistry.Take(owner, this);
+            if (runtime?.Component != null)
+                Object.Destroy(runtime.Component);
         }
     }
 }

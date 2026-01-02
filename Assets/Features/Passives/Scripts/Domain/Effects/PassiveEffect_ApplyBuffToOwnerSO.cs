@@ -13,35 +13,48 @@ namespace Features.Passives.Domain
 
         public override void Apply(GameObject owner)
         {
-            if (buff == null)
-                return;
+            var system =
+                owner.GetComponent<BuffSystem>() ??
+                owner.GetComponentInChildren<BuffSystem>() ??
+                owner.GetComponentInParent<BuffSystem>();
 
-            var system = owner.GetComponent<BuffSystem>();
             if (system == null)
+            {
+                Debug.LogError("[PASSIVES] BuffSystem not found", owner);
+                return;
+            }
+
+            if (!owner.TryGetComponent(out NetworkObject net) || !net.IsServer)
                 return;
 
-            var netObj = owner.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsServer)
-                return;
 
-            system.Add(
+            Debug.Log(
+                $"[PASSIVES] ApplyBuff {buff.name} | IsServer={net?.IsServer}",
+                owner
+            );
+
+            var runtime = new PassiveRuntime();
+
+            runtime.Buff = system.Add(
                 buff,
-                source: this,
+                source: runtime,
                 lifetimeMode: BuffLifetimeMode.WhileSourceAlive
             );
+
+            PassiveRuntimeRegistry.Store(owner, this, runtime);
         }
 
         public override void Remove(GameObject owner)
         {
-            var system = owner.GetComponent<BuffSystem>();
-            if (system == null)
+            if (!owner.TryGetComponent(out BuffSystem system))
                 return;
 
-            var netObj = owner.GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.IsServer)
+            if (!owner.TryGetComponent(out NetworkObject net) || !net.IsServer)
                 return;
 
-            system.RemoveBySource(this);
+            var runtime = PassiveRuntimeRegistry.Take(owner, this);
+            if (runtime?.Buff != null)
+                system.Remove(runtime.Buff);
         }
     }
 }

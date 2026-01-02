@@ -51,23 +51,22 @@ namespace Features.Buffs.Application
         // APPLY
         // =====================================================
 
-        public void Apply(BuffInstance inst)
+        public bool Apply(BuffInstance inst)
         {
             if (!IsServerStarted || !IsValid(inst))
-                return;
+                return false;
 
             var stats = inst.Target.GetServerStats();
             if (stats == null)
-                return;
+                return false;
 
             if (!handlers.TryGetValue(inst.Config.stat, out var h))
-            {
-                Debug.LogWarning($"[BuffExecutor] No handler for stat {inst.Config.stat}");
-                return;
-            }
+                return false;
 
             h(inst, stats, true);
+            return true;
         }
+
 
         // =====================================================
         // EXPIRE

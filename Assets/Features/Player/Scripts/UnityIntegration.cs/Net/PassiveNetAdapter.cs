@@ -62,6 +62,8 @@ namespace Features.Passives.Net
         public void ServerSetPassives(PassiveSO[] passives)
         {
             if (!IsServer) return;
+            Debug.Log("[PASSIVES] ServerSetPassives()", this);
+
 
             // 1. Применяем логику (баффы и т.д.)
             _system.SetPassivesLogic(passives);

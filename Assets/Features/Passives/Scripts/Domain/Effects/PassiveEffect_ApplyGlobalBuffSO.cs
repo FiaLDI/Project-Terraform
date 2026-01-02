@@ -1,6 +1,6 @@
-using UnityEngine;
 using Features.Buffs.Domain;
 using Features.Buffs.UnityIntegration;
+using UnityEngine;
 
 namespace Features.Passives.Domain
 {
@@ -14,19 +14,23 @@ namespace Features.Passives.Domain
             if (globalBuff == null || GlobalBuffSystem.I == null)
                 return;
 
-            // source = этот PassiveEffect
+            var runtime = new PassiveRuntime();
+
             GlobalBuffSystem.I.Add(
                 globalBuff,
-                source: this
+                source: runtime
             );
+
+            PassiveRuntimeRegistry.Store(owner, this, runtime);
         }
 
         public override void Remove(GameObject owner)
         {
-            if (globalBuff == null || GlobalBuffSystem.I == null)
+            var runtime = PassiveRuntimeRegistry.Take(owner, this);
+            if (runtime == null)
                 return;
 
-            GlobalBuffSystem.I.RemoveBySource(this);
+            GlobalBuffSystem.I.RemoveBySource(runtime);
         }
     }
 }

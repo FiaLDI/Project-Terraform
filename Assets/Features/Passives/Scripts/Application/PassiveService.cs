@@ -18,9 +18,11 @@ namespace Features.Passives.Application
 
         public void Activate(PassiveSO passive)
         {
+            Debug.Log($"[PASSIVES] Activate {passive.name}", owner);
+
             if (passive == null || active.Contains(passive))
                 return;
-
+            
             active.Add(passive);
             passive.Apply(owner);
         }

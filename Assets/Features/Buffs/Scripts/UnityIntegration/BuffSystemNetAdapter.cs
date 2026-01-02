@@ -2,80 +2,70 @@ using UnityEngine;
 using Features.Buffs.Application;
 using FishNet.Object;
 
-
 namespace Features.Buffs.Net
 {
     /// <summary>
-    /// Network adapter для BuffSystem.
-    /// Синхронизирует состояние баффов между сервером и клиентами.
+    /// Тонкий Network-адаптер над BuffSystem.
+    /// BuffSystem сам полностью отвечает за синхронизацию баффов.
+    /// Этот класс — только точка расширения (UI / логи / аналитика).
     /// </summary>
-    public class BuffSystemNetAdapter : NetworkBehaviour
+    [RequireComponent(typeof(BuffSystem))]
+    public sealed class BuffSystemNetAdapter : NetworkBehaviour
     {
-        private BuffSystem _buffSystem;
+        private BuffSystem buffSystem;
 
         private void Awake()
         {
-            _buffSystem = GetComponent<BuffSystem>();
+            buffSystem = GetComponent<BuffSystem>();
 
-            if (_buffSystem == null)
-            {
-                Debug.LogError("[BuffSystemNetAdapter] BuffSystem component not found!", this);
-            }
+            if (buffSystem == null)
+                Debug.LogError("[BuffSystemNetAdapter] BuffSystem not found!", this);
         }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
 
-            if (_buffSystem == null) return;
+            if (buffSystem == null)
+                return;
 
-            // На сервере подписываемся на события баффов
-            _buffSystem.OnBuffAdded += OnServerBuffAdded;
-            _buffSystem.OnBuffRemoved += OnServerBuffRemoved;
-
-            if (_buffSystem.ServiceReady)
-            {
-                SyncBuffsToClients();
-            }
+            buffSystem.OnBuffAdded += OnServerBuffAdded;
+            buffSystem.OnBuffRemoved += OnServerBuffRemoved;
         }
 
         public override void OnStopServer()
         {
-            base.OnStopServer();
-
-            if (_buffSystem != null)
+            if (buffSystem != null)
             {
-                _buffSystem.OnBuffAdded -= OnServerBuffAdded;
-                _buffSystem.OnBuffRemoved -= OnServerBuffRemoved;
+                buffSystem.OnBuffAdded -= OnServerBuffAdded;
+                buffSystem.OnBuffRemoved -= OnServerBuffRemoved;
             }
+
+            base.OnStopServer();
         }
+
+        // =====================================================
+        // SERVER EVENTS (OPTIONAL)
+        // =====================================================
 
         private void OnServerBuffAdded(BuffInstance inst)
         {
-            // На сервере автоматически обновляется через BuffSystem.UpdateActivBuffsSync
-            // Но можно добавить дополнительную логику если нужна
+            // BuffSystem уже:
+            // - применил баф
+            // - добавил в ActiveBuffIds
+            // - синхронизировал клиентам
+
+            // Здесь ТОЛЬКО доп. логика при необходимости
+            // (UI, аналитика, звук, achievements и т.д.)
+
+            // Debug.Log($"[BuffNet] Buff added: {inst.Config.buffId}", this);
         }
 
         private void OnServerBuffRemoved(BuffInstance inst)
         {
-            // На сервере автоматически обновляется через BuffSystem.UpdateActivBuffsSync
-            // Но можно добавить дополнительную логику если нужна
-        }
+            // Аналогично — только хуки
 
-        /// <summary>
-        /// Принудительная синхронизация всех баффов на клиентов.
-        /// Вызывается при инициализации сервера.
-        /// </summary>
-        private void SyncBuffsToClients()
-        {
-            if (!IsServer || _buffSystem == null) return;
-
-            // BuffSystem сам следит за ActiveBuffIds через SyncList
-            // Просто убеждаемся что данные актуальны
-            if (_buffSystem.Active != null && _buffSystem.Active.Count > 0)
-            {
-                Debug.Log($"[BuffSystemNetAdapter] Synced {_buffSystem.Active.Count} buffs to clients");
-            }
+            // Debug.Log($"[BuffNet] Buff removed: {inst.Config.buffId}", this);
         }
     }
 }

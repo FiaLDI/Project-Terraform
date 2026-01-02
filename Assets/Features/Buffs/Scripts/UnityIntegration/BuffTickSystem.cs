@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using FishNet.Object;
 using FishNet.Managing.Timing;
 using Features.Buffs.Application;
-using System.Linq;
 
 namespace Features.Buffs.UnityIntegration
 {
@@ -12,15 +11,15 @@ namespace Features.Buffs.UnityIntegration
     {
         // ================= SINGLETON =================
 
-        private static BuffTickSystem _instance;
-        public static BuffTickSystem Instance => _instance;
+        private static BuffTickSystem instance;
+        public static BuffTickSystem Instance => instance;
 
         // ================= ACTIVE =================
 
         private readonly HashSet<BuffSystem> buffSystems = new();
         private readonly HashSet<AreaBuffEmitter> emitters = new();
 
-        // ================= PENDING =================
+        // ================= PENDING (до старта сервера) =================
 
         private static readonly HashSet<BuffSystem> pendingSystems = new();
         private static readonly HashSet<AreaBuffEmitter> pendingEmitters = new();
@@ -33,27 +32,24 @@ namespace Features.Buffs.UnityIntegration
         {
             base.OnStartServer();
 
-            if (_instance != null && _instance != this)
+            if (instance != null && instance != this)
             {
-                Debug.LogError(
-                    "[BuffTickSystem] Multiple instances detected!",
-                    this
-                );
+                Debug.LogError("[BuffTickSystem] Multiple instances detected!", this);
                 return;
             }
 
-            _instance = this;
+            instance = this;
 
-            // 🔥 принять отложенные регистрации (ТОЛЬКО серверные)
+            // 🔥 принять отложенные регистрации
             foreach (var system in pendingSystems)
             {
-                if (system != null && system.IsServerStarted)
+                if (system != null)
                     buffSystems.Add(system);
             }
 
             foreach (var emitter in pendingEmitters)
             {
-                if (emitter != null && emitter.IsServerStarted)
+                if (emitter != null)
                     emitters.Add(emitter);
             }
 
@@ -78,19 +74,19 @@ namespace Features.Buffs.UnityIntegration
             pendingSystems.Clear();
             pendingEmitters.Clear();
 
-            if (_instance == this)
-                _instance = null;
+            if (instance == this)
+                instance = null;
 
             base.OnStopServer();
         }
 
         // =====================================================
-        // REGISTRATION API (SERVER ONLY)
+        // REGISTRATION API
         // =====================================================
 
         public static void Register(BuffSystem system)
         {
-            if (system == null || !system.IsServerStarted)
+            if (system == null)
                 return;
 
             if (Instance == null)
@@ -115,7 +111,7 @@ namespace Features.Buffs.UnityIntegration
 
         public static void RegisterEmitter(AreaBuffEmitter emitter)
         {
-            if (emitter == null || !emitter.IsServerStarted)
+            if (emitter == null)
                 return;
 
             if (Instance == null)
@@ -150,13 +146,13 @@ namespace Features.Buffs.UnityIntegration
             float dt = (float)TimeManager.TickDelta;
 
             // Snapshot — безопасно при unregister во время тика
-            foreach (var system in buffSystems.ToArray())
+            foreach (var system in buffSystems)
             {
                 if (system != null && system.ServiceReady)
                     system.Tick(dt);
             }
 
-            foreach (var emitter in emitters.ToArray())
+            foreach (var emitter in emitters)
             {
                 if (emitter != null)
                     emitter.Tick();

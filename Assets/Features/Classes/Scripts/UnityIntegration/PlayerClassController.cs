@@ -4,6 +4,8 @@ using Features.Classes.Application;
 using Features.Passives.UnityIntegration;
 using Features.Abilities.Application;
 using Features.Stats.UnityIntegration;
+using Features.Passives.Net;
+using Features.Buffs.Application;
 
 [RequireComponent(typeof(PlayerVisualController))]
 public sealed class PlayerClassController : MonoBehaviour
@@ -42,6 +44,7 @@ public sealed class PlayerClassController : MonoBehaviour
             ? currentClass.visualPreset.id
             : null;
     private PlayerBuffTarget buffTarget;
+    private BuffSystem buffSystem;
 
     /// <summary>
     /// Вызывается, когда класс полностью применён
@@ -58,6 +61,7 @@ public sealed class PlayerClassController : MonoBehaviour
         passiveSystem = GetComponent<PassiveSystem>();
         abilityCaster = GetComponent<AbilityCaster>();
         buffTarget = GetComponent<PlayerBuffTarget>();
+        buffSystem = GetComponent<BuffSystem>();
 
         if (library == null)
         {
@@ -107,48 +111,37 @@ public sealed class PlayerClassController : MonoBehaviour
 
     private void ApplyInternal(PlayerClassConfigSO cfg)
     {
-        if (cfg == null)
-        {
-            Debug.LogError(
-                "[PlayerClassController] ApplyInternal called with null config",
-                this
-            );
-            return;
-        }
-
         currentClass = cfg;
 
-        Debug.Log(
-            $"[PlayerClassController] Applying class '{cfg.displayName}'",
-            this
-        );
-
-        // 1️⃣ Доменные данные (выбранный класс)
         classService.SelectClass(cfg);
-
-
-        // 3️⃣ Способности
         abilityCaster?.SetAbilities(cfg.abilities.ToArray());
-        
-        
-        // 2️⃣ Пассивки
-        if (buffTarget != null)
-        {
-            buffTarget.OnReady -= ApplyPassivesSafe;
-            buffTarget.OnReady += ApplyPassivesSafe;
-        }
 
-        // 4️⃣ Сигнал завершения
-        OnClassApplied?.Invoke();
-
-        Debug.Log(
-            $"[PlayerClassController] ✅ Class '{cfg.displayName}' applied",
-            this
-        );
+        TryApplyPassives();
     }
 
-    private void ApplyPassivesSafe()
+    private void TryApplyPassives()
     {
-        passiveSystem?.SetPassives(currentClass.passives.ToArray());
+        if (buffTarget.IsReady)
+        {
+            ApplyPassives();
+        }
+        else
+        {
+            buffTarget.OnReady -= TryApplyPassives;
+            buffTarget.OnReady += TryApplyPassives;
+        }
     }
+
+    private void ApplyPassives()
+    {
+        buffTarget.OnReady -= TryApplyPassives;
+
+        Debug.Log("[PASSIVES] ApplyPassives()", this);
+
+        var net = GetComponent<PassiveNetAdapter>();
+        net.ServerSetPassives(currentClass.passives.ToArray());
+
+        OnClassApplied?.Invoke();
+    }
+
 }
