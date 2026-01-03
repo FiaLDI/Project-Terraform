@@ -24,10 +24,10 @@ namespace Features.Interaction.UnityIntegration
             // 1️⃣ PICKUP
             if (nearby != null && cam != null)
             {
-                Debug.Log($"[Resolver] Nearby has {nearby} items"); // сделай Count в INearbyInteractables
+                //Debug.Log($"[Resolver] Nearby has {nearby} items"); // сделай Count в INearbyInteractables
 
                 var best = nearby.GetBestItem(cam);
-                Debug.Log($"[Resolver] GetBestItem result = {best}", best);
+                //Debug.Log($"[Resolver] GetBestItem result = {best}", best);
 
                 if (best != null)
                     return InteractionTarget.ForPickup(best);
