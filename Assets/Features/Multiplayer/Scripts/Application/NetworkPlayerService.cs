@@ -6,19 +6,24 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Features.Player.UnityIntegration;
+using FishNet.Component.Transforming;
 
 public sealed class NetworkPlayerService : MonoBehaviour
 {
     public static NetworkPlayerService I { get; private set; }
 
     [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private string defaultClassId = "0";
 
     private readonly Dictionary<int, NetworkObject> _playersByConn = new();
     private readonly Dictionary<int, string> _classByConn = new();
-
-    [SerializeField] private string defaultClassId = "0";
+    private readonly HashSet<int> _waitingForSpawn = new();
 
     private NetworkManager _nm;
+
+    // ==========================================================
+    // LIFECYCLE
+    // ==========================================================
 
     private void Awake()
     {
@@ -36,7 +41,8 @@ public sealed class NetworkPlayerService : MonoBehaviour
 
     private void OnEnable()
     {
-        if (_nm == null) return;
+        if (_nm == null)
+            return;
 
         _nm.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
         _nm.SceneManager.OnClientLoadedStartScenes += OnClientLoadedStartScenes;
@@ -44,15 +50,17 @@ public sealed class NetworkPlayerService : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_nm == null) return;
+        if (_nm == null)
+            return;
 
         _nm.ServerManager.OnRemoteConnectionState -= OnRemoteConnectionState;
         _nm.SceneManager.OnClientLoadedStartScenes -= OnClientLoadedStartScenes;
     }
 
     // ==========================================================
-    // SPAWN
+    // SPAWN ENTRY
     // ==========================================================
+
     private void OnClientLoadedStartScenes(NetworkConnection conn, bool asServer)
     {
         if (!asServer)
@@ -69,42 +77,75 @@ public sealed class NetworkPlayerService : MonoBehaviour
         if (_playersByConn.ContainsKey(conn.ClientId))
             return;
 
-        string classId = GetOrCreateClass(conn);
+        if (!TryGetSpawnProvider(out var spawnProvider))
+        {
+            StartCoroutine(WaitForSpawnPointAndSpawn(conn));
+            return;
+        }
 
-        SpawnPlayer(conn, classId);
+        string classId = GetOrCreateClass(conn);
+        SpawnPlayer(conn, classId, spawnProvider);
     }
 
-    private void SpawnPlayer(NetworkConnection conn, string classId)
+    // ==========================================================
+    // WAIT FOR SPAWN POINT
+    // ==========================================================
+
+    private IEnumerator WaitForSpawnPointAndSpawn(NetworkConnection conn)
     {
-        ScenePlayerSpawnPoint sp = GetSpawnPoint();
+        while (true)
+        {
+            // клиент мог уйти
+            if (!_nm.ServerManager.Clients.ContainsKey(conn.ClientId))
+                yield break;
 
-        Vector3 pos = sp ? sp.transform.position : Vector3.zero;
-        Quaternion rot = sp ? sp.transform.rotation : Quaternion.identity;
+            if (TryGetSpawnProvider(out var provider))
+            {
+                string classId = GetOrCreateClass(conn);
+                SpawnPlayer(conn, classId, provider);
+                yield break;
+            }
 
-        NetworkObject player = Instantiate(playerPrefab, pos, rot);
+            yield return null;
+        }
+    }
+
+
+    // ==========================================================
+    // ACTUAL SPAWN
+    // ==========================================================
+
+    private void SpawnPlayer(
+        NetworkConnection conn,
+        string classId,
+        IPlayerSpawnProvider spawnProvider)
+    {
+        spawnProvider.TryGetSpawnPoint(out var pos, out var rot);
+
+        var player = Instantiate(playerPrefab, pos, rot);
 
         var psn = player.GetComponent<PlayerStateNetwork>();
-        psn.PreInitClass(classId); // 🔥 ключевая строка
+        psn.PreInitClass(classId);
 
         _nm.ServerManager.Spawn(player, conn);
 
         _playersByConn[conn.ClientId] = player;
-
-        Debug.Log($"[PlayerService] Spawned player {conn.ClientId} with class '{classId}'");
     }
+
 
     // ==========================================================
     // DESPAWN
     // ==========================================================
+
     private void OnRemoteConnectionState(
         NetworkConnection conn,
         FishNet.Transporting.RemoteConnectionStateArgs args)
     {
-        if (args.ConnectionState !=
+        if (args.ConnectionState ==
             FishNet.Transporting.RemoteConnectionState.Stopped)
-            return;
-
-        TryDespawn(conn);
+        {
+            TryDespawn(conn);
+        }
     }
 
     public void TryDespawn(NetworkConnection conn)
@@ -112,13 +153,15 @@ public sealed class NetworkPlayerService : MonoBehaviour
         if (conn == null)
             return;
 
-        if (!_playersByConn.TryGetValue(conn.ClientId, out var player))
-            return;
+        if (_playersByConn.TryGetValue(conn.ClientId, out var player))
+        {
+            if (player != null && player.IsSpawned)
+                player.Despawn();
 
-        if (player != null && player.IsSpawned)
-            player.Despawn();
+            _playersByConn.Remove(conn.ClientId);
+        }
 
-        _playersByConn.Remove(conn.ClientId);
+        _waitingForSpawn.Remove(conn.ClientId);
 
         Debug.Log($"[PlayerService] Despawned player for conn {conn.ClientId}");
     }
@@ -126,6 +169,7 @@ public sealed class NetworkPlayerService : MonoBehaviour
     // ==========================================================
     // RESPAWN
     // ==========================================================
+
     public void RequestRespawn(NetworkConnection conn, float delay = 2f)
     {
         if (conn == null)
@@ -137,31 +181,37 @@ public sealed class NetworkPlayerService : MonoBehaviour
     private IEnumerator RespawnRoutine(NetworkConnection conn, float delay)
     {
         TryDespawn(conn);
-
         yield return new WaitForSeconds(delay);
 
-        // Клиент мог уже выйти
-        if (!_nm.ServerManager.Clients.ContainsKey(conn.ClientId))
-            yield break;
-
-        TrySpawn(conn);
+        if (_nm.ServerManager.Clients.ContainsKey(conn.ClientId))
+            TrySpawn(conn);
     }
 
     // ==========================================================
-    // SPAWN POINTS
+    // SPAWN PROVIDERS
     // ==========================================================
-    private ScenePlayerSpawnPoint GetSpawnPoint()
+
+    private bool TryGetSpawnProvider(out IPlayerSpawnProvider provider)
     {
-        ScenePlayerSpawnPoint[] points =
-            FindObjectsByType<ScenePlayerSpawnPoint>(
-                FindObjectsSortMode.None);
+        var behaviours = FindObjectsByType<MonoBehaviour>(
+            FindObjectsSortMode.None);
 
-        if (points.Length == 0)
-            return null;
+        foreach (var mb in behaviours)
+        {
+            if (mb is IPlayerSpawnProvider p)
+            {
+                provider = p;
+                return true;
+            }
+        }
 
-        // пока простой рандом
-        return points[Random.Range(0, points.Length)];
+        provider = null;
+        return false;
     }
+
+    // ==========================================================
+    // CLASS
+    // ==========================================================
 
     private string GetOrCreateClass(NetworkConnection conn)
     {
@@ -174,5 +224,4 @@ public sealed class NetworkPlayerService : MonoBehaviour
         Debug.Log($"[PlayerService] Assign default class '{classId}' to {conn.ClientId}");
         return classId;
     }
-
 }

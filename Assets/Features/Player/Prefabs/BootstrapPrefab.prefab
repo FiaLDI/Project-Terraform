@@ -917,6 +917,7 @@ Transform:
   - {fileID: 5021592665727248186}
   - {fileID: 6709290924768137100}
   - {fileID: 7698683896044044358}
+  - {fileID: 6922316635188452502}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8444447357687568584
@@ -1057,13 +1058,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c7fd1e7f4cde54882949325e035616, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhaseDebuggerUI
-  font: {fileID: 12800000, guid: a8fe22a5b0e204248bc95d4bb0dccf2a, type: 3}
-  fontSize: 24
-  textColor: {r: 1, g: 1, b: 1, a: 1}
-  anchorMin: {x: 0, y: 1}
-  anchorMax: {x: 0, y: 1}
-  pivot: {x: 0, y: 1}
-  position: {x: 10, y: -10}
+  debugFont: {fileID: 0}
 --- !u!1 &2068223407689084307
 GameObject:
   m_ObjectHideFlags: 0
@@ -2172,6 +2167,50 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &7680038168577448307
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6922316635188452502}
+  - component: {fileID: 3076961617481922991}
+  m_Layer: 0
+  m_Name: UIRegistry
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6922316635188452502
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7680038168577448307}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 484.0987, y: -0.5, z: -459.8899}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1511663097971046456}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3076961617481922991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7680038168577448307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf95a706b7e3a174b97d73f6c3382145, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIRegistry
 --- !u!1 &8230933532501130588
 GameObject:
   m_ObjectHideFlags: 0
