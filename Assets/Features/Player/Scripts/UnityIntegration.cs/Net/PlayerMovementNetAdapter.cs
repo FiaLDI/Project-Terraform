@@ -8,87 +8,77 @@ namespace Features.Player.UnityIntegration
     public sealed class PlayerMovementNetAdapter : NetworkBehaviour
     {
         private PlayerMovement movement;
-        private MovementStateNetwork movementState;
+        private PlayerInputState _predictedInput;
 
-        // ======================================================
-        // LIFECYCLE
-        // ======================================================
+        [SerializeField] private float sendRate = 0.05f;
+        private float _sendTimer;
 
         public override void OnStartNetwork()
         {
             base.OnStartNetwork();
             movement = GetComponent<PlayerMovement>();
-            movementState = GetComponent<MovementStateNetwork>();
-            
-            Debug.Log($"[PlayerMovementNetAdapter] OnStartNetwork - IsOwner={base.Owner.IsLocalClient}", this);
         }
 
-        private void Update()
-        {
-            if (!IsServerInitialized || movement == null || movementState == null)
-                return;
-
-            Vector3 v = movement.Velocity;
-            float planarSpeed = new Vector2(v.x, v.z).magnitude;
-
-            movementState.SetMovementState(
-                planarSpeed,
-                movement.IsGrounded,
-                movement.IsCrouching
-            );
-        }
-
-        // ======================================================
-        // INPUT (CLIENT → LOCAL, NetworkTransform синхронизирует)
-        // ======================================================
-
-        public void SendMoveInput(Vector2 input)
+        // ===== CAMERA =====
+        public void SetLookYaw(float yaw)
         {
             if (!IsOwner)
                 return;
 
-            // Client Authoritative: применяем локально, NetworkTransform синхронизирует
-            movement.SetMoveInput(input);
+            _predictedInput.Yaw = yaw;
         }
 
-        public void SetSprint(bool value)
+        // ===== MOVEMENT INPUT =====
+        public void ApplyLocalInput(PlayerInputState input)
         {
             if (!IsOwner)
                 return;
 
-            movement.SetSprint(value);
+            // 🔑 КОПИРУЕМ В _predictedInput, А НЕ НАОБОРОТ
+            _predictedInput.Move = input.Move;
+            _predictedInput.Sprint = input.Sprint;
+            _predictedInput.Walk = input.Walk;
+            _predictedInput.Jump = input.Jump;
+            _predictedInput.Crouch = input.Crouch;
+
+            // ===== LOCAL PREDICTION =====
+            movement.SetMoveInput(_predictedInput.Move);
+            movement.SetSprint(_predictedInput.Sprint);
+            movement.SetWalk(_predictedInput.Walk);
+
+            if (_predictedInput.Crouch)
+                movement.ToggleCrouch();
+
+            if (_predictedInput.Jump)
+                movement.TryJump();
+
+            movement.SetBodyYaw(_predictedInput.Yaw);
+
+            // ===== SEND TO SERVER =====
+            _sendTimer += Time.deltaTime;
+            if (_sendTimer >= sendRate)
+            {
+                _sendTimer = 0f;
+                SendInputServerRpc(_predictedInput);
+            }
         }
 
-        public void SetWalk(bool value)
+        // ===== SERVER =====
+        [ServerRpc]
+        private void SendInputServerRpc(PlayerInputState input)
         {
-            if (!IsOwner)
-                return;
+            movement.SetMoveInput(input.Move);
+            movement.SetSprint(input.Sprint);
+            movement.SetWalk(input.Walk);
 
-            movement.SetWalk(value);
-        }
+            if (input.Crouch)
+                movement.ToggleCrouch();
 
-        public void ToggleCrouch()
-        {
-            if (!IsOwner)
-                return;
+            if (input.Jump)
+                movement.TryJump();
 
-            movement.ToggleCrouch();
-        }
-
-        public void Jump()
-        {
-            if (!IsOwner)
-                return;
-
-            movement.TryJump();
-        }
-
-        public void SetBodyRotation(float yaw)
-        {
-            if (!IsOwner)
-                return;
-
-            movement.SetBodyYaw(yaw);
+            movement.SetBodyYaw(input.Yaw);
         }
     }
+
 }

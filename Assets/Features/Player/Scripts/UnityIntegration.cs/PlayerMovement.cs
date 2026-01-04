@@ -9,10 +9,9 @@ namespace Features.Player.UnityIntegration
     {
         [Header("References")]
         [SerializeField] private Transform movementReference;
-        [SerializeField] private Transform cameraReference;
         private PlayerAnimationController anim;
 
-        [Header("Editor Fallback Speeds (Used if Stats not yet initialized)")]
+        [Header("Fallback Speeds")]
         [SerializeField] private float fallbackBaseSpeed = 5f;
         [SerializeField] private float fallbackWalkSpeed = 2f;
         [SerializeField] private float fallbackSprintSpeed = 8f;
@@ -22,7 +21,7 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private float gravity = -9.81f;
         [SerializeField] private float jumpForce = 5f;
 
-        [Header("Crouch Settings")]
+        [Header("Crouch")]
         [SerializeField] private float standHeight = 2f;
         [SerializeField] private float crouchHeight = 1f;
         [SerializeField] private float crouchTransitionSpeed = 10f;
@@ -30,29 +29,25 @@ namespace Features.Player.UnityIntegration
         [Header("Air Control")]
         [SerializeField, Range(0f, 1f)] private float airControl = 0.3f;
 
-        public bool IsCrouching { get; private set; }
-        public Vector2 moveInput = Vector2.zero;
-        private Vector3 velocity = Vector3.zero;
         private CharacterController controller;
+        private MovementStatsAdapter stats;
+
+        private Vector3 velocity;
+        private Vector2 moveInput;
 
         private bool isSprinting;
         private bool isWalking;
 
-        public bool AllowMovement { get; set; }
-
-        private MovementStatsAdapter stats;
-
+        public bool IsCrouching { get; private set; }
         public Vector3 Velocity => velocity;
-        public bool IsGrounded => controller != null && controller.enabled ? controller.isGrounded : true;
+        public bool IsGrounded => controller.isGrounded;
+
+        // ======================================================
 
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
-            
-            // Пытаемся найти stats
             stats = GetComponent<MovementStatsAdapter>();
-            
-            // Пытаемся найти anim
             anim = GetComponent<PlayerAnimationController>();
         }
 
@@ -60,175 +55,107 @@ namespace Features.Player.UnityIntegration
         {
             base.OnStartNetwork();
 
-            Debug.Log(
-                $"[PlayerMovement] OnStartNetwork - " +
-                $"IsOwner={base.Owner.IsLocalClient}, " +
-                $"IsServer={IsServerInitialized}, " +
-                $"GameObject={gameObject.name}",
-                this
-            );
-
-            // ЛОГИКА 1: Отключаем CharacterController для чужих (proxy) объектов
-            bool isRemoteProxy = !base.Owner.IsLocalClient && !IsServerInitialized;
-            if (isRemoteProxy)
-            {
+            // ❗ CharacterController работает ТОЛЬКО на сервере
+            if (!IsServerInitialized)
                 controller.enabled = false;
-                Debug.Log($"[PlayerMovement] CharacterController disabled (remote proxy)", this);
-            }
-
-            // ЛОГИКА 2: Client Authoritative - разрешаем движение для Owner
-            if (base.Owner.IsLocalClient || IsServerInitialized)
-            {
-                AllowMovement = true;
-                Debug.Log($"[PlayerMovement] ✅ AllowMovement = TRUE (Client Authoritative)", this);
-            }
         }
 
-        // ================= INPUT API =================
+        // ======================================================
+        // INPUT API (вызывается сервером)
+        // ======================================================
 
         public void SetMoveInput(Vector2 input) => moveInput = input;
-        public void SetSprint(bool sprinting) => isSprinting = sprinting;
-        public void SetWalk(bool walking) => isWalking = walking;
+        public void SetSprint(bool v) => isSprinting = v;
+        public void SetWalk(bool v) => isWalking = v;
 
         public void TryJump()
         {
-            bool grounded = controller.enabled ? controller.isGrounded : false;
-
-            if (grounded && !IsCrouching)
-            {
-                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
-                if (anim != null) anim.TriggerJump();
+            if (!controller.isGrounded)
                 return;
-            }
 
-            if (grounded && IsCrouching)
-            {
-                ToggleCrouch();
-                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
-                if (anim != null) anim.TriggerJump();
-            }
+            velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+            anim?.TriggerJump();
         }
 
         public void ToggleCrouch()
         {
-            if (IsCrouching)
-            {
-                if (CanStandUp())
-                {
-                    IsCrouching = false;
-                    if (controller.enabled)
-                    {
-                        controller.height = standHeight;
-                        controller.center = new Vector3(0, standHeight / 2f, 0);
-                    }
-                }
-            }
-            else
-            {
-                IsCrouching = true;
-            }
+            IsCrouching = !IsCrouching;
         }
 
-        // ================= UPDATE LOOP =================
+        public void SetBodyYaw(float yaw)
+        {
+            Vector3 euler = transform.eulerAngles;
+            euler.y = yaw;
+            transform.eulerAngles = euler;
+        }
+
+        // ======================================================
+        // SERVER UPDATE LOOP
+        // ======================================================
 
         private void Update()
         {
-            if (!AllowMovement) return;
-
-            // Для чужих игроков (Proxy) не вычисляем физику
-            if (!IsOwner)
-            {
-                HandleCrouchSmooth();
+            if (!IsServerInitialized)
                 return;
-            }
 
-            // Для владельца (Owner) вычисляем всё
-            HandleAnimation();
             HandleMovement();
-            HandleCrouchSmooth();
+            HandleCrouch();
+            HandleAnimation();
         }
 
-        // ================= MOVEMENT LOGIC =================
+        // ======================================================
 
         private void HandleMovement()
         {
-            float currentSpeed = GetSpeedFromStats();
+            float speed = GetSpeed();
 
-            bool grounded = controller.isGrounded;
-            if (grounded && velocity.y < 0)
+            if (controller.isGrounded && velocity.y < 0)
                 velocity.y = -2f;
 
-            Vector3 moveDirection = Vector3.zero;
+            Vector3 dir =
+                movementReference.forward * moveInput.y +
+                movementReference.right * moveInput.x;
 
-            if (movementReference != null)
+            if (controller.isGrounded)
             {
-                moveDirection = movementReference.forward * moveInput.y +
-                                movementReference.right * moveInput.x;
-            }
-
-            if (grounded)
-            {
-                velocity.x = moveDirection.x * currentSpeed;
-                velocity.z = moveDirection.z * currentSpeed;
+                velocity.x = dir.x * speed;
+                velocity.z = dir.z * speed;
             }
             else
             {
-                velocity += moveDirection * currentSpeed * airControl * Time.deltaTime;
+                velocity += dir * speed * airControl * Time.deltaTime;
             }
 
             velocity.y += gravity * Time.deltaTime;
-
-            if (controller.enabled)
-            {
-                controller.Move(velocity * Time.deltaTime);
-            }
+            controller.Move(velocity * Time.deltaTime);
         }
 
-        private void HandleCrouchSmooth()
+        private void HandleCrouch()
         {
-            if (!controller.enabled) return;
+            float target = IsCrouching ? crouchHeight : standHeight;
 
-            float targetHeight = IsCrouching ? crouchHeight : standHeight;
-            if (Mathf.Abs(controller.height - targetHeight) > 0.01f)
-            {
-                controller.height = Mathf.Lerp(
-                    controller.height,
-                    targetHeight,
-                    crouchTransitionSpeed * Time.deltaTime
-                );
-                controller.center = new Vector3(0, controller.height / 2f, 0);
-            }
+            controller.height = Mathf.Lerp(
+                controller.height,
+                target,
+                crouchTransitionSpeed * Time.deltaTime
+            );
+
+            controller.center = new Vector3(0, controller.height / 2f, 0);
         }
-
-        // ================= ANIMATION =================
 
         private void HandleAnimation()
         {
-            if (anim == null) return;
+            if (anim == null)
+                return;
 
-            float planarSpeed = new Vector2(velocity.x, velocity.z).magnitude;
-            bool grounded = controller.isGrounded;
+            float planar = new Vector2(velocity.x, velocity.z).magnitude;
 
-            float animSpeed = 0f;
-
-            if (grounded && planarSpeed > 0.1f)
-            {
-                if (IsCrouching)
-                    animSpeed = 2f;
-                else if (isSprinting)
-                    animSpeed = 2f;
-                else
-                    animSpeed = 1f;
-            }
-
-            anim.SetSpeed(animSpeed);
-            anim.SetGrounded(grounded);
+            anim.SetSpeed(planar);
+            anim.SetGrounded(controller.isGrounded);
             anim.SetCrouch(IsCrouching);
         }
 
-        // ================= HELPERS =================
-
-        private float GetSpeedFromStats()
+        private float GetSpeed()
         {
             if (stats != null && stats.IsReady)
             {
@@ -242,23 +169,6 @@ namespace Features.Player.UnityIntegration
             if (isSprinting) return fallbackSprintSpeed;
             if (isWalking) return fallbackWalkSpeed;
             return fallbackBaseSpeed;
-        }
-
-        private bool CanStandUp()
-        {
-            RaycastHit hit;
-            float checkDistance = standHeight - crouchHeight;
-            Vector3 start = transform.position + Vector3.up * crouchHeight;
-            float radius = controller != null ? controller.radius : 0.3f;
-
-            return !Physics.SphereCast(start, radius, Vector3.up, out hit, checkDistance);
-        }
-
-        public void SetBodyYaw(float yaw)
-        {
-            Vector3 euler = transform.eulerAngles;
-            euler.y = yaw;
-            transform.eulerAngles = euler;
         }
     }
 }

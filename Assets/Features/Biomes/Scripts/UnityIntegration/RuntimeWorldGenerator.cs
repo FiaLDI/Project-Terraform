@@ -15,8 +15,15 @@ namespace Features.Biomes.UnityIntegration
         [Header("Systems Prefab (World-only)")]
         public GameObject systemsPrefab;
 
-        [Header("Spawn Point")]
+        [Header("Spawn Points")]
         [SerializeField] private ScenePlayerSpawnPoint spawnPointPrefab;
+
+        [SerializeField, Min(1)]
+        private int spawnPointCount = 4;
+
+        [SerializeField]
+        private float spawnRadius = 15f;
+
 
         [Header("Custom Prefab")]
         public GameObject customPrefab;
@@ -82,7 +89,7 @@ namespace Features.Biomes.UnityIntegration
 
             // 6) Spawn point для игроков (КЛЮЧЕВОЕ)
             if (spawnPointPrefab != null)
-                SpawnPlayerSpawnPoint();
+                SpawnPlayerSpawnPoints();
 
             // 7) Кастомные объекты
             if (customPrefab != null)
@@ -122,17 +129,31 @@ namespace Features.Biomes.UnityIntegration
             Instantiate(customPrefab, pos, Quaternion.identity);
         }
 
-        private void SpawnPlayerSpawnPoint()
+        private void SpawnPlayerSpawnPoints()
         {
-            Vector3 pos = GetWorldCenterSpawn();
-            Quaternion rot = Quaternion.identity;
+            Vector3 center = GetWorldCenterSpawn();
 
-            var sp = Instantiate(spawnPointPrefab, pos, rot);
-            sp.name = "WorldSpawnPoint";
+            for (int i = 0; i < spawnPointCount; i++)
+            {
+                Vector2 offset2D = UnityEngine.Random.insideUnitCircle * spawnRadius;
+                Vector3 origin = center + new Vector3(offset2D.x, spawnHeightCheck, offset2D.y);
 
-            // ❗ NetworkObject НЕ нужен
-            // сервер использует его как IPlayerSpawnProvider
+                Vector3 pos = origin;
+                Quaternion rot = Quaternion.identity;
+
+                if (Physics.Raycast(origin, Vector3.down, out var hit, spawnHeightCheck * 2f))
+                    pos = hit.point + Vector3.up * 1.5f;
+
+                var sp = Instantiate(spawnPointPrefab, pos, rot);
+                sp.name = $"WorldSpawnPoint_{i}";
+
+                // ❗ НЕ NetworkObject
+                // ❗ сам зарегистрируется в PlayerSpawnRegistry
+            }
+
+            Debug.Log($"[WorldGen] Spawned {spawnPointCount} player spawn points");
         }
+
 
         private bool ChunkExistsAndReady(Vector2Int c)
         {

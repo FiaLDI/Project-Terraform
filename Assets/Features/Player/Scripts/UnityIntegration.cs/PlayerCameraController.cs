@@ -8,13 +8,13 @@ namespace Features.Player.UnityIntegration
     /// <summary>
     /// Локальный контроллер камеры игрока.
     /// Управляет ГЛОБАЛЬНОЙ Unity Camera через CameraRegistry.
+    /// НЕ шлёт RPC, НЕ двигает игрока напрямую.
     /// </summary>
     public sealed class PlayerCameraController : MonoBehaviour
     {
         [Header("References")]
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Transform fpsPoint;
-        [SerializeField] private Transform playerBody;
         [SerializeField] private Transform headTransform;
 
         [Header("Settings")]
@@ -26,19 +26,17 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private float collisionRadius = 0.3f;
         [SerializeField] private float minCameraDistance = 0.5f;
 
-        [Header("TPS Body Turn Limit")]
-        [SerializeField] private float bodyTurnLimit = 40f;
-
         // ===== Runtime =====
         private UnityEngine.Camera unityCamera;
         private Transform cameraTransform;
 
-        // 🔑 УНИКАЛЬНЫЙ control-сервис на игрока
+        // 🔑 Сервис логики камеры
         private ICameraControlService control;
 
         private float currentTpsDistance = 3f;
         private bool isLocal;
 
+        // 🔑 ТОЛЬКО для записи yaw в input state
         private PlayerMovementNetAdapter movementNet;
 
         // ======================================================
@@ -47,7 +45,6 @@ namespace Features.Player.UnityIntegration
 
         private void Awake()
         {
-            // По умолчанию ВЫКЛЮЧЕН
             enabled = false;
 
             control = new CameraControlService();
@@ -66,7 +63,7 @@ namespace Features.Player.UnityIntegration
         }
 
         // ======================================================
-        // INPUT (из PlayerController)
+        // INPUT (вызывается InputHandler'ом)
         // ======================================================
 
         public void SetLookInput(Vector2 input)
@@ -76,11 +73,15 @@ namespace Features.Player.UnityIntegration
 
             control.SetLookInput(input, mouseSensitivity, Time.deltaTime);
 
-            // Передаём yaw серверу для поворота тела
+            float yaw = control.State.Yaw;
+
+            Debug.Log(
+                $"[LOOK][CLIENT] yaw={yaw:F1} pitch={control.State.Pitch:F1}",
+                this
+            );
+
             if (movementNet != null)
-            {
-                movementNet.SetBodyRotation(control.State.Yaw);
-            }
+                movementNet.SetLookYaw(yaw);
         }
 
         public void SwitchView()
@@ -123,7 +124,8 @@ namespace Features.Player.UnityIntegration
                 return;
 
             cameraTransform.position = fpsPoint.position;
-            cameraTransform.rotation = Quaternion.Euler(state.Pitch, state.Yaw, 0f);
+            cameraTransform.rotation =
+                Quaternion.Euler(state.Pitch, state.Yaw, 0f);
 
             if (headTransform != null)
             {
@@ -192,7 +194,7 @@ namespace Features.Player.UnityIntegration
         }
 
         // ======================================================
-        // LOCAL CONTROL (из PlayerCameraNetAdapter)
+        // LOCAL CONTROL
         // ======================================================
 
         public void SetLocal(bool value)

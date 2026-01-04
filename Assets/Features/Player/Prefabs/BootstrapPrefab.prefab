@@ -1294,6 +1294,7 @@ GameObject:
   - component: {fileID: 5308691845288271421}
   - component: {fileID: 7670097793493798085}
   - component: {fileID: 5631159011415772163}
+  - component: {fileID: 5556765622005055074}
   m_Layer: 0
   m_Name: PlayerRegistry
   m_TagString: Untagged
@@ -1352,6 +1353,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f9be6249301a7e4897a2ce66120fc50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerDeviceRegistry
+--- !u!114 &5556765622005055074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2371530381648604821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f525c53725b2e54da8031b7342c89e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnRegistry
 --- !u!1 &2454567456124821228
 GameObject:
   m_ObjectHideFlags: 0

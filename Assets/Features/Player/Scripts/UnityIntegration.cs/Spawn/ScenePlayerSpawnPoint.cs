@@ -1,13 +1,21 @@
 using UnityEngine;
 
-public class ScenePlayerSpawnPoint : MonoBehaviour, IPlayerSpawnProvider
+public sealed class ScenePlayerSpawnPoint : MonoBehaviour, IPlayerSpawnProvider
 {
-    public int TeamId = 0;
-    
-    public bool TryGetSpawnPoint(out Vector3 position, out Quaternion rotation)
+    private void Awake()
     {
-        position = transform.position;
-        rotation = transform.rotation;
+        PlayerSpawnRegistry.I?.Register(this);
+    }
+
+    private void OnDestroy()
+    {
+        PlayerSpawnRegistry.I?.Unregister(this);
+    }
+
+    public bool TryGetSpawnPoint(out Vector3 pos, out Quaternion rot)
+    {
+        pos = transform.position;
+        rot = transform.rotation;
         return true;
     }
 
