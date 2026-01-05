@@ -7,11 +7,8 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
 
     private readonly List<IPlayerSpawnProvider> providers = new();
 
-    // ================= EVENTS =================
     public event System.Action OnProviderRegistered;
     public event System.Action OnProviderUnregistered;
-
-    // ================= LIFECYCLE =================
 
     private void Awake()
     {
@@ -20,16 +17,19 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
+        transform.SetParent(null);
         I = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    // ================= API =================
-
     public void Register(IPlayerSpawnProvider provider)
     {
-        if (provider == null || providers.Contains(provider))
+        if (provider == null)
+            return;
+
+        CleanupDead();
+
+        if (providers.Contains(provider))
             return;
 
         providers.Add(provider);
@@ -43,6 +43,8 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
         if (provider == null)
             return;
 
+        CleanupDead();
+
         if (providers.Remove(provider))
         {
             Debug.Log($"[SpawnRegistry] Unregistered {provider}", provider as Object);
@@ -50,10 +52,19 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
         }
     }
 
-    public bool HasProvider => providers.Count > 0;
+    public bool HasProvider
+    {
+        get
+        {
+            CleanupDead();
+            return providers.Count > 0;
+        }
+    }
 
     public bool TryGetRandom(out IPlayerSpawnProvider provider)
     {
+        CleanupDead();
+
         if (providers.Count == 0)
         {
             provider = null;
@@ -61,6 +72,11 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
         }
 
         provider = providers[Random.Range(0, providers.Count)];
-        return true;
+        return provider != null;
+    }
+
+    private void CleanupDead()
+    {
+        providers.RemoveAll(p => p == null || (p is Object o && o == null));
     }
 }

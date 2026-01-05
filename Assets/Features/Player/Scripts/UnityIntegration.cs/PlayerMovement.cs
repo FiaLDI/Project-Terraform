@@ -1,6 +1,7 @@
 using UnityEngine;
 using FishNet.Object;
 using Features.Stats.Adapter;
+using System.Collections;
 
 namespace Features.Player.UnityIntegration
 {
@@ -38,6 +39,8 @@ namespace Features.Player.UnityIntegration
         private bool isSprinting;
         private bool isWalking;
 
+        private bool initialized;
+
         public bool IsCrouching { get; private set; }
         public Vector3 Velocity => velocity;
         public bool IsGrounded => controller.isGrounded;
@@ -51,11 +54,31 @@ namespace Features.Player.UnityIntegration
             anim = GetComponent<PlayerAnimationController>();
         }
 
-        public override void OnStartNetwork()
+        public override void OnStartServer()
         {
-            base.OnStartNetwork();
+            base.OnStartServer();
 
-            // ❗ CharacterController работает ТОЛЬКО на сервере
+            // 🔑 КРИТИЧНО:
+            // CharacterController выключаем ТОЛЬКО на сервере
+            controller.enabled = false;
+            StartCoroutine(EnableControllerAfterPhysics());
+        }
+
+        private IEnumerator EnableControllerAfterPhysics()
+        {
+            // ждём 1 physics tick
+            yield return new WaitForFixedUpdate();
+
+            velocity = Vector3.zero;
+            controller.enabled = true;
+            initialized = true;
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            // Клиенты НИКОГДА не управляют CC
             if (!IsServerInitialized)
                 controller.enabled = false;
         }
@@ -70,7 +93,7 @@ namespace Features.Player.UnityIntegration
 
         public void TryJump()
         {
-            if (!controller.isGrounded)
+            if (!initialized || !controller.isGrounded)
                 return;
 
             velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
@@ -84,6 +107,9 @@ namespace Features.Player.UnityIntegration
 
         public void SetBodyYaw(float yaw)
         {
+            if (!initialized)
+                return;
+
             Vector3 euler = transform.eulerAngles;
             euler.y = yaw;
             transform.eulerAngles = euler;
@@ -93,9 +119,9 @@ namespace Features.Player.UnityIntegration
         // SERVER UPDATE LOOP
         // ======================================================
 
-        private void Update()
+        private void FixedUpdate()
         {
-            if (!IsServerInitialized)
+            if (!IsServerInitialized || !initialized)
                 return;
 
             HandleMovement();
@@ -109,7 +135,7 @@ namespace Features.Player.UnityIntegration
         {
             float speed = GetSpeed();
 
-            if (controller.isGrounded && velocity.y < 0)
+            if (controller.isGrounded && velocity.y < 0f)
                 velocity.y = -2f;
 
             Vector3 dir =
@@ -123,11 +149,11 @@ namespace Features.Player.UnityIntegration
             }
             else
             {
-                velocity += dir * speed * airControl * Time.deltaTime;
+                velocity += dir * speed * airControl * Time.fixedDeltaTime;
             }
 
-            velocity.y += gravity * Time.deltaTime;
-            controller.Move(velocity * Time.deltaTime);
+            velocity.y += gravity * Time.fixedDeltaTime;
+            controller.Move(velocity * Time.fixedDeltaTime);
         }
 
         private void HandleCrouch()
@@ -137,10 +163,10 @@ namespace Features.Player.UnityIntegration
             controller.height = Mathf.Lerp(
                 controller.height,
                 target,
-                crouchTransitionSpeed * Time.deltaTime
+                crouchTransitionSpeed * Time.fixedDeltaTime
             );
 
-            controller.center = new Vector3(0, controller.height / 2f, 0);
+            controller.center = new Vector3(0f, controller.height / 2f, 0f);
         }
 
         private void HandleAnimation()

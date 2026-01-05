@@ -16,19 +16,18 @@ namespace Features.Interaction.UnityIntegration
         {
             this.ray = ray;
             this.nearby = nearby;
-
         }
 
         public InteractionTarget Resolve(UnityEngine.Camera cam)
         {
+            // 🔒 защита от уничтоженного NearbyInteractables
+            if (nearby is UnityEngine.Object o && o == null)
+                return InteractionTarget.None;
+
             // 1️⃣ PICKUP
             if (nearby != null && cam != null)
             {
-                //Debug.Log($"[Resolver] Nearby has {nearby} items"); // сделай Count в INearbyInteractables
-
                 var best = nearby.GetBestItem(cam);
-                //Debug.Log($"[Resolver] GetBestItem result = {best}", best);
-
                 if (best != null)
                     return InteractionTarget.ForPickup(best);
             }
@@ -37,13 +36,10 @@ namespace Features.Interaction.UnityIntegration
             if (ray != null)
             {
                 var hit = ray.Raycast();
-                if (hit.Hit)
+                if (hit.Hit &&
+                    interactionService.TryGetInteractable(hit, out var interactable))
                 {
-
-                    if (interactionService.TryGetInteractable(hit, out var interactable))
-                    {
-                        return InteractionTarget.ForInteractable(interactable);
-                    }
+                    return InteractionTarget.ForInteractable(interactable);
                 }
             }
 

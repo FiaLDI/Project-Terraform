@@ -33,7 +33,7 @@ namespace Features.Buffs.Application
                 Destroy(gameObject);
                 return;
             }
-
+            transform.SetParent(null);
             Instance = this;
             DontDestroyOnLoad(gameObject);
 

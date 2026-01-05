@@ -75,11 +75,6 @@ namespace Features.Player.UnityIntegration
 
             float yaw = control.State.Yaw;
 
-            Debug.Log(
-                $"[LOOK][CLIENT] yaw={yaw:F1} pitch={control.State.Pitch:F1}",
-                this
-            );
-
             if (movementNet != null)
                 movementNet.SetLookYaw(yaw);
         }
@@ -204,10 +199,6 @@ namespace Features.Player.UnityIntegration
 
             isLocal = value;
             enabled = value;
-
-            Debug.Log(
-                $"[PlayerCameraController] {name} SetLocal={value}"
-            );
         }
     }
 }

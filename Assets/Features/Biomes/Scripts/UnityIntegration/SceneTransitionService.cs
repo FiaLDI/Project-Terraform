@@ -1,4 +1,6 @@
 using Features.Input;
+using FishNet;
+using FishNet.Managing.Scened;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -6,20 +8,28 @@ public static class SceneTransitionService
 {
     public const string WORLD_SCENE = "TestScene";
 
-    public static void LoadWorldScene()
-    {
-        SceneManager.LoadScene(WORLD_SCENE);
-    }
     public static void RequestWorldScene()
     {
-        var dispatcher = Object.FindFirstObjectByType<SceneTransitionDispatcher>();
-        if (dispatcher == null)
+        var nm = InstanceFinder.NetworkManager;
+        if (nm == null)
         {
-            UnityEngine.Debug.LogError("[SceneTransitionService] Dispatcher not found");
+            Debug.LogError("[SceneTransition] NetworkManager not found");
             return;
         }
 
-        dispatcher.RequestWorldScene();
+        // 🔴 КРИТИЧНО: сцену грузит ТОЛЬКО сервер
+        if (!nm.IsServer)
+        {
+            Debug.LogWarning("[SceneTransition] Only server can load world scene");
+            return;
+        }
+
+        var data = new SceneLoadData(WORLD_SCENE)
+        {
+            ReplaceScenes = ReplaceOption.All
+        };
+
+        nm.SceneManager.LoadGlobalScenes(data);
     }
 
 }

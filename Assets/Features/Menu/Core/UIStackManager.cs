@@ -18,7 +18,6 @@ public class UIStackManager : MonoBehaviour
         }
 
         I = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     // ======================================================

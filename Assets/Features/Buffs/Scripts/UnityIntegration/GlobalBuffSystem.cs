@@ -21,7 +21,7 @@ namespace Features.Buffs.UnityIntegration
                 Destroy(gameObject);
                 return;
             }
-
+            transform.SetParent(null);
             I = this;
             DontDestroyOnLoad(gameObject);
         }

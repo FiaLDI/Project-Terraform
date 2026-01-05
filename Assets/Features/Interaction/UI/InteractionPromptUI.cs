@@ -34,7 +34,6 @@ public sealed class InteractionPromptUI : MonoBehaviour
 
     private void Start()
     {
-        // гарантированно после всех Awake
         if (PlayerUIRoot.I == null)
         {
             Debug.LogError("[InteractionPromptUI] PlayerUIRoot.I is NULL in Start");
@@ -56,7 +55,12 @@ public sealed class InteractionPromptUI : MonoBehaviour
 
     private void OnPlayerBound(GameObject player)
     {
-        if (initialized)
+        // 🔥 СБРОС старых ссылок (обязательно)
+        resolver = null;
+        nearby = null;
+        initialized = false;
+
+        if (player == null)
             return;
 
         Debug.Log("[InteractionPromptUI] Player bound: " + player.name);
@@ -80,10 +84,9 @@ public sealed class InteractionPromptUI : MonoBehaviour
 
     private void InitResolver(InteractionRayService ray)
     {
-        Debug.Log("[InteractionPromptUI] Resolver initialized");
-
         resolver = new InteractionResolver(ray, nearby);
         initialized = true;
+        Debug.Log("[InteractionPromptUI] Resolver initialized");
     }
 
     // ======================================================
@@ -92,7 +95,12 @@ public sealed class InteractionPromptUI : MonoBehaviour
 
     private void Update()
     {
-        if (!initialized || resolver == null || Camera.main == null)
+        // 🔒 полная защита
+        if (!initialized ||
+            resolver == null ||
+            Camera.main == null ||
+            nearby == null ||
+            nearby is UnityEngine.Object o && o == null)
         {
             promptText.enabled = false;
             return;

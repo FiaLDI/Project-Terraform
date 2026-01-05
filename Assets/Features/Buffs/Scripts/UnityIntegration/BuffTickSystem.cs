@@ -32,6 +32,7 @@ namespace Features.Buffs.UnityIntegration
         {
             base.OnStartServer();
 
+
             if (instance != null && instance != this)
             {
                 Debug.LogError("[BuffTickSystem] Multiple instances detected!", this);

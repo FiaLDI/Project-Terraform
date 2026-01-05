@@ -16,7 +16,7 @@ public sealed class UIRegistry : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
+        transform.SetParent(null);
         I = this;
         DontDestroyOnLoad(gameObject);
     }

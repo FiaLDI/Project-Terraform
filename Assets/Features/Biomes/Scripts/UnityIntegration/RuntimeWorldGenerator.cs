@@ -24,7 +24,6 @@ namespace Features.Biomes.UnityIntegration
         [SerializeField]
         private float spawnRadius = 15f;
 
-
         [Header("Custom Prefab")]
         public GameObject customPrefab;
 
@@ -39,6 +38,9 @@ namespace Features.Biomes.UnityIntegration
         private GameObject systemsInstance;
 
         public static WorldConfig World { get; private set; }
+
+        public static event System.Action<int> OnWorldReady;
+
 
         // ======================================================
         // SERVER
@@ -59,23 +61,23 @@ namespace Features.Biomes.UnityIntegration
 
         private IEnumerator ServerGenerateWorld()
         {
-            // 1) Биомы
+            // 1️⃣ Биомы
             if (!BiomeRuntimeDatabase.Initialized)
                 BiomeRuntimeDatabase.Build(worldConfig);
 
-            // 2) ChunkManager
+            // 2️⃣ ChunkManager
             manager = new ChunkManager(worldConfig);
             World = worldConfig;
 
-            // 3) Стартовая генерация
+            // 3️⃣ Стартовая генерация чанков
             manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
             manager.ProcessLoadQueue();
 
-            // 4) Ждём стартовый чанк
-            while (!ChunkExistsAndReady(Vector2Int.zero))
-                yield return null;
+            // 🔑 КЛЮЧ: НЕ ждём MeshCollider / физику
+            // Даём PhysX 1 тик, чтобы мир начал существовать
+            yield return new WaitForFixedUpdate();
 
-            // 5) Системы мира
+            // 4️⃣ Системы мира
             if (systemsPrefab != null)
             {
                 systemsInstance = Instantiate(
@@ -87,13 +89,16 @@ namespace Features.Biomes.UnityIntegration
                 Spawn(systemsInstance);
             }
 
-            // 6) Spawn point для игроков (КЛЮЧЕВОЕ)
+            // 5️⃣ Spawn-point’ы игроков (логические)
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();
 
-            // 7) Кастомные объекты
+            // 6️⃣ Кастомные объекты
             if (customPrefab != null)
                 SpawnCustomPrefab();
+
+            OnWorldReady?.Invoke(WorldSession.WorldVersion);
+            Debug.Log("[WorldGen] World generation completed");
         }
 
         private void Update()
@@ -116,6 +121,7 @@ namespace Features.Biomes.UnityIntegration
             float cz = cs * 0.5f;
 
             Vector3 origin = new Vector3(cx, spawnHeightCheck, cz);
+
             if (Physics.Raycast(origin, Vector3.down, out var hit, spawnHeightCheck * 2f))
                 return hit.point + Vector3.up * 2f;
 
@@ -141,24 +147,15 @@ namespace Features.Biomes.UnityIntegration
                 Vector3 pos = origin;
                 Quaternion rot = Quaternion.identity;
 
+                // Лёгкий raycast — только если физика уже есть
                 if (Physics.Raycast(origin, Vector3.down, out var hit, spawnHeightCheck * 2f))
                     pos = hit.point + Vector3.up * 1.5f;
 
                 var sp = Instantiate(spawnPointPrefab, pos, rot);
                 sp.name = $"WorldSpawnPoint_{i}";
-
-                // ❗ НЕ NetworkObject
-                // ❗ сам зарегистрируется в PlayerSpawnRegistry
             }
 
             Debug.Log($"[WorldGen] Spawned {spawnPointCount} player spawn points");
-        }
-
-
-        private bool ChunkExistsAndReady(Vector2Int c)
-        {
-            var go = GameObject.Find($"Chunk_{c.x}_{c.y}");
-            return go != null && go.GetComponentInChildren<MeshCollider>() != null;
         }
     }
 }
