@@ -4,51 +4,53 @@ using Features.Passives.Domain;
 
 namespace Features.Passives.Application
 {
-    public class PassiveService
+    public sealed class PassiveService
     {
-        private readonly GameObject _owner;
-        private readonly List<PassiveSO> _active = new();
+        private readonly GameObject owner;
+        private readonly List<PassiveSO> active = new();
 
-        public IReadOnlyList<PassiveSO> Active => _active;
+        public IReadOnlyList<PassiveSO> Active => active;
 
         public PassiveService(GameObject owner)
         {
-            _owner = owner;
+            this.owner = owner;
         }
 
         public void Activate(PassiveSO passive)
         {
-            if (passive == null || _active.Contains(passive))
-                return;
+            Debug.Log($"[PASSIVES] Activate {passive.name}", owner);
 
-            _active.Add(passive);
-            passive.Apply(_owner);
+            if (passive == null || active.Contains(passive))
+                return;
+            
+            active.Add(passive);
+            passive.Apply(owner);
         }
 
         public void Deactivate(PassiveSO passive)
         {
-            if (passive == null || !_active.Contains(passive))
+            if (passive == null || !active.Contains(passive))
                 return;
 
-            _active.Remove(passive);
-            passive.Remove(_owner);
+            active.Remove(passive);
+            passive.Remove(owner);
         }
 
         public void ActivateAll(IEnumerable<PassiveSO> passives)
         {
+            if (passives == null)
+                return;
+
             foreach (var p in passives)
-            {
                 Activate(p);
-            }
         }
 
         public void DeactivateAll()
         {
-            foreach (var p in _active)
-            {
-                p.Remove(_owner);
-            }
-            _active.Clear();
+            for (int i = active.Count - 1; i >= 0; i--)
+                active[i].Remove(owner);
+
+            active.Clear();
         }
     }
 }

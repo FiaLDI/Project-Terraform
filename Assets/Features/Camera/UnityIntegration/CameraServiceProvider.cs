@@ -5,12 +5,11 @@ using Features.Camera.Application;
 namespace Features.Camera.UnityIntegration
 {
     /// <summary>
-    /// Р•Р”РРќР«Р™ РіР»РѕР±Р°Р»СЊРЅС‹Р№ РїСЂРѕРІР°Р№РґРµСЂ СЃРµСЂРІРёСЃРѕРІ РєР°РјРµСЂС‹:
-    /// - Control: Р»РѕРіРёРєР° yaw/pitch, fps/tps, blend.
-    /// - Runtime: СЃСЃС‹Р»РєР° РЅР° Р°РєС‚РёРІРЅСѓСЋ Unity-РєР°РјРµСЂСѓ, FOV, shake.
+    /// ЕДИНЫЙ глобальный провайдер камеры.
+    /// Один на клиент / хост.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
-    public class CameraServiceProvider : MonoBehaviour
+    public sealed class CameraServiceProvider : MonoBehaviour
     {
         public static ICameraControlService Control { get; private set; }
         public static ICameraRuntimeService Runtime { get; private set; }

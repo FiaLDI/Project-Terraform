@@ -8,6 +8,7 @@ namespace Features.Quests.UnityIntegration
         MonoBehaviour,
         IInputContextConsumer
     {
+        private PlayerInputContext input;
         private QuestUIRuntime questUI;
 
         private InputAction togglePlayer;
@@ -15,9 +16,20 @@ namespace Features.Quests.UnityIntegration
 
         private bool subscribed;
 
+        // ======================================================
+        // INPUT BIND
+        // ======================================================
+
         public void BindInput(PlayerInputContext ctx)
         {
-            if (subscribed)
+            if (input == ctx)
+                return;
+
+            if (input != null)
+                UnbindInput(input);
+            input = ctx;
+
+            if (input == null)
                 return;
 
             questUI = Object.FindAnyObjectByType<QuestUIRuntime>(
@@ -29,34 +41,50 @@ namespace Features.Quests.UnityIntegration
                 return;
             }
 
-            togglePlayer = ctx.Actions.Player.FindAction("ToggleQuests", true);
-            toggleUI     = ctx.Actions.UI.FindAction("ToggleQuests", true);
+            togglePlayer = input.Actions.Player.FindAction("ToggleQuests", true);
+            toggleUI = input.Actions.UI.FindAction("ToggleQuests", true);
 
             togglePlayer.performed += OnToggle;
-            toggleUI.performed     += OnToggle;
+            toggleUI.performed += OnToggle;
+
+            togglePlayer.Enable();
+            toggleUI.Enable();
 
             subscribed = true;
-
-            Debug.Log("[QuestJournalInputHandler] Bound");
         }
 
-        private void OnDisable()
+        public void UnbindInput(PlayerInputContext ctx)
         {
-            if (!subscribed)
+            if (!subscribed || input != ctx)
                 return;
 
-            togglePlayer.performed -= OnToggle;
-            toggleUI.performed     -= OnToggle;
+            if (togglePlayer != null)
+            {
+                togglePlayer.performed -= OnToggle;
+                togglePlayer.Disable();
+                togglePlayer = null;
+            }
 
+            if (toggleUI != null)
+            {
+                toggleUI.performed -= OnToggle;
+                toggleUI.Disable();
+                toggleUI = null;
+            }
+
+            input = null;
             subscribed = false;
         }
+
+        // ======================================================
+        // ACTION
+        // ======================================================
 
         private void OnToggle(InputAction.CallbackContext _)
         {
             if (UIStackManager.I == null)
                 return;
 
-            // toggle логика как в Inventory
             if (UIStackManager.I.HasScreens)
             {
                 var top = UIStackManager.I.Peek();

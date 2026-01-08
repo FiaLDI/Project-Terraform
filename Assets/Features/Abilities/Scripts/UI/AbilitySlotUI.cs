@@ -59,6 +59,8 @@ namespace Features.Abilities.UI
 
         public void Bind(AbilitySO ability, AbilityCaster caster, int index)
         {
+            Debug.Log($"[AbilitySlotUI] Bind CALLED | slotGO={gameObject.name} idx={index} ability={(ability ? ability.name : "null")} abilityId={(ability ? ability.GetInstanceID().ToString() : "null")} caster={(caster ? caster.name : "null")} casterId={(caster ? caster.GetInstanceID().ToString() : "null")} iconRef={(icon ? icon.name : "null")}", this);
+
             Unsubscribe();
 
             boundAbility = ability;
@@ -112,9 +114,12 @@ namespace Features.Abilities.UI
             {
                 icon.sprite = ability.icon;
                 icon.color = Color.white;
+                Debug.Log($"[AbilitySlotUI] SPRITE SET OK | ability={ability.name} sprite={ability.icon.name} iconImageGO={icon.gameObject.name}", this);
+
             }
             else
             {
+                Debug.LogWarning($"[AbilitySlotUI] Ability {ability.name} has NO icon", this);
                 icon.sprite = defaultIcon;
                 icon.color = Color.yellow;
             }
@@ -238,5 +243,12 @@ namespace Features.Abilities.UI
             if (warnedMissingRefs) return;
             warnedMissingRefs = true;
         }
+
+        private string Obj(UnityEngine.Object o) =>
+            o == null ? "null" : $"{o.name} ({o.GetType().Name}) id={o.GetInstanceID()}";
+
+        private void Log(string msg) =>
+            Debug.Log($"[AbilitySlotUI] {msg} | slotGO={Obj(gameObject)} idx={index} bound={(boundAbility ? boundAbility.name : "null")} iconRef={(icon ? Obj(icon) : "null")}");
+
     }
 }

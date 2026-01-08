@@ -6,6 +6,7 @@ using Features.Resources.UnityIntegration;
 using Features.Combat.Domain;
 using Features.Equipment.Domain;
 using Features.Items.UnityIntegration;
+using FishNet;
 
 public class DrillToolPresenter : MonoBehaviour, IUsable
 {
@@ -19,7 +20,6 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
     private bool drilling;
     private float heat;
     private const float heatMax = 5f;
-
     private float toolMultiplier = 1f;
 
     public void Initialize(Camera camera)
@@ -29,7 +29,6 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
         var inst = GetComponent<ItemRuntimeHolder>()?.Instance;
         if (inst == null || inst.itemDefinition == null)
         {
-            // НОРМАЛЬНОЕ состояние (предмет сняли / переключили)
             enabled = false;
             return;
         }
@@ -41,10 +40,6 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
         enabled = true;
     }
 
-    // ============================================================
-    // IUsable
-    // ============================================================
-
     public void OnUsePrimary_Start() => drilling = true;
     public void OnUsePrimary_Hold()  => drilling = true;
     public void OnUsePrimary_Stop()  => drilling = false;
@@ -53,11 +48,9 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
     public void OnUseSecondary_Hold()  => drilling = true;
     public void OnUseSecondary_Stop()  => drilling = false;
 
-    // ============================================================
-
     private void Update()
     {
-        if (!drilling)
+        if (!drilling || stats == null)
         {
             fx?.Stop();
             heat = Mathf.Max(0, heat - Time.deltaTime * 1.5f);
@@ -68,47 +61,68 @@ public class DrillToolPresenter : MonoBehaviour, IUsable
         DrillTick();
     }
 
+    private bool TryGetUseRay(out Ray ray)
+    {
+        // owner client
+        if (cam != null)
+        {
+            ray = new Ray(cam.transform.position, cam.transform.forward);
+            return true;
+        }
+
+        // server (нет камеры)
+        var adapter = GetComponentInParent<PlayerUsageNetAdapter>();
+        if (adapter != null && adapter.TryGetServerAim(out ray))
+            return true;
+
+        ray = default;
+        return false;
+    }
+
     private void DrillTick()
     {
-        if (!Physics.Raycast(
-                cam.transform.position,
-                cam.transform.forward,
-                out var hit,
-                stats[ToolStat.Range]))
+        if (!TryGetUseRay(out var ray))
         {
             fx?.Stop();
             return;
         }
 
+        float range = stats[ToolStat.Range];
+
+        if (!Physics.Raycast(ray.origin, ray.direction, out var hit, range))
+        {
+            fx?.Stop();
+            return;
+        }
 
         fx?.Play(hit.point, hit.normal);
 
         heat += Time.deltaTime;
-        if (heat > heatMax)
-            fx?.SetOverheat(true);
-
+        fx?.SetOverheat(heat > heatMax);
         float mining = stats[ToolStat.MiningSpeed] * toolMultiplier * Time.deltaTime;
         float dmg    = stats[ToolStat.Damage]      * toolMultiplier * Time.deltaTime;
 
-        // 1. СНАЧАЛА ресурсы
-        var node = hit.collider.GetComponent<ResourceNodePresenter>();
-        if (node != null)
+        var nodeNet = hit.collider.GetComponent<ResourceNodeNetwork>();
+        if (nodeNet != null)
         {
-            node.ApplyMining(mining);
+            nodeNet.Mine_Server(mining, 1f);
             return;
         }
 
-        // 2. ПОТОМ урон
-        var comps = hit.collider.GetComponentsInParent<Component>();
-        foreach (var c in comps)
+        if (InstanceFinder.IsServerStarted)
         {
-            if (c is IDamageable damageable)
+            var node = hit.collider.GetComponent<ResourceNodePresenter>();
+            if (node != null)
             {
-                damageable.TakeDamage(dmg, DamageType.Mining);
+                node.ApplyMining(mining);
                 return;
             }
+
+            var dmgTarget = hit.collider.GetComponentInParent<IDamageable>();
+            if (dmgTarget != null)
+            {
+                dmgTarget.TakeDamage(dmg, DamageType.Mining);
+            }
         }
-
     }
-
 }

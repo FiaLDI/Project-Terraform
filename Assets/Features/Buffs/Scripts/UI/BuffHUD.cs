@@ -1,136 +1,90 @@
 using UnityEngine;
-using System.Linq;
 using System.Collections.Generic;
-using Features.Buffs.Application;
-using Features.Buffs.UnityIntegration;
-using Features.Player.UnityIntegration;
+using Features.Buffs.Data;
+using Features.Buffs.Client;
+using Features.UI;
+using Features.Buffs.Domain;
 
 namespace Features.Buffs.UI
 {
-    public class BuffHUD : MonoBehaviour
+    public sealed class BuffHUD : PlayerBoundUIView
     {
         [Header("UI")]
-        public Transform container;
-        public BuffIconUI iconPrefab;
+        [SerializeField] private Transform container;
+        [SerializeField] private BuffIconUI iconPrefab;
 
-        private BuffSystem buffSystem;
-        private readonly Dictionary<BuffInstance, BuffIconUI> icons = new();
+        private ClientBuffView buffView;
 
-        private bool bound = false;
+        // KEY = buffId
+        private readonly Dictionary<string, BuffIconUI> icons = new();
 
-        private void Start()
+        // ======================================================
+        // PLAYER BIND
+        // ======================================================
+
+        protected override void OnPlayerBound(GameObject player)
         {
-            TryAutoBind();
-        }
-
-        private void Update()
-        {
-            if (!bound)
-                TryAutoBind();
-        }
-
-        // ==========================================================
-        // AUTO-BIND
-        // ==========================================================
-        private void TryAutoBind()
-        {
-            if (PlayerRegistry.Instance == null)
-                return;
-
-            var player = PlayerRegistry.Instance.LocalPlayer;
-            if (player == null)
-                return;
-
-            var bs = player.GetComponent<BuffSystem>();
-            if (bs == null)
-                return;
-
-            // Подождать один кадр после инициализации BuffSystem
-            if (!bs.ServiceReady)
-                return;
-
-            Bind(bs);
-        }
-
-
-        // ==========================================================
-        // BIND
-        // ==========================================================
-        private void Bind(BuffSystem bs)
-        {
-            buffSystem = bs;
-            bound = true;
-
-            buffSystem.OnBuffAdded += HandleAdd;
-            buffSystem.OnBuffRemoved += HandleRemove;
-
-            // Добавляем уже активные баффы
-            if (buffSystem.Active != null)
+            buffView = player.GetComponent<ClientBuffView>();
+            if (buffView == null)
             {
-                foreach (var inst in buffSystem.Active)
-                    HandleAdd(inst);
-            }
-        }
-
-        // ==========================================================
-        // ADD / REMOVE ICONS
-        // ==========================================================
-        private void HandleAdd(BuffInstance inst)
-        {
-            if (inst == null || inst.Config == null) return;
-            if (icons.ContainsKey(inst)) return;
-
-            var ui = Instantiate(iconPrefab, container);
-            ui.Bind(inst);
-
-            // Tooltip
-            var tt = ui.GetComponent<BuffTooltipTrigger>();
-            if (tt != null) tt.Bind(inst);
-
-            icons[inst] = ui;
-            Resort();
-        }
-
-        private void HandleRemove(BuffInstance inst)
-        {
-            if (!icons.TryGetValue(inst, out var ui))
+                Debug.LogError("[BuffHUD] ClientBuffView missing", this);
                 return;
-
-            if (ui != null) // Unity-null check
-                Destroy(ui.gameObject);
-
-            icons.Remove(inst);
-
-            Resort();
-        }
-
-        // ==========================================================
-        // SORT
-        // ==========================================================
-        private void Resort()
-        {
-            var sorted = icons
-                .OrderBy(kv => kv.Key.Config.isDebuff ? 0 : 1) // дебаффы слева
-                .ThenByDescending(kv => kv.Key.Remaining)
-                .ToList();
-
-            for (int i = 0; i < sorted.Count; i++)
-                sorted[i].Value.transform.SetSiblingIndex(i);
-        }
-
-        private void OnDisable()
-        {
-            if (buffSystem != null)
-            {
-                buffSystem.OnBuffAdded -= HandleAdd;
-                buffSystem.OnBuffRemoved -= HandleRemove;
             }
 
+            buffView.BuffsChanged += Rebuild;
+            buffView.Bind();
+
+            Rebuild();
+        }
+
+        protected override void OnPlayerUnbound(GameObject player)
+        {
+            if (buffView != null)
+            {
+                buffView.BuffsChanged -= Rebuild;
+                buffView.Unbind();
+            }
+
+            buffView = null;
+            ClearAll();
+        }
+
+        // ======================================================
+        // UI BUILD
+        // ======================================================
+
+        private void Rebuild()
+        {
             ClearAll();
 
-            buffSystem = null;
-            bound = false;
+            if (buffView == null)
+                return;
+
+            foreach (var cfg in buffView.Active)
+                CreateIcon(cfg);
         }
+
+        private void CreateIcon(BuffSO cfg)
+        {
+            if (cfg == null || container == null || iconPrefab == null)
+                return;
+
+            var ui = Instantiate(iconPrefab, container);
+            ui.Bind(cfg);
+
+            var tt = ui.GetComponentInChildren<BuffTooltipTrigger>();
+            if (tt != null)
+                tt.Bind(cfg);
+
+            else
+                Debug.LogError("[BuffHUD] BuffTooltipTrigger not found", ui);
+
+            icons[cfg.buffId] = ui;
+        }
+
+        // ======================================================
+        // CLEANUP
+        // ======================================================
 
         private void ClearAll()
         {

@@ -32,5 +32,8 @@ namespace Features.Stats.Domain
         void Recover(float amount);
 
         void ApplyBuff(BuffSO cfg, bool apply);
+        void SetCurrentHp(float value);
+        void SetMaxHpDirect(float hp);
+        void Reset();
     }
 }

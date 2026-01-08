@@ -1,45 +1,35 @@
-using UnityEngine;
+using Features.Buffs.Domain;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
-using Features.Buffs.Application;
 
 namespace Features.Buffs.UI
 {
-    public class BuffIconUI : MonoBehaviour
+    public sealed class BuffIconUI : MonoBehaviour
     {
+        [Header("UI")]
         public Image icon;
-        public Image radialFill;
-        public TextMeshProUGUI timer;
+        public TextMeshProUGUI label;
 
-        private BuffInstance inst;
+        private BuffSO cfg;
 
-        public void Bind(BuffInstance inst)
+        public void Bind(BuffSO cfg)
         {
-            this.inst = inst;
+            this.cfg = cfg;
 
-            if (inst == null || inst.Config == null)
+            if (cfg == null)
                 return;
 
-            icon.sprite = inst.Config.icon;
+            if (icon != null)
+                icon.sprite = cfg.icon;
+
+            if (label != null)
+                label.text = cfg.displayName;
         }
 
-        private void Update()
+        private void OnDestroy()
         {
-            if (inst == null || inst.Config == null)
-                return;
-
-            // Бесконечные баффы
-            if (float.IsInfinity(inst.Config.duration))
-            {
-                timer.text = "";
-                radialFill.fillAmount = 0f;
-                return;
-            }
-
-            radialFill.fillAmount = inst.Progress01;
-
-            float t = inst.Remaining;
-            timer.text = t < 1f ? $"{t:0.0}" : $"{t:0}";
+            cfg = null;
         }
     }
 }

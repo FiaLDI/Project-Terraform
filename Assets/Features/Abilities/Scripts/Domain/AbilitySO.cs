@@ -1,8 +1,9 @@
+using Features.Buffs.Domain;
 using UnityEngine;
 
 namespace Features.Abilities.Domain
 {
-    public abstract class AbilitySO : ScriptableObject
+    public abstract class AbilitySO : ScriptableObject, IBuffSource
     {
         [Header("Identity")]
         public string id;

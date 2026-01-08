@@ -1,132 +1,101 @@
 using UnityEngine;
-using Features.Abilities.Domain;
 using Features.Buffs.Application;
-using Features.Combat.Domain;
 using Features.Buffs.Domain;
-using Features.Buffs.UnityIntegration;
+using Features.Combat.Domain;
+using Features.Abilities.Domain;
 
 namespace Features.Abilities.UnityIntegration
 {
-    public class OverloadPulseHandler : IAbilityHandler
+    public sealed class OverloadPulseHandler
+        : AbilityHandler<OverloadPulseAbilitySO>
     {
-        public System.Type AbilityType => typeof(OverloadPulseAbilitySO);
-
-        public void Execute(AbilitySO abilityBase, AbilityContext ctx)
+        protected override void ExecuteInternal(
+            OverloadPulseAbilitySO ability,
+            AbilityContext ctx,
+            GameObject owner)
         {
-            var ability = (OverloadPulseAbilitySO)abilityBase;
+            EnsureBuffInfrastructure(owner);
 
-            // ==== ADAPTATION: ctx.Owner is NOW object, not GameObject ====
-            GameObject ownerGO = null;
+            Vector3 origin = owner.transform.position;
 
-            switch (ctx.Owner)
-            {
-                case GameObject go:
-                    ownerGO = go;
-                    break;
-
-                case Component comp:
-                    ownerGO = comp.gameObject;
-                    break;
-
-                default:
-                    Debug.LogError("[OverloadPulse] AbilityContext.Owner is not a GameObject or Component");
-                    return;
-            }
-
-            if (ownerGO == null)
-                return;
-
-            // =========================================================
-            // ENSURE Buff Infrastructure
-            // =========================================================
-
-            if (PlayerDeviceBuffService.I == null)
-            {
-                new GameObject("PlayerDeviceBuffService")
-                    .AddComponent<PlayerDeviceBuffService>();
-            }
-
-            var playerTarget = ownerGO.GetComponent<IBuffTarget>();
-            if (playerTarget == null)
-            {
-                Debug.LogWarning("[OverloadPulse] Player has NO IBuffTarget → Adding PlayerBuffTarget");
-                playerTarget = ownerGO.AddComponent<PlayerBuffTarget>();
-            }
-
-            if (playerTarget.BuffSystem == null)
-            {
-                Debug.LogWarning("[OverloadPulse] Player had no BuffSystem → Adding");
-                ownerGO.AddComponent<BuffSystem>();
-            }
-
-            // =========================================================
-            // SPAWN FX
-            // =========================================================
-
-            Vector3 origin = ownerGO.transform.position;
-
+            // ================= FX =================
             if (ability.pulseFxPrefab != null)
             {
-                GameObject fx = Object.Instantiate(
+                var fx = Object.Instantiate(
                     ability.pulseFxPrefab,
                     origin,
                     Quaternion.identity
                 );
 
-                if (fx.TryGetComponent<OverloadPulseBehaviour>(out var pulse))
-                    pulse.Init(ownerGO.transform, ability.radius, ability.fxDuration);
+                if (fx.TryGetComponent(out OverloadPulseBehaviour pulse))
+                    pulse.Init(owner.transform, ability.radius, ability.fxDuration);
 
                 Object.Destroy(fx, ability.fxDuration + 1f);
             }
 
-            // =========================================================
-            // APPLY BUFFS TO PLAYER
-            // =========================================================
-
-            var buffSys = ownerGO.GetComponent<BuffSystem>();
-
+            // ================= PLAYER BUFFS =================
+            var buffSys = owner.GetComponent<BuffSystem>();
             if (buffSys != null)
             {
-                if (ability.damageBuff)
-                    buffSys.Add(ability.damageBuff);
-
-                if (ability.fireRateBuff)
-                    buffSys.Add(ability.fireRateBuff);
-
-                if (ability.turretMoveBuff)
-                    buffSys.Add(ability.turretMoveBuff);
+                Apply(buffSys, ability.damageBuff, ability);
+                Apply(buffSys, ability.fireRateBuff, ability);
+                Apply(buffSys, ability.turretMoveBuff, ability);
             }
 
-            // =========================================================
-            // APPLY BUFFS TO PLAYER DEVICES / TURRETS
-            // =========================================================
+            // ================= DEVICES =================
+            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
+                owner, ability.damageBuff, ability);
 
-            PlayerDeviceBuffService.I.BuffAllPlayerDevices(ownerGO, ability.damageBuff);
-            PlayerDeviceBuffService.I.BuffAllPlayerDevices(ownerGO, ability.fireRateBuff);
-            PlayerDeviceBuffService.I.BuffAllPlayerDevices(ownerGO, ability.turretMoveBuff);
+            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
+                owner, ability.fireRateBuff, ability);
 
-            // =========================================================
-            // DAMAGE ENEMIES
-            // =========================================================
+            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
+                owner, ability.turretMoveBuff, ability);
 
-            Collider[] hits = Physics.OverlapSphere(origin, ability.radius);
-
-            foreach (var h in hits)
+            // ================= DAMAGE =================
+            foreach (var h in Physics.OverlapSphere(origin, ability.radius))
             {
-                if (h.CompareTag("Enemy"))
-                {
-                    if (h.TryGetComponent<IDamageable>(out var dmg))
-                        dmg.TakeDamage(ability.pulseDamage, DamageType.Generic);
+                if (!h.CompareTag("Enemy"))
+                    continue;
 
-                    var rb = h.attachedRigidbody;
-                    if (rb)
-                    {
-                        Vector3 dir = h.transform.position - origin;
-                        dir.y = 0;
-                        rb.AddForce(dir.normalized * ability.knockbackForce, ForceMode.Impulse);
-                    }
+                if (h.TryGetComponent<IDamageable>(out var dmg))
+                    dmg.TakeDamage(ability.pulseDamage, DamageType.Generic);
+
+                if (h.attachedRigidbody != null)
+                {
+                    Vector3 dir = h.transform.position - origin;
+                    dir.y = 0;
+
+                    h.attachedRigidbody.AddForce(
+                        dir.normalized * ability.knockbackForce,
+                        ForceMode.Impulse
+                    );
                 }
             }
+        }
+
+        private static void Apply(BuffSystem sys, BuffSO buff, AbilitySO source)
+        {
+            if (buff == null) return;
+
+            sys.Add(
+                buff,
+                source: source,
+                lifetimeMode: BuffLifetimeMode.Duration
+            );
+        }
+
+        private static void EnsureBuffInfrastructure(GameObject owner)
+        {
+            if (owner.GetComponent<IBuffTarget>() == null)
+                owner.AddComponent<PlayerBuffTarget>();
+
+            if (owner.GetComponent<BuffSystem>() == null)
+                owner.AddComponent<BuffSystem>();
+
+            if (PlayerDeviceBuffService.I == null)
+                new GameObject("PlayerDeviceBuffService")
+                    .AddComponent<PlayerDeviceBuffService>();
         }
     }
 }

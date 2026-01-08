@@ -145,12 +145,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 959747366}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: efc7c45eb19b89e4eb598d9b2aa1a015, type: 3}
+  m_Script: {fileID: 11500000, guid: 698d315f79fa6994c88a9f60b7a211a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerAuthoring
-  EnemyPrefab: {fileID: 5886046190554101884, guid: 7d4309ef596f6024a8f1e1f513f1e71e, type: 3}
-  Count: 3403
-  Radius: 125.5
+  EnemyPrefab: {fileID: 5739330300266458567, guid: f98c2f15af069a04b8ffe0ee9c6a8f59, type: 3}
+  Count: 100
+  Radius: 20
 --- !u!4 &959747368
 Transform:
   m_ObjectHideFlags: 0

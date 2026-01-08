@@ -1,7 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using Features.Enemy.Data;
-using Features.Enemy;
+using Features.Enemy.UnityIntegration;
 
 public class EnemyEditorWindow : EditorWindow
 {
@@ -37,7 +37,7 @@ public class EnemyEditorWindow : EditorWindow
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
         DrawInfoBlock();
-        DrawStats();
+        DrawStatsPreset();          // 🔥 ИЗМЕНЕНО
         DrawModelValidation();
         DrawLODSettings();
         DrawCanvasSettings();
@@ -46,6 +46,10 @@ public class EnemyEditorWindow : EditorWindow
 
         EditorGUILayout.EndScrollView();
     }
+
+    // =====================================================
+    // INFO
+    // =====================================================
 
     private void DrawInfoBlock()
     {
@@ -67,13 +71,27 @@ public class EnemyEditorWindow : EditorWindow
             EditorGUILayout.HelpBox("Enemy must have a base prefab!", MessageType.Error);
     }
 
-    private void DrawStats()
+    // =====================================================
+    // STATS (NEW)
+    // =====================================================
+
+    private void DrawStatsPreset()
     {
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Stats", EditorStyles.boldLabel);
 
-        config.baseMaxHealth = EditorGUILayout.FloatField("Max Health", config.baseMaxHealth);
+        config.statsPreset = (EnemyStatsPresetSO)EditorGUILayout.ObjectField(
+            "Stats Preset",
+            config.statsPreset,
+            typeof(EnemyStatsPresetSO),
+            false
+        );
+
     }
+
+    // =====================================================
+    // LOD VALIDATION
+    // =====================================================
 
     private void DrawModelValidation()
     {
@@ -103,28 +121,35 @@ public class EnemyEditorWindow : EditorWindow
         var child = root.Find(childName);
         if (!child)
         {
-            if (required)
-                EditorGUILayout.HelpBox($"{childName} missing!", MessageType.Error);
-            else
-                EditorGUILayout.HelpBox($"{childName} optional but missing.", MessageType.Warning);
+            EditorGUILayout.HelpBox(
+                required
+                    ? $"{childName} missing!"
+                    : $"{childName} optional but missing.",
+                required ? MessageType.Error : MessageType.Warning
+            );
             return;
         }
 
         var renderer = child.GetComponentInChildren<Renderer>();
         if (!renderer)
-            EditorGUILayout.HelpBox($"{childName} found but has NO Renderer!", MessageType.Error);
-        else
         {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField($"{childName}: OK ({renderer.GetType().Name})");
-
-            Texture2D preview = AssetPreview.GetAssetPreview(renderer.gameObject);
-            if (preview) GUILayout.Label(preview, GUILayout.Width(64), GUILayout.Height(64));
-
-            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.HelpBox($"{childName} found but has NO Renderer!", MessageType.Error);
+            return;
         }
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField($"{childName}: OK ({renderer.GetType().Name})");
+
+        Texture2D preview = AssetPreview.GetAssetPreview(renderer.gameObject);
+        if (preview)
+            GUILayout.Label(preview, GUILayout.Width(64), GUILayout.Height(64));
+
+        EditorGUILayout.EndHorizontal();
     }
 
+    // =====================================================
+    // OTHER BLOCKS (без изменений)
+    // =====================================================
 
     private void DrawLODSettings()
     {
@@ -148,7 +173,8 @@ public class EnemyEditorWindow : EditorWindow
             false
         );
 
-        config.canvasHideDistance = EditorGUILayout.FloatField("Canvas Hide Distance", config.canvasHideDistance);
+        config.canvasHideDistance =
+            EditorGUILayout.FloatField("Canvas Hide Distance", config.canvasHideDistance);
     }
 
     private void DrawInstancing()
@@ -156,15 +182,23 @@ public class EnemyEditorWindow : EditorWindow
         GUILayout.Space(10);
         EditorGUILayout.LabelField("Instancing", EditorStyles.boldLabel);
 
-        config.useGPUInstancing = EditorGUILayout.Toggle("Use Instancing", config.useGPUInstancing);
+        config.useGPUInstancing =
+            EditorGUILayout.Toggle("Use Instancing", config.useGPUInstancing);
 
         if (config.useGPUInstancing)
         {
-            config.instancingDistance = EditorGUILayout.FloatField("Instancing Distance", config.instancingDistance);
-            config.disableAnimatorInInstancing = EditorGUILayout.Toggle("Disable Animator", config.disableAnimatorInInstancing);
-            config.makeRigidbodyKinematicInInstancing = EditorGUILayout.Toggle("Make Rigidbody Kinematic", config.makeRigidbodyKinematicInInstancing);
+            config.instancingDistance =
+                EditorGUILayout.FloatField("Instancing Distance", config.instancingDistance);
+            config.disableAnimatorInInstancing =
+                EditorGUILayout.Toggle("Disable Animator", config.disableAnimatorInInstancing);
+            config.makeRigidbodyKinematicInInstancing =
+                EditorGUILayout.Toggle("Make Rigidbody Kinematic", config.makeRigidbodyKinematicInInstancing);
         }
     }
+
+    // =====================================================
+    // BUILD
+    // =====================================================
 
     private void DrawBuildButtons()
     {
@@ -194,24 +228,28 @@ public class EnemyEditorWindow : EditorWindow
 
         string basePath = AssetDatabase.GetAssetPath(config.prefab);
         string folder = System.IO.Path.GetDirectoryName(basePath);
-        string outputPath = folder + "/" + config.displayName + "_Runtime.prefab";
+        string outputPath = $"{folder}/{config.displayName}_Runtime.prefab";
 
-        // Clone base prefab
-        GameObject clone = PrefabUtility.InstantiatePrefab(config.prefab) as GameObject;
+        GameObject clone =
+            PrefabUtility.InstantiatePrefab(config.prefab) as GameObject;
 
-        // Add required systems
-        if (!clone.GetComponent<EnemyInstanceTracker>())
-            clone.AddComponent<EnemyInstanceTracker>().config = config;
-
-        if (!clone.GetComponent<EnemyLODController>())
-            clone.AddComponent<EnemyLODController>().config = config;
-
-        if (!clone.GetComponent<EnemyHealth>())
-            clone.AddComponent<EnemyHealth>().config = config;
+        // 🔥 REQUIRED RUNTIME SYSTEMS
+        Ensure<EnemyStats>(clone).GetComponent<EnemyStats>().enabled = true;
+        Ensure<EnemyActor>(clone);
+        Ensure<EnemyBuffTarget>(clone);
+        Ensure<EnemyStatsUpdateSystem>(clone);
+        Ensure<EnemyStatsNetSync>(clone);
+        Ensure<EnemyHealth>(clone);
 
         PrefabUtility.SaveAsPrefabAsset(clone, outputPath);
         DestroyImmediate(clone);
 
         Debug.Log($"[EnemyEditor] Runtime enemy prefab generated: {outputPath}");
+    }
+
+    private T Ensure<T>(GameObject go) where T : Component
+    {
+        var c = go.GetComponent<T>();
+        return c != null ? c : go.AddComponent<T>();
     }
 }

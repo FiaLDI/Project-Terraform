@@ -1,22 +1,28 @@
+using FishNet.Object;
 using UnityEngine;
-using System.Collections;
 using Unity.Mathematics;
+using System.Collections;
 using Features.Biomes.Domain;
 using Features.Biomes.Application;
-using Features.Player.UI;
 
 namespace Features.Biomes.UnityIntegration
 {
-    public sealed class RuntimeWorldGenerator : MonoBehaviour
+    public sealed class RuntimeWorldGenerator : NetworkBehaviour
     {
         [Header("World Settings")]
         public WorldConfig worldConfig;
 
-        [Header("Player Prefab (PlayerCore)")]
-        public GameObject playerPrefab;
-
         [Header("Systems Prefab (World-only)")]
         public GameObject systemsPrefab;
+
+        [Header("Spawn Points")]
+        [SerializeField] private ScenePlayerSpawnPoint spawnPointPrefab;
+
+        [SerializeField, Min(1)]
+        private int spawnPointCount = 4;
+
+        [SerializeField]
+        private float spawnRadius = 15f;
 
         [Header("Custom Prefab")]
         public GameObject customPrefab;
@@ -26,172 +32,130 @@ namespace Features.Biomes.UnityIntegration
         public int unloadDistance = 8;
 
         [Header("Spawn Settings")]
-        public float spawnDistanceForward = 5f;
         public float spawnHeightCheck = 500f;
 
         private ChunkManager manager;
-        private GameObject playerInstance;
         private GameObject systemsInstance;
 
         public static WorldConfig World { get; private set; }
 
+        public static event System.Action<int> OnWorldReady;
+
+
         // ======================================================
-        // LIFECYCLE
+        // SERVER
         // ======================================================
 
-        private void Start()
+        public override void OnStartServer()
         {
+            base.OnStartServer();
+
             if (worldConfig == null)
             {
                 Debug.LogError("[RuntimeWorldGenerator] WorldConfig is NULL!");
                 return;
             }
 
-            // 1) Биомные правила
+            StartCoroutine(ServerGenerateWorld());
+        }
+
+        private IEnumerator ServerGenerateWorld()
+        {
+            // 1️⃣ Биомы
             if (!BiomeRuntimeDatabase.Initialized)
                 BiomeRuntimeDatabase.Build(worldConfig);
 
-            // 2) ChunkManager
+            // 2️⃣ ChunkManager
             manager = new ChunkManager(worldConfig);
             World = worldConfig;
 
-            // 3) Первая генерация вокруг (0,0)
+            // 3️⃣ Стартовая генерация чанков
             manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
             manager.ProcessLoadQueue();
 
-            // 4) Асинхронный спавн мира + игрока
-            StartCoroutine(SpawnSequence());
+            // 🔑 КЛЮЧ: НЕ ждём MeshCollider / физику
+            // Даём PhysX 1 тик, чтобы мир начал существовать
+            yield return new WaitForFixedUpdate();
+
+            // 4️⃣ Системы мира
+            if (systemsPrefab != null)
+            {
+                systemsInstance = Instantiate(
+                    systemsPrefab,
+                    GetWorldCenterSpawn(),
+                    Quaternion.identity
+                );
+
+                Spawn(systemsInstance);
+            }
+
+            // 5️⃣ Spawn-point’ы игроков (логические)
+            if (spawnPointPrefab != null)
+                SpawnPlayerSpawnPoints();
+
+            // 6️⃣ Кастомные объекты
+            if (customPrefab != null)
+                SpawnCustomPrefab();
+
+            OnWorldReady?.Invoke(WorldSession.WorldVersion);
+            Debug.Log("[WorldGen] World generation completed");
         }
 
         private void Update()
         {
-            if (manager == null)
+            if (!IsServer || manager == null)
                 return;
 
-            Vector3 focusPos = playerInstance != null
-                ? playerInstance.transform.position
-                : Vector3.zero;
-
-            manager.UpdateChunks(focusPos, loadDistance, unloadDistance);
+            manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
             manager.ProcessLoadQueue();
         }
 
         // ======================================================
-        // SPAWN SEQUENCE
+        // HELPERS
         // ======================================================
 
-        private IEnumerator SpawnSequence()
-        {
-            // Ждём готовность стартового чанка (0,0)
-            Vector2Int startChunk = new Vector2Int(0, 0);
-
-            while (!ChunkExistsAndReady(startChunk))
-                yield return null;
-
-            // Пара кадров на физику
-            yield return null;
-            yield return null;
-
-            // 1) World systems (ТОЛЬКО world)
-            if (systemsPrefab != null)
-            {
-                SpawnSystemsAtCenter();
-                yield return null;
-            }
-
-            // 2) PlayerCore
-            Vector3 spawnPos = GetSafePlayerSpawnPosition();
-            Debug.Log("[RuntimeWorldGenerator] Player spawn at: " + spawnPos);
-
-            playerInstance = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-
-            // 🔑 ЯВНЫЙ БИНДИНГ
-            if (LocalPlayerController.I != null)
-                LocalPlayerController.I.Bind(playerInstance);
-
-            if (PlayerUIRoot.I != null)
-                PlayerUIRoot.I.Bind(playerInstance);
-
-            // для врагов / спавнеров
-            if (InstancedSpawnerSystem.Instance != null)
-                InstancedSpawnerSystem.Instance.targetOverride = playerInstance.transform;
-
-            yield return null;
-
-            // 3) Кастомный префаб (опционально)
-            if (customPrefab != null)
-                SpawnCustomPrefabNearPlayer();
-        }
-
-        // ======================================================
-        // SPAWN HELPERS
-        // ======================================================
-
-        /// <summary>
-        /// Находит безопасную позицию для спавна игрока
-        /// </summary>
-        private Vector3 GetSafePlayerSpawnPosition()
+        private Vector3 GetWorldCenterSpawn()
         {
             int cs = worldConfig.chunkSize;
+            float cx = cs * 0.5f;
+            float cz = cs * 0.5f;
 
-            float centerX = cs * 0.5f;
-            float centerZ = cs * 0.5f;
-
-            Vector3 origin = new Vector3(centerX, spawnHeightCheck, centerZ);
+            Vector3 origin = new Vector3(cx, spawnHeightCheck, cz);
 
             if (Physics.Raycast(origin, Vector3.down, out var hit, spawnHeightCheck * 2f))
-            {
-                Debug.Log("[Spawn] Raycast hit at " + hit.point);
                 return hit.point + Vector3.up * 2f;
-            }
 
-            Debug.LogWarning("[Spawn] Raycast failed, fallback to height map");
-
-            float h = worldConfig.GetHeight(new float2(centerX, centerZ));
-            return new Vector3(centerX, h + 2f, centerZ);
+            float h = worldConfig.GetHeight(new float2(cx, cz));
+            return new Vector3(cx, h + 2f, cz);
         }
 
-        private void SpawnSystemsAtCenter()
+        private void SpawnCustomPrefab()
         {
-            Vector3 pos = GetSafePlayerSpawnPosition();
-
-            systemsInstance = Instantiate(
-                systemsPrefab,
-                pos,
-                Quaternion.identity
-            );
-
-            systemsInstance.name = "GameSystems";
+            var pos = GetWorldCenterSpawn();
+            Instantiate(customPrefab, pos, Quaternion.identity);
         }
 
-        private void SpawnCustomPrefabNearPlayer()
+        private void SpawnPlayerSpawnPoints()
         {
-            if (customPrefab == null || playerInstance == null)
-                return;
+            Vector3 center = GetWorldCenterSpawn();
 
-            Vector3 startPos = playerInstance.transform.position +
-                               playerInstance.transform.forward * 3f +
-                               Vector3.up * 50f;
-
-            if (GroundSnapUtility.TrySnapWithNormal(
-                    startPos,
-                    out Vector3 snapped,
-                    out Quaternion rot,
-                    out _))
+            for (int i = 0; i < spawnPointCount; i++)
             {
-                Instantiate(customPrefab, snapped, rot);
+                Vector2 offset2D = UnityEngine.Random.insideUnitCircle * spawnRadius;
+                Vector3 origin = center + new Vector3(offset2D.x, spawnHeightCheck, offset2D.y);
+
+                Vector3 pos = origin;
+                Quaternion rot = Quaternion.identity;
+
+                // Лёгкий raycast — только если физика уже есть
+                if (Physics.Raycast(origin, Vector3.down, out var hit, spawnHeightCheck * 2f))
+                    pos = hit.point + Vector3.up * 1.5f;
+
+                var sp = Instantiate(spawnPointPrefab, pos, rot);
+                sp.name = $"WorldSpawnPoint_{i}";
             }
-        }
 
-        private bool ChunkExistsAndReady(Vector2Int c)
-        {
-            string name = $"Chunk_{c.x}_{c.y}";
-            var chunkGO = GameObject.Find(name);
-
-            if (chunkGO == null)
-                return false;
-
-            return chunkGO.GetComponentInChildren<MeshCollider>() != null;
+            Debug.Log($"[WorldGen] Spawned {spawnPointCount} player spawn points");
         }
     }
 }

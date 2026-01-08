@@ -1,39 +1,65 @@
 using UnityEngine;
-using Features.Stats.Domain;
+using System;
 
 namespace Features.Stats.Adapter
 {
-    public class HealthStatsAdapter : MonoBehaviour
+    /// <summary>
+    /// ViewModel здоровья.
+    /// ЧИСТО визуальный слой.
+    /// </summary>
+    public sealed class HealthStatsAdapter : MonoBehaviour
     {
-        private IHealthStats _stats;
+        public float CurrentHp { get; private set; }
+        public float MaxHp { get; private set; }
 
-        public float MaxHp => _stats?.MaxHp ?? 0f;
-        public float CurrentHp => _stats?.CurrentHp ?? 0f;
+        public float CurrentShield { get; private set; }
+        public float MaxShield { get; private set; }
 
-        public float MaxShield => _stats?.MaxShield ?? 0f;
-        public float CurrentShield => _stats?.CurrentShield ?? 0f;
+        public bool IsReady { get; private set; }
 
-        public float Regen => _stats?.FinalRegen ?? 0f;
+        public event Action<float, float> OnHealthChanged;
+        public event Action<float, float> OnShieldChanged;
 
-        public event System.Action<float, float> OnHealthChanged;
-        public event System.Action<float, float> OnShieldChanged;
-
-        public void Init(IHealthStats stats)
+        /// <summary>
+        /// Вызывается ТОЛЬКО из StatsNetSync.
+        /// </summary>
+        public void SetHp(float current, float max)
         {
-            _stats = stats;
+            current = Mathf.Clamp(current, 0f, max);
 
-            _stats.OnHealthChanged += (cur, max) =>
-            {
-                OnHealthChanged?.Invoke(cur, max);
-            };
+            bool changed =
+                !Mathf.Approximately(CurrentHp, current) ||
+                !Mathf.Approximately(MaxHp, max);
 
-            _stats.OnShieldChanged += (cur, max) =>
-            {
-                OnShieldChanged?.Invoke(cur, max);
-            };
+            CurrentHp = current;
+            MaxHp = max;
+
+            if (!IsReady)
+                IsReady = true;
+
+            if (changed)
+                OnHealthChanged?.Invoke(CurrentHp, MaxHp);
         }
 
-        public void Damage(float amount) => _stats?.Damage(amount);
-        public void Heal(float amount) => _stats?.Heal(amount);
+        /// <summary>
+        /// Если используешь щит — отдельно.
+        /// </summary>
+        public void SetShield(float current, float max)
+        {
+            current = Mathf.Clamp(current, 0f, max);
+
+            bool changed =
+                !Mathf.Approximately(CurrentShield, current) ||
+                !Mathf.Approximately(MaxShield, max);
+
+            CurrentShield = current;
+            MaxShield = max;
+
+            if (!IsReady)
+                IsReady = true;
+
+            if (changed)
+                OnShieldChanged?.Invoke(CurrentShield, MaxShield);
+        }
     }
 }

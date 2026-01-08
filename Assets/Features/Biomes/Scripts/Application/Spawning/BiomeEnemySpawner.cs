@@ -3,6 +3,7 @@ using Features.Biomes.Domain;
 using Features.Enemy.Data;
 using Features.Pooling;
 using Features.Enemy;
+using Features.Enemy.UnityIntegration;
 
 public class BiomeEnemySpawner : MonoBehaviour
 {
@@ -122,9 +123,9 @@ public class BiomeEnemySpawner : MonoBehaviour
         tracker.config = config;
 
         // EnemyHealth также должен иметь ссылку на config
-        var health = enemyGO.GetComponent<EnemyHealth>();
-        if (health)
-            health.config = config;
+        //var health = enemyGO.GetComponent<EnemyHealth>();
+        //if (health)
+        //    health.config = config;
 
         // EnemyLODController тоже
         var lod = enemyGO.GetComponent<EnemyLODController>();

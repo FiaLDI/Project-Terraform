@@ -8,6 +8,7 @@ namespace Features.Inventory.Application
         bool AddItem(ItemInstance item);
         bool TryRemove(Item itemDefinition, int amount);
         int GetItemCount(Item itemDefinition);
-        ItemInstance GetFirst(Item itemDefinition);
+        bool HasIngredients(RecipeIngredient[] ingredients);
+        bool ConsumeIngredients(RecipeIngredient[] ingredients);
     }
 }

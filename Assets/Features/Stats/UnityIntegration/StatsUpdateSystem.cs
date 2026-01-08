@@ -1,77 +1,75 @@
 using UnityEngine;
-using Features.Stats.Adapter;
+using FishNet.Object;
+using FishNet.Managing.Timing;
 using Features.Stats.Domain;
 
 namespace Features.Stats.UnityIntegration
 {
-    /// <summary>
-    /// Единая система обновления статов сущности.
-    /// Обновляет энергию, хп, щиты, регенерацию и тики бафов.
-    /// Висит на Player / NPC / любом объекте со статами.
-    /// </summary>
-    public class StatsUpdateSystem : MonoBehaviour
+    [DefaultExecutionOrder(-200)]
+    public sealed class StatsUpdateSystem : NetworkBehaviour
     {
-        [SerializeField] private StatsFacadeAdapter statsAdapter;
         [SerializeField] private bool useUnscaledTime = false;
 
         private IStatsCollection stats;
-
         private IEnergyStats energy;
         private IHealthStats health;
 
-        private void Awake()
+        private bool isReady;
+
+        public override void OnStartServer()
         {
-            if (statsAdapter == null)
-                statsAdapter = GetComponent<StatsFacadeAdapter>();
+            base.OnStartServer();
+            TryInitServer();
+
+            TimeManager.OnTick += OnServerTick;
         }
 
-        private void Start()
+        public override void OnStopServer()
         {
-            if (statsAdapter == null || statsAdapter.Stats == null)
-            {
-                Debug.LogError("[StatsUpdateSystem] No StatsFacadeAdapter or Stats found!");
-                enabled = false;
+            base.OnStopServer();
+            TimeManager.OnTick -= OnServerTick;
+        }
+
+        private void TryInitServer()
+        {
+            if (isReady)
                 return;
-            }
 
-            stats = statsAdapter.Stats as IStatsCollection;
+            var ps = GetComponent<PlayerStats>();
+            if (ps == null || !ps.IsReady || ps.Facade == null)
+                return;
 
+            stats = ps.Facade as IStatsCollection;
             if (stats == null)
-            {
-                Debug.LogError("StatsFacade does not implement IStatsCollection!");
-                enabled = false;
                 return;
-            }
 
             energy = stats.Energy;
             health = stats.Health;
+
+            isReady = true;
+
+            Debug.Log("[StatsUpdateSystem] SERVER initialized ✅", this);
         }
 
-        private void Update()
+        private void OnServerTick()
         {
-            if (stats == null) return;
+            if (!IsServerStarted)
+                return;
 
-            float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            if (!isReady)
+            {
+                TryInitServer();
+                return;
+            }
 
-            // ================================
-            // ENERGY REGEN
-            // ================================
+            float dt = (float)TimeManager.TickDelta;
+
             if (energy != null && energy.Regen > 0f)
                 energy.Recover(energy.Regen * dt);
 
-            // ================================
-            // HEALTH REGEN (если есть)
-            // ================================
             if (health != null && health.FinalRegen > 0f)
                 health.Recover(health.FinalRegen * dt);
 
-            // ================================
-            // SHIELD REGEN (если есть)
-            // ================================
-
-            // ================================
-            // BUFF / PASSIVE TICK UPDATE
-            // ================================
             stats.Tick(dt);
         }
     }

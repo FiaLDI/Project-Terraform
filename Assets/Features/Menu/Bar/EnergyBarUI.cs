@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Features.Stats.Domain;
-using Features.Stats.UnityIntegration;
-public class EnergyBarUI : MonoBehaviour
+using Features.Stats.Adapter;
+using Features.UI;
+
+public class EnergyBarUI : PlayerBoundUIView
 {
     [Header("UI")]
     [SerializeField] private Image fillImage;
@@ -12,51 +13,44 @@ public class EnergyBarUI : MonoBehaviour
     [Header("Smooth")]
     [SerializeField] private float smoothSpeed = 10f;
 
-    private IEnergyView energy;
-    private float targetFill = 1f;
-    
-    private void Start()
+    private EnergyStatsAdapter energy;
+    private float targetFill;
+
+    protected override void OnPlayerBound(GameObject player)
     {
-        PlayerStats.OnStatsReady += OnReady;
+        var statsAdapter = player.GetComponent<StatsFacadeAdapter>();
+        if (statsAdapter == null)
+        {
+            Debug.LogError("[EnergyBarUI] StatsFacadeAdapter not found", this);
+            return;
+        }
+
+        energy = statsAdapter.EnergyStats;
+        if (energy == null)
+        {
+            Debug.LogError("[EnergyBarUI] EnergyStatsAdapter not found", this);
+            return;
+        }
+
+        energy.OnEnergyChanged += UpdateView;
+
+        // если снапшот уже был
+        if (energy.IsReady)
+            UpdateView(energy.Current, energy.Max);
     }
 
-    private void OnReady(PlayerStats stats)
-    {
-        var adapter = stats.GetFacadeAdapter();
-        Bind(adapter.EnergyStats);
-    }
-
-
-    private void OnDestroy()
+    protected override void OnPlayerUnbound(GameObject player)
     {
         if (energy != null)
             energy.OnEnergyChanged -= UpdateView;
-    }
 
-    public void Bind(IEnergyView e)
-    {
-        if (energy != null)
-            energy.OnEnergyChanged -= UpdateView;
-
-        energy = e;
-
-         Debug.Log("[UI] Bind Energy: " +
-        $"Current={energy.CurrentEnergy} Max={energy.MaxEnergy}");
-
-        if (energy != null)
-        {
-            energy.OnEnergyChanged += UpdateView;
-            UpdateView(energy.CurrentEnergy, energy.MaxEnergy);
-        }
-        else
-        {
-            Debug.LogWarning("[EnergyBarUI] Bind() received null reference!");
-        }
+        energy = null;
+        targetFill = 0f;
     }
 
     private void UpdateView(float current, float max)
     {
-        targetFill = (max > 0) ? current / max : 0f;
+        targetFill = max > 0f ? current / max : 0f;
 
         if (label != null)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";
@@ -64,7 +58,8 @@ public class EnergyBarUI : MonoBehaviour
 
     private void Update()
     {
-        if (!fillImage) return;
+        if (fillImage == null)
+            return;
 
         fillImage.fillAmount = Mathf.Lerp(
             fillImage.fillAmount,

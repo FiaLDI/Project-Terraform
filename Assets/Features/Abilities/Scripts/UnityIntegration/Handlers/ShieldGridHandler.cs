@@ -1,57 +1,38 @@
 using UnityEngine;
-using Features.Abilities.Domain;
 using Features.Combat.Devices;
+using Features.Abilities.Domain;
 
 namespace Features.Abilities.UnityIntegration
 {
-    public class ShieldGridHandler : IAbilityHandler
+    public sealed class ShieldGridHandler
+        : AbilityHandler<ShieldGridAbilitySO>
     {
-        public System.Type AbilityType => typeof(ShieldGridAbilitySO);
-
-        public void Execute(AbilitySO abilityBase, AbilityContext ctx)
+        protected override void ExecuteInternal(
+            ShieldGridAbilitySO ability,
+            AbilityContext ctx,
+            GameObject owner)
         {
-            var ability = (ShieldGridAbilitySO)abilityBase;
-
-            // ==== ADAPTATION: ctx.Owner is NOW object ====
-            GameObject ownerGO = null;
-
-            switch (ctx.Owner)
-            {
-                case GameObject go:
-                    ownerGO = go;
-                    break;
-
-                case Component comp:
-                    ownerGO = comp.gameObject;
-                    break;
-
-                default:
-                    Debug.LogError("[ShieldGridHandler] AbilityContext.Owner is not GameObject or Component.");
-                    return;
-            }
-
-            if (ownerGO == null)
-                return;
-
             if (!ability.shieldGridPrefab)
             {
-                Debug.LogWarning("[ShieldGridHandler] shieldGridPrefab is null.");
+                Debug.LogWarning(
+                    "[ShieldGridHandler] shieldGridPrefab is null"
+                );
                 return;
             }
 
-            GameObject gridObj = Object.Instantiate(
+            var gridObj = Object.Instantiate(
                 ability.shieldGridPrefab,
-                ownerGO.transform.position,
+                owner.transform.position,
                 Quaternion.identity
             );
 
-            if (gridObj.TryGetComponent<ShieldGridBehaviour>(out var grid))
+            if (gridObj.TryGetComponent(out ShieldGridBehaviour grid))
             {
                 grid.Init(
                     ability.radius,
                     ability.duration,
                     ability.damageReductionPercent,
-                    ownerGO   // explicitly passing GO
+                    owner
                 );
             }
 

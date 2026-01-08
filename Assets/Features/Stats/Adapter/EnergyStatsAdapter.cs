@@ -1,53 +1,53 @@
 using UnityEngine;
-using Features.Stats.Domain;
+using System;
 
 namespace Features.Stats.Adapter
 {
     /// <summary>
-    /// Адаптер, превращающий IEnergyStats → IEnergyView для UI/HUD.
-    /// AbilityCaster и AbilityService НЕ используют этот класс.
+    /// ViewModel энергии.
+    /// НЕ знает про домен, НЕ знает про сеть.
+    /// Получает значения ТОЛЬКО через Set().
     /// </summary>
-    public class EnergyStatsAdapter : MonoBehaviour, IEnergyView
+    public sealed class EnergyStatsAdapter : MonoBehaviour
     {
-        private IEnergyStats _stats;
+        public float Current { get; private set; }
+        public float Max { get; private set; }
+        public float Regen { get; private set; }
+        public float CostMultiplier { get; private set; } = 1f;
 
-        public float MaxEnergy => _stats?.MaxEnergy ?? 0f;
-        public float CurrentEnergy => _stats?.CurrentEnergy ?? 0f;
-        public float Regen => _stats?.Regen ?? 0f;
+        public bool IsReady { get; private set; }
 
-        public float CostMultiplier =>
-            _stats != null ? _stats.CostMultiplier : 1f;
+        public event Action<float, float> OnEnergyChanged;
 
-        public event System.Action<float, float> OnEnergyChanged;
-
-        private void Awake()
+        /// <summary>
+        /// Вызывается ТОЛЬКО из StatsNetSync.
+        /// </summary>
+        public void Set(float current, float max)
         {
-            Debug.Log($"[DBG] EnergyStatsAdapter AWAKED at {gameObject.name}  from {GetType()}");
+            current = Mathf.Clamp(current, 0f, max);
+
+            bool changed =
+                !Mathf.Approximately(Current, current) ||
+                !Mathf.Approximately(Max, max);
+
+            Current = current;
+            Max = max;
+
+            if (!IsReady)
+                IsReady = true;
+
+            if (changed)
+                OnEnergyChanged?.Invoke(Current, Max);
         }
 
-        public void Init(IEnergyStats stats)
+        /// <summary>
+        /// Опционально: если ты хочешь показывать реген в UI.
+        /// НЕ влияет на домен.
+        /// </summary>
+        public void SetMeta(float regen, float costMultiplier)
         {
-            if (_stats != null)
-                _stats.OnEnergyChanged -= HandleChanged;
-
-            _stats = stats;
-
-            if (_stats != null)
-            {
-                _stats.OnEnergyChanged += HandleChanged;
-                HandleChanged(_stats.CurrentEnergy, _stats.MaxEnergy);
-            }
-        }
-
-        private void HandleChanged(float cur, float max)
-        {
-            OnEnergyChanged?.Invoke(cur, max);
-        }
-
-        private void OnDestroy()
-        {
-            if (_stats != null)
-                _stats.OnEnergyChanged -= HandleChanged;
+            Regen = regen;
+            CostMultiplier = costMultiplier;
         }
     }
 }

@@ -1,17 +1,18 @@
 using UnityEngine;
+using FishNet.Object;
 using Features.Stats.Adapter;
+using System.Collections;
 
 namespace Features.Player.UnityIntegration
 {
     [RequireComponent(typeof(CharacterController))]
-    public class PlayerMovement : MonoBehaviour
+    public class PlayerMovement : NetworkBehaviour
     {
         [Header("References")]
-        [SerializeField] private Transform movementReference; 
-        [SerializeField] private Transform cameraReference;
+        [SerializeField] private Transform movementReference;
         private PlayerAnimationController anim;
 
-        [Header("Editor Fallback Speeds (Used if Stats not yet initialized)")]
+        [Header("Fallback Speeds")]
         [SerializeField] private float fallbackBaseSpeed = 5f;
         [SerializeField] private float fallbackWalkSpeed = 2f;
         [SerializeField] private float fallbackSprintSpeed = 8f;
@@ -21,7 +22,7 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private float gravity = -9.81f;
         [SerializeField] private float jumpForce = 5f;
 
-        [Header("Crouch Settings")]
+        [Header("Crouch")]
         [SerializeField] private float standHeight = 2f;
         [SerializeField] private float crouchHeight = 1f;
         [SerializeField] private float crouchTransitionSpeed = 10f;
@@ -29,16 +30,22 @@ namespace Features.Player.UnityIntegration
         [Header("Air Control")]
         [SerializeField, Range(0f, 1f)] private float airControl = 0.3f;
 
-        public bool IsCrouching { get; private set; }
-
-        public Vector2 moveInput = Vector2.zero;
-        private Vector3 velocity = Vector3.zero;
         private CharacterController controller;
+        private MovementStatsAdapter stats;
+
+        private Vector3 velocity;
+        private Vector2 moveInput;
 
         private bool isSprinting;
         private bool isWalking;
 
-        private MovementStatsAdapter stats;
+        private bool initialized;
+
+        public bool IsCrouching { get; private set; }
+        public Vector3 Velocity => velocity;
+        public bool IsGrounded => controller.isGrounded;
+
+        // ======================================================
 
         private void Awake()
         {
@@ -47,63 +54,136 @@ namespace Features.Player.UnityIntegration
             anim = GetComponent<PlayerAnimationController>();
         }
 
-        // Input API
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+
+            // 🔑 КРИТИЧНО:
+            // CharacterController выключаем ТОЛЬКО на сервере
+            controller.enabled = false;
+            StartCoroutine(EnableControllerAfterPhysics());
+        }
+
+        private IEnumerator EnableControllerAfterPhysics()
+        {
+            // ждём 1 physics tick
+            yield return new WaitForFixedUpdate();
+
+            velocity = Vector3.zero;
+            controller.enabled = true;
+            initialized = true;
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            // Клиенты НИКОГДА не управляют CC
+            if (!IsServerInitialized)
+                controller.enabled = false;
+        }
+
+        // ======================================================
+        // INPUT API (вызывается сервером)
+        // ======================================================
+
         public void SetMoveInput(Vector2 input) => moveInput = input;
-        public void SetSprint(bool sprinting) => isSprinting = sprinting;
-        public void SetWalk(bool walking) => isWalking = walking;
+        public void SetSprint(bool v) => isSprinting = v;
+        public void SetWalk(bool v) => isWalking = v;
 
         public void TryJump()
         {
-            if (controller.isGrounded && !IsCrouching)
-            {
-                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
-                anim?.TriggerJump();
+            if (!initialized || !controller.isGrounded)
                 return;
-            }
 
-            if (controller.isGrounded && IsCrouching)
-            {
-                ToggleCrouch();
-                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
-                anim?.TriggerJump();
-            }
+            velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+            anim?.TriggerJump();
         }
 
         public void ToggleCrouch()
         {
-            if (IsCrouching)
-            {
-                if (CanStandUp())
-                {
-                    IsCrouching = false;
-                    controller.height = standHeight;
-                    controller.center = new Vector3(0, standHeight / 2f, 0);
-                }
-            }
-            else
-            {
-                IsCrouching = true;
-                float targetHeight = IsCrouching ? crouchHeight : standHeight;
-                controller.height = Mathf.Lerp(
-                    controller.height,
-                    targetHeight,
-                    crouchTransitionSpeed * Time.deltaTime
-                );
-
-                controller.center = new Vector3(0, controller.height / 2f, 0);
-
-            }
+            IsCrouching = !IsCrouching;
         }
 
-        private void Update()
+        public void SetBodyYaw(float yaw)
         {
+            if (!initialized)
+                return;
+
+            Vector3 euler = transform.eulerAngles;
+            euler.y = yaw;
+            transform.eulerAngles = euler;
+        }
+
+        // ======================================================
+        // SERVER UPDATE LOOP
+        // ======================================================
+
+        private void FixedUpdate()
+        {
+            if (!IsServerInitialized || !initialized)
+                return;
+
             HandleMovement();
+            HandleCrouch();
             HandleAnimation();
         }
 
-        private float GetSpeedFromStats()
+        // ======================================================
+
+        private void HandleMovement()
         {
-            if (stats != null)
+            float speed = GetSpeed();
+
+            if (controller.isGrounded && velocity.y < 0f)
+                velocity.y = -2f;
+
+            Vector3 dir =
+                movementReference.forward * moveInput.y +
+                movementReference.right * moveInput.x;
+
+            if (controller.isGrounded)
+            {
+                velocity.x = dir.x * speed;
+                velocity.z = dir.z * speed;
+            }
+            else
+            {
+                velocity += dir * speed * airControl * Time.fixedDeltaTime;
+            }
+
+            velocity.y += gravity * Time.fixedDeltaTime;
+            controller.Move(velocity * Time.fixedDeltaTime);
+        }
+
+        private void HandleCrouch()
+        {
+            float target = IsCrouching ? crouchHeight : standHeight;
+
+            controller.height = Mathf.Lerp(
+                controller.height,
+                target,
+                crouchTransitionSpeed * Time.fixedDeltaTime
+            );
+
+            controller.center = new Vector3(0f, controller.height / 2f, 0f);
+        }
+
+        private void HandleAnimation()
+        {
+            if (anim == null)
+                return;
+
+            float planar = new Vector2(velocity.x, velocity.z).magnitude;
+
+            anim.SetSpeed(planar);
+            anim.SetGrounded(controller.isGrounded);
+            anim.SetCrouch(IsCrouching);
+        }
+
+        private float GetSpeed()
+        {
+            if (stats != null && stats.IsReady)
             {
                 if (IsCrouching) return stats.CrouchSpeed;
                 if (isSprinting) return stats.SprintSpeed;
@@ -116,68 +196,5 @@ namespace Features.Player.UnityIntegration
             if (isWalking) return fallbackWalkSpeed;
             return fallbackBaseSpeed;
         }
-
-        private void HandleMovement()
-        {
-            float currentSpeed = GetSpeedFromStats();
-
-            bool grounded = controller.isGrounded;
-            if (grounded && velocity.y < 0)
-                velocity.y = -2f;
-
-            Vector3 moveDirection =
-                movementReference.forward * moveInput.y +
-                movementReference.right * moveInput.x;
-
-            if (grounded)
-            {
-                velocity.x = moveDirection.x * currentSpeed;
-                velocity.z = moveDirection.z * currentSpeed;
-            }
-            else
-            {
-                velocity += moveDirection * currentSpeed * airControl * Time.deltaTime;
-            }
-
-            velocity.y += gravity * Time.deltaTime;
-
-            controller.Move(velocity * Time.deltaTime);
-        }
-
-        private bool CanStandUp()
-        {
-            RaycastHit hit;
-            float checkDistance = standHeight - crouchHeight;
-            Vector3 start = transform.position + Vector3.up * crouchHeight;
-
-            return !Physics.SphereCast(start, controller.radius, Vector3.up, out hit, checkDistance);
-        }
-
-        // Animation
-        private void HandleAnimation()
-        {
-            if (anim == null)
-                return;
-
-            float planarSpeed = new Vector2(velocity.x, velocity.z).magnitude;
-            bool grounded = controller.isGrounded;
-
-            float animSpeed = 0f;
-
-            if (grounded && planarSpeed > 0.1f)
-            {
-                if (IsCrouching)
-                    animSpeed = 2f;        // Sit_Walk
-                else if (isSprinting)
-                    animSpeed = 2f;        // Running
-                else
-                    animSpeed = 1f;        // Walking
-            }
-
-            anim.SetSpeed(animSpeed);
-            anim.SetGrounded(grounded);
-            anim.SetCrouch(IsCrouching);
-        }
-
     }
 }

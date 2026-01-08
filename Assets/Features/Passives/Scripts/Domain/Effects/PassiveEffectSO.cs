@@ -1,3 +1,4 @@
+using Features.Buffs.Domain;
 using UnityEngine;
 
 namespace Features.Passives.Domain

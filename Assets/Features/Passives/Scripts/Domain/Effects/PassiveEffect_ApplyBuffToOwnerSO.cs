@@ -1,36 +1,66 @@
 using UnityEngine;
 using Features.Buffs.Domain;
-using Features.Buffs.Application;
 using Features.Buffs.UnityIntegration;
+using FishNet.Object;
+using Features.Buffs.Application;
 
 namespace Features.Passives.Domain
 {
     [CreateAssetMenu(menuName = "Game/Passive/Effect/Apply Buff To Owner")]
-    public class PassiveEffect_ApplyBuffToOwnerSO : PassiveEffectSO
+    public sealed class PassiveEffect_ApplyBuffToOwnerSO : PassiveEffectSO
     {
         public BuffSO buff;
 
-        private BuffInstance _instance;
-
         public override void Apply(GameObject owner)
         {
-            if (buff == null) return;
+            var system =
+                owner.GetComponent<BuffSystem>() ??
+                owner.GetComponentInChildren<BuffSystem>() ??
+                owner.GetComponentInParent<BuffSystem>();
 
-            var system = owner.GetComponent<BuffSystem>();
-            if (system == null) return;
+            if (!system.ServiceReady)
+            {
+                system.OnServiceReady += () => Apply(owner);
+                return;
+            }
 
-            _instance = system.Add(buff);
+            if (system == null)
+            {
+                Debug.LogError("[PASSIVES] BuffSystem not found", owner);
+                return;
+            }
+
+            if (!owner.TryGetComponent(out NetworkObject net) || !net.IsServer)
+                return;
+
+
+            Debug.Log(
+                $"[PASSIVES] ApplyBuff {buff.name} | IsServer={net?.IsServer}",
+                owner
+            );
+
+            var runtime = new PassiveRuntime();
+
+            runtime.Buff = system.Add(
+                buff,
+                source: runtime,
+                lifetimeMode: BuffLifetimeMode.WhileSourceAlive
+            );
+
+            PassiveRuntimeRegistry.Store(owner, this, runtime);
         }
 
         public override void Remove(GameObject owner)
         {
-            if (_instance == null) return;
+            if (!owner.TryGetComponent(out BuffSystem system))
+                return;
 
-            var system = owner.GetComponent<BuffSystem>();
-            if (system == null) return;
+            if (!owner.TryGetComponent(out NetworkObject net) || !net.IsServer)
+                return;
 
-            system.Remove(_instance);
-            _instance = null;
+            var runtime = PassiveRuntimeRegistry.Take(owner, this);
+            if (runtime?.Buff != null)
+                system.Remove(runtime.Buff);
         }
     }
 }

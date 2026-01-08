@@ -8,5 +8,8 @@ namespace Features.Stats.Domain
 
         void ApplyFireRateBase(float baseRate);
         void ApplyFireRateBuff(BuffSO cfg, bool apply);
+
+        
+        void Reset();
     }
 }

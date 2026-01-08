@@ -51,7 +51,7 @@ public class ItemRuntimeHolderInspector : Editor
             rb.angularDamping = 0.05f;
         });
 
-        AddOrGet<NearbyItemPresenter>(go);
+        AddOrGet<WorldItemNetwork>(go);
 
         Debug.Log($"[ItemSetup] World Item applied to {go.name}");
     }

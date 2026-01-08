@@ -4,6 +4,8 @@ using UnityEngine;
 using Features.Items.Domain;
 using Features.Inventory;
 using Features.Inventory.Application;
+using Features.Player;
+using Features.Inventory.Domain;
 
 public class UpgradeProcessor : MonoBehaviour
 {
@@ -12,6 +14,8 @@ public class UpgradeProcessor : MonoBehaviour
     public event Action<ItemInstance> OnComplete;
 
     private IInventoryContext inventory;
+
+    private InventorySlotRef currentSlot;
 
     private bool isProcessing;
     private Coroutine currentRoutine;
@@ -29,10 +33,15 @@ public class UpgradeProcessor : MonoBehaviour
     // PUBLIC API
     // ======================================================
 
-    public void BeginUpgrade(UpgradeRecipeSO recipe, ItemInstance inst)
+    public void BeginUpgrade(UpgradeRecipeSO recipe, ItemInstance inst, InventorySlotRef slotRef)
     {
+        Debug.Log($"[UpgradeProcessor] BeginUpgrade item={inst.itemDefinition.id} lvl={inst.level} slot={slotRef.Section}[{slotRef.Index}]");
+
         if (isProcessing)
+        {
+            Debug.Log("[UpgradeProcessor] Already processing, cancel");
             return;
+        }
 
         if (recipe == null || inst == null || inst.itemDefinition == null)
             return;
@@ -42,11 +51,18 @@ public class UpgradeProcessor : MonoBehaviour
 
         int maxLevels = inst.itemDefinition.upgrades?.Length ?? 0;
         if (inst.level >= maxLevels)
+        {
+            Debug.Log("[UpgradeProcessor] Max level reached");
             return;
+        }
 
         if (!inventory.Service.HasIngredients(recipe.ingredients))
+        {
+            Debug.Log("[UpgradeProcessor] Missing ingredients");
             return;
+        }
 
+        currentSlot   = slotRef;
         currentRoutine = StartCoroutine(Process(recipe, inst));
     }
 
@@ -79,21 +95,29 @@ public class UpgradeProcessor : MonoBehaviour
 
     private void Finish(UpgradeRecipeSO recipe, ItemInstance inst)
     {
-        isProcessing = false;
+        isProcessing  = false;
         currentRoutine = null;
 
-        var service = inventory.Service;
+        Debug.Log($"[UpgradeProcessor] Finish item={inst.itemDefinition.id} lvl={inst.level} slot={currentSlot.Section}[{currentSlot.Index}]");
 
-        // 1️⃣ REMOVE INGREDIENTS
-        foreach (var ing in recipe.ingredients)
-            service.TryRemove(ing.item, ing.amount);
+        var player = LocalPlayerContext.Player;
+        if (player == null)
+            return;
 
-        // 2️⃣ APPLY UPGRADE
-        inst.level++;
+        var net = player.GetComponent<InventoryStateNetwork>();
+        if (net == null)
+            return;
 
-        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
-        // Сообщаем всем UI, что модель изменилась
-        service.NotifyChanged();
+        var cmd = new InventoryCommandData
+        {
+            Command  = InventoryCommand.UpgradeItem,
+            RecipeId = recipe.recipeId,
+            Section  = currentSlot.Section,
+            Index    = currentSlot.Index
+        };
+
+        Debug.Log($"[UpgradeProcessor] Send Upgrade cmd: recipe={cmd.RecipeId}, section={cmd.Section}, index={cmd.Index}");
+        net.RequestInventoryCommand(cmd);
 
         OnComplete?.Invoke(inst);
     }

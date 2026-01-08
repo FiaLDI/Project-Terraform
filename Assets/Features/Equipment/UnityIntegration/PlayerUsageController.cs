@@ -2,21 +2,33 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Features.Equipment.Domain;
 using Features.Player;
+using Features.Game;
 
 namespace Features.Equipment.UnityIntegration
 {
+    /// <summary>
+    /// Глобальный контроллер использования (стрельба, вторичное, перезарядка),
+    /// который читает input и прокидывает его на PlayerUsageNetAdapter локального игрока.
+    /// </summary>
     public class PlayerUsageController : MonoBehaviour, IInputContextConsumer
     {
         private PlayerInputContext input;
 
-        private IUsable rightHand;
-        private IUsable leftHand;
-        private bool isTwoHanded;
-
         private bool usingPrimary;
         private bool usingSecondary;
+        private bool bound;
 
-        private bool subscribed;
+        // Локальный адаптер с игрока, берём через BootstrapRoot
+        private PlayerUsageNetAdapter Net
+        {
+            get
+            {
+                var player = BootstrapRoot.I?.LocalPlayer;
+                return player != null
+                    ? player.GetComponent<PlayerUsageNetAdapter>()
+                    : null;
+            }
+        }
 
         // ======================================================
         // INPUT BIND
@@ -27,81 +39,70 @@ namespace Features.Equipment.UnityIntegration
             if (input == ctx)
                 return;
 
-            Unsubscribe();
+            if (input != null)
+                UnbindInput(input);
 
             input = ctx;
-
             if (input == null)
-            {
-                Debug.LogError(
-                    $"{nameof(PlayerUsageController)}: BindInput with NULL",
-                    this);
                 return;
-            }
 
-            Subscribe();
+            BindActions();
+            bound = true;
+
+            Debug.Log("[PlayerUsageController] BindInput OK", this);
         }
 
-        private void OnEnable()
+        public void UnbindInput(PlayerInputContext ctx)
         {
-            if (input != null)
-                Subscribe();
-        }
+            if (!bound || input != ctx)
+                return;
 
-        private void OnDisable()
-        {
-            Unsubscribe();
+            UnbindActions();
+
+            usingPrimary   = false;
+            usingSecondary = false;
+
+            input = null;
+            bound = false;
+
+            Debug.Log("[PlayerUsageController] UnbindInput", this);
         }
 
         // ======================================================
-        // SUBSCRIBE
+        // ACTIONS
         // ======================================================
 
-        private void Subscribe()
+        private void BindActions()
         {
-            if (subscribed || input == null)
-                return;
-
             var p = input.Actions.Player;
 
-            p.FindAction("Use").performed += OnPrimaryStart;
-            p.FindAction("Use").canceled += OnPrimaryStop;
+            Enable(p, "Use", "SecondaryUse", "Reload");
+
+            p.FindAction("Use").performed        += OnPrimaryStart;
+            p.FindAction("Use").canceled         += OnPrimaryStop;
 
             p.FindAction("SecondaryUse").performed += OnSecondaryStart;
-            p.FindAction("SecondaryUse").canceled += OnSecondaryStop;
+            p.FindAction("SecondaryUse").canceled  += OnSecondaryStop;
 
-            p.FindAction("Reload").performed += OnReload;
-
-            subscribed = true;
+            p.FindAction("Reload").performed     += OnReload;
         }
 
-        private void Unsubscribe()
+        private void UnbindActions()
         {
-            if (!subscribed || input == null)
+            if (input == null)
                 return;
 
             var p = input.Actions.Player;
 
-            p.FindAction("Use").performed -= OnPrimaryStart;
-            p.FindAction("Use").canceled -= OnPrimaryStop;
+            p.FindAction("Use").performed        -= OnPrimaryStart;
+            p.FindAction("Use").canceled         -= OnPrimaryStop;
 
             p.FindAction("SecondaryUse").performed -= OnSecondaryStart;
-            p.FindAction("SecondaryUse").canceled -= OnSecondaryStop;
+            p.FindAction("SecondaryUse").canceled  -= OnSecondaryStop;
 
-            p.FindAction("Reload").performed -= OnReload;
+            p.FindAction("Reload").performed     -= OnReload;
 
-            subscribed = false;
-        }
-
-        // ======================================================
-        // CALLED BY EquipmentManager
-        // ======================================================
-
-        public void OnHandsUpdated(IUsable left, IUsable right, bool twoHanded)
-        {
-            leftHand = left;
-            rightHand = right;
-            isTwoHanded = twoHanded;
+            Disable(p, "Use", "SecondaryUse", "Reload");
         }
 
         // ======================================================
@@ -111,13 +112,21 @@ namespace Features.Equipment.UnityIntegration
         private void OnPrimaryStart(InputAction.CallbackContext _)
         {
             usingPrimary = true;
-            rightHand?.OnUsePrimary_Start();
+
+            var net = Net;
+            if (net != null)
+                net.PrimaryStart();
+            else
+                Debug.LogWarning("[PlayerUsageController] PrimaryStart: Net adapter not found on LocalPlayer", this);
         }
 
         private void OnPrimaryStop(InputAction.CallbackContext _)
         {
             usingPrimary = false;
-            rightHand?.OnUsePrimary_Stop();
+
+            var net = Net;
+            if (net != null)
+                net.PrimaryStop();
         }
 
         // ======================================================
@@ -127,13 +136,21 @@ namespace Features.Equipment.UnityIntegration
         private void OnSecondaryStart(InputAction.CallbackContext _)
         {
             usingSecondary = true;
-            rightHand?.OnUseSecondary_Start();
+
+            var net = Net;
+            if (net != null)
+                net.SecondaryStart();
+            else
+                Debug.LogWarning("[PlayerUsageController] SecondaryStart: Net adapter not found on LocalPlayer", this);
         }
 
         private void OnSecondaryStop(InputAction.CallbackContext _)
         {
             usingSecondary = false;
-            rightHand?.OnUseSecondary_Stop();
+
+            var net = Net;
+            if (net != null)
+                net.SecondaryStop();
         }
 
         // ======================================================
@@ -142,21 +159,42 @@ namespace Features.Equipment.UnityIntegration
 
         private void OnReload(InputAction.CallbackContext _)
         {
-            if (rightHand is IReloadable reloadable)
-                reloadable.OnReloadPressed();
+            var net = Net;
+            if (net != null)
+                net.Reload();
+            else
+                Debug.LogWarning("[PlayerUsageController] Reload: Net adapter not found on LocalPlayer", this);
         }
 
         // ======================================================
-        // UPDATE (HOLD)
+        // HELPERS
         // ======================================================
 
-        private void Update()
+        private static void Enable(InputActionMap map, params string[] names)
         {
-            if (usingPrimary)
-                rightHand?.OnUsePrimary_Hold();
+            foreach (var n in names)
+                map.FindAction(n, true).Enable();
+        }
 
-            if (usingSecondary)
-                rightHand?.OnUseSecondary_Hold();
+        private static void Disable(InputActionMap map, params string[] names)
+        {
+            foreach (var n in names)
+                map.FindAction(n, true).Disable();
+        }
+
+        private static bool TryGetAim(out Vector3 pos, out Vector3 forward)
+        {
+            var cam = UnityEngine.Camera.main;
+            if (cam == null)
+            {
+                pos     = default;
+                forward = Vector3.forward;
+                return false;
+            }
+
+            pos     = cam.transform.position;
+            forward = cam.transform.forward;
+            return true;
         }
     }
 }

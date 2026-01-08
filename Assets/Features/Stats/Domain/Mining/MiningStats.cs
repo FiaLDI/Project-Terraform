@@ -53,5 +53,11 @@ namespace Features.Stats.Domain
             if (MiningPower < 0f)
                 MiningPower = 0f;
         }
+        public void Reset()
+        {
+            _basePower = 1f;
+            _addBonus = 0f;
+            _multBonus = 1f;
+        }
     }
 }

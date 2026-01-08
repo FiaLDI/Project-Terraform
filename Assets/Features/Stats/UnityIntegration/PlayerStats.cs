@@ -1,68 +1,165 @@
 using UnityEngine;
+using FishNet.Object;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
 using Features.Stats.Application;
-using Features.Player.UnityIntegration;
 
 namespace Features.Stats.UnityIntegration
 {
     [DefaultExecutionOrder(-400)]
-    public class PlayerStats : MonoBehaviour
+    [RequireComponent(typeof(ServerGamePhase))]
+    public sealed class PlayerStats : NetworkBehaviour
     {
+        // =====================================================
+        // PUBLIC
+        // =====================================================
+
         public IStatsFacade Facade { get; private set; }
         public StatsFacadeAdapter Adapter { get; private set; }
+        public bool IsReady { get; private set; }
 
-        public IStatsFacade Stats => Facade;
-        public StatsFacadeAdapter GetFacadeAdapter() => Adapter;
+        private ServerGamePhase phase;
 
-        public static event System.Action<PlayerStats> OnStatsReady;
+        // =====================================================
+        // SERVER INIT
+        // =====================================================
 
-        private void Awake()
+        public override void OnStartServer()
         {
-            // Создаём фасад с пустыми Domain-статами
+            base.OnStartServer();
+            phase = GetComponent<ServerGamePhase>();
+            InitServer();
+        }
+
+        private void InitServer()
+        {
+            if (IsReady)
+                return;
+
+            // 1️⃣ Facade
             Facade = new StatsFacade(isTurret: false);
 
-            // Создаём адаптер для Unity-систем (UI, Movement)
-            Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
-            Adapter.Init(Facade);
+            // 2️⃣ Reset + defaults
+            Facade.ResetAll();
+            ApplyClassDefaults();
 
-            // Регистрируем в PlayerRegistry (если нужно)
-            PlayerRegistry.Instance?.Register(gameObject, Adapter);
+            // 3️⃣ Bind BuffTarget
+            var buffTarget = GetComponent<PlayerBuffTarget>();
+            if (buffTarget != null)
+            {
+                buffTarget.SetStats(Facade);
+                Debug.Log("[PlayerStats] BuffTarget linked", this);
+            }
+            else
+            {
+                Debug.LogWarning("[PlayerStats] PlayerBuffTarget missing", this);
+            }
+
+            IsReady = true;
+
+            Debug.Log("[PlayerStats] SERVER ready → StatsReady", this);
+
+            // 🔥 ЕДИНСТВЕННЫЙ сигнал наружу
+            phase.Reach(GamePhase.StatsReady);
         }
 
-        private void Start()
+        // =====================================================
+        // CLIENT INIT (VIEW ONLY)
+        // =====================================================
+
+        public override void OnStartClient()
         {
-            // Сообщаем контроллеру классов, что фасад готов
-            OnStatsReady?.Invoke(this);
+            base.OnStartClient();
+
+            Adapter = GetComponent<StatsFacadeAdapter>();
+            if (Adapter == null)
+                Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
+
+            Debug.Log("[PlayerStats] CLIENT ready (view)", this);
         }
 
-        // -------- Runtime Helper Values --------
+        // =====================================================
+        // DEFAULTS (SERVER ONLY)
+        // =====================================================
 
-        public float FinalDamage => Facade.Combat.DamageMultiplier;
+        private void ApplyClassDefaults()
+        {
+            Facade.Health.ApplyBase(120f);
+            Facade.Health.ApplyRegenBase(5f);
 
-        public float FinalHp => Facade.Health.MaxHp;
-        public float CurrentHp => Facade.Health.CurrentHp;
+            Facade.Energy.ApplyBase(150f, 8f);
 
-        public float CurrentEnergy => Facade.Energy.CurrentEnergy;
-        public float MaxEnergy => Facade.Energy.MaxEnergy;
-        public float FinalEnergyRegen => Facade.Energy.Regen;
+            Facade.Combat.ApplyBase(1f);
 
-        public float BaseSpeed => Facade.Movement.BaseSpeed;
-        public float WalkSpeed => Facade.Movement.WalkSpeed;
-        public float SprintSpeed => Facade.Movement.SprintSpeed;
-        public float CrouchSpeed => Facade.Movement.CrouchSpeed;
+            Facade.Movement.ApplyBase(
+                baseSpeed: 0f,
+                walk: 5f,
+                sprint: 6.5f,
+                crouch: 3.5f,
+                rotation: 180f
+            );
 
-        public float MiningSpeed => Facade.Mining.MiningPower;
+            Facade.Mining.ApplyBase(1f);
+        }
 
-        // DEBUG
-        public float Debug_HP => Facade?.Health?.CurrentHp ?? 0f;
-        public float Debug_MaxHP => Facade?.Health?.MaxHp ?? 0f;
+        // =====================================================
+        // SERVER API
+        // =====================================================
 
-        public float Debug_Energy => Facade?.Energy?.CurrentEnergy ?? 0f;
-        public float Debug_MaxEnergy => Facade?.Energy?.MaxEnergy ?? 0f;
+        [Server]
+        public void ResetAndApplyDefaults()
+        {
+            if (!IsReady)
+                return;
 
-        public float Debug_DamageMultiplier => Facade.Combat.DamageMultiplier;
+            Facade.ResetAll();
+            ApplyClassDefaults();
+        }
 
-        public float Debug_Speed => Facade.Movement.BaseSpeed;
+        [Server]
+        public void ApplyPreset(StatsPresetSO preset)
+        {
+            if (!IsReady || preset == null)
+                return;
+
+            Facade.Health.ApplyBase(preset.health.baseHp);
+            Facade.Health.ApplyRegenBase(preset.health.baseRegen);
+
+            Facade.Energy.ApplyBase(
+                preset.energy.baseMaxEnergy,
+                preset.energy.baseRegen
+            );
+
+            Facade.Combat.ApplyBase(
+                preset.combat.baseDamageMultiplier
+            );
+
+            Facade.Movement.ApplyBase(
+                preset.movement.baseSpeed,
+                preset.movement.walkSpeed,
+                preset.movement.sprintSpeed,
+                preset.movement.crouchSpeed,
+                preset.movement.rotationSpeed
+            );
+
+            Facade.Mining.ApplyBase(
+                preset.mining.baseMining
+            );
+        }
+
+        // =====================================================
+        // SAFE ACCESS
+        // =====================================================
+
+        public IStatsFacade GetFacadeSafe()
+        {
+            if (!IsReady)
+            {
+                Debug.LogError("[PlayerStats] Facade not ready", this);
+                return null;
+            }
+
+            return Facade;
+        }
     }
 }

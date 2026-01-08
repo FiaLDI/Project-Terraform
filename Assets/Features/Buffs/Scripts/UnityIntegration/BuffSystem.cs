@@ -1,104 +1,212 @@
 using UnityEngine;
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using Features.Buffs.Domain;
-using Features.Stats.Domain;
+using Features.Buffs.Data;
+using Features.Buffs.UnityIntegration;
 
 namespace Features.Buffs.Application
 {
-    public class BuffSystem : MonoBehaviour
+    public sealed class BuffSystem : NetworkBehaviour
     {
-        private IBuffTarget _target;
-        private BuffExecutor _executor;
-        private BuffService _service;
-        private IStatsFacade _stats;
+        [Header("Debug")]
+        [SerializeField] private bool debugMode;
 
-        public BuffService Service => _service;
-        public IReadOnlyList<BuffInstance> Active => _service?.Active;
-        public bool ServiceReady => _service != null;
+        // ================= NETWORK =================
 
-        public IBuffTarget Target => _target; // ← ВОССТАНОВЛЕНО
+        public readonly SyncList<string> ActiveBuffIds = new();
 
-        public event System.Action<BuffInstance> OnBuffAdded;
-        public event System.Action<BuffInstance> OnBuffRemoved;
+        // ================= RUNTIME =================
+
+        private IBuffTarget target;
+        private BuffExecutor executor;
+        private BuffService service;
+        private ServerGamePhase phase;
+
+        private bool ready;
+
+        // ================= PUBLIC =================
+
+        public bool ServiceReady => ready;
+        public event Action OnServiceReady;
+
+        public IReadOnlyList<BuffInstance> Active => service?.Active;
+
+        // =====================================================
+        // LIFECYCLE
+        // =====================================================
 
         private void Awake()
         {
-            TryResolveTarget();
+            ResolveTarget();
+            phase = GetComponent<ServerGamePhase>();
         }
 
-        private void Start()
+        public override void OnStartServer()
         {
-            StartCoroutine(InitRoutine());
-        }
+            base.OnStartServer();
 
-        private IEnumerator InitRoutine()
-        {
-            yield return null;
-            TryInit();
-        }
+            BuffTickSystem.Register(this);
 
-        private void Update()
-        {
-            if (ServiceReady)
-                _service.Tick(Time.deltaTime);
-        }
-
-        private void TryResolveTarget()
-        {
-            _target =
-                GetComponent<IBuffTarget>() ??
-                GetComponentInChildren<IBuffTarget>() ??
-                GetComponentInParent<IBuffTarget>();
-
-            if (_target == null)
-                Debug.LogError("[BuffSystem] No IBuffTarget found!", this);
-        }
-
-        private void TryInit()
-        {
-            if (_target == null) return;
-
-            if (_executor == null)
-                _executor = FindAnyObjectByType<BuffExecutor>();
-
-            if (_executor == null) return;
-
-            if (_service == null)
+            if (phase == null)
             {
-                _service = new BuffService(_executor);
-
-                _service.OnAdded += inst => OnBuffAdded?.Invoke(inst);
-                _service.OnRemoved += inst => OnBuffRemoved?.Invoke(inst);
+                Debug.LogWarning("[BuffSystem] ServerGamePhase missing", this);
+                return;
             }
+
+            phase.OnPhaseReached += OnPhaseReached;
         }
 
-        public BuffInstance Add(BuffSO cfg)
+        public override void OnStopServer()
         {
-            if (!ServiceReady) return null;
-            return _service.AddBuff(cfg, _target);
+            BuffTickSystem.Unregister(this);
+
+            if (phase != null)
+                phase.OnPhaseReached -= OnPhaseReached;
+
+            base.OnStopServer();
+        }
+
+        // =====================================================
+        // PHASE
+        // =====================================================
+
+        private void OnPhaseReached(GamePhase p)
+        {
+            if (p == GamePhase.StatsReady)
+                InitService();
+        }
+
+        private void InitService()
+        {
+            if (ready)
+                return;
+
+            executor = BuffExecutor.Instance;
+            if (executor == null)
+            {
+                Debug.LogError("[BuffSystem] BuffExecutor not ready", this);
+                return;
+            }
+
+            if (target.GetServerStats() == null)
+            {
+                Debug.LogError("[BuffSystem] Stats not ready", this);
+                return;
+            }
+
+            service = new BuffService();
+            service.OnAdded += HandleBuffAdded;
+            service.OnRemoved += HandleBuffRemoved;
+
+            ready = true;
+
+            Debug.Log("[BuffSystem] READY", this);
+
+            OnServiceReady?.Invoke();
+            phase.Reach(GamePhase.BuffsReady);
+        }
+
+        // =====================================================
+        // SERVER API
+        // =====================================================
+
+        public BuffInstance Add(
+            BuffSO cfg,
+            IBuffSource source,
+            BuffLifetimeMode lifetimeMode = BuffLifetimeMode.Duration)
+        {
+            if (!PhaseAssert.Require(phase, GamePhase.BuffsReady, this))
+                return null;
+            if (!IsServer || !ready || cfg == null)
+            {
+                if (debugMode)
+                    Debug.Log($"[BuffSystem] Reject Add {cfg?.buffId}", this);
+                return null;
+            }
+
+            return service.AddBuff(cfg, target, source, lifetimeMode);
         }
 
         public void Remove(BuffInstance inst)
         {
-            if (ServiceReady)
-                _service.RemoveBuff(inst);
+            if (!IsServer || !ready || inst == null)
+                return;
+
+            executor.Expire(inst);
+            service.RemoveBuff(inst);
         }
 
-        // ← ВОССТАНОВЛЕННАЯ ОБРАТНАЯ СОВМЕСТИМОСТЬ
-        public BuffService GetServiceSafe()
+        public void RemoveBySource(IBuffSource source)
         {
-            return _service;
+            if (!IsServer || !ready)
+                return;
+
+            service.RemoveBySource(source);
         }
 
-        public void SetTarget(IBuffTarget target)
+        public void ClearAll()
         {
-            _target = target;
+            if (!IsServer || !ready)
+                return;
+
+            service.ClearAll();
         }
 
-        public void SetStats(IStatsFacade stats)
+        // =====================================================
+        // TICK
+        // =====================================================
+
+        public void Tick(float dt)
         {
-            _stats = stats;
+            if (!IsServer || !ready)
+                return;
+
+            service.Tick(dt);
+        }
+
+        // =====================================================
+        // INTERNAL
+        // =====================================================
+
+        private void ResolveTarget()
+        {
+            target =
+                GetComponent<IBuffTarget>() ??
+                GetComponentInChildren<IBuffTarget>() ??
+                GetComponentInParent<IBuffTarget>();
+
+            if (target == null)
+                Debug.LogError("[BuffSystem] IBuffTarget not found", this);
+        }
+
+        private void HandleBuffAdded(BuffInstance inst)
+        {
+            executor.Apply(inst);
+            SyncActiveBuffs();
+        }
+
+        private void HandleBuffRemoved(BuffInstance inst)
+        {
+            executor.Expire(inst);
+            SyncActiveBuffs();
+        }
+
+        private void SyncActiveBuffs()
+        {
+            if (!IsServer || service == null)
+                return;
+
+            var ids = new HashSet<string>();
+            foreach (var b in service.Active)
+                if (b?.Config != null)
+                    ids.Add(b.Config.buffId);
+
+            ActiveBuffIds.Clear();
+            foreach (var id in ids)
+                ActiveBuffIds.Add(id);
         }
     }
 }

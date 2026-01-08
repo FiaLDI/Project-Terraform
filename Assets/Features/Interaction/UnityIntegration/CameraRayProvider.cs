@@ -6,23 +6,21 @@ using Features.Interaction.UnityIntegration;
 public class CameraRayProvider : MonoBehaviour, IInteractionRayProvider
 {
     [SerializeField] private float maxDistance = 3f;
-
     public float MaxDistance => maxDistance;
 
     private Camera cam;
 
     private void Awake()
     {
-        cam = GetComponentInChildren<Camera>();
+        cam = GetComponent<Camera>();
         if (cam == null)
         {
-            Debug.LogError("[CameraRayProvider] Camera NOT FOUND");
+            Debug.LogError("[CameraRayProvider] Camera component NOT FOUND");
             enabled = false;
             return;
         }
-
-        InteractionServiceProvider.Init(this);
-        Debug.Log("[CameraRayProvider] InteractionRayService INITIALIZED");
+        
+            InteractionServiceProvider.Init(this);
     }
 
     public Ray GetRay()

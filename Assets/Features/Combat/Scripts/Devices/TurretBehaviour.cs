@@ -2,8 +2,9 @@ using UnityEngine;
 using System.Collections;
 using Features.Combat.Domain;
 using Features.Stats.UnityIntegration;
+using FishNet.Object;
 
-public class TurretBehaviour : MonoBehaviour, IDamageable
+public class TurretBehaviour : NetworkBehaviour, IDamageable
 {
     public Transform turretHead;
     public Transform muzzlePoint;
@@ -154,5 +155,32 @@ public class TurretBehaviour : MonoBehaviour, IDamageable
     {
         if (laser)
             laser.enabled = false;
+    }
+
+    /// <summary>
+    /// 🎯 Синхронизированное уничтожение через сетевой таймер
+    /// </summary>
+    public void ScheduleDestruction(float delay)
+    {
+        if (IsServerInitialized)
+        {
+            RpcDestroyAfterDelay(delay);
+        }
+    }
+
+    [ObserversRpc]
+    private void RpcDestroyAfterDelay(float delay)
+    {
+        StartCoroutine(DestroyCoroutine(delay));
+    }
+
+    private System.Collections.IEnumerator DestroyCoroutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        if (IsServerInitialized)
+        {
+            GetComponent<NetworkObject>().Despawn();
+        }
     }
 }

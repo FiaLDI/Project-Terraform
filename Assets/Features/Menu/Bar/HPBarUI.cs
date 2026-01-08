@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Features.Stats.Adapter;
-using Features.Stats.UnityIntegration;
-public class HPBarUI : MonoBehaviour
+using Features.UI;
+
+public class HPBarUI : PlayerBoundUIView
 {
     [Header("UI")]
     [SerializeField] private Image fillImage;
@@ -12,72 +13,53 @@ public class HPBarUI : MonoBehaviour
     [Header("Smooth")]
     [SerializeField] private float smoothSpeed = 10f;
 
-    private HealthStatsAdapter adapter;
-    private float targetFill = 1f;
+    private HealthStatsAdapter health;
+    private float targetFill;
 
-    private void OnDestroy()
+    protected override void OnPlayerBound(GameObject player)
     {
-        Unsubscribe();
-    }
-
-    private void Start()
-    {
-        PlayerStats.OnStatsReady += HandleStatsReady;
-    }
-
-    private void HandleStatsReady(PlayerStats stats)
-    {
-        Bind(stats.GetFacadeAdapter().HealthStats);
-    }
-
-    private void Unsubscribe()
-    {
-        if (adapter == null) return;
-
-        adapter.OnHealthChanged -= UpdateHp;
-        adapter.OnShieldChanged -= UpdateShield;
-    }
-
-    /// <summary>
-    /// Привязка к адаптеру HP. Вызывать из PlayerController.HandleStatsReady()
-    /// </summary>
-    public void Bind(HealthStatsAdapter a)
-    {
-        Unsubscribe();
-
-        adapter = a;
-
-        if (adapter != null)
+        var statsAdapter = player.GetComponent<StatsFacadeAdapter>();
+        if (statsAdapter == null)
         {
-            adapter.OnHealthChanged += UpdateHp;
-            adapter.OnShieldChanged += UpdateShield;
+            Debug.LogError("[HPBarUI] StatsFacadeAdapter not found", this);
+            return;
+        }
 
-            // Инициализация UI текущими значениями
-            UpdateHp(adapter.CurrentHp, adapter.MaxHp);
-        }
-        else
+        health = statsAdapter.HealthStats;
+        if (health == null)
         {
-            Debug.LogWarning("[HPBarUI] Bind() received NULL!");
+            Debug.LogError("[HPBarUI] HealthStatsAdapter not found", this);
+            return;
         }
+
+        health.OnHealthChanged += UpdateHp;
+
+        // если снапшот уже приходил — сразу обновим UI
+        if (health.IsReady)
+            UpdateHp(health.CurrentHp, health.MaxHp);
+    }
+
+    protected override void OnPlayerUnbound(GameObject player)
+    {
+        if (health != null)
+            health.OnHealthChanged -= UpdateHp;
+
+        health = null;
+        targetFill = 0f;
     }
 
     private void UpdateHp(float current, float max)
     {
-        targetFill = max > 0 ? current / max : 0f;
+        targetFill = max > 0f ? current / max : 0f;
 
-        if (label)
+        if (label != null)
             label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";
-    }
-
-    private void UpdateShield(float current, float max)
-    {
-        // OPTIONAL: если хочешь отображение щита в баре
-        // пока игнорируем
     }
 
     private void Update()
     {
-        if (!fillImage) return;
+        if (fillImage == null)
+            return;
 
         fillImage.fillAmount = Mathf.Lerp(
             fillImage.fillAmount,

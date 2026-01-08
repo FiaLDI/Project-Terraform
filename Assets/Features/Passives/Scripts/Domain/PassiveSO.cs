@@ -1,4 +1,7 @@
 using UnityEngine;
+using System.Collections;
+using Features.Buffs.Domain;
+using Features.Buffs.Application;
 
 namespace Features.Passives.Domain
 {
@@ -7,11 +10,37 @@ namespace Features.Passives.Domain
         public string id;
         public string displayName;
         public Sprite icon;
-        
-        /// <summary>Активировать пассивку для конкретного владельца.</summary>
-        public abstract void Apply(GameObject owner);
-        
-        /// <summary>Отключить пассивку для конкретного владельца.</summary>
-        public abstract void Remove(GameObject owner);
+
+        // =====================================================
+        // APPLY
+        // =====================================================
+
+        public void Apply(GameObject owner)
+        {
+            Debug.Log($"[PASSIVES] PassiveSO.Apply {name}", this);
+            if (owner == null)
+                return;
+
+            ApplyInternal(owner);
+        }
+
+        // =====================================================
+        // REMOVE
+        // =====================================================
+
+        public void Remove(GameObject owner)
+        {
+            if (owner == null)
+                return;
+
+            RemoveInternal(owner);
+        }
+       
+        // =====================================================
+        // TO IMPLEMENT
+        // =====================================================
+
+        protected abstract void ApplyInternal(GameObject owner);
+        protected abstract void RemoveInternal(GameObject owner);
     }
 }

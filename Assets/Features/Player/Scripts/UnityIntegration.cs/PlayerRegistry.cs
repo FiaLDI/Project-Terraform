@@ -1,100 +1,163 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Features.Stats.Adapter;
 using Features.Abilities.Application;
 using Features.Inventory.UnityIntegration;
-using System;
+using Features.Stats.UnityIntegration;
 
 namespace Features.Player.UnityIntegration
 {
     /// <summary>
-    /// Глобальный реестр игрока/турелей.
-    /// Это UnityIntegration-слой, пересекающийся с другими фичами через адаптеры.
+    /// Глобальный реестр игроков.
+    /// Не отвечает за готовность статов.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
-    public class PlayerRegistry : MonoBehaviour
+    public sealed class PlayerRegistry : MonoBehaviour
     {
-        public static PlayerRegistry Instance { get; private set; }
+        public static PlayerRegistry Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = FindObjectOfType<PlayerRegistry>();
+                return _instance;
+            }
+            private set => _instance = value;
+        }
+        private static PlayerRegistry _instance;
 
-        public readonly List<GameObject> PlayerTurrets = new();
-        public readonly List<GameObject> Players = new();
-        private bool _localPlayerInitialized;
+        // ================= PLAYERS =================
+
+        private readonly List<GameObject> _players = new();
+        public IReadOnlyList<GameObject> Players => _players;
+
+        // ================= LOCAL PLAYER =================
 
         public GameObject LocalPlayer { get; private set; }
 
+        public InventoryManager LocalInventory { get; private set; }
+        public AbilityCaster LocalAbilities { get; private set; }
+        public PlayerStats LocalPlayerStats { get; private set; }
+
         public static event Action<PlayerRegistry> OnLocalPlayerReady;
 
-        // Адаптеры статов
-        public StatsFacadeAdapter LocalStats { get; private set; }
+        public bool HasLocalPlayer => LocalPlayer != null;
 
-        public HealthStatsAdapter LocalHealth => LocalStats?.HealthStats;
-        public EnergyStatsAdapter LocalEnergy => LocalStats?.EnergyStats;
-        public CombatStatsAdapter LocalCombat => LocalStats?.CombatStats;
-        public MovementStatsAdapter LocalMovement => LocalStats?.MovementStats;
-        public MiningStatsAdapter LocalMining => LocalStats?.MiningStats;
-
-        public AbilityCaster LocalAbilities { get; private set; }
-
-        public readonly Dictionary<GameObject, List<GameObject>> PlayerOwnedTurrets
-            = new();
-
-        public InventoryManager LocalInventory { get; private set; }
-
+        // ================= LIFECYCLE =================
 
         private void Awake()
         {
-            if (Instance != null)
+            if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
 
             Instance = this;
+            Debug.Log("[PlayerRegistry] Initialized as singleton", this);
         }
 
-        // =======================================================================
-        // РЕГИСТРАЦИЯ ИГРОКА
-        // =======================================================================
-        public void Register(GameObject player, StatsFacadeAdapter statsAdapter)
+        // ================= REGISTRATION =================
+
+        public void RegisterPlayer(GameObject player)
         {
-            if (!player.CompareTag("Player"))
+            if (player == null || _players.Contains(player))
+                return;
+
+            _players.Add(player);
+            Debug.Log($"[PlayerRegistry] Registered player: {player.name}", this);
+        }
+
+        public void UnregisterPlayer(GameObject player)
+        {
+            if (player == null)
+                return;
+
+            _players.Remove(player);
+
+            if (LocalPlayer == player)
+                ClearLocalPlayer();
+
+            Debug.Log($"[PlayerRegistry] Unregistered player: {player.name}", this);
+        }
+
+        // ================= LOCAL PLAYER =================
+
+        /// <summary>
+        /// Вызывается для локального игрока.
+        /// Гарантирует только наличие ссылок, не данных.
+        /// </summary>
+        public void SetLocalPlayer(GameObject player)
+        {
+            if (player == null)
             {
-                Debug.Log("[PlayerRegistry] Ignore non-player stats");
+                Debug.LogError("[PlayerRegistry] SetLocalPlayer called with NULL", this);
                 return;
             }
 
-            if (!Players.Contains(player))
-                Players.Add(player);
+            if (LocalPlayer == player)
+                return;
 
-            if (LocalPlayer == null)
-                LocalPlayer = player;
+            LocalPlayer = player;
+            Debug.Log($"[PlayerRegistry] Local player set: {player.name}", this);
 
+            // -------- cache components --------
             LocalInventory = player.GetComponent<InventoryManager>();
-            LocalStats = statsAdapter;
+            if (LocalInventory == null)
+                Debug.LogWarning("[PlayerRegistry] InventoryManager not found on local player", player);
+
             LocalAbilities = player.GetComponent<AbilityCaster>();
+            if (LocalAbilities == null)
+                Debug.LogWarning("[PlayerRegistry] AbilityCaster not found on local player", player);
 
-            if (!_localPlayerInitialized && LocalPlayer != null)
+            LocalPlayerStats = player.GetComponent<PlayerStats>();
+            if (LocalPlayerStats == null)
+                Debug.LogWarning("[PlayerRegistry] PlayerStats not found on local player", player);
+
+            // -------- notify --------
+            Debug.Log("[PlayerRegistry] Invoking OnLocalPlayerReady", this);
+            OnLocalPlayerReady?.Invoke(this);
+        }
+
+        private void ClearLocalPlayer()
+        {
+            Debug.Log("[PlayerRegistry] Local player cleared", this);
+
+            LocalPlayer = null;
+            LocalInventory = null;
+            LocalAbilities = null;
+            LocalPlayerStats = null;
+        }
+
+        // ================= UTIL =================
+
+        /// <summary>
+        /// Возвращает PlayerStats локального игрока, если есть.
+        /// НЕ проверяет готовность данных.
+        /// </summary>
+        public PlayerStats GetLocalStats()
+        {
+            if (LocalPlayerStats == null)
             {
-                _localPlayerInitialized = true;
-                OnLocalPlayerReady?.Invoke(this);
+                Debug.LogWarning("[PlayerRegistry] LocalPlayerStats is null", this);
+                return null;
             }
+
+            return LocalPlayerStats;
         }
 
-        public void RegisterTurret(GameObject ownerPlayer, GameObject turret)
+        public static void SubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
         {
-            if (!PlayerOwnedTurrets.ContainsKey(ownerPlayer))
-                PlayerOwnedTurrets[ownerPlayer] = new List<GameObject>();
+            OnLocalPlayerReady += cb;
 
-            PlayerOwnedTurrets[ownerPlayer].Add(turret);
-            PlayerTurrets.Add(turret);
+            // если локальный игрок уже есть — вызываем сразу
+            if (Instance != null && Instance.LocalPlayer != null)
+                cb(Instance);
         }
 
-        public void UnregisterTurret(GameObject ownerPlayer, GameObject turret)
+        public static void UnsubscribeLocalPlayerReady(Action<PlayerRegistry> cb)
         {
-            if (PlayerOwnedTurrets.TryGetValue(ownerPlayer, out var list))
-                list.Remove(turret);
-
-            PlayerTurrets.Remove(turret);
+            OnLocalPlayerReady -= cb;
         }
     }
 }

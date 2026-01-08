@@ -1,77 +1,58 @@
-using UnityEngine;
 using Features.Abilities.Domain;
 using Features.Buffs.UnityIntegration;
 using Features.Combat.Devices;
+using FishNet;
+using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Abilities.UnityIntegration
 {
-    public class ChargeDeviceHandler : IAbilityHandler
+    public sealed class ChargeDeviceHandler
+        : AbilityHandler<ChargeDeviceAbilitySO>
     {
-        public System.Type AbilityType => typeof(ChargeDeviceAbilitySO);
-
-        public void Execute(AbilitySO abilityBase, AbilityContext ctx)
+        protected override void ExecuteInternal(
+            ChargeDeviceAbilitySO ability,
+            AbilityContext ctx,
+            GameObject owner)
         {
-            var ability = (ChargeDeviceAbilitySO)abilityBase;
-
-            // ================================
-            // ADAPTATION: ctx.Owner is NOW object — not GameObject
-            // ================================
-            GameObject ownerGO = null;
-
-            switch (ctx.Owner)
-            {
-                case GameObject go:
-                    ownerGO = go;
-                    break;
-
-                case Component comp:
-                    ownerGO = comp.gameObject;
-                    break;
-
-                default:
-                    Debug.LogError("[ChargeDeviceHandler] AbilityContext.Owner is not GameObject or Component.");
-                    return;
-            }
-
-            if (ownerGO == null)
+            if (ability.chargeFxPrefab == null || ability.areaBuff == null)
                 return;
 
-            // ================================
-            // BUFF DURATION
-            // ================================
-            float duration = 0f;
+            var fx = Object.Instantiate(
+                ability.chargeFxPrefab,
+                owner.transform.position,
+                Quaternion.identity
+            );
 
-            if (ability.areaBuff != null && ability.areaBuff.buff != null)
-                duration = ability.areaBuff.buff.duration;
-
-            // ================================
-            // APPLY AREA BUFF ON OWNER
-            // ================================
-            if (ability.areaBuff != null)
+            if (!fx.TryGetComponent(out NetworkObject fxNO))
             {
-                var emitter = ownerGO.AddComponent<AreaBuffEmitter>();
+                Object.Destroy(fx);
+                return;
+            }
+
+            var ownerNO = owner.GetComponent<NetworkObject>();
+
+            InstanceFinder.ServerManager.Spawn(
+                fxNO.gameObject,
+                ownerNO != null ? ownerNO.Owner : null
+            );
+
+            float duration = ability.areaBuff.buff.duration;
+
+            if (fx.TryGetComponent(out ChargeDeviceBehaviour beh))
+                beh.Init(owner.transform, duration);
+
+            if (fx.TryGetComponent(out AreaBuffEmitter emitter))
+            {
                 emitter.area = ability.areaBuff;
-
-                if (duration > 0f)
-                    Object.Destroy(emitter, duration);
+                emitter.enabled = true;
             }
 
-            // ================================
-            // FX
-            // ================================
-            if (ability.chargeFxPrefab)
-            {
-                GameObject fx = Object.Instantiate(
-                    ability.chargeFxPrefab,
-                    ownerGO.transform.position,
-                    Quaternion.identity
-                );
+            var auto =
+                fx.GetComponent<NetworkAutoDespawn>()
+                ?? fx.AddComponent<NetworkAutoDespawn>();
 
-                if (fx.TryGetComponent<ChargeDeviceBehaviour>(out var beh))
-                    beh.Init(ownerGO.transform, duration);
-
-                Object.Destroy(fx, duration + 0.2f);
-            }
+            auto.StartDespawn(duration + 0.25f);
         }
     }
 }

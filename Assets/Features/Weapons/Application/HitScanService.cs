@@ -29,7 +29,7 @@ namespace Features.Weapons.Application
                 info.hitNormal = hit.normal;
                 info.distance = hit.distance;
 
-                if (hit.collider.TryGetComponent(out IDamageable dmg))
+                if (hit.collider.GetComponentInParent<IDamageable>() is { } dmg)
                     info.target = dmg;
             }
 

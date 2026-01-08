@@ -38,5 +38,10 @@ namespace Features.Stats.Domain
                     break;
             }
         }
+
+        public void Reset()
+        {
+
+        }
     }
 }

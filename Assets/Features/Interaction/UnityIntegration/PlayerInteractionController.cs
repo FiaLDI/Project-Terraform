@@ -1,229 +1,217 @@
-﻿using UnityEngine;
-using UnityEngine.InputSystem;
+﻿using Features.Game;
+using Features.Input;
 using Features.Interaction.Application;
 using Features.Interaction.Domain;
 using Features.Interaction.UnityIntegration;
-using Features.Items.Domain;
+using Features.Inventory.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player;
-using Features.Input;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class PlayerInteractionController : MonoBehaviour, IInputContextConsumer
+public sealed class PlayerInteractionController :
+    MonoBehaviour,
+    IInputContextConsumer
 {
-    private bool interactionBlocked;
-
-    private InteractionRayService rayService;
-    private InteractionService interactionService;
-
     private PlayerInputContext input;
+    private InteractionResolver resolver;
     private INearbyInteractables nearby;
 
+    private InputAction interactAction;
+
+    private bool interactionBlocked;
     private bool subscribed;
+    private double lastInteractTime = 0;
+    private const double INTERACT_COOLDOWN = 0.2;
 
-    // ======================================================
-    // LIFECYCLE
-    // ======================================================
-
-    private void Awake()
-    {
-        interactionService = new InteractionService();
-    }
+    // ================= UNITY =================
 
     private void Start()
     {
-        rayService = InteractionServiceProvider.Ray;
-        if (rayService == null)
+        // сразу пробуем взять player и nearby
+        var player = BootstrapRoot.I?.LocalPlayer;
+        if (player != null)
         {
-            Debug.LogError("[PlayerInteractionController] InteractionRayService NOT FOUND");
-            enabled = false;
-            return;
+            nearby = player.GetComponent<INearbyInteractables>();
+            Debug.Log($"[PIC] Start: nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
         }
 
-        nearby = LocalPlayerContext.Get<NearbyInteractables>();
+        if (InteractionServiceProvider.Ray != null)
+            InitResolver(InteractionServiceProvider.Ray);
+        else
+            InteractionServiceProvider.OnRayInitialized += InitResolver;
     }
 
-    // ======================================================
-    // INPUT BIND
-    // ======================================================
+    private void OnEnable()  => TrySubscribe();
+    private void OnDisable() => Unsubscribe();
+    private void OnDestroy() => Unsubscribe();
+
+    // ================= INPUT BIND =================
 
     public void BindInput(PlayerInputContext ctx)
     {
-        if (input == ctx)
-            return;
-
-        Unsubscribe();
-
         input = ctx;
-
         if (input == null)
-        {
-            Debug.LogError(
-                $"{nameof(PlayerInteractionController)}: BindInput with NULL",
-                this);
             return;
-        }
 
-        Subscribe();
+        var playerMap = input.Actions.Player;
+        interactAction = playerMap.FindAction("Interact", true);
+
+        TrySubscribe();
+
+        Debug.Log("[PlayerInteractionController] BindInput OK", this);
     }
 
-    private void OnEnable()
+    public void UnbindInput(PlayerInputContext ctx)
     {
-        if (input != null)
-            Subscribe();
-    }
+        if (input != ctx)
+            return;
 
-    private void OnDisable()
-    {
         Unsubscribe();
+        interactAction = null;
+        input = null;
     }
 
-    // ======================================================
-    // SUBSCRIBE
-    // ======================================================
+    // ================= SUBSCRIBE =================
 
-    private void Subscribe()
+    private void TrySubscribe()
     {
-        if (subscribed || input == null)
+        if (subscribed || interactAction == null)
             return;
 
-        var p = input.Actions.Player;
-
-        p.FindAction("Interact").performed += OnInteract;
-        p.FindAction("Drop").performed += OnDrop;
-
+        interactAction.performed += OnInteract;
         subscribed = true;
     }
 
     private void Unsubscribe()
     {
-        if (!subscribed || input == null)
+        if (!subscribed)
             return;
 
-        var p = input.Actions.Player;
-
-        p.FindAction("Interact").performed -= OnInteract;
-        p.FindAction("Drop").performed -= OnDrop;
+        if (interactAction != null)
+            interactAction.performed -= OnInteract;
 
         subscribed = false;
     }
 
-    // ======================================================
-    // INTERACTION
-    // ======================================================
+    // ================= ACTIONS =================
 
     private void OnInteract(InputAction.CallbackContext _)
     {
         TryInteract();
     }
 
-    public void TryInteract()
-    {
-        if (interactionBlocked || rayService == null)
-            return;
+    // ================= INTERACTION =================
 
-        // 1️⃣ Pickup world item
-        if (nearby != null && Camera.main != null)
+    private void TryInteract()
+    {
+        var player = BootstrapRoot.I?.LocalPlayer;
+        if (player == null)
         {
-            var best = nearby.GetBestItem(Camera.main);
-            if (best != null)
-            {
-                PickupItem(best);
-                return;
-            }
+            Debug.LogWarning("[PlayerInteractionController] TryInteract: LocalPlayer is NULL", this);
+            return;
         }
 
-        // 2️⃣ Ray interactable
-        var hit = rayService.Raycast();
-        if (interactionService.TryGetInteractable(hit, out var interactable))
+        // гарантированно есть nearby
+        if (nearby == null)
         {
-            interactable.Interact();
+            nearby = player.GetComponent<INearbyInteractables>();
+            Debug.Log($"[PIC] TryInteract: reacquired nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
+
+            // если резолвер уже был создан с null-nearby – пересоздаём
+            if (resolver != null && nearby != null)
+                resolver = new InteractionResolver(InteractionServiceProvider.Ray, nearby);
         }
-    }
 
-    // ======================================================
-    // DROP
-    // ======================================================
-
-    private void OnDrop(InputAction.CallbackContext _)
-    {
-        DropCurrentItem(false);
-    }
-
-    public void DropCurrentItem(bool dropFullStack)
-    {
-        var inventory = LocalPlayerContext.Inventory;
-        if (inventory == null || Camera.main == null)
-            return;
-
-        var model = inventory.Model;
-        var service = inventory.Service;
-
-        if (model.hotbar.Count == 0)
-            return;
-
-        var slot = model.hotbar[model.selectedHotbarIndex];
-        if (slot.item == null)
-            return;
-
-        var inst = slot.item;
-        int dropAmount = dropFullStack ? inst.quantity : 1;
-
-        var droppedInst = new ItemInstance(inst.itemDefinition, dropAmount);
-
-        Vector3 pos = Camera.main.transform.position
-                    + Camera.main.transform.forward * 1.2f;
-
-        SpawnWorldItem(droppedInst, pos);
-
-        service.TryRemove(inst.itemDefinition, dropAmount);
-    }
-
-    // ======================================================
-    // WORLD SPAWN
-    // ======================================================
-
-    private void SpawnWorldItem(ItemInstance inst, Vector3 position)
-    {
-        var prefab = inst.itemDefinition.worldPrefab;
-        if (prefab == null)
-            return;
-
-        var obj = Instantiate(prefab, position, Quaternion.identity);
-
-        var holder = obj.GetComponent<ItemRuntimeHolder>()
-                    ?? obj.AddComponent<ItemRuntimeHolder>();
-        holder.SetInstance(inst);
-
-        if (obj.TryGetComponent<Rigidbody>(out var rb))
+        double currentTime = Time.realtimeSinceStartup;
+        if (currentTime - lastInteractTime < INTERACT_COOLDOWN)
         {
-            rb.isKinematic = false;
-            rb.useGravity = true;
+            Debug.Log("[PlayerInteractionController] TryInteract blocked by cooldown", this);
+            return;
+        }
+        lastInteractTime = currentTime;
+
+        if (interactionBlocked || resolver == null || nearby == null)
+        {
+            Debug.Log("[PlayerInteractionController] TryInteract: resolver or nearby is NULL", this);
+            return;
+        }
+
+        var cam = UnityEngine.Camera.main;
+        if (cam == null)
+        {
+            Debug.LogWarning("[PlayerInteractionController] TryInteract: Camera.main is NULL", this);
+            return;
+        }
+
+        var target = resolver.Resolve(cam);
+        Debug.Log($"[PlayerInteractionController] TryInteract resolved: {target.Type}", this);
+
+        switch (target.Type)
+        {
+            case InteractionTargetType.Pickup:
+                Debug.Log($"[PlayerInteractionController] PICKUP action triggered, item={target.WorldItem?.name}", this);
+                PickupWorldItem(player, target.WorldItem);
+                break;
+
+            case InteractionTargetType.Interactable:
+                Debug.Log("[PlayerInteractionController] INTERACTABLE action triggered", this);
+                target.Interactable?.Interact();
+                break;
         }
     }
 
-    private void PickupItem(NearbyItemPresenter presenter)
+    private void PickupWorldItem(GameObject player, WorldItemNetwork worldItem)
     {
-        if (presenter == null)
+        if (worldItem == null)
+        {
+            Debug.LogWarning("[PlayerInteractionController] PickupWorldItem: worldItem is NULL", this);
             return;
+        }
 
-        var inst = presenter.GetInstance();
-        if (inst == null || inst.itemDefinition == null)
+        var invNet = player.GetComponent<InventoryStateNetwork>();
+        if (invNet == null)
+        {
+            Debug.LogError("[PlayerInteractionController] PickupWorldItem: InventoryStateNetwork NOT FOUND on player", this);
             return;
+        }
 
-        var inventory = LocalPlayerContext.Inventory;
-        if (inventory == null)
-            return;
+        // берем данные из синхронизированных свойств
+        string itemId = worldItem.ItemId;
+        int qty       = worldItem.Quantity;
+        int lvl       = worldItem.Level;
 
-        inventory.Service.AddItem(inst);
-        Destroy(presenter.gameObject);
+        Debug.Log(
+            $"[PlayerInteractionController] PickupWorldItem → send command | " +
+            $"ItemId={itemId}, Qty={qty}, Level={lvl}, NetId={worldItem.NetworkObject.ObjectId}",
+            this
+        );
+
+        var cmd = new InventoryCommandData
+        {
+            Command        = InventoryCommand.PickupWorldItem,
+            WorldItemNetId = (uint)worldItem.NetworkObject.ObjectId,
+            ItemId         = itemId,
+            PickupQuantity = qty,
+            PickupLevel    = lvl
+        };
+
+        invNet.RequestInventoryCommand(cmd);
     }
 
-    // ======================================================
-    // STATE
-    // ======================================================
+    // ================= EXTERNAL =================
 
     public void SetInteractionBlocked(bool blocked)
     {
         interactionBlocked = blocked;
+    }
+
+    // ================= RESOLVER =================
+
+    private void InitResolver(InteractionRayService ray)
+    {
+        // здесь nearby уже должен быть установлен
+        resolver = new InteractionResolver(ray, nearby);
+        Debug.Log($"[INTERACTION] Resolver initialized, nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
     }
 }

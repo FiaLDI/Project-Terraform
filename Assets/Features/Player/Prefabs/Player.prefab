@@ -65,147 +65,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2093033724641454212}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1944970636957110345
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1251196766475263414}
-  - component: {fileID: 867937932076513187}
-  - component: {fileID: 1765979378530297832}
-  - component: {fileID: 3596959061003280964}
-  m_Layer: 0
-  m_Name: CameraAnchor
-  m_TagString: MainCamera
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1251196766475263414
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1944970636957110345}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2683651113482784269}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!20 &867937932076513187
-Camera:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1944970636957110345}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 1
-  m_GateFitMode: 2
-  m_FOVAxisMode: 0
-  m_Iso: 200
-  m_ShutterSpeed: 0.005
-  m_Aperture: 16
-  m_FocusDistance: 10
-  m_FocalLength: 50
-  m_BladeCount: 5
-  m_Curvature: {x: 2, y: 11}
-  m_BarrelClipping: 0.25
-  m_Anamorphism: 0
-  m_SensorSize: {x: 36, y: 24}
-  m_LensShift: {x: 0, y: 0}
-  m_NormalizedViewPortRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 60
-  orthographic: 0
-  orthographic size: 5
-  m_Depth: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 0
-  m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
-  m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
-  m_StereoConvergence: 10
-  m_StereoSeparation: 0.022
---- !u!114 &1765979378530297832
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1944970636957110345}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 061476d44fe4c66498bd60c374950294, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Camera.UnityIntegration.CameraAnchor
---- !u!114 &3596959061003280964
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1944970636957110345}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
-  m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
-  m_CameraType: 0
-  m_Cameras: []
-  m_RendererIndex: -1
-  m_VolumeLayerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  m_VolumeTrigger: {fileID: 0}
-  m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 1
-  m_Antialiasing: 0
-  m_AntialiasingQuality: 2
-  m_StopNaN: 0
-  m_Dithering: 0
-  m_ClearDepth: 1
-  m_AllowXRRendering: 1
-  m_AllowHDROutput: 1
-  m_UseScreenCoordOverride: 0
-  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
-  m_RequiresDepthTexture: 0
-  m_RequiresColorTexture: 0
-  m_TaaSettings:
-    m_Quality: 3
-    m_FrameInfluence: 0.1
-    m_JitterScale: 1
-    m_MipBias: 0
-    m_VarianceClampScale: 0.9
-    m_ContrastAdaptiveSharpening: 0
-  m_Version: 2
 --- !u!1 &2160573197438437439
 GameObject:
   m_ObjectHideFlags: 0
@@ -308,7 +167,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2683651113482784269}
-  - component: {fileID: 4079258296507483703}
   m_Layer: 0
   m_Name: CameraPivot
   m_TagString: Untagged
@@ -328,23 +186,9 @@ Transform:
   m_LocalPosition: {x: 0.446, y: 2.439, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1251196766475263414}
+  m_Children: []
   m_Father: {fileID: 8282239097301865665}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4079258296507483703
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5151272602035875914}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68466c01d28ee65439f15f239603cc97, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Interaction.UnityIntegration.CameraRayProvider
-  maxDistance: 4
 --- !u!1 &6202741382508557473
 GameObject:
   m_ObjectHideFlags: 0
@@ -385,7 +229,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8282239097301865665}
-  - component: {fileID: 3326919792088178442}
   m_Layer: 0
   m_Name: CameraController
   m_TagString: Untagged
@@ -413,31 +256,6 @@ Transform:
   - {fileID: 2683651113482784269}
   m_Father: {fileID: 2093033724641454212}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3326919792088178442
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6977386072105919177}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c88ff7e19dccc2b429c771720ed11120, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cameraPivot: {fileID: 2683651113482784269}
-  fpsPoint: {fileID: 5175878013477234654}
-  playerBody: {fileID: 8962433313233342359}
-  headTransform: {fileID: 0}
-  cameraTransform: {fileID: 1251196766475263414}
-  mouseSensitivity: 100
-  tpsSmoothSpeed: 7
-  collisionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  collisionRadius: 0.3
-  minCameraDistance: 0.5
-  bodyTurnLimit: 40
 --- !u!1 &7012883752185838559
 GameObject:
   m_ObjectHideFlags: 0
@@ -512,7 +330,6 @@ GameObject:
   - component: {fileID: 367475557838877319}
   - component: {fileID: 6028127562398437825}
   - component: {fileID: 2889153697471037876}
-  - component: {fileID: 7876251346337340079}
   - component: {fileID: 7420869319970409758}
   - component: {fileID: 2322558391178485831}
   - component: {fileID: 2556438216558507215}
@@ -523,16 +340,36 @@ GameObject:
   - component: {fileID: 5031338854518875698}
   - component: {fileID: 7022724963732028029}
   - component: {fileID: 5819680935717294758}
-  - component: {fileID: 6046908101144590067}
   - component: {fileID: 283238272492682892}
-  - component: {fileID: 5666035054648912853}
   - component: {fileID: 5530530445021933545}
   - component: {fileID: 217312396618154767}
   - component: {fileID: 7104529458777332987}
-  - component: {fileID: 2124617729700347530}
   - component: {fileID: 2751139509848182196}
   - component: {fileID: 2364264481245977081}
   - component: {fileID: 4130661444078387841}
+  - component: {fileID: 8363241993167751770}
+  - component: {fileID: 6311823513652316802}
+  - component: {fileID: 187266121288184345}
+  - component: {fileID: 273676337467518626}
+  - component: {fileID: 8671413978466710636}
+  - component: {fileID: 9183921448104923755}
+  - component: {fileID: 5907872678837714149}
+  - component: {fileID: 5082500085448155888}
+  - component: {fileID: 7463166964726445143}
+  - component: {fileID: 3277316184608179795}
+  - component: {fileID: 6347126385330872850}
+  - component: {fileID: 1984978742174617564}
+  - component: {fileID: 142910258178585441}
+  - component: {fileID: 3522764533794228268}
+  - component: {fileID: 368187022757258266}
+  - component: {fileID: 9015480268040883364}
+  - component: {fileID: 7407599192339855080}
+  - component: {fileID: 4243781917691856348}
+  - component: {fileID: 5527670935517867940}
+  - component: {fileID: 7381832722026141383}
+  - component: {fileID: 189359690574479345}
+  - component: {fileID: 2072067561037810914}
+  - component: {fileID: 211343894895838769}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -594,6 +431,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74bc1cb4ac0f54c4eb0d2c824757358e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilityCaster
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
   abilities:
   - {fileID: 0}
   - {fileID: 0}
@@ -604,6 +444,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   executor: {fileID: 0}
+  abilityLibrary: {fileID: 0}
+  cooldownSyncInterval: 0.5
 --- !u!114 &2889153697471037876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -616,22 +458,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a598ae0d0a239844191a98d1694e1afb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffSystem
---- !u!114 &7876251346337340079
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16b296a3a58ab414b94f4ce03b0c52f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ResourceVisualizer
-  radius: 30
-  pointSize: 0.5
-  showColorsByCluster: 1
-  logCountToConsole: 1
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+  debugMode: 0
 --- !u!114 &7420869319970409758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -644,6 +474,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e43118fc938eeff4292a162e78de4d22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.UnityIntegration.PlayerBuffTarget
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
 --- !u!114 &2322558391178485831
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -697,6 +530,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3774e3cdf29f1134db8c792bf047f2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.PlayerStats
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
 --- !u!114 &5136383045370552025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -709,7 +545,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eefe9874e88c6b54fb5f77e2a929969c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsUpdateSystem
-  statsAdapter: {fileID: 0}
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
   useUnscaledTime: 0
 --- !u!114 &3249233337102116910
 MonoBehaviour:
@@ -752,9 +590,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06763d1296a44b54196c9334ef04a76b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerController
-  playerMovement: {fileID: 5819680935717294758}
-  playerCameraController: {fileID: 3326919792088178442}
-  abilityCaster: {fileID: 6028127562398437825}
+  movementNet: {fileID: 187266121288184345}
+  playerCameraController: {fileID: 9183921448104923755}
+  abilityCasterNet: {fileID: 273676337467518626}
 --- !u!114 &5819680935717294758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -767,6 +605,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60a78536e79750a4ba559b1cbafab3e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerMovement
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
   movementReference: {fileID: 5017748270277261448}
   cameraReference: {fileID: 2683651113482784269}
   fallbackBaseSpeed: 5
@@ -780,18 +621,6 @@ MonoBehaviour:
   crouchTransitionSpeed: 10
   airControl: 0.3
   moveInput: {x: 0, y: 0}
---- !u!114 &6046908101144590067
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feaf1b3cdc716a54e9c9b2bb5abf7885, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractionController
 --- !u!114 &283238272492682892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -806,18 +635,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerVisualController
   visualLibrary: {fileID: 11400000, guid: 92992d9b3b0baee4aac268ab4ac09620, type: 2}
   modelRoot: {fileID: 5017748270277261448}
---- !u!114 &5666035054648912853
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0066e41d35fdd5f4d9a8b22e83d0d254, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.PlayerUsageController
 --- !u!114 &5530530445021933545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -832,7 +649,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.EquipmentManager
   rightHandTransform: {fileID: 7222833214983773515}
   leftHandTransform: {fileID: 5728575651840416725}
-  playerCamera: {fileID: 867937932076513187}
+  playerCamera: {fileID: 0}
 --- !u!114 &217312396618154767
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -846,7 +663,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryManager
   bagSize: 12
-  hotbarSize: 2
 --- !u!114 &7104529458777332987
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -860,18 +676,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.UnityIntegration.Adapters.InventoryQuestEventsAdapter
   questManager: {fileID: 0}
---- !u!114 &2124617729700347530
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0066e41d35fdd5f4d9a8b22e83d0d254, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.PlayerUsageController
 --- !u!114 &2751139509848182196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -886,6 +690,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NearbyInteractables
   maxDistance: 3
   maxAngle: 45
+  cleanupInterval: 60
 --- !u!95 &2364264481245977081
 Animator:
   serializedVersion: 7
@@ -920,3 +725,416 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d094ad011ce476041a4d72b0696edf13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerAnimationController
+--- !u!114 &8363241993167751770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d941353c6bf830645a82f144a81891ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerAuthority
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 6311823513652316802}
+  playerController: {fileID: 7022724963732028029}
+--- !u!114 &6311823513652316802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 0
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours:
+  - {fileID: 8363241993167751770}
+  - {fileID: 187266121288184345}
+  - {fileID: 0}
+  - {fileID: 273676337467518626}
+  - {fileID: 8671413978466710636}
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  _initializedTimestamp: -8584352884365890641
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 0
+  _predictionType: 0
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 4294967295
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 4294967295
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 1
+  <SpawnableCollectionId>k__BackingField: 0
+  <AssetPathHash>k__BackingField: 14987090137305175387
+  SceneId: 0
+  SerializedTransformProperties:
+    Position: {x: 5.198681, y: 0.50000095, z: -1.1699247}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1
+--- !u!114 &187266121288184345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bcf529b3a612e740917809eeb60c95a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerMovementNetAdapter
+  _componentIndexCache: 1
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 6311823513652316802}
+--- !u!114 &273676337467518626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31a91c0a4ba3a2c44b37be0cde59fba2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityCasterNetAdapter
+  _componentIndexCache: 3
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 6311823513652316802}
+--- !u!114 &8671413978466710636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
+  _componentIndexCache: 4
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 6311823513652316802}
+  _componentConfiguration: 1
+  _synchronizeParent: 0
+  _packing:
+    Position: 1
+    Rotation: 1
+    Scale: 0
+  _useScaledTime: 1
+  _interpolation: 1
+  _extrapolation: 0
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  _clientAuthoritative: 0
+  _sendToOwner: 1
+  _interval: 1
+  _synchronizePosition: 1
+  _positionSensitivity: 0.001
+  _positionSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+  _synchronizeRotation: 1
+  _rotationSnapping:
+    X: 0
+    Y: 1
+    Z: 0
+  _synchronizeScale: 0
+  _scaleSensitivity: 0.001
+  _scaleSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+--- !u!114 &9183921448104923755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c88ff7e19dccc2b429c771720ed11120, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraPivot: {fileID: 2683651113482784269}
+  fpsPoint: {fileID: 5175878013477234654}
+  playerBody: {fileID: 8962433313233342359}
+  headTransform: {fileID: 0}
+  mouseSensitivity: 100
+  tpsSmoothSpeed: 7
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionRadius: 0.3
+  minCameraDistance: 0.5
+  bodyTurnLimit: 40
+--- !u!114 &5907872678837714149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51e313d0a6e6dfa42828e25eac92185e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerCameraNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &5082500085448155888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b96363ed380ba6d449cf8004205ce624, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.PlayerStateNetwork
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &7463166964726445143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3781b7fb4f7dcf741a8346f250fd87f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.MovementStateNetwork
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &3277316184608179795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfed3782942c21f45862db33d51d9d43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryStateNetwork
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &6347126385330872850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c4e11ef3bbd86744b3e6e4dd85c2f22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.CombatStatsAdapter
+--- !u!114 &1984978742174617564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85745559778e9b340bbacedfd6b65084, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.EnergyStatsAdapter
+--- !u!114 &142910258178585441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d213353b9eade47afdcfe3462a71fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.HealthStatsAdapter
+--- !u!114 &3522764533794228268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fe9cb848f5b9948aaf74e10346ebbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.MovementStatsAdapter
+--- !u!114 &368187022757258266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d9b1d9d612d8204891bf6d03916066f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.MiningStatsAdapter
+--- !u!114 &9015480268040883364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 322e261a792007b4fa0262887681082f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStateNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+  classLibrary: {fileID: 0}
+--- !u!114 &7407599192339855080
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c71fd7f855ec523429999fc4e14a1928, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Observing.NetworkObserver
+  _overrideType: 1
+  _updateHostVisibility: 1
+  _observerConditions: []
+--- !u!114 &4243781917691856348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5cc106ff18c5b44b7520bb7cee5f7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUsageNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+  aimSendRate: 20
+--- !u!114 &5527670935517867940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fa84b807ef77744fa402fa2fbbcb9b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Net.PassiveNetAdapter
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &7381832722026141383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca61dd7427f810b438512fb1cacdeab5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatsNetSync
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+  syncInterval: 0.1
+  threshold: 0.05
+  lerpSpeed: 12
+--- !u!114 &189359690574479345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c70612df4d1e2644c90d44d72cf778a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerGamePhase
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &2072067561037810914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16c3a86919e829242953da235f995773, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Abilities.Client.ClientAbilityView
+--- !u!114 &211343894895838769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49b41d04a8a9bba4b9d07d9f32abe863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Client.ClientBuffView

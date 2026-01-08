@@ -165,7 +165,8 @@ namespace Features.Weapons.UnityIntegration
             if (can)
             {
                 var result = reloadService.StartReload(instance, config, ammoState);
-                Debug.Log($"[ReloadPressed] Reload STARTED ({result})");
+                
+                GetComponentInParent<WeaponFxNetwork>()?.NotifyReload(result == ReloadResult.EmptyReload);
 
                 if (animator != null)
                     animator.Play(
@@ -215,6 +216,8 @@ namespace Features.Weapons.UnityIntegration
         {
             ammoState.ammoInMagazine--;
 
+            GetComponentInParent<WeaponFxNetwork>()?.NotifyFire();
+
             ApplyRecoil();
             PlayMuzzleFx();
 
@@ -237,11 +240,7 @@ namespace Features.Weapons.UnityIntegration
 
             if (config.isProjectile)
             {
-                projectileService.SpawnProjectile(
-                    config.projectileConfig,
-                    muzzlePoint.position,
-                    direction
-                );
+                ProjectileSpawnService.I?.SpawnServer(config.projectileConfig, muzzlePoint.position, direction);
             }
             else
             {
@@ -302,13 +301,11 @@ namespace Features.Weapons.UnityIntegration
 
         private void ApplyRecoil()
         {
+            if (playerCamera == null || !playerCamera.enabled)
+                 return;
             float recoil = runtimeStats.recoil;
 
             Vector2 recoilVec = recoilService.GetRecoil();
-
-            playerCamera.transform.localRotation *=
-                Quaternion.Euler(-recoilVec.y, recoilVec.x, 0f);
-
 
             playerCamera.transform.localRotation *=
                 Quaternion.Euler(-recoilVec.y, recoilVec.x, 0f);
@@ -350,5 +347,23 @@ namespace Features.Weapons.UnityIntegration
 
             animator?.Play("Melee");
         }
+
+        public void PlayFireFxClient()
+        {
+            if (muzzleFlash != null)
+                muzzleFlash.Play();
+
+            if (animator != null)
+                animator.Play(config != null && config.isMelee ? "Melee" : "Fire");
+        }
+
+        public void PlayReloadFxClient(bool emptyReload)
+        {
+            if (animator == null)
+                return;
+
+            animator.Play(emptyReload ? "ReloadEmpty" : "Reload");
+        }
+
     }
 }

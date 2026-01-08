@@ -1,22 +1,28 @@
-using System.Collections.Generic;
-using Features.Input;
 using Features.Inventory.Domain;
-using Features.Inventory.UI;
 using Features.Player;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Features.Inventory.UnityIntegration
 {
-    public class InventoryUIInputController : MonoBehaviour, IInputContextConsumer
+    public sealed class InventoryUIInputController :
+        MonoBehaviour,
+        IInputContextConsumer
     {
         private PlayerInputContext input;
         private bool subscribed;
 
-        // ======================================================
-        // BIND INPUT
-        // ======================================================
+        private InventoryDragController drag;
+        private InputAction dropOneAction;
+        private InputAction dropAllAction;
+        private System.Action<InputAction.CallbackContext> dropOneHandler;
+        private System.Action<InputAction.CallbackContext> dropAllHandler;
+
+        public void SetContext(InventoryDragController dragCtrl)
+        {
+            Debug.LogWarning("IS DRAGFFFFF");
+            drag = dragCtrl;
+        }
 
         public void BindInput(PlayerInputContext ctx)
         {
@@ -24,33 +30,18 @@ namespace Features.Inventory.UnityIntegration
                 return;
 
             Unsubscribe();
-
             input = ctx;
-
-            if (input == null)
-            {
-                Debug.LogError(
-                    $"{nameof(InventoryUIInputController)}: BindInput with NULL",
-                    this);
-                return;
-            }
             Subscribe();
         }
 
-        private void OnEnable()
+        public void UnbindInput(PlayerInputContext ctx)
         {
-            if (input != null)
-                Subscribe();
-        }
+            if (input != ctx)
+                return;
 
-        private void OnDisable()
-        {
             Unsubscribe();
+            input = null;
         }
-
-        // ======================================================
-        // SUBSCRIBE
-        // ======================================================
 
         private void Subscribe()
         {
@@ -59,8 +50,20 @@ namespace Features.Inventory.UnityIntegration
 
             var ui = input.Actions.UI;
 
-            ui.FindAction("DropOne", true).performed += OnDropOne;
-            ui.FindAction("DropAll", true).performed += OnDropAll;
+            dropOneAction = ui.FindAction("DropOne", false);
+            dropAllAction = ui.FindAction("DropAll", false);
+
+            if (dropOneAction == null || dropAllAction == null)
+            {
+                UnityEngine.Debug.LogError("[InventoryUIInputController] DropOne/DropAll not found in UI map", this);
+                return;
+            }
+
+            dropOneHandler = _ => TryDrop(false);
+            dropAllHandler = _ => TryDrop(true);
+
+            dropOneAction.performed += dropOneHandler;
+            dropAllAction.performed += dropAllHandler;
 
             subscribed = true;
         }
@@ -70,72 +73,52 @@ namespace Features.Inventory.UnityIntegration
             if (!subscribed || input == null)
                 return;
 
-            var ui = input.Actions.UI;
+            if (dropOneAction != null && dropOneHandler != null)
+                dropOneAction.performed -= dropOneHandler;
+            if (dropAllAction != null && dropAllHandler != null)
+                dropAllAction.performed -= dropAllHandler;
 
-            ui.FindAction("DropOne", true).performed -= OnDropOne;
-            ui.FindAction("DropAll", true).performed -= OnDropAll;
-
+            dropOneAction = null;
+            dropAllAction = null;
+            dropOneHandler = null;
+            dropAllHandler = null;
             subscribed = false;
         }
 
-        // ======================================================
-        // INPUT
-        // ======================================================
-
-        private void OnDropOne(InputAction.CallbackContext _)
-        {
-            Debug.Log("DROP ONE INPUT");
-            TryDrop(dropAll: false);
-        }
-
-        private void OnDropAll(InputAction.CallbackContext _)
-        {
-            Debug.Log("DROP ALL INPUT");
-            TryDrop(dropAll: true);
-        }
-
-        // ======================================================
-        // DROP LOGIC
-        // ======================================================
-
         private void TryDrop(bool dropAll)
         {
-            // 1. Берём слот
-            InventorySlotUI slotUI =
-                InventorySlotUI.HoveredSlot ??
-                InventorySlotUI.LastInteractedSlot;
-
-            if (slotUI == null &&
-                EventSystem.current != null &&
-                Mouse.current != null)
+            if (drag == null)
             {
-                var results = new List<RaycastResult>();
-                var pointerData = new PointerEventData(EventSystem.current)
-                {
-                    position = Mouse.current.position.ReadValue()
-                };
-
-                EventSystem.current.RaycastAll(pointerData, results);
-
-                foreach (var r in results)
-                {
-                    slotUI = r.gameObject.GetComponentInParent<InventorySlotUI>();
-                    if (slotUI != null)
-                        break;
-                }
+                UnityEngine.Debug.LogError("NOT DRUG");
+                return;
             }
 
-            if (slotUI == null)
+            var slotUI =
+                drag.HoveredSlot ??
+                drag.LastInteractedSlot;
+
+            if (slotUI == null || slotUI.BoundSlot == null || slotUI.BoundSlot.item.IsEmpty)
                 return;
 
-            if (slotUI.BoundSlot == null || slotUI.BoundSlot.item == null)
+            var net = LocalPlayerContext.Inventory
+                ?.GetComponent<InventoryStateNetwork>();
+
+            if (net == null)
                 return;
 
-            var dc = InventoryDragController.Instance;
-            if (dc == null)
+            var cam = UnityEngine.Camera.main;
+            if (cam == null)
                 return;
 
-            dc.DropFromSlotToWorld(slotUI, dropAll);
+            net.RequestInventoryCommand(new InventoryCommandData
+            {
+                Command = InventoryCommand.DropFromSlot,
+                Section = slotUI.Section,
+                Index = slotUI.Index,
+                Amount = dropAll ? int.MaxValue : 1,
+                WorldPos = cam.transform.position,
+                WorldForward = cam.transform.forward
+            });
         }
     }
 }

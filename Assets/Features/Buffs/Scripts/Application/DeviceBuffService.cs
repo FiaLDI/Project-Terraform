@@ -1,9 +1,8 @@
-using UnityEngine;
-using System.Collections.Generic;
-using Features.Buffs.Domain;
 using Features.Buffs.Application;
+using Features.Buffs.Domain;
 using Features.Buffs.UnityIntegration;
 using Features.Player.UnityIntegration;
+using UnityEngine;
 
 public class PlayerDeviceBuffService : MonoBehaviour
 {
@@ -20,43 +19,61 @@ public class PlayerDeviceBuffService : MonoBehaviour
         I = this;
     }
 
-    public void BuffAllPlayerDevices(GameObject player, BuffSO buff, float duration = -1f)
+    public void BuffAllPlayerDevices(
+        GameObject player,
+        BuffSO buff,
+        IBuffSource source
+    )
     {
-        if (buff == null)
-        {
-            Debug.LogWarning("[DeviceBuffService] BuffSO is null");
-            return;
-        }
-
-        BuffAllTurrets(player, buff, duration);
-
-        // будущие устройства (дроны, щиты и т.д.)
-    }
-
-    private void BuffAllTurrets(GameObject player, BuffSO buff, float duration)
-    {
-        var registry = PlayerRegistry.Instance;
-
-        if (!registry.PlayerOwnedTurrets.TryGetValue(player, out var list))
+        if (buff == null || source == null)
             return;
 
-        foreach (var turret in list)
+        var devices = PlayerDeviceRegistry.Instance?.GetDevices(player);
+        if (devices == null)
+            return;
+
+        foreach (var turret in devices)
         {
-            if (turret == null) continue;
+            if (!turret) continue;
 
             if (turret.TryGetComponent<BuffSystem>(out var bs))
             {
-                var service = bs.GetServiceSafe();
-                if (service == null) continue;
-
-                // создаём бафф
-                var inst = service.AddBuff(buff, bs.Target);
-
-                // кастомная длительность
-                if (duration >= 0 && inst != null)
-                    inst.SetDuration(duration);
+                bs.Add(
+                    buff,
+                    source: source,
+                    lifetimeMode: BuffLifetimeMode.WhileSourceAlive
+                );
             }
         }
     }
 
+
+    private void BuffAllTurrets(GameObject player, BuffSO buff, float duration)
+    {
+        var devices = PlayerDeviceRegistry.Instance?.GetDevices(player);
+        if (devices == null)
+            return;
+
+        foreach (var turret in devices)
+        {
+            if (!turret)
+                continue;
+
+            if (!turret.TryGetComponent<BuffSystem>(out var buffSystem))
+                continue;
+
+            IBuffSource source =
+                duration < 0
+                    ? new RuntimeBuffSource(turret)
+                    : new TimedBuffSource(this, duration);
+
+            buffSystem.Add(
+                buff,
+                source,
+                duration < 0
+                    ? BuffLifetimeMode.WhileSourceAlive
+                    : BuffLifetimeMode.Duration
+            );
+        }
+    }
 }

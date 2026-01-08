@@ -20,7 +20,7 @@ MonoBehaviour:
   hitboxes:
   - type: 0
     damageMultiplier: 4
-  baseMaxHealth: 300
+  statsPreset: {fileID: 11400000, guid: fb982eeac80451f48ae636e404ba6c9e, type: 2}
   lod0Distance: 2
   lod1Distance: 5
   lod2Distance: 9

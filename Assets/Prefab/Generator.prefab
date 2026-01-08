@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2861818377613526688}
   - component: {fileID: 2359123666482985354}
+  - component: {fileID: 7688760262762765644}
   m_Layer: 0
   m_Name: Generator
   m_TagString: Untagged
@@ -51,14 +52,69 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14f7a7dfa570dda429ff3a5d6b588a02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeWorldGenerator
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 7688760262762765644}
+  _networkObjectCache: {fileID: 0}
   worldConfig: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
-  playerPrefab: {fileID: 5329499696602917847, guid: 129d114e0f2c6154797ab5ecbe0a1a5f, type: 3}
   systemsPrefab: {fileID: 2830221871605978793, guid: 63613e7461b902147a0c030a9608a25f, type: 3}
+  spawnPointPrefab: {fileID: 7891511044358976705, guid: ac7569557f29c0142be7a8d2cffe30a6, type: 3}
   customPrefab: {fileID: 5502989716011450611, guid: 12b39b97c144da94682c029abc2ff1a4, type: 3}
   loadDistance: 5
   unloadDistance: 8
-  spawnDistanceForward: 5
   spawnHeightCheck: 500
+--- !u!114 &7688760262762765644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 484403358512921624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 0
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours: []
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  _initializedTimestamp: 0
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 0
+  _predictionType: 0
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 255
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 255
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 65535
+  <SpawnableCollectionId>k__BackingField: 0
+  <AssetPathHash>k__BackingField: 14090675556484538564
+  SceneId: 0
+  SerializedTransformProperties:
+    Position: {x: 0, y: 0, z: 0}
+    Rotation: {x: 0, y: 0, z: 0, w: 0}
+    Scale: {x: 0, y: 0, z: 0}
+    IsValid: 0
 --- !u!1 &594147239531366846
 GameObject:
   m_ObjectHideFlags: 0

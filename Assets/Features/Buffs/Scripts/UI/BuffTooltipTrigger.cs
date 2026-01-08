@@ -1,32 +1,56 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Features.Buffs.Application;
+using Features.Buffs.Domain;
 using Features.Menu.Tooltip;
 
 namespace Features.Buffs.UI
 {
-    public class BuffTooltipTrigger :
+    public sealed class BuffTooltipTrigger :
         MonoBehaviour,
         IPointerEnterHandler,
-        IPointerExitHandler
+        IPointerExitHandler,
+        IPointerMoveHandler
     {
-        private BuffInstance inst;
+        private BuffSO cfg;
 
-        public void Bind(BuffInstance inst)
+        // =====================================================
+        // BIND
+        // =====================================================
+
+        public void Bind(BuffSO cfg)
         {
-            this.inst = inst;
+            this.cfg = cfg;
         }
+
+        // =====================================================
+        // POINTER
+        // =====================================================
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            Debug.Log("HOVER BUFF ICON", this);
-            if (inst != null)
-                TooltipController.Instance?.ShowBuff(inst);
+            if (cfg == null)
+            {
+                Debug.LogWarning("[BuffTooltipTrigger] Not bound");
+                return;
+            }
+
+            TooltipController.Instance?.ShowBuff(cfg);
+            TooltipController.Instance?.SetPointerPosition(eventData.position);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             TooltipController.Instance?.Hide();
+        }
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            TooltipController.Instance?.SetPointerPosition(eventData.position);
+        }
+
+        private void OnDestroy()
+        {
+            cfg = null;
         }
     }
 }

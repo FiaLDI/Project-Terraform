@@ -1,20 +1,20 @@
-﻿using UnityEngine;
-using Features.Inventory.Domain;
-using Features.Inventory.Application;
-using Features.Items.Domain;
-using Features.Items.Data;
-using System;
-using Features.Inventory;
+﻿using System;
+using System.Collections.Generic;
 using Features.Equipment.UnityIntegration;
+using Features.Inventory.Domain;
+using Features.Items.Data;
+using Features.Items.Domain;
+using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Inventory.UnityIntegration
 {
     /// <summary>
     /// Player-scoped Inventory.
-    /// Владелец модели, сервиса и экипировки.
-    /// Никаких singleton'ов.
+    /// Владелец модели и сервиса.
+    /// НЕ содержит сетевой логики.
     /// </summary>
-    public class InventoryManager : MonoBehaviour, IInventoryContext
+    public sealed class InventoryManager : MonoBehaviour, IInventoryContext
     {
         public InventoryModel Model { get; private set; }
         public InventoryService Service { get; private set; }
@@ -25,7 +25,6 @@ namespace Features.Inventory.UnityIntegration
 
         [Header("Config")]
         [SerializeField] private int bagSize = 12;
-        [SerializeField] private int hotbarSize = 2; // руки
 
         private EquipmentManager equipment;
 
@@ -37,14 +36,18 @@ namespace Features.Inventory.UnityIntegration
 
         private void Awake()
         {
-            CreateModel();
+            Debug.Log("[InventoryManager] Awake");
+             CreateModel();
             CreateService();
             InitEquipment();
 
             IsReady = true;
-            Debug.Log("XXX[InventoryManager] OnReady invoked", this);
             OnReady?.Invoke();
+            
+            Debug.Log("[InventoryManager] Ready");
         }
+
+
 
         private void OnDestroy()
         {
@@ -62,9 +65,6 @@ namespace Features.Inventory.UnityIntegration
 
             for (int i = 0; i < bagSize; i++)
                 Model.main.Add(new InventorySlot());
-
-            for (int i = 0; i < hotbarSize; i++)
-                Model.hotbar.Add(new InventorySlot());
         }
 
         private void CreateService()
@@ -77,15 +77,9 @@ namespace Features.Inventory.UnityIntegration
         {
             equipment = GetComponent<EquipmentManager>();
             if (equipment != null)
-            {
                 equipment.Init(this);
-            }
             else
-            {
-                Debug.LogWarning(
-                    "[InventoryManager] EquipmentManager not found on Player"
-                );
-            }
+                Debug.LogWarning("[InventoryManager] EquipmentManager not found");
         }
 
         // ======================================================
@@ -98,7 +92,7 @@ namespace Features.Inventory.UnityIntegration
         }
 
         // ======================================================
-        // PUBLIC API — NO GAME LOGIC
+        // PUBLIC API (LOCAL ONLY)
         // ======================================================
 
         public void AddItem(Item definition, int amount = 1)
@@ -108,12 +102,10 @@ namespace Features.Inventory.UnityIntegration
 
             var inst = new ItemInstance(definition, amount);
 
-            bool added = Service.AddItem(inst);
-            if (!added)
+            if (!Service.AddItem(inst))
             {
                 Debug.LogWarning(
-                    $"[InventoryManager] Failed to add item {definition.name}"
-                );
+                    $"[InventoryManager] Failed to add item {definition.id}");
                 return;
             }
 
@@ -130,36 +122,140 @@ namespace Features.Inventory.UnityIntegration
             return Service.GetItemCount(definition);
         }
 
-        public void SelectHotbarIndex(int index)
-        {
-            Model.selectedHotbarIndex =
-                Mathf.Clamp(index, 0, Model.hotbar.Count - 1);
+        // ======================================================
+        // NETWORK STATE APPLY
+        // ======================================================
 
+        public void ApplyNetState(
+            IReadOnlyList<InventorySlotNet> bagNet,
+            InventorySlotNet left,
+            InventorySlotNet right)
+        {
+            ApplySection(Model.main, bagNet);
+
+            ApplySlot(Model.leftHand, left);
+            ApplySlot(Model.rightHand, right);
+
+            Debug.Log("[InventoryManager] ApplyNetState -> OnInventoryChanged");
             OnInventoryChanged?.Invoke();
         }
 
-        // ======================================================
-        // EQUIPMENT SHORTCUTS (UI ONLY)
-        // ======================================================
-
-        public void EquipRightFromUI(int slotIndex, InventorySection section)
+        private void ApplySection(
+            IList<InventorySlot> slots,
+            IReadOnlyList<InventorySlotNet> net)
         {
-            Service.EquipRightHand(slotIndex, section);
+            int count = Mathf.Min(slots.Count, net.Count);
+            for (int i = 0; i < count; i++)
+                ApplySlot(slots[i], net[i]);
         }
 
-        public void EquipLeftFromUI(int slotIndex, InventorySection section)
+        private void ApplySlot(InventorySlot slot, InventorySlotNet net)
         {
-            Service.EquipLeftHand(slotIndex, section);
+            if (string.IsNullOrEmpty(net.itemId) || net.quantity <= 0)
+            {
+                slot.item = ItemInstance.Empty;
+                return;
+            }
+
+            if (!slot.item.IsEmpty &&
+                slot.item.itemDefinition.id == net.itemId &&
+                slot.item.level == net.level)
+            {
+                slot.item.quantity = net.quantity;
+                return;
+            }
+
+            // NEW ITEM
+            var def = ItemRegistrySO.Instance?.Get(net.itemId);
+            if (def == null)
+            {
+                Debug.LogError($"[Inventory] Item not found: {net.itemId}");
+                slot.item = ItemInstance.Empty;
+                return;
+            }
+
+            slot.item = new ItemInstance(def, net.quantity, net.level);
         }
 
-        public void UnequipRight()
+
+        public void ApplyHandsNetState(InventorySlotNet left, InventorySlotNet right)
         {
-            Service.UnequipRightHand();
+            Model.leftHand.item  = FromNet(left);
+            Model.rightHand.item = FromNet(right);
+            OnInventoryChanged?.Invoke();
         }
 
-        public void UnequipLeft()
+        private ItemInstance FromNet(InventorySlotNet net)
         {
-            Service.UnequipLeftHand();
+            if (string.IsNullOrEmpty(net.itemId) || net.quantity <= 0)
+                return ItemInstance.Empty;
+
+            var def = ItemRegistrySO.Instance?.Get(net.itemId);
+            if (def == null)
+            {
+                Debug.LogError($"[InventoryManager] Item not found: {net.itemId}");
+                return ItemInstance.Empty;
+            }
+
+            return new ItemInstance(def, net.quantity, net.level);
+        }
+
+        public List<InventorySlotRef> GetUpgradableSlots()
+        {
+            var result = new List<InventorySlotRef>();
+
+            if (Model == null)
+                return result;
+
+            // ===== BAG =====
+            for (int i = 0; i < Model.main.Count; i++)
+            {
+                var slot = Model.main[i];
+                var inst = slot.item;
+                if (IsUpgradable(inst))
+                {
+                    result.Add(new InventorySlotRef(
+                        InventorySection.Bag,
+                        i,
+                        inst
+                    ));
+                }
+            }
+
+            // ===== LEFT HAND =====
+            if (IsUpgradable(Model.leftHand.item))
+            {
+                result.Add(new InventorySlotRef(
+                    InventorySection.LeftHand,
+                    0,
+                    Model.leftHand.item
+                ));
+            }
+
+            // ===== RIGHT HAND =====
+            if (IsUpgradable(Model.rightHand.item))
+            {
+                result.Add(new InventorySlotRef(
+                    InventorySection.RightHand,
+                    0,
+                    Model.rightHand.item
+                ));
+            }
+
+            return result;
+        }
+
+        private bool IsUpgradable(ItemInstance inst)
+        {
+            if (inst == null || inst.IsEmpty || inst.itemDefinition == null)
+                return false;
+
+            var upgrades = inst.itemDefinition.upgrades;
+            if (upgrades == null || upgrades.Length == 0)
+                return false;
+
+            // есть ли ещё уровни выше текущего
+            return inst.level < upgrades.Length;
         }
     }
 }

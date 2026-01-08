@@ -18,7 +18,6 @@ public class UIStackManager : MonoBehaviour
         }
 
         I = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     // ======================================================
@@ -89,6 +88,17 @@ public class UIStackManager : MonoBehaviour
     {
         return stack.Count > 0 && stack.Peek() is T;
     }
+
+    public void Clear()
+    {
+        while (stack.Count > 0)
+        {
+            stack.Pop().Hide();
+        }
+
+        TrySetMode(InputMode.Gameplay);
+    }
+
 
     public bool HasScreens =>
         stack.Count > 0 &&

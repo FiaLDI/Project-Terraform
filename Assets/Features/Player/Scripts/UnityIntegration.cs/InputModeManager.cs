@@ -27,9 +27,12 @@ namespace Features.Input
                 Destroy(gameObject);
                 return;
             }
+            if (transform.parent == null)  // Только root объекты!
+            {
+                DontDestroyOnLoad(gameObject);
+            }
 
             I = this;
-            DontDestroyOnLoad(gameObject);
         }
 
         // ======================================================
@@ -109,6 +112,9 @@ namespace Features.Input
 
         private void EnableGameplay()
         {
+            input.Actions.UI.Disable();
+            input.Actions.Player.Enable();
+
             input.PlayerInput.SwitchCurrentActionMap("Player");
 
             Cursor.lockState = CursorLockMode.Locked;
@@ -118,6 +124,9 @@ namespace Features.Input
 
         private void EnableUI(bool pauseTime)
         {
+            input.Actions.Player.Disable();
+            input.Actions.UI.Enable();
+
             input.PlayerInput.SwitchCurrentActionMap("UI");
 
             Cursor.lockState = CursorLockMode.None;

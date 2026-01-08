@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Features.Camera.UnityIntegration;
+using UnityEngine;
+using Features.Enemy.UnityIntegration;
+
 
 namespace Features.Enemy
 {
     [RequireComponent(typeof(Canvas))]
-    public class EnemyHealthBarUI : MonoBehaviour
+    public sealed class EnemyHealthBarUI : MonoBehaviour
     {
         [Header("UI")]
         [SerializeField] private Image fillImage;
@@ -17,20 +20,15 @@ namespace Features.Enemy
         private Canvas canvas;
         private UnityEngine.Camera cam;
 
+        private float current;
+        private float max;
         private float targetFill = 1f;
-        private float uiTimer;
 
-        public EnemyHealth Target
-        {
-            get => target;
-            set => target = value;
-        }
+        private float updateTimer;
 
-        public Transform HeadAnchor
-        {
-            get => headAnchor;
-            set => headAnchor = value;
-        }
+        // =====================================================
+        // UNITY
+        // =====================================================
 
         private void Awake()
         {
@@ -40,16 +38,12 @@ namespace Features.Enemy
 
         private void OnEnable()
         {
-            // ������� ������� CameraRegistry
             if (CameraRegistry.Instance != null)
             {
                 CameraRegistry.Instance.OnCameraChanged += HandleCameraChanged;
 
-                // ���� ������ ��� ���� ���������������� � ������������� � �����
                 if (CameraRegistry.Instance.CurrentCamera != null)
-                {
                     HandleCameraChanged(CameraRegistry.Instance.CurrentCamera);
-                }
             }
         }
 
@@ -58,8 +52,14 @@ namespace Features.Enemy
             if (target == null)
                 target = GetComponentInParent<EnemyHealth>();
 
-            // ������� head anchor �������������
-            if (headAnchor == null && target != null)
+            if (target == null)
+            {
+                Debug.LogError("[EnemyHealthBarUI] EnemyHealth not found", this);
+                enabled = false;
+                return;
+            }
+
+            if (headAnchor == null)
             {
                 var go = new GameObject("HeadAnchor");
                 go.transform.SetParent(target.transform);
@@ -67,59 +67,34 @@ namespace Features.Enemy
                 headAnchor = go.transform;
             }
 
-            if (target == null || headAnchor == null || fillImage == null)
+            if (fillImage == null)
             {
-                Debug.LogError("[EnemyHealthBarUI] Missing references");
+                Debug.LogError("[EnemyHealthBarUI] FillImage missing", this);
                 enabled = false;
                 return;
             }
 
-            // ������������� �� ��������
-            target.OnHealthChanged += HandleHealthChanged;
+            // 🔥 регистрируемся как view
+            target.RegisterHealthView(this);
 
-            // ���� ������ ��� ����
-            if (canvas != null && cam != null)
-                canvas.worldCamera = cam;
-
-            HandleHealthChanged(target.CurrentHealth, target.MaxHealth);
+            UpdateFillImmediate();
         }
 
         private void LateUpdate()
         {
-            uiTimer += Time.deltaTime;
-            if (uiTimer < 0.1f) return;
-            uiTimer = 0f;
-
-            if (!target || cam == null)
+            updateTimer += Time.deltaTime;
+            if (updateTimer < 0.05f)
                 return;
 
-            // ������� ��� �������
-            transform.position = headAnchor.position;
+            updateTimer = 0f;
 
-            // face the camera
+            if (cam == null || headAnchor == null)
+                return;
+
+            transform.position = headAnchor.position;
             transform.LookAt(cam.transform, Vector3.up);
 
-            // progress bar
             fillImage.fillAmount = targetFill;
-        }
-
-        private void HandleHealthChanged(float current, float max)
-        {
-            targetFill = max > 0 ? current / max : 0f;
-
-            if (current <= 0)
-                Invoke(nameof(Hide), 1f);
-        }
-
-        private void Hide()
-        {
-            gameObject.SetActive(false);
-        }
-
-        private void HandleCameraChanged(UnityEngine.Camera newCam)
-        {
-            cam = newCam;
-            canvas.worldCamera = cam;
         }
 
         private void OnDisable()
@@ -131,7 +106,43 @@ namespace Features.Enemy
         private void OnDestroy()
         {
             if (target != null)
-                target.OnHealthChanged -= HandleHealthChanged;
+                target.UnregisterHealthView(this);
+        }
+
+        // =====================================================
+        // VIEW API (вызывается EnemyHealth)
+        // =====================================================
+
+        public void SetHealth(float hp, float maxHp)
+        {
+            current = hp;
+            max = maxHp;
+
+            targetFill = max > 0f ? current / max : 0f;
+
+            if (current <= 0f)
+                Invoke(nameof(Hide), 1f);
+        }
+
+        // =====================================================
+        // HELPERS
+        // =====================================================
+
+        private void UpdateFillImmediate()
+        {
+            targetFill = max > 0f ? current / max : 1f;
+            fillImage.fillAmount = targetFill;
+        }
+
+        private void Hide()
+        {
+            gameObject.SetActive(false);
+        }
+
+        private void HandleCameraChanged(UnityEngine.Camera newCam)
+        {
+            cam = newCam;
+            canvas.worldCamera = cam;
         }
     }
 }

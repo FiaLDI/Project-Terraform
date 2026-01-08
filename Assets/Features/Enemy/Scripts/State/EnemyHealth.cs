@@ -1,53 +1,28 @@
+using System.Collections.Generic;
 using UnityEngine;
-using System;
-using Features.Combat.Domain;
-using Features.Enemy.Data;
 
-namespace Features.Enemy
+namespace Features.Enemy.UnityIntegration
 {
-    public class EnemyHealth : MonoBehaviour, IDamageable
+    public sealed class EnemyHealth : MonoBehaviour
     {
-        public EnemyConfigSO config;
+        private readonly List<EnemyHealthBarUI> views = new();
 
-        public string EnemyId => config.enemyId;
-
-        public float MaxHealth { get; private set; }
-        public float CurrentHealth { get; private set; }
-
-        public event Action<float, float> OnHealthChanged;
-        public static event Action<EnemyHealth> GlobalEnemyKilled;
-
-        private bool isDead;
-
-        private void Awake()
+        public void RegisterHealthView(EnemyHealthBarUI view)
         {
-            MaxHealth = config.baseMaxHealth;
-            CurrentHealth = MaxHealth;
-            OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
+            if (!views.Contains(view))
+                views.Add(view);
         }
 
-        public void TakeDamage(float amount, DamageType type)
+        public void UnregisterHealthView(EnemyHealthBarUI view)
         {
-            if (isDead) return;
-
-            CurrentHealth -= amount;
-            if (CurrentHealth <= 0)
-            {
-                CurrentHealth = 0;
-                isDead = true;
-                OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
-                GlobalEnemyKilled?.Invoke(this);
-                Destroy(gameObject);
-            }
-            else
-            {
-                OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
-            }
+            views.Remove(view);
         }
 
-        public void Heal(float healAmount)
+        // CLIENT ONLY
+        public void SetHealthFromNetwork(float hp, float maxHp)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < views.Count; i++)
+                views[i].SetHealth(hp, maxHp);
         }
     }
 }
