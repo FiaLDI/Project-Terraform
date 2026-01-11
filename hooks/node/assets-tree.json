@@ -1,5 +1,15 @@
 [
   {
+    "type": "file",
+    "name": "DefaultPrefabObjects.asset",
+    "path": "Assets\\DefaultPrefabObjects.asset"
+  },
+  {
+    "type": "file",
+    "name": "DefaultPrefabObjects.asset.meta",
+    "path": "Assets\\DefaultPrefabObjects.asset.meta"
+  },
+  {
     "type": "folder",
     "name": "Features",
     "path": "Assets\\Features",
@@ -500,13 +510,13 @@
               },
               {
                 "type": "file",
-                "name": "Turret.prefab",
-                "path": "Assets\\Features\\Abilities\\Prefab\\Turret.prefab"
+                "name": "TurretPrefab.prefab",
+                "path": "Assets\\Features\\Abilities\\Prefab\\TurretPrefab.prefab"
               },
               {
                 "type": "file",
-                "name": "Turret.prefab.meta",
-                "path": "Assets\\Features\\Abilities\\Prefab\\Turret.prefab.meta"
+                "name": "TurretPrefab.prefab.meta",
+                "path": "Assets\\Features\\Abilities\\Prefab\\TurretPrefab.prefab.meta"
               }
             ]
           },
@@ -552,6 +562,28 @@
                 "type": "file",
                 "name": "Core.meta",
                 "path": "Assets\\Features\\Abilities\\Scripts\\Core.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Data",
+                "path": "Assets\\Features\\Abilities\\Scripts\\Data",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "AbilityLibrarySO.cs",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\Data\\AbilityLibrarySO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AbilityLibrarySO.cs.meta",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\Data\\AbilityLibrarySO.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Data.meta",
+                "path": "Assets\\Features\\Abilities\\Scripts\\Data.meta"
               },
               {
                 "type": "folder",
@@ -694,13 +726,13 @@
                   },
                   {
                     "type": "file",
-                    "name": "AbilityUIRoot.cs",
-                    "path": "Assets\\Features\\Abilities\\Scripts\\UI\\AbilityUIRoot.cs"
+                    "name": "ClientAbilityView.cs",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\UI\\ClientAbilityView.cs"
                   },
                   {
                     "type": "file",
-                    "name": "AbilityUIRoot.cs.meta",
-                    "path": "Assets\\Features\\Abilities\\Scripts\\UI\\AbilityUIRoot.cs.meta"
+                    "name": "ClientAbilityView.cs.meta",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\UI\\ClientAbilityView.cs.meta"
                   }
                 ]
               },
@@ -735,6 +767,26 @@
                     "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\AbilityExecutor.cs.meta"
                   },
                   {
+                    "type": "file",
+                    "name": "AbilityHandlerRegistry.cs",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\AbilityHandlerRegistry.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AbilityHandlerRegistry.cs.meta",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\AbilityHandlerRegistry.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AbilityRuntimeBase.cs",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\AbilityRuntimeBase.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "AbilityRuntimeBase.cs.meta",
+                    "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\AbilityRuntimeBase.cs.meta"
+                  },
+                  {
                     "type": "folder",
                     "name": "Animation",
                     "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\Animation",
@@ -761,6 +813,16 @@
                     "name": "Handlers",
                     "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\Handlers",
                     "children": [
+                      {
+                        "type": "file",
+                        "name": "AbilityHandler.cs",
+                        "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\Handlers\\AbilityHandler.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "AbilityHandler.cs.meta",
+                        "path": "Assets\\Features\\Abilities\\Scripts\\UnityIntegration\\Handlers\\AbilityHandler.cs.meta"
+                      },
                       {
                         "type": "file",
                         "name": "ChargeDeviceHandler.cs",
@@ -1275,6 +1337,16 @@
                     "type": "file",
                     "name": "BiomeUIController.cs.meta",
                     "path": "Assets\\Features\\Biomes\\Scripts\\UI\\BiomeUIController.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "WorldGeneratorUI.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\UI\\WorldGeneratorUI.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "WorldGeneratorUI.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\UI\\WorldGeneratorUI.cs.meta"
                   }
                 ]
               },
@@ -1380,6 +1452,16 @@
                   },
                   {
                     "type": "file",
+                    "name": "SceneTransitionService.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\UnityIntegration\\SceneTransitionService.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "SceneTransitionService.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\UnityIntegration\\SceneTransitionService.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "TerrainMeshGenerator.cs",
                     "path": "Assets\\Features\\Biomes\\Scripts\\UnityIntegration\\TerrainMeshGenerator.cs"
                   },
@@ -1387,6 +1469,16 @@
                     "type": "file",
                     "name": "TerrainMeshGenerator.cs.meta",
                     "path": "Assets\\Features\\Biomes\\Scripts\\UnityIntegration\\TerrainMeshGenerator.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "WorldGeneratorTerminal.cs",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\UnityIntegration\\WorldGeneratorTerminal.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "WorldGeneratorTerminal.cs.meta",
+                    "path": "Assets\\Features\\Biomes\\Scripts\\UnityIntegration\\WorldGeneratorTerminal.cs.meta"
                   }
                 ]
               },
@@ -3303,16 +3395,6 @@
                 "type": "file",
                 "name": "BuffIconUI.prefab.meta",
                 "path": "Assets\\Features\\Buffs\\Prefabs\\BuffIconUI.prefab.meta"
-              },
-              {
-                "type": "file",
-                "name": "GlobalBuffSystem.prefab",
-                "path": "Assets\\Features\\Buffs\\Prefabs\\GlobalBuffSystem.prefab"
-              },
-              {
-                "type": "file",
-                "name": "GlobalBuffSystem.prefab.meta",
-                "path": "Assets\\Features\\Buffs\\Prefabs\\GlobalBuffSystem.prefab.meta"
               }
             ]
           },
@@ -3360,6 +3442,16 @@
                     "type": "file",
                     "name": "GlobalBuffRegistry.cs.meta",
                     "path": "Assets\\Features\\Buffs\\Scripts\\Application\\GlobalBuffRegistry.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ServerBuffTargetRegistry.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Application\\ServerBuffTargetRegistry.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ServerBuffTargetRegistry.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Application\\ServerBuffTargetRegistry.cs.meta"
                   }
                 ]
               },
@@ -3367,6 +3459,28 @@
                 "type": "file",
                 "name": "Application.meta",
                 "path": "Assets\\Features\\Buffs\\Scripts\\Application.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Data",
+                "path": "Assets\\Features\\Buffs\\Scripts\\Data",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "BuffRegistrySO.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Data\\BuffRegistrySO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffRegistrySO.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Data\\BuffRegistrySO.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Data.meta",
+                "path": "Assets\\Features\\Buffs\\Scripts\\Data.meta"
               },
               {
                 "type": "folder",
@@ -3395,6 +3509,16 @@
                   },
                   {
                     "type": "file",
+                    "name": "BuffLifetimeMode.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffLifetimeMode.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffLifetimeMode.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffLifetimeMode.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "BuffSO.cs",
                     "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffSO.cs"
                   },
@@ -3402,6 +3526,26 @@
                     "type": "file",
                     "name": "BuffSO.cs.meta",
                     "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffSO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffSource.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffSource.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffSource.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffSource.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffSourceType.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffSourceType.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffSourceType.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\BuffSourceType.cs.meta"
                   },
                   {
                     "type": "file",
@@ -3453,6 +3597,16 @@
                     "type": "file",
                     "name": "StatInterfaces.meta",
                     "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\StatInterfaces.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TimedBuffSource.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\TimedBuffSource.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "TimedBuffSource.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\Domain\\TimedBuffSource.cs.meta"
                   }
                 ]
               },
@@ -3495,6 +3649,16 @@
                     "type": "file",
                     "name": "BuffTooltipTrigger.cs.meta",
                     "path": "Assets\\Features\\Buffs\\Scripts\\UI\\BuffTooltipTrigger.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ClientBuffView.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UI\\ClientBuffView.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ClientBuffView.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UI\\ClientBuffView.cs.meta"
                   }
                 ]
               },
@@ -3540,6 +3704,26 @@
                   },
                   {
                     "type": "file",
+                    "name": "BuffTickSystem.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\BuffTickSystem.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BuffTickSystem.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\BuffTickSystem.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "GlobalBuffInstance.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\GlobalBuffInstance.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "GlobalBuffInstance.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\GlobalBuffInstance.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "GlobalBuffRegistryAdapter.cs",
                     "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\GlobalBuffRegistryAdapter.cs"
                   },
@@ -3567,6 +3751,38 @@
                     "type": "file",
                     "name": "PlayerBuffTarget.cs.meta",
                     "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\PlayerBuffTarget.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RuntimeBuffSource.cs",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\RuntimeBuffSource.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "RuntimeBuffSource.cs.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\RuntimeBuffSource.cs.meta"
+                  },
+                  {
+                    "type": "folder",
+                    "name": "Target",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\Target",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "EnemyBuffTarget.cs",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\Target\\EnemyBuffTarget.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "EnemyBuffTarget.cs.meta",
+                        "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\Target\\EnemyBuffTarget.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Target.meta",
+                    "path": "Assets\\Features\\Buffs\\Scripts\\UnityIntegration\\Target.meta"
                   },
                   {
                     "type": "file",
@@ -3769,16 +3985,6 @@
               },
               {
                 "type": "file",
-                "name": "CameraAnchor.cs",
-                "path": "Assets\\Features\\Camera\\UnityIntegration\\CameraAnchor.cs"
-              },
-              {
-                "type": "file",
-                "name": "CameraAnchor.cs.meta",
-                "path": "Assets\\Features\\Camera\\UnityIntegration\\CameraAnchor.cs.meta"
-              },
-              {
-                "type": "file",
                 "name": "CameraFollowAdapter.cs",
                 "path": "Assets\\Features\\Camera\\UnityIntegration\\CameraFollowAdapter.cs"
               },
@@ -3816,6 +4022,16 @@
                 "type": "file",
                 "name": "HeadFollowAdapter.cs.meta",
                 "path": "Assets\\Features\\Camera\\UnityIntegration\\HeadFollowAdapter.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "PlayerAimProxy.cs",
+                "path": "Assets\\Features\\Camera\\UnityIntegration\\PlayerAimProxy.cs"
+              },
+              {
+                "type": "file",
+                "name": "PlayerAimProxy.cs.meta",
+                "path": "Assets\\Features\\Camera\\UnityIntegration\\PlayerAimProxy.cs.meta"
               }
             ]
           },
@@ -3862,16 +4078,6 @@
                 "type": "file",
                 "name": "Class.meta",
                 "path": "Assets\\Features\\Classes\\Configs\\Class.meta"
-              },
-              {
-                "type": "file",
-                "name": "Library.asset",
-                "path": "Assets\\Features\\Classes\\Configs\\Library.asset"
-              },
-              {
-                "type": "file",
-                "name": "Library.asset.meta",
-                "path": "Assets\\Features\\Classes\\Configs\\Library.asset.meta"
               }
             ]
           },
@@ -3960,6 +4166,28 @@
                 "type": "file",
                 "name": "Domain.meta",
                 "path": "Assets\\Features\\Classes\\Scripts\\Domain.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Net",
+                "path": "Assets\\Features\\Classes\\Scripts\\Net",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "PlayerStateNetAdapter.cs",
+                    "path": "Assets\\Features\\Classes\\Scripts\\Net\\PlayerStateNetAdapter.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerStateNetAdapter.cs.meta",
+                    "path": "Assets\\Features\\Classes\\Scripts\\Net\\PlayerStateNetAdapter.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Net.meta",
+                "path": "Assets\\Features\\Classes\\Scripts\\Net.meta"
               },
               {
                 "type": "folder",
@@ -4854,6 +5082,16 @@
               },
               {
                 "type": "file",
+                "name": "EnemyStats Preset SO.asset",
+                "path": "Assets\\Features\\Enemy\\Config\\EnemyStats Preset SO.asset"
+              },
+              {
+                "type": "file",
+                "name": "EnemyStats Preset SO.asset.meta",
+                "path": "Assets\\Features\\Enemy\\Config\\EnemyStats Preset SO.asset.meta"
+              },
+              {
+                "type": "file",
                 "name": "Enemy_3ee078.asset",
                 "path": "Assets\\Features\\Enemy\\Config\\Enemy_3ee078.asset"
               },
@@ -4883,6 +5121,16 @@
                 "type": "file",
                 "name": "colorsbla.png.meta",
                 "path": "Assets\\Features\\Enemy\\Model\\colorsbla.png.meta"
+              },
+              {
+                "type": "file",
+                "name": "Enemy.controller",
+                "path": "Assets\\Features\\Enemy\\Model\\Enemy.controller"
+              },
+              {
+                "type": "file",
+                "name": "Enemy.controller.meta",
+                "path": "Assets\\Features\\Enemy\\Model\\Enemy.controller.meta"
               },
               {
                 "type": "file",
@@ -4968,6 +5216,16 @@
                     "type": "file",
                     "name": "Enemy_Dinozavr_NO_Anim_5K_TRIS.glb.meta",
                     "path": "Assets\\Features\\Enemy\\Model\\new\\Enemy_Dinozavr_NO_Anim_5K_TRIS.glb.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "New Animation.anim",
+                    "path": "Assets\\Features\\Enemy\\Model\\new\\New Animation.anim"
+                  },
+                  {
+                    "type": "file",
+                    "name": "New Animation.anim.meta",
+                    "path": "Assets\\Features\\Enemy\\Model\\new\\New Animation.anim.meta"
                   }
                 ]
               },
@@ -5069,13 +5327,33 @@
                 "children": [
                   {
                     "type": "file",
-                    "name": "Empty.cs",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\Empty.cs"
+                    "name": "EnemyAI.cs",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\EnemyAI.cs"
                   },
                   {
                     "type": "file",
-                    "name": "Empty.cs.meta",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\Empty.cs.meta"
+                    "name": "EnemyAI.cs.meta",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\EnemyAI.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyAISystem.cs",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\EnemyAISystem.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyAISystem.cs.meta",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\EnemyAISystem.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyEcsMoveBridge.cs",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\EnemyEcsMoveBridge.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyEcsMoveBridge.cs.meta",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\AI\\EnemyEcsMoveBridge.cs.meta"
                   }
                 ]
               },
@@ -5137,126 +5415,6 @@
                 "type": "file",
                 "name": "Data.meta",
                 "path": "Assets\\Features\\Enemy\\Scripts\\Data.meta"
-              },
-              {
-                "type": "folder",
-                "name": "ECS",
-                "path": "Assets\\Features\\Enemy\\Scripts\\ECS",
-                "children": [
-                  {
-                    "type": "folder",
-                    "name": "Authoring",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Authoring",
-                    "children": [
-                      {
-                        "type": "file",
-                        "name": "EnemyAuthoring.cs",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Authoring\\EnemyAuthoring.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EnemyAuthoring.cs.meta",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Authoring\\EnemyAuthoring.cs.meta"
-                      },
-                      {
-                        "type": "file",
-                        "name": "SpawnerAuthoring.cs",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Authoring\\SpawnerAuthoring.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "SpawnerAuthoring.cs.meta",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Authoring\\SpawnerAuthoring.cs.meta"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "file",
-                    "name": "Authoring.meta",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Authoring.meta"
-                  },
-                  {
-                    "type": "folder",
-                    "name": "Components",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Components",
-                    "children": [
-                      {
-                        "type": "file",
-                        "name": "EnemyComponents.cs",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Components\\EnemyComponents.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EnemyComponents.cs.meta",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Components\\EnemyComponents.cs.meta"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "file",
-                    "name": "Components.meta",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Components.meta"
-                  },
-                  {
-                    "type": "folder",
-                    "name": "Prefabs",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Prefabs",
-                    "children": [
-                      {
-                        "type": "file",
-                        "name": "Enemy.prefab",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Prefabs\\Enemy.prefab"
-                      },
-                      {
-                        "type": "file",
-                        "name": "Enemy.prefab.meta",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Prefabs\\Enemy.prefab.meta"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "file",
-                    "name": "Prefabs.meta",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Prefabs.meta"
-                  },
-                  {
-                    "type": "folder",
-                    "name": "Systems",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Systems",
-                    "children": [
-                      {
-                        "type": "file",
-                        "name": "EnemyMovementSystem.cs",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Systems\\EnemyMovementSystem.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EnemyMovementSystem.cs.meta",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Systems\\EnemyMovementSystem.cs.meta"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EnemySpawnerSystem.cs",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Systems\\EnemySpawnerSystem.cs"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EnemySpawnerSystem.cs.meta",
-                        "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Systems\\EnemySpawnerSystem.cs.meta"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "file",
-                    "name": "Systems.meta",
-                    "path": "Assets\\Features\\Enemy\\Scripts\\ECS\\Systems.meta"
-                  }
-                ]
-              },
-              {
-                "type": "file",
-                "name": "ECS.meta",
-                "path": "Assets\\Features\\Enemy\\Scripts\\ECS.meta"
               },
               {
                 "type": "folder",
@@ -5362,17 +5520,6 @@
               },
               {
                 "type": "folder",
-                "name": "Spawner",
-                "path": "Assets\\Features\\Enemy\\Scripts\\Spawner",
-                "children": []
-              },
-              {
-                "type": "file",
-                "name": "Spawner.meta",
-                "path": "Assets\\Features\\Enemy\\Scripts\\Spawner.meta"
-              },
-              {
-                "type": "folder",
                 "name": "State",
                 "path": "Assets\\Features\\Enemy\\Scripts\\State",
                 "children": [
@@ -5462,6 +5609,16 @@
                   },
                   {
                     "type": "file",
+                    "name": "EnemyEcsRuntimeBinder.cs",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyEcsRuntimeBinder.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyEcsRuntimeBinder.cs.meta",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyEcsRuntimeBinder.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "EnemyHitboxCollider.cs",
                     "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyHitboxCollider.cs"
                   },
@@ -5469,6 +5626,26 @@
                     "type": "file",
                     "name": "EnemyHitboxCollider.cs.meta",
                     "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyHitboxCollider.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyPatrolGizmos.cs",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyPatrolGizmos.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyPatrolGizmos.cs.meta",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyPatrolGizmos.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyVisualController.cs",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyVisualController.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "EnemyVisualController.cs.meta",
+                    "path": "Assets\\Features\\Enemy\\Scripts\\UnityIntegration\\EnemyVisualController.cs.meta"
                   }
                 ]
               },
@@ -5764,6 +5941,154 @@
       },
       {
         "type": "folder",
+        "name": "Game",
+        "path": "Assets\\Features\\Game",
+        "children": [
+          {
+            "type": "folder",
+            "name": "Domain",
+            "path": "Assets\\Features\\Game\\Domain",
+            "children": [
+              {
+                "type": "file",
+                "name": "WorldSession.cs",
+                "path": "Assets\\Features\\Game\\Domain\\WorldSession.cs"
+              },
+              {
+                "type": "file",
+                "name": "WorldSession.cs.meta",
+                "path": "Assets\\Features\\Game\\Domain\\WorldSession.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Domain.meta",
+            "path": "Assets\\Features\\Game\\Domain.meta"
+          },
+          {
+            "type": "folder",
+            "name": "UnityIntegration",
+            "path": "Assets\\Features\\Game\\UnityIntegration",
+            "children": [
+              {
+                "type": "file",
+                "name": "BootstrapRoot.cs",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\BootstrapRoot.cs"
+              },
+              {
+                "type": "file",
+                "name": "BootstrapRoot.cs.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\BootstrapRoot.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "GamePhase.cs",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\GamePhase.cs"
+              },
+              {
+                "type": "file",
+                "name": "GamePhase.cs.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\GamePhase.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "PhaseAssert.cs",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\PhaseAssert.cs"
+              },
+              {
+                "type": "file",
+                "name": "PhaseAssert.cs.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\PhaseAssert.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "SceneBootstrap.cs",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\SceneBootstrap.cs"
+              },
+              {
+                "type": "file",
+                "name": "SceneBootstrap.cs.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\SceneBootstrap.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "SceneTransitionDispatcher.cs",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\SceneTransitionDispatcher.cs"
+              },
+              {
+                "type": "file",
+                "name": "SceneTransitionDispatcher.cs.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\SceneTransitionDispatcher.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "SceneTransitionService.cs",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\SceneTransitionService.cs"
+              },
+              {
+                "type": "file",
+                "name": "SceneTransitionService.cs.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\SceneTransitionService.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "ServerGamePhase.cs",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\ServerGamePhase.cs"
+              },
+              {
+                "type": "file",
+                "name": "ServerGamePhase.cs.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\ServerGamePhase.cs.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UI",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\UI",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "PhaseDebugger.cs",
+                    "path": "Assets\\Features\\Game\\UnityIntegration\\UI\\PhaseDebugger.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PhaseDebugger.cs.meta",
+                    "path": "Assets\\Features\\Game\\UnityIntegration\\UI\\PhaseDebugger.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UIRegistry.cs",
+                    "path": "Assets\\Features\\Game\\UnityIntegration\\UI\\UIRegistry.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "UIRegistry.cs.meta",
+                    "path": "Assets\\Features\\Game\\UnityIntegration\\UI\\UIRegistry.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UI.meta",
+                "path": "Assets\\Features\\Game\\UnityIntegration\\UI.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "UnityIntegration.meta",
+            "path": "Assets\\Features\\Game\\UnityIntegration.meta"
+          }
+        ]
+      },
+      {
+        "type": "file",
+        "name": "Game.meta",
+        "path": "Assets\\Features\\Game.meta"
+      },
+      {
+        "type": "folder",
         "name": "Input",
         "path": "Assets\\Features\\Input",
         "children": [
@@ -5807,6 +6132,26 @@
             "children": [
               {
                 "type": "file",
+                "name": "AbilityInputHandler.cs",
+                "path": "Assets\\Features\\Input\\Unitiy\\AbilityInputHandler.cs"
+              },
+              {
+                "type": "file",
+                "name": "AbilityInputHandler.cs.meta",
+                "path": "Assets\\Features\\Input\\Unitiy\\AbilityInputHandler.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "CameraInputHandler.cs",
+                "path": "Assets\\Features\\Input\\Unitiy\\CameraInputHandler.cs"
+              },
+              {
+                "type": "file",
+                "name": "CameraInputHandler.cs.meta",
+                "path": "Assets\\Features\\Input\\Unitiy\\CameraInputHandler.cs.meta"
+              },
+              {
+                "type": "file",
                 "name": "GameInput.cs",
                 "path": "Assets\\Features\\Input\\Unitiy\\GameInput.cs"
               },
@@ -5814,16 +6159,6 @@
                 "type": "file",
                 "name": "GameInput.cs.meta",
                 "path": "Assets\\Features\\Input\\Unitiy\\GameInput.cs.meta"
-              },
-              {
-                "type": "file",
-                "name": "InputHandlersSpawner.cs",
-                "path": "Assets\\Features\\Input\\Unitiy\\InputHandlersSpawner.cs"
-              },
-              {
-                "type": "file",
-                "name": "InputHandlersSpawner.cs.meta",
-                "path": "Assets\\Features\\Input\\Unitiy\\InputHandlersSpawner.cs.meta"
               },
               {
                 "type": "file",
@@ -5844,6 +6179,16 @@
                 "type": "file",
                 "name": "InventoryUIInputController.cs.meta",
                 "path": "Assets\\Features\\Input\\Unitiy\\InventoryUIInputController.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "MovementInputHandler.cs",
+                "path": "Assets\\Features\\Input\\Unitiy\\MovementInputHandler.cs"
+              },
+              {
+                "type": "file",
+                "name": "MovementInputHandler.cs.meta",
+                "path": "Assets\\Features\\Input\\Unitiy\\MovementInputHandler.cs.meta"
               },
               {
                 "type": "folder",
@@ -5950,6 +6295,28 @@
           },
           {
             "type": "folder",
+            "name": "Debug",
+            "path": "Assets\\Features\\Interaction\\Debug",
+            "children": [
+              {
+                "type": "file",
+                "name": "InteractionDebug.cs",
+                "path": "Assets\\Features\\Interaction\\Debug\\InteractionDebug.cs"
+              },
+              {
+                "type": "file",
+                "name": "InteractionDebug.cs.meta",
+                "path": "Assets\\Features\\Interaction\\Debug\\InteractionDebug.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Debug.meta",
+            "path": "Assets\\Features\\Interaction\\Debug.meta"
+          },
+          {
+            "type": "folder",
             "name": "Domain",
             "path": "Assets\\Features\\Interaction\\Domain",
             "children": [
@@ -5992,6 +6359,16 @@
                 "type": "file",
                 "name": "InteractionRayHit.cs.meta",
                 "path": "Assets\\Features\\Interaction\\Domain\\InteractionRayHit.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "InteractionTarget.cs",
+                "path": "Assets\\Features\\Interaction\\Domain\\InteractionTarget.cs"
+              },
+              {
+                "type": "file",
+                "name": "InteractionTarget.cs.meta",
+                "path": "Assets\\Features\\Interaction\\Domain\\InteractionTarget.cs.meta"
               },
               {
                 "type": "file",
@@ -6059,6 +6436,16 @@
               },
               {
                 "type": "file",
+                "name": "InteractionResolver.cs",
+                "path": "Assets\\Features\\Interaction\\UnityIntegration\\InteractionResolver.cs"
+              },
+              {
+                "type": "file",
+                "name": "InteractionResolver.cs.meta",
+                "path": "Assets\\Features\\Interaction\\UnityIntegration\\InteractionResolver.cs.meta"
+              },
+              {
+                "type": "file",
                 "name": "NearbyInteractables.cs",
                 "path": "Assets\\Features\\Interaction\\UnityIntegration\\NearbyInteractables.cs"
               },
@@ -6069,16 +6456,6 @@
               },
               {
                 "type": "file",
-                "name": "NearbyItemPresenter.cs",
-                "path": "Assets\\Features\\Interaction\\UnityIntegration\\NearbyItemPresenter.cs"
-              },
-              {
-                "type": "file",
-                "name": "NearbyItemPresenter.cs.meta",
-                "path": "Assets\\Features\\Interaction\\UnityIntegration\\NearbyItemPresenter.cs.meta"
-              },
-              {
-                "type": "file",
                 "name": "PlayerInteractionController.cs",
                 "path": "Assets\\Features\\Interaction\\UnityIntegration\\PlayerInteractionController.cs"
               },
@@ -6086,6 +6463,16 @@
                 "type": "file",
                 "name": "PlayerInteractionController.cs.meta",
                 "path": "Assets\\Features\\Interaction\\UnityIntegration\\PlayerInteractionController.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "WorldItemNearbyRegistrator.cs",
+                "path": "Assets\\Features\\Interaction\\UnityIntegration\\WorldItemNearbyRegistrator.cs"
+              },
+              {
+                "type": "file",
+                "name": "WorldItemNearbyRegistrator.cs.meta",
+                "path": "Assets\\Features\\Interaction\\UnityIntegration\\WorldItemNearbyRegistrator.cs.meta"
               }
             ]
           },
@@ -6166,6 +6553,26 @@
               },
               {
                 "type": "file",
+                "name": "InventoryCommand.cs",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventoryCommand.cs"
+              },
+              {
+                "type": "file",
+                "name": "InventoryCommand.cs.meta",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventoryCommand.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "InventoryCommandData.cs",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventoryCommandData.cs"
+              },
+              {
+                "type": "file",
+                "name": "InventoryCommandData.cs.meta",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventoryCommandData.cs.meta"
+              },
+              {
+                "type": "file",
                 "name": "InventoryModel.cs",
                 "path": "Assets\\Features\\Inventory\\Domain\\InventoryModel.cs"
               },
@@ -6193,6 +6600,26 @@
                 "type": "file",
                 "name": "InventorySlot.cs.meta",
                 "path": "Assets\\Features\\Inventory\\Domain\\InventorySlot.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "InventorySlotNet.cs",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventorySlotNet.cs"
+              },
+              {
+                "type": "file",
+                "name": "InventorySlotNet.cs.meta",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventorySlotNet.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "InventorySlotRef.cs",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventorySlotRef.cs"
+              },
+              {
+                "type": "file",
+                "name": "InventorySlotRef.cs.meta",
+                "path": "Assets\\Features\\Inventory\\Domain\\InventorySlotRef.cs.meta"
               }
             ]
           },
@@ -6200,6 +6627,50 @@
             "type": "file",
             "name": "Domain.meta",
             "path": "Assets\\Features\\Inventory\\Domain.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Net",
+            "path": "Assets\\Features\\Inventory\\Net",
+            "children": [
+              {
+                "type": "file",
+                "name": "InventorySlotNetSerializers.cs",
+                "path": "Assets\\Features\\Inventory\\Net\\InventorySlotNetSerializers.cs"
+              },
+              {
+                "type": "file",
+                "name": "InventorySlotNetSerializers.cs.meta",
+                "path": "Assets\\Features\\Inventory\\Net\\InventorySlotNetSerializers.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Net.meta",
+            "path": "Assets\\Features\\Inventory\\Net.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Prefab",
+            "path": "Assets\\Features\\Inventory\\Prefab",
+            "children": [
+              {
+                "type": "file",
+                "name": "DropService.prefab",
+                "path": "Assets\\Features\\Inventory\\Prefab\\DropService.prefab"
+              },
+              {
+                "type": "file",
+                "name": "DropService.prefab.meta",
+                "path": "Assets\\Features\\Inventory\\Prefab\\DropService.prefab.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Prefab.meta",
+            "path": "Assets\\Features\\Inventory\\Prefab.meta"
           },
           {
             "type": "folder",
@@ -6393,6 +6864,16 @@
                 "type": "file",
                 "name": "Item.cs.meta",
                 "path": "Assets\\Features\\Items\\Data\\Item.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "ItemRegistrySO.cs",
+                "path": "Assets\\Features\\Items\\Data\\ItemRegistrySO.cs"
+              },
+              {
+                "type": "file",
+                "name": "ItemRegistrySO.cs.meta",
+                "path": "Assets\\Features\\Items\\Data\\ItemRegistrySO.cs.meta"
               },
               {
                 "type": "file",
@@ -7017,6 +7498,16 @@
                         "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Ammo.asset.meta"
                       },
                       {
+                        "type": "file",
+                        "name": "BlasterIco.png",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\BlasterIco.png"
+                      },
+                      {
+                        "type": "file",
+                        "name": "BlasterIco.png.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\BlasterIco.png.meta"
+                      },
+                      {
                         "type": "folder",
                         "name": "Bullet",
                         "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Bullet",
@@ -7024,28 +7515,13 @@
                       },
                       {
                         "type": "file",
-                        "name": "Bullet.meta",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Bullet.meta"
+                        "name": "EQ_blaster.prefab",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\EQ_blaster.prefab"
                       },
                       {
                         "type": "file",
-                        "name": "Cube (1).prefab",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Cube (1).prefab"
-                      },
-                      {
-                        "type": "file",
-                        "name": "Cube (1).prefab.meta",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Cube (1).prefab.meta"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EQCylinder.prefab",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\EQCylinder.prefab"
-                      },
-                      {
-                        "type": "file",
-                        "name": "EQCylinder.prefab.meta",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\EQCylinder.prefab.meta"
+                        "name": "EQ_blaster.prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\EQ_blaster.prefab.meta"
                       },
                       {
                         "type": "file",
@@ -7056,6 +7532,48 @@
                         "type": "file",
                         "name": "ItemWeapon.asset.meta",
                         "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\ItemWeapon.asset.meta"
+                      },
+                      {
+                        "type": "folder",
+                        "name": "Model",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model",
+                        "children": [
+                          {
+                            "type": "file",
+                            "name": "weapon_blaster.fbx",
+                            "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model\\weapon_blaster.fbx"
+                          },
+                          {
+                            "type": "file",
+                            "name": "weapon_blaster.fbx.meta",
+                            "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model\\weapon_blaster.fbx.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "weapon_blaster_bullet.fbx",
+                            "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model\\weapon_blaster_bullet.fbx"
+                          },
+                          {
+                            "type": "file",
+                            "name": "weapon_blaster_bullet.fbx.meta",
+                            "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model\\weapon_blaster_bullet.fbx.meta"
+                          },
+                          {
+                            "type": "file",
+                            "name": "weapon_blaster_texture.jpg",
+                            "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model\\weapon_blaster_texture.jpg"
+                          },
+                          {
+                            "type": "file",
+                            "name": "weapon_blaster_texture.jpg.meta",
+                            "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model\\weapon_blaster_texture.jpg.meta"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "file",
+                        "name": "Model.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\Model.meta"
                       },
                       {
                         "type": "file",
@@ -7079,23 +7597,23 @@
                       },
                       {
                         "type": "file",
-                        "name": "WeaponIco.png",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\WeaponIco.png"
+                        "name": "weapon_blaster_bullet.prefab",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\weapon_blaster_bullet.prefab"
                       },
                       {
                         "type": "file",
-                        "name": "WeaponIco.png.meta",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\WeaponIco.png.meta"
+                        "name": "weapon_blaster_bullet.prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\weapon_blaster_bullet.prefab.meta"
                       },
                       {
                         "type": "file",
-                        "name": "WOCylinder.prefab",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\WOCylinder.prefab"
+                        "name": "WO_blaster.prefab",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\WO_blaster.prefab"
                       },
                       {
                         "type": "file",
-                        "name": "WOCylinder.prefab.meta",
-                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\WOCylinder.prefab.meta"
+                        "name": "WO_blaster.prefab.meta",
+                        "path": "Assets\\Features\\Items\\Item\\UtilityItems\\TestWeapon\\WO_blaster.prefab.meta"
                       }
                     ]
                   },
@@ -7284,6 +7802,26 @@
                 "type": "file",
                 "name": "ItemStatCalculator.cs.meta",
                 "path": "Assets\\Features\\Items\\UnityIntegration\\ItemStatCalculator.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "WorldItemDropService.cs",
+                "path": "Assets\\Features\\Items\\UnityIntegration\\WorldItemDropService.cs"
+              },
+              {
+                "type": "file",
+                "name": "WorldItemDropService.cs.meta",
+                "path": "Assets\\Features\\Items\\UnityIntegration\\WorldItemDropService.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "WorldItemNetwork.cs",
+                "path": "Assets\\Features\\Items\\UnityIntegration\\WorldItemNetwork.cs"
+              },
+              {
+                "type": "file",
+                "name": "WorldItemNetwork.cs.meta",
+                "path": "Assets\\Features\\Items\\UnityIntegration\\WorldItemNetwork.cs.meta"
               }
             ]
           },
@@ -7338,6 +7876,16 @@
                 "type": "file",
                 "name": "ShieldBarUI.cs.meta",
                 "path": "Assets\\Features\\Menu\\Bar\\ShieldBarUI.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "StatsUIRoot.cs",
+                "path": "Assets\\Features\\Menu\\Bar\\StatsUIRoot.cs"
+              },
+              {
+                "type": "file",
+                "name": "StatsUIRoot.cs.meta",
+                "path": "Assets\\Features\\Menu\\Bar\\StatsUIRoot.cs.meta"
               }
             ]
           },
@@ -8183,6 +8731,11 @@
         "path": "Assets\\Features\\Mining.meta"
       },
       {
+        "type": "file",
+        "name": "Model_Weapon_Blaster.meta",
+        "path": "Assets\\Features\\Model_Weapon_Blaster.meta"
+      },
+      {
         "type": "folder",
         "name": "Movement",
         "path": "Assets\\Features\\Movement",
@@ -8227,6 +8780,220 @@
         "type": "file",
         "name": "Movement.meta",
         "path": "Assets\\Features\\Movement.meta"
+      },
+      {
+        "type": "folder",
+        "name": "Multiplayer",
+        "path": "Assets\\Features\\Multiplayer",
+        "children": [
+          {
+            "type": "folder",
+            "name": "Prefabs",
+            "path": "Assets\\Features\\Multiplayer\\Prefabs",
+            "children": []
+          },
+          {
+            "type": "file",
+            "name": "Prefabs.meta",
+            "path": "Assets\\Features\\Multiplayer\\Prefabs.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Scenes",
+            "path": "Assets\\Features\\Multiplayer\\Scenes",
+            "children": []
+          },
+          {
+            "type": "file",
+            "name": "Scenes.meta",
+            "path": "Assets\\Features\\Multiplayer\\Scenes.meta"
+          },
+          {
+            "type": "folder",
+            "name": "Scripts",
+            "path": "Assets\\Features\\Multiplayer\\Scripts",
+            "children": [
+              {
+                "type": "folder",
+                "name": "Application",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\Application",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "NetworkPlayerService.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Application\\NetworkPlayerService.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "NetworkPlayerService.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Application\\NetworkPlayerService.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Application.meta",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\Application.meta"
+              },
+              {
+                "type": "folder",
+                "name": "Domain",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "HealthNetwork.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\HealthNetwork.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "HealthNetwork.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\HealthNetwork.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "InventoryStateNetwork.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\InventoryStateNetwork.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "InventoryStateNetwork.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\InventoryStateNetwork.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "MovementStateNetwork.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\MovementStateNetwork.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "MovementStateNetwork.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\MovementStateNetwork.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerStateNetwork.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\PlayerStateNetwork.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerStateNetwork.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\PlayerStateNetwork.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerUsageNetAdapter.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\PlayerUsageNetAdapter.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerUsageNetAdapter.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain\\PlayerUsageNetAdapter.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Domain.meta",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\Domain.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UI",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\UI",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "BootstrapUI.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UI\\BootstrapUI.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "BootstrapUI.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UI\\BootstrapUI.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UI.meta",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\UI.meta"
+              },
+              {
+                "type": "folder",
+                "name": "UnityIntegration",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "FishNetSmokeTest.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\FishNetSmokeTest.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "FishNetSmokeTest.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\FishNetSmokeTest.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "NetworkAutoDespawn.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\NetworkAutoDespawn.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "NetworkAutoDespawn.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\NetworkAutoDespawn.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "NetworkBootstrap.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\NetworkBootstrap.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "NetworkBootstrap.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\NetworkBootstrap.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "NetworkPlayer.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\NetworkPlayer.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "NetworkPlayer.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\NetworkPlayer.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ServerManagerProvider.cs",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\ServerManagerProvider.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ServerManagerProvider.cs.meta",
+                    "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration\\ServerManagerProvider.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "UnityIntegration.meta",
+                "path": "Assets\\Features\\Multiplayer\\Scripts\\UnityIntegration.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Scripts.meta",
+            "path": "Assets\\Features\\Multiplayer\\Scripts.meta"
+          }
+        ]
+      },
+      {
+        "type": "file",
+        "name": "Multiplayer.meta",
+        "path": "Assets\\Features\\Multiplayer.meta"
       },
       {
         "type": "folder",
@@ -8316,6 +9083,16 @@
               },
               {
                 "type": "file",
+                "name": "EffishencyOwner.asset",
+                "path": "Assets\\Features\\Passives\\Config\\EffishencyOwner.asset"
+              },
+              {
+                "type": "file",
+                "name": "EffishencyOwner.asset.meta",
+                "path": "Assets\\Features\\Passives\\Config\\EffishencyOwner.asset.meta"
+              },
+              {
+                "type": "file",
                 "name": "En Max owner.asset",
                 "path": "Assets\\Features\\Passives\\Config\\En Max owner.asset"
               },
@@ -8401,6 +9178,38 @@
               },
               {
                 "type": "folder",
+                "name": "Data",
+                "path": "Assets\\Features\\Passives\\Scripts\\Data",
+                "children": [
+                  {
+                    "type": "file",
+                    "name": "PassiveRegistrySO.cs",
+                    "path": "Assets\\Features\\Passives\\Scripts\\Data\\PassiveRegistrySO.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PassiveRegistrySO.cs.meta",
+                    "path": "Assets\\Features\\Passives\\Scripts\\Data\\PassiveRegistrySO.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PassiveRuntimeRegistry.cs",
+                    "path": "Assets\\Features\\Passives\\Scripts\\Data\\PassiveRuntimeRegistry.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PassiveRuntimeRegistry.cs.meta",
+                    "path": "Assets\\Features\\Passives\\Scripts\\Data\\PassiveRuntimeRegistry.cs.meta"
+                  }
+                ]
+              },
+              {
+                "type": "file",
+                "name": "Data.meta",
+                "path": "Assets\\Features\\Passives\\Scripts\\Data.meta"
+              },
+              {
+                "type": "folder",
                 "name": "Domain",
                 "path": "Assets\\Features\\Passives\\Scripts\\Domain",
                 "children": [
@@ -8465,6 +9274,16 @@
                     "type": "file",
                     "name": "Effects.meta",
                     "path": "Assets\\Features\\Passives\\Scripts\\Domain\\Effects.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PassiveRuntime.cs",
+                    "path": "Assets\\Features\\Passives\\Scripts\\Domain\\PassiveRuntime.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PassiveRuntime.cs.meta",
+                    "path": "Assets\\Features\\Passives\\Scripts\\Domain\\PassiveRuntime.cs.meta"
                   },
                   {
                     "type": "file",
@@ -8913,13 +9732,13 @@
             "children": [
               {
                 "type": "file",
-                "name": "Bootstrap.prefab",
-                "path": "Assets\\Features\\Player\\Prefabs\\Bootstrap.prefab"
+                "name": "BootstrapPrefab.prefab",
+                "path": "Assets\\Features\\Player\\Prefabs\\BootstrapPrefab.prefab"
               },
               {
                 "type": "file",
-                "name": "Bootstrap.prefab.meta",
-                "path": "Assets\\Features\\Player\\Prefabs\\Bootstrap.prefab.meta"
+                "name": "BootstrapPrefab.prefab.meta",
+                "path": "Assets\\Features\\Player\\Prefabs\\BootstrapPrefab.prefab.meta"
               },
               {
                 "type": "file",
@@ -8930,16 +9749,6 @@
                 "type": "file",
                 "name": "Player.prefab.meta",
                 "path": "Assets\\Features\\Player\\Prefabs\\Player.prefab.meta"
-              },
-              {
-                "type": "file",
-                "name": "PlayerSpawner.prefab",
-                "path": "Assets\\Features\\Player\\Prefabs\\PlayerSpawner.prefab"
-              },
-              {
-                "type": "file",
-                "name": "PlayerSpawner.prefab.meta",
-                "path": "Assets\\Features\\Player\\Prefabs\\PlayerSpawner.prefab.meta"
               },
               {
                 "type": "file",
@@ -8960,6 +9769,16 @@
                 "type": "file",
                 "name": "ScenePlayerSpawnPoint.prefab.meta",
                 "path": "Assets\\Features\\Player\\Prefabs\\ScenePlayerSpawnPoint.prefab.meta"
+              },
+              {
+                "type": "file",
+                "name": "SpawnPoint.prefab",
+                "path": "Assets\\Features\\Player\\Prefabs\\SpawnPoint.prefab"
+              },
+              {
+                "type": "file",
+                "name": "SpawnPoint.prefab.meta",
+                "path": "Assets\\Features\\Player\\Prefabs\\SpawnPoint.prefab.meta"
               }
             ]
           },
@@ -8980,6 +9799,16 @@
                 "children": [
                   {
                     "type": "file",
+                    "name": "IPlayerAdapter.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\Domain\\IPlayerAdapter.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "IPlayerAdapter.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\Domain\\IPlayerAdapter.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "IPlayerSpawnProvider.cs",
                     "path": "Assets\\Features\\Player\\Scripts\\Domain\\IPlayerSpawnProvider.cs"
                   },
@@ -8987,6 +9816,16 @@
                     "type": "file",
                     "name": "IPlayerSpawnProvider.cs.meta",
                     "path": "Assets\\Features\\Player\\Scripts\\Domain\\IPlayerSpawnProvider.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerInputState.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\Domain\\PlayerInputState.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerInputState.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\Domain\\PlayerInputState.cs.meta"
                   },
                   {
                     "type": "file",
@@ -9032,13 +9871,13 @@
                   },
                   {
                     "type": "file",
-                    "name": "PlayerStatsUIBinder.cs",
-                    "path": "Assets\\Features\\Player\\Scripts\\UI\\PlayerStatsUIBinder.cs"
+                    "name": "PlayerBoundUIView.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\UI\\PlayerBoundUIView.cs"
                   },
                   {
                     "type": "file",
-                    "name": "PlayerStatsUIBinder.cs.meta",
-                    "path": "Assets\\Features\\Player\\Scripts\\UI\\PlayerStatsUIBinder.cs.meta"
+                    "name": "PlayerBoundUIView.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\UI\\PlayerBoundUIView.cs.meta"
                   }
                 ]
               },
@@ -9103,6 +9942,58 @@
                     "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\LocalPlayerController.cs.meta"
                   },
                   {
+                    "type": "folder",
+                    "name": "Net",
+                    "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "AbilityCasterNetAdapter.cs",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\AbilityCasterNetAdapter.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "AbilityCasterNetAdapter.cs.meta",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\AbilityCasterNetAdapter.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PassiveNetAdapter.cs",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\PassiveNetAdapter.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PassiveNetAdapter.cs.meta",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\PassiveNetAdapter.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PlayerCameraNetAdapter.cs",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\PlayerCameraNetAdapter.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PlayerCameraNetAdapter.cs.meta",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\PlayerCameraNetAdapter.cs.meta"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PlayerMovementNetAdapter.cs",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\PlayerMovementNetAdapter.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PlayerMovementNetAdapter.cs.meta",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net\\PlayerMovementNetAdapter.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Net.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Net.meta"
+                  },
+                  {
                     "type": "file",
                     "name": "PlayerAnimationController.cs",
                     "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\PlayerAnimationController.cs"
@@ -9154,6 +10045,16 @@
                   },
                   {
                     "type": "file",
+                    "name": "PlayerNetAdaptersInstaller.cs",
+                    "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\PlayerNetAdaptersInstaller.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "PlayerNetAdaptersInstaller.cs.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\PlayerNetAdaptersInstaller.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "PlayerRegistry.cs",
                     "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\PlayerRegistry.cs"
                   },
@@ -9184,18 +10085,40 @@
                   },
                   {
                     "type": "folder",
+                    "name": "Registry",
+                    "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Registry",
+                    "children": [
+                      {
+                        "type": "file",
+                        "name": "PlayerDeviceRegistry.cs",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Registry\\PlayerDeviceRegistry.cs"
+                      },
+                      {
+                        "type": "file",
+                        "name": "PlayerDeviceRegistry.cs.meta",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Registry\\PlayerDeviceRegistry.cs.meta"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "file",
+                    "name": "Registry.meta",
+                    "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Registry.meta"
+                  },
+                  {
+                    "type": "folder",
                     "name": "Spawn",
                     "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Spawn",
                     "children": [
                       {
                         "type": "file",
-                        "name": "PlayerSpawner.cs",
-                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Spawn\\PlayerSpawner.cs"
+                        "name": "PlayerSpawnRegistry.cs",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Spawn\\PlayerSpawnRegistry.cs"
                       },
                       {
                         "type": "file",
-                        "name": "PlayerSpawner.cs.meta",
-                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Spawn\\PlayerSpawner.cs.meta"
+                        "name": "PlayerSpawnRegistry.cs.meta",
+                        "path": "Assets\\Features\\Player\\Scripts\\UnityIntegration.cs\\Spawn\\PlayerSpawnRegistry.cs.meta"
                       },
                       {
                         "type": "folder",
@@ -10438,6 +11361,16 @@
                 "children": [
                   {
                     "type": "file",
+                    "name": "ResourceNodeNetwork.cs",
+                    "path": "Assets\\Features\\Resources\\Scripts\\UnityIntegration\\ResourceNodeNetwork.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ResourceNodeNetwork.cs.meta",
+                    "path": "Assets\\Features\\Resources\\Scripts\\UnityIntegration\\ResourceNodeNetwork.cs.meta"
+                  },
+                  {
+                    "type": "file",
                     "name": "ResourceNodePresenter.cs",
                     "path": "Assets\\Features\\Resources\\Scripts\\UnityIntegration\\ResourceNodePresenter.cs"
                   },
@@ -10445,6 +11378,16 @@
                     "type": "file",
                     "name": "ResourceNodePresenter.cs.meta",
                     "path": "Assets\\Features\\Resources\\Scripts\\UnityIntegration\\ResourceNodePresenter.cs.meta"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ResourceNodeSpawner.cs",
+                    "path": "Assets\\Features\\Resources\\Scripts\\UnityIntegration\\ResourceNodeSpawner.cs"
+                  },
+                  {
+                    "type": "file",
+                    "name": "ResourceNodeSpawner.cs.meta",
+                    "path": "Assets\\Features\\Resources\\Scripts\\UnityIntegration\\ResourceNodeSpawner.cs.meta"
                   }
                 ]
               },
@@ -10721,16 +11664,6 @@
               },
               {
                 "type": "file",
-                "name": "EnergyViewAdapter.cs",
-                "path": "Assets\\Features\\Stats\\Adapter\\EnergyViewAdapter.cs"
-              },
-              {
-                "type": "file",
-                "name": "EnergyViewAdapter.cs.meta",
-                "path": "Assets\\Features\\Stats\\Adapter\\EnergyViewAdapter.cs.meta"
-              },
-              {
-                "type": "file",
                 "name": "HealthStatsAdapter.cs",
                 "path": "Assets\\Features\\Stats\\Adapter\\HealthStatsAdapter.cs"
               },
@@ -10738,16 +11671,6 @@
                 "type": "file",
                 "name": "HealthStatsAdapter.cs.meta",
                 "path": "Assets\\Features\\Stats\\Adapter\\HealthStatsAdapter.cs.meta"
-              },
-              {
-                "type": "file",
-                "name": "HealthViewAdapter.cs",
-                "path": "Assets\\Features\\Stats\\Adapter\\HealthViewAdapter.cs"
-              },
-              {
-                "type": "file",
-                "name": "HealthViewAdapter.cs.meta",
-                "path": "Assets\\Features\\Stats\\Adapter\\HealthViewAdapter.cs.meta"
               },
               {
                 "type": "file",
@@ -10798,6 +11721,28 @@
           },
           {
             "type": "folder",
+            "name": "Application",
+            "path": "Assets\\Features\\Stats\\Application",
+            "children": [
+              {
+                "type": "file",
+                "name": "StatsValidator.cs",
+                "path": "Assets\\Features\\Stats\\Application\\StatsValidator.cs"
+              },
+              {
+                "type": "file",
+                "name": "StatsValidator.cs.meta",
+                "path": "Assets\\Features\\Stats\\Application\\StatsValidator.cs.meta"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "Application.meta",
+            "path": "Assets\\Features\\Stats\\Application.meta"
+          },
+          {
+            "type": "folder",
             "name": "Configs",
             "path": "Assets\\Features\\Stats\\Configs",
             "children": [
@@ -10835,53 +11780,13 @@
             "children": [
               {
                 "type": "file",
-                "name": "CombatStatsConfigSO.cs",
-                "path": "Assets\\Features\\Stats\\Data\\CombatStatsConfigSO.cs"
+                "name": "EnemyStatsPresetSO.cs",
+                "path": "Assets\\Features\\Stats\\Data\\EnemyStatsPresetSO.cs"
               },
               {
                 "type": "file",
-                "name": "CombatStatsConfigSO.cs.meta",
-                "path": "Assets\\Features\\Stats\\Data\\CombatStatsConfigSO.cs.meta"
-              },
-              {
-                "type": "file",
-                "name": "EnergyStatsConfigSO.cs",
-                "path": "Assets\\Features\\Stats\\Data\\EnergyStatsConfigSO.cs"
-              },
-              {
-                "type": "file",
-                "name": "EnergyStatsConfigSO.cs.meta",
-                "path": "Assets\\Features\\Stats\\Data\\EnergyStatsConfigSO.cs.meta"
-              },
-              {
-                "type": "file",
-                "name": "HealthStatsConfigSO.cs",
-                "path": "Assets\\Features\\Stats\\Data\\HealthStatsConfigSO.cs"
-              },
-              {
-                "type": "file",
-                "name": "HealthStatsConfigSO.cs.meta",
-                "path": "Assets\\Features\\Stats\\Data\\HealthStatsConfigSO.cs.meta"
-              },
-              {
-                "type": "file",
-                "name": "MiningStatsConfigSO.cs",
-                "path": "Assets\\Features\\Stats\\Data\\MiningStatsConfigSO.cs"
-              },
-              {
-                "type": "file",
-                "name": "MiningStatsConfigSO.cs.meta",
-                "path": "Assets\\Features\\Stats\\Data\\MiningStatsConfigSO.cs.meta"
-              },
-              {
-                "type": "file",
-                "name": "MovementStatsConfigSO.cs",
-                "path": "Assets\\Features\\Stats\\Data\\MovementStatsConfigSO.cs"
-              },
-              {
-                "type": "file",
-                "name": "MovementStatsConfigSO.cs.meta",
-                "path": "Assets\\Features\\Stats\\Data\\MovementStatsConfigSO.cs.meta"
+                "name": "EnemyStatsPresetSO.cs.meta",
+                "path": "Assets\\Features\\Stats\\Data\\EnemyStatsPresetSO.cs.meta"
               },
               {
                 "type": "file",
@@ -11164,6 +12069,16 @@
                 "type": "file",
                 "name": "StatsFacade.cs.meta",
                 "path": "Assets\\Features\\Stats\\Domain\\StatsFacade.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "StatsSnapshot.cs",
+                "path": "Assets\\Features\\Stats\\Domain\\StatsSnapshot.cs"
+              },
+              {
+                "type": "file",
+                "name": "StatsSnapshot.cs.meta",
+                "path": "Assets\\Features\\Stats\\Domain\\StatsSnapshot.cs.meta"
               }
             ]
           },
@@ -11205,23 +12120,6 @@
             "path": "Assets\\Features\\Stats\\Editor.meta"
           },
           {
-            "type": "folder",
-            "name": "UI",
-            "path": "Assets\\Features\\Stats\\UI",
-            "children": [
-              {
-                "type": "file",
-                "name": "StatsDebugPanel.cs",
-                "path": "Assets\\Features\\Stats\\UI\\StatsDebugPanel.cs"
-              },
-              {
-                "type": "file",
-                "name": "StatsDebugPanel.cs.meta",
-                "path": "Assets\\Features\\Stats\\UI\\StatsDebugPanel.cs.meta"
-              }
-            ]
-          },
-          {
             "type": "file",
             "name": "UI.meta",
             "path": "Assets\\Features\\Stats\\UI.meta"
@@ -11233,13 +12131,33 @@
             "children": [
               {
                 "type": "file",
-                "name": "EnergyViewProvider.cs",
-                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnergyViewProvider.cs"
+                "name": "EnemyStats.cs",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnemyStats.cs"
               },
               {
                 "type": "file",
-                "name": "EnergyViewProvider.cs.meta",
-                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnergyViewProvider.cs.meta"
+                "name": "EnemyStats.cs.meta",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnemyStats.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "EnemyStatsNetSync.cs",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnemyStatsNetSync.cs"
+              },
+              {
+                "type": "file",
+                "name": "EnemyStatsNetSync.cs.meta",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnemyStatsNetSync.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "EnemyStatsUpdateSystem.cs",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnemyStatsUpdateSystem.cs"
+              },
+              {
+                "type": "file",
+                "name": "EnemyStatsUpdateSystem.cs.meta",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\EnemyStatsUpdateSystem.cs.meta"
               },
               {
                 "type": "file",
@@ -11250,6 +12168,26 @@
                 "type": "file",
                 "name": "PlayerStats.cs.meta",
                 "path": "Assets\\Features\\Stats\\UnityIntegration\\PlayerStats.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "StatApplyGuard.cs",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\StatApplyGuard.cs"
+              },
+              {
+                "type": "file",
+                "name": "StatApplyGuard.cs.meta",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\StatApplyGuard.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "StatsNetSync.cs",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\StatsNetSync.cs"
+              },
+              {
+                "type": "file",
+                "name": "StatsNetSync.cs.meta",
+                "path": "Assets\\Features\\Stats\\UnityIntegration\\StatsNetSync.cs.meta"
               },
               {
                 "type": "file",
@@ -11369,6 +12307,16 @@
             "name": "Domain",
             "path": "Assets\\Features\\Tools\\Domain",
             "children": [
+              {
+                "type": "file",
+                "name": "ILocalOnlyUsable.cs",
+                "path": "Assets\\Features\\Tools\\Domain\\ILocalOnlyUsable.cs"
+              },
+              {
+                "type": "file",
+                "name": "ILocalOnlyUsable.cs.meta",
+                "path": "Assets\\Features\\Tools\\Domain\\ILocalOnlyUsable.cs.meta"
+              },
               {
                 "type": "file",
                 "name": "IToolAction.cs",
@@ -11829,6 +12777,26 @@
               },
               {
                 "type": "file",
+                "name": "ProjectileNetwork.cs",
+                "path": "Assets\\Features\\Weapons\\UnityIntegration\\ProjectileNetwork.cs"
+              },
+              {
+                "type": "file",
+                "name": "ProjectileNetwork.cs.meta",
+                "path": "Assets\\Features\\Weapons\\UnityIntegration\\ProjectileNetwork.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "ProjectileSpawnService.cs",
+                "path": "Assets\\Features\\Weapons\\UnityIntegration\\ProjectileSpawnService.cs"
+              },
+              {
+                "type": "file",
+                "name": "ProjectileSpawnService.cs.meta",
+                "path": "Assets\\Features\\Weapons\\UnityIntegration\\ProjectileSpawnService.cs.meta"
+              },
+              {
+                "type": "file",
                 "name": "UsableGun.cs",
                 "path": "Assets\\Features\\Weapons\\UnityIntegration\\UsableGun.cs"
               },
@@ -11856,6 +12824,16 @@
                 "type": "file",
                 "name": "WeaponController.cs.meta",
                 "path": "Assets\\Features\\Weapons\\UnityIntegration\\WeaponController.cs.meta"
+              },
+              {
+                "type": "file",
+                "name": "WeaponFxNetwork.cs",
+                "path": "Assets\\Features\\Weapons\\UnityIntegration\\WeaponFxNetwork.cs"
+              },
+              {
+                "type": "file",
+                "name": "WeaponFxNetwork.cs.meta",
+                "path": "Assets\\Features\\Weapons\\UnityIntegration\\WeaponFxNetwork.cs.meta"
               },
               {
                 "type": "file",
@@ -11900,29 +12878,6 @@
   },
   {
     "type": "folder",
-    "name": "Models",
-    "path": "Assets\\Models",
-    "children": [
-      {
-        "type": "folder",
-        "name": "Player_Tech_All_Animations",
-        "path": "Assets\\Models\\Player_Tech_All_Animations",
-        "children": []
-      },
-      {
-        "type": "file",
-        "name": "Player_Tech_All_Animations.meta",
-        "path": "Assets\\Models\\Player_Tech_All_Animations.meta"
-      }
-    ]
-  },
-  {
-    "type": "file",
-    "name": "Models.meta",
-    "path": "Assets\\Models.meta"
-  },
-  {
-    "type": "folder",
     "name": "Prefab",
     "path": "Assets\\Prefab",
     "children": [
@@ -11962,6 +12917,80 @@
     "type": "file",
     "name": "Prefab.meta",
     "path": "Assets\\Prefab.meta"
+  },
+  {
+    "type": "folder",
+    "name": "Resources",
+    "path": "Assets\\Resources",
+    "children": [
+      {
+        "type": "folder",
+        "name": "Databases",
+        "path": "Assets\\Resources\\Databases",
+        "children": [
+          {
+            "type": "file",
+            "name": "AbilityLibrary.asset",
+            "path": "Assets\\Resources\\Databases\\AbilityLibrary.asset"
+          },
+          {
+            "type": "file",
+            "name": "AbilityLibrary.asset.meta",
+            "path": "Assets\\Resources\\Databases\\AbilityLibrary.asset.meta"
+          },
+          {
+            "type": "file",
+            "name": "BuffRegistry.asset",
+            "path": "Assets\\Resources\\Databases\\BuffRegistry.asset"
+          },
+          {
+            "type": "file",
+            "name": "BuffRegistry.asset.meta",
+            "path": "Assets\\Resources\\Databases\\BuffRegistry.asset.meta"
+          },
+          {
+            "type": "file",
+            "name": "ItemRegistry.asset",
+            "path": "Assets\\Resources\\Databases\\ItemRegistry.asset"
+          },
+          {
+            "type": "file",
+            "name": "ItemRegistry.asset.meta",
+            "path": "Assets\\Resources\\Databases\\ItemRegistry.asset.meta"
+          },
+          {
+            "type": "file",
+            "name": "PassiveRegistry.asset",
+            "path": "Assets\\Resources\\Databases\\PassiveRegistry.asset"
+          },
+          {
+            "type": "file",
+            "name": "PassiveRegistry.asset.meta",
+            "path": "Assets\\Resources\\Databases\\PassiveRegistry.asset.meta"
+          },
+          {
+            "type": "file",
+            "name": "PlayerClassLibrary.asset",
+            "path": "Assets\\Resources\\Databases\\PlayerClassLibrary.asset"
+          },
+          {
+            "type": "file",
+            "name": "PlayerClassLibrary.asset.meta",
+            "path": "Assets\\Resources\\Databases\\PlayerClassLibrary.asset.meta"
+          }
+        ]
+      },
+      {
+        "type": "file",
+        "name": "Databases.meta",
+        "path": "Assets\\Resources\\Databases.meta"
+      }
+    ]
+  },
+  {
+    "type": "file",
+    "name": "Resources.meta",
+    "path": "Assets\\Resources.meta"
   },
   {
     "type": "folder",
@@ -12009,6 +13038,38 @@
         "type": "file",
         "name": "MainMenu.unity.meta",
         "path": "Assets\\Scenes\\MainMenu.unity.meta"
+      },
+      {
+        "type": "folder",
+        "name": "Net",
+        "path": "Assets\\Scenes\\Net",
+        "children": [
+          {
+            "type": "file",
+            "name": "BootstrapScene.unity",
+            "path": "Assets\\Scenes\\Net\\BootstrapScene.unity"
+          },
+          {
+            "type": "file",
+            "name": "BootstrapScene.unity.meta",
+            "path": "Assets\\Scenes\\Net\\BootstrapScene.unity.meta"
+          },
+          {
+            "type": "file",
+            "name": "NetHubScene.unity",
+            "path": "Assets\\Scenes\\Net\\NetHubScene.unity"
+          },
+          {
+            "type": "file",
+            "name": "NetHubScene.unity.meta",
+            "path": "Assets\\Scenes\\Net\\NetHubScene.unity.meta"
+          }
+        ]
+      },
+      {
+        "type": "file",
+        "name": "Net.meta",
+        "path": "Assets\\Scenes\\Net.meta"
       },
       {
         "type": "folder",
@@ -12638,5 +13699,15 @@
     "type": "file",
     "name": "TextMesh Pro.meta",
     "path": "Assets\\TextMesh Pro.meta"
+  },
+  {
+    "type": "file",
+    "name": "UserChoices.choices",
+    "path": "Assets\\UserChoices.choices"
+  },
+  {
+    "type": "file",
+    "name": "UserChoices.choices.meta",
+    "path": "Assets\\UserChoices.choices.meta"
   }
 ]
