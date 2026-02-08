@@ -2,6 +2,7 @@
 using UnityEditor;
 using Features.Enemy.Data;
 using Features.Enemy.UnityIntegration;
+using Features.Stats.UnityIntegration;
 
 public class EnemyEditorWindow : EditorWindow
 {
@@ -37,7 +38,7 @@ public class EnemyEditorWindow : EditorWindow
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
         DrawInfoBlock();
-        DrawStatsPreset();          // 🔥 ИЗМЕНЕНО
+        DrawStatsPreset();
         DrawModelValidation();
         DrawLODSettings();
         DrawCanvasSettings();
@@ -233,12 +234,11 @@ public class EnemyEditorWindow : EditorWindow
         GameObject clone =
             PrefabUtility.InstantiatePrefab(config.prefab) as GameObject;
 
-        // 🔥 REQUIRED RUNTIME SYSTEMS
+        // REQUIRED RUNTIME SYSTEMS
         Ensure<EnemyStats>(clone).GetComponent<EnemyStats>().enabled = true;
         Ensure<EnemyActor>(clone);
         Ensure<EnemyBuffTarget>(clone);
-        Ensure<EnemyStatsUpdateSystem>(clone);
-        Ensure<EnemyStatsNetSync>(clone);
+        Ensure<UnifiedStatsUpdateSystem>(clone);
         Ensure<EnemyHealth>(clone);
 
         PrefabUtility.SaveAsPrefabAsset(clone, outputPath);

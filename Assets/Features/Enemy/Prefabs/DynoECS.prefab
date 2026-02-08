@@ -217,8 +217,6 @@ GameObject:
   - component: {fileID: 2721067133395966611}
   - component: {fileID: 5928809208972985904}
   - component: {fileID: 7363443033071884}
-  - component: {fileID: 8354099090800759067}
-  - component: {fileID: 8531581945467715478}
   - component: {fileID: 3209661115049244770}
   - component: {fileID: 5031449921048320471}
   - component: {fileID: 5953923645941207714}
@@ -227,6 +225,9 @@ GameObject:
   - component: {fileID: 8899890071420028954}
   - component: {fileID: 2637786417364705689}
   - component: {fileID: 984756496871841194}
+  - component: {fileID: -6394603796330078313}
+  - component: {fileID: 6798121071620844925}
+  - component: {fileID: 781611609165490846}
   m_Layer: 7
   m_Name: DynoECS
   m_TagString: Enemy
@@ -308,8 +309,8 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: 7363443033071884}
-  - {fileID: 8354099090800759067}
-  - {fileID: 8531581945467715478}
+  - {fileID: 0}
+  - {fileID: 0}
   - {fileID: 5031449921048320471}
   - {fileID: 5953923645941207714}
   InitializedParentNetworkBehaviour: {fileID: 0}
@@ -361,37 +362,8 @@ MonoBehaviour:
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
+  statsProfile: {fileID: 11400000, guid: 6a97a0c61f628e749ac8bf5b61c54de3, type: 2}
   config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
---- !u!114 &8354099090800759067
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739330300266458567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49eea77457c855b429df7b73a75fd318, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyStatsNetSync
-  _componentIndexCache: 1
-  _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 5928809208972985904}
---- !u!114 &8531581945467715478
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739330300266458567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c557a3b818fa01649bec86d8126ceee2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyStatsUpdateSystem
-  _componentIndexCache: 2
-  _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 5928809208972985904}
 --- !u!114 &3209661115049244770
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -576,6 +548,52 @@ MonoBehaviour:
   modelRoot: {fileID: 0}
   rotationSpeed: 8
   minTurnDistance: 0.2
+--- !u!114 &-6394603796330078313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.UnifiedStatsUpdateSystem
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &6798121071620844925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca61dd7427f810b438512fb1cacdeab5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsNetSync
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 0}
+  netProfile: {fileID: 11400000, guid: b6881cd365e70224b9e68789e4549d92, type: 2}
+  syncInterval: 0.1
+  threshold: 0.05
+  lerpSpeed: 12
+--- !u!114 &781611609165490846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ac87626e41348844bd1334159d45404, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.StatsFacadeAdapter
 --- !u!1 &5882816248013448756
 GameObject:
   m_ObjectHideFlags: 0

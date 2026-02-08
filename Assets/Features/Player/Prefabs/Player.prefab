@@ -533,6 +533,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
+  statsProfile: {fileID: 11400000, guid: 6a64a8acc954f83418ed819bcb59e741, type: 2}
 --- !u!114 &5136383045370552025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -542,13 +543,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 7813149641224511590}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eefe9874e88c6b54fb5f77e2a929969c, type: 3}
+  m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsUpdateSystem
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
-  useUnscaledTime: 0
 --- !u!114 &3249233337102116910
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -609,7 +609,6 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
   movementReference: {fileID: 5017748270277261448}
-  cameraReference: {fileID: 2683651113482784269}
   fallbackBaseSpeed: 5
   fallbackWalkSpeed: 2
   fallbackSprintSpeed: 8
@@ -620,7 +619,6 @@ MonoBehaviour:
   crouchHeight: 1
   crouchTransitionSpeed: 10
   airControl: 0.3
-  moveInput: {x: 0, y: 0}
 --- !u!114 &283238272492682892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -814,6 +812,7 @@ MonoBehaviour:
   _componentIndexCache: 1
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
+  sendRate: 0.05
 --- !u!114 &273676337467518626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -889,7 +888,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 2683651113482784269}
   fpsPoint: {fileID: 5175878013477234654}
-  playerBody: {fileID: 8962433313233342359}
   headTransform: {fileID: 0}
   mouseSensitivity: 100
   tpsSmoothSpeed: 7
@@ -898,7 +896,6 @@ MonoBehaviour:
     m_Bits: 4294967295
   collisionRadius: 0.3
   minCameraDistance: 0.5
-  bodyTurnLimit: 40
 --- !u!114 &5907872678837714149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1096,6 +1093,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
+  netProfile: {fileID: 11400000, guid: b4ad2a48c965cd44c9d77b5a3a32a2b8, type: 2}
   syncInterval: 0.1
   threshold: 0.05
   lerpSpeed: 12

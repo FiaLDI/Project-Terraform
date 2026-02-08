@@ -4,6 +4,7 @@ using Features.Abilities.Application;
 using Features.Abilities.Client;
 using Features.Abilities.Domain;
 using Features.Classes.Data;
+using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using FishNet.Object;
 
@@ -16,7 +17,8 @@ namespace Features.Class.Net
     public sealed class PlayerStateNetAdapter : NetworkBehaviour
     {
         private PlayerClassController classController;
-        private PlayerStats playerStats;
+        private PlayerStats playerStats;     // роль
+        private IStatsOwner statsOwner;      // инфраструктура
         private AbilityCaster abilityCaster;
         private ServerGamePhase phase;
 
@@ -59,8 +61,15 @@ namespace Features.Class.Net
         {
             classController ??= GetComponent<PlayerClassController>();
             playerStats ??= GetComponent<PlayerStats>();
+            statsOwner ??= GetComponent<IStatsOwner>();
             abilityCaster ??= GetComponent<AbilityCaster>();
             phase ??= GetComponent<ServerGamePhase>();
+
+            if (statsOwner == null)
+                Debug.LogError(
+                    "[PlayerStateNetAdapter] IStatsOwner not found",
+                    this
+                );
         }
 
         // =====================================================
@@ -103,6 +112,15 @@ namespace Features.Class.Net
             if (classApplied)
                 return;
 
+            if (statsOwner == null || !statsOwner.IsReady)
+            {
+                Debug.LogWarning(
+                    "[PlayerStateNetAdapter] StatsOwner not ready yet",
+                    this
+                );
+                return;
+            }
+
             if (string.IsNullOrEmpty(pendingClassId))
             {
                 Debug.LogError(
@@ -124,7 +142,7 @@ namespace Features.Class.Net
 
             classApplied = true;
 
-            // 1️⃣ базовые статы
+            // 1️⃣ базовые статы (роль PlayerStats)
             playerStats.ResetAndApplyDefaults();
 
             // 2️⃣ пресет класса

@@ -1,30 +1,51 @@
 using UnityEngine;
 using System.Collections;
 using Features.Combat.Domain;
-using Features.Stats.UnityIntegration;
+using Features.Stats.Domain;
 using FishNet.Object;
 
 public class TurretBehaviour : NetworkBehaviour, IDamageable
 {
+    [Header("Refs")]
     public Transform turretHead;
     public Transform muzzlePoint;
     public LineRenderer laser;
 
+    [Header("Config")]
     public float baseRange = 15f;
     public float lifetime = 25f;
     public LayerMask targetMask;
 
-    private TurretStats stats;
+    // =========================
+    // STATS
+    // =========================
+    private IStatsOwner statsOwner;
+    private IStatsFacade stats;
 
+    // =========================
+    // STATE
+    // =========================
     private Transform target;
     private float fireTimer;
     private float retargetTimer;
 
-    private float sphereHeight = 0.8f;
+    private readonly float sphereHeight = 0.8f;
+
+    // =========================
+    // UNITY
+    // =========================
 
     private void Awake()
     {
-        stats = GetComponent<TurretStats>();
+        statsOwner = GetComponent<IStatsOwner>();
+        stats = statsOwner?.Facade;
+
+        if (statsOwner == null)
+        {
+            Debug.LogError("[TurretBehaviour] IStatsOwner not found", this);
+            enabled = false;
+            return;
+        }
 
         if (targetMask == 0)
             targetMask = LayerMask.GetMask("Enemy");
@@ -39,38 +60,49 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
     private IEnumerator LifeTimer()
     {
         yield return new WaitForSeconds(lifetime);
-        Destroy(gameObject);
+
+        if (IsServerInitialized)
+            GetComponent<NetworkObject>().Despawn();
     }
 
     private void Update()
     {
+        if (!IsServerInitialized || statsOwner == null || !statsOwner.IsReady)
+            return;
+
         TickCombat();
     }
+
+    // =========================
+    // COMBAT
+    // =========================
 
     private void TickCombat()
     {
         retargetTimer -= Time.deltaTime;
         fireTimer -= Time.deltaTime;
 
-        if (retargetTimer <= 0)
+        if (retargetTimer <= 0f)
         {
             AcquireTarget();
             retargetTimer = 0.15f;
         }
 
-        if (target)
+        if (target != null)
         {
             RotateToTarget();
             FireIfPossible();
             UpdateLaser();
         }
-        else DisableLaser();
+        else
+        {
+            DisableLaser();
+        }
     }
 
     private void AcquireTarget()
     {
         Vector3 center = transform.position + Vector3.up * sphereHeight;
-
         Collider[] hits = Physics.OverlapSphere(center, baseRange, targetMask);
 
         float best = float.MaxValue;
@@ -82,7 +114,6 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
                 continue;
 
             float d = (h.transform.position - center).sqrMagnitude;
-
             if (d < best)
             {
                 best = d;
@@ -93,12 +124,13 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
 
     private void RotateToTarget()
     {
-        if (!turretHead || !target) return;
+        if (!turretHead || target == null || stats?.Movement == null)
+            return;
 
         Vector3 dir = target.position - turretHead.position;
         dir.y = 0f;
 
-        float speed = stats.FinalRotationSpeed;
+        float speed = stats.Movement.RotationSpeed;
 
         turretHead.rotation = Quaternion.Slerp(
             turretHead.rotation,
@@ -107,15 +139,36 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
         );
     }
 
-    private float FireInterval =>
-        Mathf.Max(0.02f, 1f / stats.FinalFireRate);
+    // =========================
+    // FIRING
+    // =========================
 
-    private float DamagePerShot =>
-        stats.FinalDamage * FireInterval;
+    private float FireInterval
+    {
+        get
+        {
+            if (stats?.Combat is ITurretCombatStats tc && tc.FireRate > 0f)
+                return Mathf.Max(0.02f, 1f / tc.FireRate);
+
+            return 1f;
+        }
+    }
+
+    private float DamagePerShot
+    {
+        get
+        {
+            if (stats?.Combat == null)
+                return 0f;
+
+            return stats.Combat.DamageMultiplier * FireInterval;
+        }
+    }
 
     private void FireIfPossible()
     {
-        if (fireTimer > 0f || !target) return;
+        if (fireTimer > 0f || target == null)
+            return;
 
         if (target.TryGetComponent<IDamageable>(out var d))
             d.TakeDamage(DamagePerShot, DamageType.Generic);
@@ -123,15 +176,29 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
         fireTimer = FireInterval;
     }
 
+    // =========================
+    // DAMAGE
+    // =========================
+
     public void TakeDamage(float amount, DamageType type)
     {
-        stats.Facade.Health.Damage(amount);
-        if (stats.Facade.Health.CurrentHp <= 0)
-            Destroy(gameObject);
+        if (stats?.Health == null)
+            return;
+
+        stats.Health.Damage(amount);
+
+        if (stats.Health.CurrentHp <= 0f && IsServerInitialized)
+            GetComponent<NetworkObject>().Despawn();
     }
 
-    public void Heal(float amount) =>
-        stats.Facade.Health.Heal(amount);
+    public void Heal(float amount)
+    {
+        stats?.Health?.Heal(amount);
+    }
+
+    // =========================
+    // LASER
+    // =========================
 
     private void SetupLaser()
     {
@@ -144,7 +211,8 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
 
     private void UpdateLaser()
     {
-        if (!laser || !target || !muzzlePoint) return;
+        if (!laser || target == null || !muzzlePoint)
+            return;
 
         laser.enabled = true;
         laser.SetPosition(0, muzzlePoint.position);
@@ -157,15 +225,14 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
             laser.enabled = false;
     }
 
-    /// <summary>
-    /// 🎯 Синхронизированное уничтожение через сетевой таймер
-    /// </summary>
+    // =========================
+    // NETWORKED DESTROY
+    // =========================
+
     public void ScheduleDestruction(float delay)
     {
         if (IsServerInitialized)
-        {
             RpcDestroyAfterDelay(delay);
-        }
     }
 
     [ObserversRpc]
@@ -174,13 +241,11 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
         StartCoroutine(DestroyCoroutine(delay));
     }
 
-    private System.Collections.IEnumerator DestroyCoroutine(float delay)
+    private IEnumerator DestroyCoroutine(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         if (IsServerInitialized)
-        {
             GetComponent<NetworkObject>().Despawn();
-        }
     }
 }

@@ -828,6 +828,7 @@ GameObject:
   - component: {fileID: 2134744270812450051}
   - component: {fileID: 6888746637339960081}
   - component: {fileID: 3127127081630111513}
+  - component: {fileID: -2609504964404914139}
   m_Layer: 7
   m_Name: TurretPrefab
   m_TagString: Untagged
@@ -864,6 +865,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4122c357dae6bc342bd5ef25ffdbbbf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurretBehaviour
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3127127081630111513}
+  _networkObjectCache: {fileID: 0}
   turretHead: {fileID: 3241219567218010373}
   muzzlePoint: {fileID: 6145001486089969691}
   laser: {fileID: 4386018491568941130}
@@ -887,6 +891,7 @@ MonoBehaviour:
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 3127127081630111513}
   _networkObjectCache: {fileID: 0}
+  debugMode: 0
 --- !u!114 &6859820028838700850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -899,7 +904,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca505d3f0c6a0924e9f4fc09bc86167b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.TurretStats
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3127127081630111513}
+  _networkObjectCache: {fileID: 0}
   preset: {fileID: 11400000, guid: 3c0e0f654cc9bbe46b73c974ec5e9f69, type: 2}
+  statsProfile: {fileID: 11400000, guid: 3a03d6b694a8583469217fe475480e16, type: 2}
 --- !u!114 &1926531339624578966
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -912,6 +921,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b94ec7f2359655e478dd46aa10740633, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurretBuffTarget
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3127127081630111513}
+  _networkObjectCache: {fileID: 0}
 --- !u!114 &394026785594853742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1025,6 +1037,21 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 0}
     Scale: {x: 0, y: 0, z: 0}
     IsValid: 0
+--- !u!114 &-2609504964404914139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.UnifiedStatsUpdateSystem
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3127127081630111513}
+  _networkObjectCache: {fileID: 0}
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0
