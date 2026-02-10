@@ -1,4 +1,4 @@
-using Features.Buffs.Domain;
+using Features.Stats.Domain;
 
 namespace Features.Stats.Domain
 {
@@ -8,10 +8,19 @@ namespace Features.Stats.Domain
         float WalkSpeed { get; }
         float SprintSpeed { get; }
         float CrouchSpeed { get; }
-        public float RotationSpeed { get; }
+        float RotationSpeed { get; }
 
-        void ApplyBase(float baseSpeed, float walk, float sprint, float crouch, float rotation);
-        void ApplyBuff(BuffSO cfg, bool apply);
+        void ApplyBase(
+            float baseSpeed,
+            float walk,
+            float sprint,
+            float crouch,
+            float rotation
+        );
+
+        bool TryAdd(StatKey key, float value);
+        bool TryMultiply(StatKey key, float value);
+
         void Reset();
     }
 }

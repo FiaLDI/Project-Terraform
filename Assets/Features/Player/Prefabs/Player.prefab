@@ -330,7 +330,6 @@ GameObject:
   - component: {fileID: 367475557838877319}
   - component: {fileID: 6028127562398437825}
   - component: {fileID: 2889153697471037876}
-  - component: {fileID: 7420869319970409758}
   - component: {fileID: 2322558391178485831}
   - component: {fileID: 2556438216558507215}
   - component: {fileID: 1686559364612444093}
@@ -370,6 +369,7 @@ GameObject:
   - component: {fileID: 189359690574479345}
   - component: {fileID: 2072067561037810914}
   - component: {fileID: 211343894895838769}
+  - component: {fileID: -4040251124926920918}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -462,21 +462,6 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
   debugMode: 0
---- !u!114 &7420869319970409758
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e43118fc938eeff4292a162e78de4d22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.UnityIntegration.PlayerBuffTarget
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 6311823513652316802}
-  _networkObjectCache: {fileID: 0}
 --- !u!114 &2322558391178485831
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1136,3 +1121,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49b41d04a8a9bba4b9d07d9f32abe863, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Client.ClientBuffView
+--- !u!114 &-4040251124926920918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cbd9dc0870482446b7a003922fa9602, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatsBuffTarget
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}

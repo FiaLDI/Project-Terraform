@@ -218,7 +218,6 @@ GameObject:
   - component: {fileID: 5928809208972985904}
   - component: {fileID: 7363443033071884}
   - component: {fileID: 3209661115049244770}
-  - component: {fileID: 5031449921048320471}
   - component: {fileID: 5953923645941207714}
   - component: {fileID: 1301065148069508600}
   - component: {fileID: 2477525584403044842}
@@ -228,6 +227,10 @@ GameObject:
   - component: {fileID: -6394603796330078313}
   - component: {fileID: 6798121071620844925}
   - component: {fileID: 781611609165490846}
+  - component: {fileID: -3025476531782380607}
+  - component: {fileID: -3956627166990086975}
+  - component: {fileID: 6325611359922830475}
+  - component: {fileID: -3421877017634375112}
   m_Layer: 7
   m_Name: DynoECS
   m_TagString: Enemy
@@ -309,10 +312,13 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: 7363443033071884}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 5031449921048320471}
   - {fileID: 5953923645941207714}
+  - {fileID: 1301065148069508600}
+  - {fileID: 2477525584403044842}
+  - {fileID: 8899890071420028954}
+  - {fileID: -6394603796330078313}
+  - {fileID: 6798121071620844925}
+  - {fileID: -3025476531782380607}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -323,7 +329,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584342321113914606
+  _initializedTimestamp: -8584308809204897286
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -343,7 +349,7 @@ MonoBehaviour:
   <AssetPathHash>k__BackingField: 15237321690452928042
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: -14.78581, y: -2.62, z: -10.02838}
+    Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
@@ -377,21 +383,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyActor
   config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
---- !u!114 &5031449921048320471
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739330300266458567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d52ddb8e6359e574d867608296e870b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyBuffTarget
-  _componentIndexCache: 3
-  _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 5928809208972985904}
 --- !u!114 &5953923645941207714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -404,7 +395,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a598ae0d0a239844191a98d1694e1afb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Application.BuffSystem
-  _componentIndexCache: 4
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
   debugMode: 0
@@ -420,9 +411,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb77eaeb4ffebe34da03788b2f945dbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEcsRuntimeBinder
-  _componentIndexCache: 255
+  _componentIndexCache: 2
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 5928809208972985904}
   patrolPoints:
   - {fileID: 276696072031083721}
   - {fileID: 2193609484933478631}
@@ -447,9 +438,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be60d8d74d3efa447a9edb955f896bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEcsMoveBridge
-  _componentIndexCache: 255
+  _componentIndexCache: 3
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 5928809208972985904}
   moveSpeed: 3
   obstacleMask:
     serializedVersion: 2
@@ -466,9 +457,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
-  _componentIndexCache: 255
+  _componentIndexCache: 4
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 5928809208972985904}
   _componentConfiguration: 2
   _synchronizeParent: 0
   _packing:
@@ -560,9 +551,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.UnifiedStatsUpdateSystem
-  _componentIndexCache: 255
+  _componentIndexCache: 5
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 5928809208972985904}
 --- !u!114 &6798121071620844925
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -575,9 +566,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca61dd7427f810b438512fb1cacdeab5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsNetSync
-  _componentIndexCache: 255
+  _componentIndexCache: 6
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 5928809208972985904}
   netProfile: {fileID: 11400000, guid: b6881cd365e70224b9e68789e4549d92, type: 2}
   syncInterval: 0.1
   threshold: 0.05
@@ -594,6 +585,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ac87626e41348844bd1334159d45404, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.StatsFacadeAdapter
+--- !u!114 &-3025476531782380607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cbd9dc0870482446b7a003922fa9602, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatsBuffTarget
+  _componentIndexCache: 7
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
+--- !u!114 &-3956627166990086975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d213353b9eade47afdcfe3462a71fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.HealthStatsAdapter
+--- !u!114 &6325611359922830475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c4e11ef3bbd86744b3e6e4dd85c2f22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.CombatStatsAdapter
+--- !u!114 &-3421877017634375112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85745559778e9b340bbacedfd6b65084, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.EnergyStatsAdapter
 --- !u!1 &5882816248013448756
 GameObject:
   m_ObjectHideFlags: 0

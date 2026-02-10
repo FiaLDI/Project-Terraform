@@ -165,7 +165,11 @@ namespace Features.Buffs.Application
                 return;
 
             service.Tick(dt);
+
+            foreach (var inst in service.Active)
+                executor.Tick(inst, dt);
         }
+
 
         // =====================================================
         // INTERNAL

@@ -1,15 +1,9 @@
-using Features.Buffs.Domain;
-
 namespace Features.Stats.Domain
 {
-    public interface ITurretCombatStats : ICombatStats
+    public interface ITurretCombatStats
     {
         float FireRate { get; }
-
         void ApplyFireRateBase(float baseRate);
-        void ApplyFireRateBuff(BuffSO cfg, bool apply);
-
-        
         void Reset();
     }
 }

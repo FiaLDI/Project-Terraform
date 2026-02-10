@@ -1,3 +1,4 @@
+using Features.Buffs.Data;
 using Features.Buffs.Domain;
 using TMPro;
 using UnityEngine;
@@ -11,12 +12,13 @@ namespace Features.Buffs.UI
         public Image icon;
         public TextMeshProUGUI label;
 
-        private BuffSO cfg;
+        private string buffId;
 
-        public void Bind(BuffSO cfg)
+        public void Bind(string buffId)
         {
-            this.cfg = cfg;
+            this.buffId = buffId;
 
+            var cfg = BuffRegistrySO.Instance.GetById(buffId);
             if (cfg == null)
                 return;
 
@@ -27,9 +29,6 @@ namespace Features.Buffs.UI
                 label.text = cfg.displayName;
         }
 
-        private void OnDestroy()
-        {
-            cfg = null;
-        }
+        public string BuffId => buffId;
     }
 }

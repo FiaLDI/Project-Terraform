@@ -1,11 +1,11 @@
 using UnityEngine;
-using FishNet.Object;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
 
 namespace Features.Stats.UnityIntegration
 {
     [DefaultExecutionOrder(-400)]
+    [RequireComponent(typeof(StatsBuffTarget))]
     public sealed class TurretStats : StatsOwnerBase
     {
         [Header("Preset")]

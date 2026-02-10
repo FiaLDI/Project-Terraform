@@ -8,6 +8,7 @@ namespace Features.Stats.UnityIntegration
 {
     [DefaultExecutionOrder(-400)]
     [RequireComponent(typeof(ServerGamePhase))]
+    [RequireComponent(typeof(StatsBuffTarget))]
     public sealed class PlayerStats : StatsOwnerBase
     {
         public StatsFacadeAdapter Adapter { get; private set; }
@@ -25,7 +26,6 @@ namespace Features.Stats.UnityIntegration
             phase = GetComponent<ServerGamePhase>();
 
             ApplyClassDefaults();
-            BindBuffTarget();
 
             Debug.Log("[PlayerStats] SERVER ready → StatsReady", this);
             phase.Reach(GamePhase.StatsReady);
@@ -63,20 +63,6 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Mining != null)
             {
                 Facade.Mining.ApplyBase(1f);
-            }
-        }
-
-        private void BindBuffTarget()
-        {
-            var buffTarget = GetComponent<PlayerBuffTarget>();
-            if (buffTarget != null)
-            {
-                buffTarget.SetStats(Facade);
-                Debug.Log("[PlayerStats] BuffTarget linked", this);
-            }
-            else
-            {
-                Debug.LogWarning("[PlayerStats] PlayerBuffTarget missing", this);
             }
         }
 
@@ -153,6 +139,6 @@ namespace Features.Stats.UnityIntegration
                     preset.mining.baseMining
                 );
             }
-}
+        }
     }
 }

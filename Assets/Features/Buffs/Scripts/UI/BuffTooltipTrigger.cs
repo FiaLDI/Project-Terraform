@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Features.Buffs.Domain;
 using Features.Menu.Tooltip;
+using Features.Buffs.Data;
 
 namespace Features.Buffs.UI
 {
@@ -11,28 +12,18 @@ namespace Features.Buffs.UI
         IPointerExitHandler,
         IPointerMoveHandler
     {
-        private BuffSO cfg;
+        private string buffId;
 
-        // =====================================================
-        // BIND
-        // =====================================================
-
-        public void Bind(BuffSO cfg)
+        public void Bind(string buffId)
         {
-            this.cfg = cfg;
+            this.buffId = buffId;
         }
-
-        // =====================================================
-        // POINTER
-        // =====================================================
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            var cfg = BuffRegistrySO.Instance.GetById(buffId);
             if (cfg == null)
-            {
-                Debug.LogWarning("[BuffTooltipTrigger] Not bound");
                 return;
-            }
 
             TooltipController.Instance?.ShowBuff(cfg);
             TooltipController.Instance?.SetPointerPosition(eventData.position);
@@ -46,11 +37,6 @@ namespace Features.Buffs.UI
         public void OnPointerMove(PointerEventData eventData)
         {
             TooltipController.Instance?.SetPointerPosition(eventData.position);
-        }
-
-        private void OnDestroy()
-        {
-            cfg = null;
         }
     }
 }

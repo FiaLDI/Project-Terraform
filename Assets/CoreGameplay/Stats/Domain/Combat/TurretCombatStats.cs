@@ -1,47 +1,45 @@
-using Features.Buffs.Domain;
-
 namespace Features.Stats.Domain
 {
-    public class TurretCombatStats : CombatStats, ITurretCombatStats
+    public class TurretCombatStats
+        : CombatStats, ITurretCombatStats, IStatModifierTarget
     {
-        private float _baseFireRate = 1f;
-        private float _fireRateAdd = 0f;
-        private float _fireRateMult = 1f;
+        public static readonly StatKey FireRateKey = StatKeys.FireRate;
 
-        public float FireRate =>
-            (_baseFireRate + _fireRateAdd) * _fireRateMult;
+        private float _baseFireRate = 1f;
+        private float _add;
+        private float _mult = 1f;
+
+        public float FireRate => (_baseFireRate + _add) * _mult;
 
         public void ApplyFireRateBase(float baseRate)
         {
             _baseFireRate = baseRate;
         }
 
-        public void ApplyFireRateBuff(BuffSO cfg, bool apply)
+        public bool TryAdd(StatKey key, float value)
         {
-            if (cfg.stat != BuffStat.TurretFireRate)
-                return;
+            if (base.TryAdd(key, value)) return true;
+            if (key.Id != FireRateKey.Id) return false;
 
-            float sign = apply ? 1f : -1f;
-
-            switch (cfg.modType)
-            {
-                case BuffModType.Add:
-                    _fireRateAdd += cfg.value * sign;
-                    break;
-
-                case BuffModType.Mult:
-                    _fireRateMult = apply ? _fireRateMult * cfg.value : _fireRateMult / cfg.value;
-                    break;
-
-                case BuffModType.Set:
-                    if (apply) _baseFireRate = cfg.value;
-                    break;
-            }
+            _add += value;
+            return true;
         }
 
-        public void Reset()
+        public bool TryMultiply(StatKey key, float multiplier)
         {
+            if (base.TryMultiply(key, multiplier)) return true;
+            if (key.Id != FireRateKey.Id) return false;
 
+            _mult *= multiplier;
+            return true;
+        }
+
+        public new void Reset()
+        {
+            base.Reset();
+            _baseFireRate = 1f;
+            _add = 0f;
+            _mult = 1f;
         }
     }
 }

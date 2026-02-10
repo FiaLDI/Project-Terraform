@@ -14,8 +14,6 @@ namespace Features.Abilities.UnityIntegration
             AbilityContext ctx,
             GameObject owner)
         {
-            EnsureBuffInfrastructure(owner);
-
             Vector3 origin = owner.transform.position;
 
             // ================= FX =================
@@ -41,15 +39,22 @@ namespace Features.Abilities.UnityIntegration
                 Apply(buffSys, ability.fireRateBuff, ability);
                 Apply(buffSys, ability.turretMoveBuff, ability);
             }
+            else
+            {
+                Debug.LogError(
+                    "[OverloadPulse] BuffSystem missing on owner",
+                    owner
+                );
+            }
 
             // ================= DEVICES =================
-            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
+            PlayerDeviceBuffService.I?.BuffAllPlayerDevices(
                 owner, ability.damageBuff, ability);
 
-            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
+            PlayerDeviceBuffService.I?.BuffAllPlayerDevices(
                 owner, ability.fireRateBuff, ability);
 
-            PlayerDeviceBuffService.I.BuffAllPlayerDevices(
+            PlayerDeviceBuffService.I?.BuffAllPlayerDevices(
                 owner, ability.turretMoveBuff, ability);
 
             // ================= DAMAGE =================
@@ -83,19 +88,6 @@ namespace Features.Abilities.UnityIntegration
                 source: source,
                 lifetimeMode: BuffLifetimeMode.Duration
             );
-        }
-
-        private static void EnsureBuffInfrastructure(GameObject owner)
-        {
-            if (owner.GetComponent<IBuffTarget>() == null)
-                owner.AddComponent<PlayerBuffTarget>();
-
-            if (owner.GetComponent<BuffSystem>() == null)
-                owner.AddComponent<BuffSystem>();
-
-            if (PlayerDeviceBuffService.I == null)
-                new GameObject("PlayerDeviceBuffService")
-                    .AddComponent<PlayerDeviceBuffService>();
         }
     }
 }

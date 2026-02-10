@@ -8,7 +8,7 @@ namespace Features.Stats.UnityIntegration
     [DefaultExecutionOrder(-200)]
     public sealed class UnifiedStatsUpdateSystem : NetworkBehaviour
     {
-        private IStatsCollection stats;
+        private IStatsFacade facade;
         private IHealthStats health;
         private IEnergyStats energy;
 
@@ -34,9 +34,9 @@ namespace Features.Stats.UnityIntegration
             if (owner == null || !owner.IsReady)
                 return;
 
-            stats = owner.Facade as IStatsCollection;
-            health = stats?.Health;
-            energy = stats?.Energy;
+            facade = owner.Facade;
+            health = facade.Health;
+            energy = facade.Energy;
 
             ready = true;
         }
@@ -59,8 +59,7 @@ namespace Features.Stats.UnityIntegration
 
             if (health != null && health.FinalRegen > 0)
                 health.Recover(health.FinalRegen * dt);
-
-            stats.Tick(dt);
         }
     }
+
 }

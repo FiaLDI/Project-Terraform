@@ -821,7 +821,6 @@ GameObject:
   - component: {fileID: 9012733006345588933}
   - component: {fileID: 2094240665213674160}
   - component: {fileID: 6859820028838700850}
-  - component: {fileID: 1926531339624578966}
   - component: {fileID: 394026785594853742}
   - component: {fileID: 4442242552899396924}
   - component: {fileID: 3714489024258571851}
@@ -829,6 +828,7 @@ GameObject:
   - component: {fileID: 6888746637339960081}
   - component: {fileID: 3127127081630111513}
   - component: {fileID: -2609504964404914139}
+  - component: {fileID: 7350075856022002700}
   m_Layer: 7
   m_Name: TurretPrefab
   m_TagString: Untagged
@@ -907,23 +907,8 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 3127127081630111513}
   _networkObjectCache: {fileID: 0}
-  preset: {fileID: 11400000, guid: 3c0e0f654cc9bbe46b73c974ec5e9f69, type: 2}
   statsProfile: {fileID: 11400000, guid: 3a03d6b694a8583469217fe475480e16, type: 2}
---- !u!114 &1926531339624578966
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5885013346192204236}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b94ec7f2359655e478dd46aa10740633, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TurretBuffTarget
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 3127127081630111513}
-  _networkObjectCache: {fileID: 0}
+  preset: {fileID: 11400000, guid: 3c0e0f654cc9bbe46b73c974ec5e9f69, type: 2}
 --- !u!114 &394026785594853742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1052,6 +1037,22 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 3127127081630111513}
   _networkObjectCache: {fileID: 0}
+--- !u!114 &7350075856022002700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cbd9dc0870482446b7a003922fa9602, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatsBuffTarget
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3127127081630111513}
+  _networkObjectCache: {fileID: 0}
+  statsProvider: {fileID: 0}
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0

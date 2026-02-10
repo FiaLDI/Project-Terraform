@@ -60,26 +60,20 @@ namespace Features.Buffs.UI
             if (buffView == null)
                 return;
 
-            foreach (var cfg in buffView.Active)
-                CreateIcon(cfg);
+            foreach (var view in buffView.Active)
+                CreateIcon(view.buffId);
         }
 
-        private void CreateIcon(BuffSO cfg)
+        private void CreateIcon(string buffId)
         {
-            if (cfg == null || container == null || iconPrefab == null)
-                return;
-
             var ui = Instantiate(iconPrefab, container);
-            ui.Bind(cfg);
+            ui.Bind(buffId);
 
             var tt = ui.GetComponentInChildren<BuffTooltipTrigger>();
             if (tt != null)
-                tt.Bind(cfg);
+                tt.Bind(buffId);
 
-            else
-                Debug.LogError("[BuffHUD] BuffTooltipTrigger not found", ui);
-
-            icons[cfg.buffId] = ui;
+            icons[buffId] = ui;
         }
 
         // ======================================================

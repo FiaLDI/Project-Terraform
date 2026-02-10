@@ -1,6 +1,4 @@
 using Features.Abilities.Domain;
-using Features.Buffs.Application;
-using Features.Buffs.Domain;
 using Features.Player.UnityIntegration;
 using FishNet;
 using FishNet.Object;
@@ -53,13 +51,7 @@ namespace Features.Abilities.UnityIntegration
                 ownerNO.Owner
             );
 
-            // ===== BUFF INFRA =====
-            if (!turret.TryGetComponent<IBuffTarget>(out _))
-                turret.AddComponent<TurretBuffTarget>();
-
-            if (!turret.TryGetComponent<BuffSystem>(out _))
-                turret.AddComponent<BuffSystem>();
-
+            // ===== REGISTRATION =====
             PlayerDeviceRegistry.Instance?.RegisterDevice(owner, turret);
 
             // ===== VISUAL =====
@@ -71,6 +63,7 @@ namespace Features.Abilities.UnityIntegration
                 beh.ScheduleDestruction(ability.duration);
         }
 
+        // FindBestTurretSpawnPoint ≈ аег хглемемхи
         private static Vector3 FindBestTurretSpawnPoint(
             Transform player,
             float searchRadius,

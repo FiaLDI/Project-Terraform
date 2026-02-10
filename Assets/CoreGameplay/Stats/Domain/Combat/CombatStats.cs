@@ -1,76 +1,36 @@
-using Features.Buffs.Domain;
-
 namespace Features.Stats.Domain
 {
-    public class CombatStats : ICombatStats
+    public class CombatStats : ICombatStats, IStatModifierTarget
     {
-        // BASE
-        private float _baseDamage;
+        public static readonly StatKey DamageKey = StatKeys.DamageMultiplier;
 
-        // BUFF MODIFIERS
-        private float _bonusAdd = 0f;
-        private float _bonusMult = 1f;
-        private float _bonusSet = -1f; // -1 = не используется
+        private float _base;
+        private float _add;
+        private float _mult = 1f;
 
-        // PUBLIC FINAL STAT
-        public float DamageMultiplier { get; private set; }
+        public float DamageMultiplier => (_base + _add) * _mult;
 
-        // -----------------------------------
-        // BASE VALUES
-        // -----------------------------------
-        public void ApplyBase(float dmg)
+        public void ApplyBase(float dmg) => _base = dmg;
+
+        public bool TryAdd(StatKey key, float value)
         {
-            _baseDamage = dmg;
-            Recalc();
+            if (key.Id != DamageKey.Id) return false;
+            _add += value;
+            return true;
         }
 
-        // -----------------------------------
-        // BUFFS
-        // -----------------------------------
-        public void ApplyBuff(BuffSO cfg, bool apply)
+        public bool TryMultiply(StatKey key, float multiplier)
         {
-            float sign = apply ? 1f : -1f;
-
-            switch (cfg.modType)
-            {
-                case BuffModType.Add:
-                    _bonusAdd += cfg.value * sign;
-                    break;
-
-                case BuffModType.Mult:
-                    if (apply) _bonusMult *= cfg.value;
-                    else        _bonusMult /= cfg.value;
-                    break;
-
-                case BuffModType.Set:
-                    if (apply)
-                        _bonusSet = cfg.value;
-                    else
-                        _bonusSet = -1f;
-                    break;
-            }
-
-            Recalc();
-        }
-
-        // -----------------------------------
-        // RECALC FINAL DAMAGE OUTPUT
-        // -----------------------------------
-        private void Recalc()
-        {
-            if (_bonusSet >= 0)
-            {
-                DamageMultiplier = _bonusSet;
-                return;
-            }
-
-            DamageMultiplier =
-                (_baseDamage + _bonusAdd) * _bonusMult;
+            if (key.Id != DamageKey.Id) return false;
+            _mult *= multiplier;
+            return true;
         }
 
         public void Reset()
         {
-            
+            _base = 0f;
+            _add = 0f;
+            _mult = 1f;
         }
     }
 }

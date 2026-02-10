@@ -193,10 +193,7 @@ namespace Features.Menu.Tooltip
             icon.sprite      = cfg.icon;
             title.text       = cfg.displayName;
             description.text = cfg.description;
-
-            stats.text =
-                $"{cfg.stat} {cfg.modType} {cfg.value}\n" +
-                (cfg.isDebuff ? "<color=red>Debuff</color>" : "");
+            stats.text       = cfg.isDebuff ? "<color=#FF5555>Debuff</color>" : "";
 
             Show();
         }

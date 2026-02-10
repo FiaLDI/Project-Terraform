@@ -5,6 +5,7 @@ using Features.Buffs.Application;
 using Features.Buffs.Data;
 using FishNet.Object.Synchronizing;
 using Features.Buffs.Domain;
+using Features.Buffs.Client;
 
 namespace Features.Buffs.Client
 {
@@ -15,8 +16,8 @@ namespace Features.Buffs.Client
 
         private BuffSystem buffSystem;
 
-        private readonly List<BuffSO> active = new();
-        public IReadOnlyList<BuffSO> Active => active;
+        private readonly List<ActiveBuffView> active = new();
+        public IReadOnlyList<ActiveBuffView> Active => active;
 
         private void Awake()
         {
@@ -57,9 +58,7 @@ namespace Features.Buffs.Client
 
             foreach (var id in buffSystem.ActiveBuffIds)
             {
-                var cfg = BuffRegistrySO.Instance.GetById(id);
-                if (cfg != null)
-                    active.Add(cfg);
+                active.Add(new ActiveBuffView(id));
             }
 
             BuffsChanged?.Invoke();

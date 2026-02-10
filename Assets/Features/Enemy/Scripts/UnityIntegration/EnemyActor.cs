@@ -6,6 +6,7 @@ using Features.Combat.Application;
 using Features.Combat.Actors;
 using Features.Stats.Domain;
 using System.Collections.Generic;
+using Features.Stats.UnityIntegration;
 
 namespace Features.Enemy.UnityIntegration
 {

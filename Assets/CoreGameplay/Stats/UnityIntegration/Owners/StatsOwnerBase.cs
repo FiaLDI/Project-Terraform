@@ -22,7 +22,50 @@ namespace Features.Stats.UnityIntegration
 
         protected virtual void InitStats()
         {
-            Facade = new StatsFacade(statsProfile);
+            if (statsProfile == null)
+            {
+                Debug.LogError("[StatsOwnerBase] StatsProfileSO missing", this);
+                return;
+            }
+
+            // =========================
+            // CREATE SUB-STATS
+            // =========================
+
+            IHealthStats health = statsProfile.hasHealth
+                ? new HealthStats()
+                : null;
+
+            IEnergyStats energy = statsProfile.hasEnergy
+                ? new EnergyStats()
+                : null;
+
+            ICombatStats combat = statsProfile.hasCombat
+                ? (statsProfile.useTurretCombat
+                    ? new TurretCombatStats()
+                    : new CombatStats())
+                : null;
+
+            IMovementStats movement = statsProfile.hasMovement
+                ? new MovementStats()
+                : null;
+
+            IMiningStats mining = statsProfile.hasMining
+                ? new MiningStats()
+                : null;
+
+            // =========================
+            // CREATE FACADE
+            // =========================
+
+            Facade = new StatsFacade(
+                health,
+                energy,
+                combat,
+                movement,
+                mining
+            );
+
             Facade.ResetAll();
             IsReady = true;
         }

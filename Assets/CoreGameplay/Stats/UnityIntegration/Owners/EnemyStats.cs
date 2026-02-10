@@ -1,13 +1,11 @@
 using UnityEngine;
-using FishNet.Object;
 using Features.Stats.Domain;
-using Features.Stats.Application;
 using Features.Enemy.Data;
-using Features.Stats.UnityIntegration;
 
-namespace Features.Enemy.UnityIntegration
+namespace Features.Stats.UnityIntegration
 {
     [DefaultExecutionOrder(-400)]
+    [RequireComponent(typeof(StatsBuffTarget))]
     public sealed class EnemyStats : StatsOwnerBase
     {
         [Header("Config")]
@@ -28,7 +26,6 @@ namespace Features.Enemy.UnityIntegration
             }
 
             ApplyDefaultsFromConfig();
-            BindBuffTarget();
         }
 
         private void ApplyDefaultsFromConfig()
@@ -63,13 +60,6 @@ namespace Features.Enemy.UnityIntegration
             {
                 Facade.Combat.ApplyBase(preset.combat.baseDamageMultiplier);
             }
-        }
-
-        private void BindBuffTarget()
-        {
-            var buffTarget = GetComponent<EnemyBuffTarget>();
-            if (buffTarget != null)
-                buffTarget.SetStats(Facade);
         }
     }
 }
