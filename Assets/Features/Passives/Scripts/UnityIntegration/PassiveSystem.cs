@@ -2,50 +2,29 @@ using UnityEngine;
 using Features.Passives.Domain;
 using Features.Passives.Application;
 using FishNet.Object;
+using System.Collections.Generic;
 
 namespace Features.Passives.UnityIntegration
 {
-    [DefaultExecutionOrder(-50)]
-    public sealed class PassiveSystem : MonoBehaviour
+    public sealed class PassiveSystem : NetworkBehaviour
     {
-        [Header("Equipped Passives (debug only)")]
-        public PassiveSO[] equipped;
-
         private PassiveService service;
 
-        private void Awake()
+        public override void OnStartServer()
         {
-            service = new PassiveService(gameObject);
+            service = new PassiveService(GetComponent<StatsBuffTarget>());
         }
 
-        private void OnDisable()
+        [Server]
+        public void SetPassives(IEnumerable<PassiveSO> passives)
         {
-            service?.DeactivateAll();
+            service.Set(passives);
         }
 
-        // =====================================================
-        // LOGIC (SERVER ONLY)
-        // =====================================================
-
-        public void SetPassivesLogic(PassiveSO[] passives)
+        [Server]
+        public void ResetPassives()
         {
-            if (!TryGetComponent<NetworkObject>(out var net) || !net.IsServer)
-                return;
-
-            service.DeactivateAll();
-            equipped = passives;
-
-            if (equipped != null && equipped.Length > 0)
-                service.ActivateAll(equipped);
-        }
-
-        // =====================================================
-        // VISUALS (CLIENT ONLY)
-        // =====================================================
-
-        public void SetPassivesVisuals(PassiveSO[] passives)
-        {
-            equipped = passives;
+            service.ClearAll();
         }
     }
 }

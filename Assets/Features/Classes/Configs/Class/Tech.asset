@@ -18,9 +18,7 @@ MonoBehaviour:
   preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
   visualPreset: {fileID: 11400000, guid: ffc13c66519696d408de5657c3919e32, type: 2}
   passives:
-  - {fileID: 11400000, guid: e497cbe8c9ed9ab42a224730970ee31f, type: 2}
-  - {fileID: 11400000, guid: 46d2df12eb2d6e745aa306b4d2a19b6a, type: 2}
-  - {fileID: 11400000, guid: 40c171f4028e3914f906158433749fe8, type: 2}
+  - {fileID: 11400000, guid: 567f67ac3af28ad4e9e3629be706bd9e, type: 2}
   abilities:
   - {fileID: 11400000, guid: cd3d053f16cd1754cab26de7a5fd1801, type: 2}
   - {fileID: 11400000, guid: 00dc3ae3775acae4b850ce8abecd76c8, type: 2}

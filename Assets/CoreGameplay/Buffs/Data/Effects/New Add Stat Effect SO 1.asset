@@ -9,7 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccec4dd3449928346a8acb56b03815ca, type: 3}
-  m_Name: Aura
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Domain.PassiveEffect_AuraEmitterSO
-  aura: {fileID: 11400000, guid: cb7eb8189a60e2845a43c94b1ad74de4, type: 2}
+  m_Script: {fileID: 11500000, guid: 7106f6b4490274a44a7213352308a0f2, type: 3}
+  m_Name: New Add Stat Effect SO 1
+  m_EditorClassIdentifier: Assembly-CSharp::AddStatEffectSO
+  statId: energy.regen
+  value: 5

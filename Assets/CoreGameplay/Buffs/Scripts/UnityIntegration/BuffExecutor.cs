@@ -29,7 +29,7 @@ namespace Features.Buffs.Application
                 return;
 
             foreach (var effect in inst.Config.effects)
-                effect?.Apply(stats);
+                effect.ApplyWithContext(inst, stats);
         }
 
         // ================= TICK =================

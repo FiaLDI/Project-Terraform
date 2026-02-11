@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4dd355db4adabd94c889d19f93d44e8e, type: 3}
-  m_Name: En Max owner
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Domain.PassiveEffect_ApplyBuffToOwnerSO
+  m_Script: {fileID: 11500000, guid: 6391f50ea28cf274da38977b8c6cd2af, type: 3}
+  m_Name: New Passive Effect_Apply Buff SO
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Domain.PassiveEffect_ApplyBuffSO
   buff: {fileID: 11400000, guid: 8c8dd56d33ee0b04e90579b74060ba22, type: 2}

@@ -17,8 +17,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
   buffIcon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
   description: 
-  energyCost: 20
-  cooldown: 12
+  energyCost: 5
+  cooldown: 5
   targetType: 0
   castType: 0
   castTime: 0
