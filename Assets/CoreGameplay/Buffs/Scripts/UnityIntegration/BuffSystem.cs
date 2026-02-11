@@ -212,5 +212,17 @@ namespace Features.Buffs.Application
             foreach (var id in ids)
                 ActiveBuffIds.Add(id);
         }
+
+        public void RemoveBySourceAndId(
+            IBuffSource source,
+            string buffId)
+            {
+            service.RemoveWhere(b =>
+                    b.Source == source &&
+                    b.Config.buffId == buffId);
+            }
+
+
+
     }
 }

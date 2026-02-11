@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
+using Features.Buffs.Domain;
 using Features.Camera.Domain;
 using Features.Camera.UnityIntegration;
 using Features.Stats.Domain;
@@ -11,7 +12,7 @@ namespace Features.Abilities.Application
 {
     public class AbilityService
     {
-        private readonly object _owner;
+        private readonly IBuffSource _owner;
         public AbilityContext LastInstantContext { get; private set; }
         public AbilityContext LastChannelContext { get; private set; }
 
@@ -46,7 +47,7 @@ namespace Features.Abilities.Application
         // CONSTRUCTOR
         // ============================================================
         public AbilityService(
-            object owner,
+            IBuffSource owner,
             IEnergyStats energy,
             LayerMask groundMask,
             AbilityExecutor executor

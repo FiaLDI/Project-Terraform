@@ -84,5 +84,14 @@ namespace Features.Buffs.Application
 
             active.Clear();
         }
+
+        public void RemoveWhere(Func<BuffInstance, bool> predicate)
+        {
+            for (int i = active.Count - 1; i >= 0; i--)
+            {
+                if (predicate(active[i]))
+                    RemoveBuff(active[i]);
+            }
+        }
     }
 }

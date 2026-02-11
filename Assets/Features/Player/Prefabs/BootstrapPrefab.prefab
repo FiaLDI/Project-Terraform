@@ -1466,6 +1466,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8868529999353731622}
+  - component: {fileID: 3122582640458265976}
   - component: {fileID: 5976742230780520248}
   - component: {fileID: 3237876651092747431}
   - component: {fileID: 5370337398871615266}
@@ -1491,6 +1492,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1511663097971046456}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3122582640458265976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2571091580735681807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 235dcff09fce0784e9825b7a36b93a96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Effects.Application.EffectExecutor
 --- !u!114 &5976742230780520248
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1929,6 +1942,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7060251833256494328}
   - component: {fileID: 8090554108341056846}
+  - component: {fileID: 2809909849973381705}
   m_Layer: 0
   m_Name: spawn
   m_TagString: Untagged
@@ -1964,6 +1978,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerService
   playerPrefab: {fileID: 6311823513652316802, guid: 183439e94ff5e2b47ba4afbf933a7f53, type: 3}
+--- !u!114 &2809909849973381705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5037748668695186302}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ba5d27aa57d0f4cb161f371f846d50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Effects.Application.SpawnService
+  registry: {fileID: 11400000, guid: 2a7dc3cc848b85c48806364bb264f399, type: 2}
 --- !u!1 &5239439058099563262
 GameObject:
   m_ObjectHideFlags: 0

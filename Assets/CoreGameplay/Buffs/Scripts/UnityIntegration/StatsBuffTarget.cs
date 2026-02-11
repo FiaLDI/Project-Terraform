@@ -8,7 +8,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(StatsOwnerBase))]
 [RequireComponent(typeof(BuffSystem))]
-public sealed class StatsBuffTarget : NetworkBehaviour, IBuffTarget
+public sealed class StatsBuffTarget : NetworkBehaviour, IBuffTarget, IBuffSource
 {
     private StatsOwnerBase statsOwner;
     private bool fired;
