@@ -9,7 +9,15 @@ namespace Features.Effects.Application
             return def.type switch
             {
                 EffectType.DealDamage =>
-                    new DealDamageEffect(def.value),
+                    new DealDamageEffect(def.value, def.damageType),
+
+                EffectType.HitscanDamage =>
+                    new HitscanDamageEffect(
+                        def.value,
+                        def.radius,
+                        def.layerMask,
+                        def.damageType
+                    ),
 
                 EffectType.HealInstant =>
                     new HealInstantEffect(def.value),
@@ -29,6 +37,22 @@ namespace Features.Effects.Application
                         def.lifetime,
                         def.useSourcePosition
                     ),
+
+                EffectType.MineNetworkResource =>
+                    new MineNetworkResourceEffect(
+                        def.value,
+                        def.radius,
+                        def.layerMask
+                    ),
+
+                EffectType.Continuous =>
+                    new ContinuousEffect(def.value, def.childEffects),
+
+                EffectType.StopContinuous =>
+                    new StopContinuousEffect(),
+
+                EffectType.Scan =>
+                    new ScanEffect(def.value),
 
                 _ => null
             };

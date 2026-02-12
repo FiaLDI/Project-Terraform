@@ -1,12 +1,13 @@
 using UnityEngine;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
 using Features.Items.Domain;
 using Features.Weapons.Data;
 using Features.Weapons.Domain;
-using Features.Weapons.Application;
-using Features.Combat.Application;
-using Features.Combat.Domain;
 using Features.Inventory;
 using Features.Equipment.Domain;
+using Features.Weapons.Application;
 
 namespace Features.Weapons.UnityIntegration
 {
@@ -18,38 +19,20 @@ namespace Features.Weapons.UnityIntegration
         public ParticleSystem muzzleFlash;
         public Animator animator;
 
-        // Runtime
         private ItemInstance instance;
         private WeaponConfig config;
         private WeaponAmmoState ammoState;
-
-        // Runtime stats
         private WeaponRuntimeStats runtimeStats;
-
-        // Inventory
         private IInventoryContext inventory;
-
-        // Services
         private WeaponService weaponService;
-        private AmmoService ammoService;
         private ReloadService reloadService;
-        private HitScanService hitscan;
-        private ProjectileService projectileService;
-        private RecoilService recoilService;
         private AimService aimService;
-        private CombatService combat;
-        private MeleeService meleeService;
+        private RecoilService recoilService;
 
-        // Fire control
         private bool triggerHeld;
 
         public int CurrentAmmo => ammoState?.ammoInMagazine ?? 0;
         public int MaxAmmo => runtimeStats?.magazineSize ?? 0;
-
-
-        // ======================================================
-        // SETUP
-        // ======================================================
 
         public WeaponController Setup(ItemInstance inst)
         {
@@ -63,65 +46,36 @@ namespace Features.Weapons.UnityIntegration
             this.inventory = inventory;
         }
 
-        // ======================================================
-        // INITIALIZE
-        // ======================================================
-
         public void Initialize(UnityEngine.Camera camera)
         {
             playerCamera = camera;
-            combat = CombatServiceProvider.Service;
 
-            // === CALCULATE RUNTIME STATS ===
             runtimeStats = WeaponStatCalculator.Calculate(instance);
 
-            // === SERVICES ===
             weaponService = new WeaponService();
             weaponService.Initialize(runtimeStats);
 
-            ammoService = new AmmoService(inventory.Service);
-            reloadService = new ReloadService(ammoService);
-            hitscan = new HitScanService();
-            projectileService = new ProjectileService(combat);
+            reloadService = new ReloadService(
+                new AmmoService(inventory.Service)
+            );
 
-            recoilService = new RecoilService();
             aimService = new AimService();
-            meleeService = new MeleeService();
-
-            ammoState = new WeaponAmmoState(runtimeStats.magazineSize);
-
-            // === REFERENCES ===
-            if (muzzlePoint == null)
-                muzzlePoint = transform.Find("MuzzlePoint");
-
-            if (muzzleFlash == null && muzzlePoint != null)
-                muzzleFlash = muzzlePoint.GetComponentInChildren<ParticleSystem>();
-
-            // === INIT SERVICES ===
             aimService.Initialize(runtimeStats);
 
-            recoilService.Initialize(
-                runtimeStats,
-                config.recoilPattern
-            );
+            recoilService = new RecoilService();
+            recoilService.Initialize(runtimeStats, config.recoilPattern);
+
+            ammoState = new WeaponAmmoState(runtimeStats.magazineSize);
         }
 
         private void Update()
         {
-            HandleAutomaticFire();
+            if (triggerHeld && config.fireMode == FireMode.Auto)
+                TryFireOnce();
 
             if (ammoState.isReloading)
-            {
-                Debug.Log("[Reload] PerformReloadStep()");
                 reloadService.PerformReloadStep(config, ammoState);
-                Debug.Log($"[Reload] ammo now {ammoState.ammoInMagazine}");
-            }
         }
-
-
-        // ======================================================
-        // INPUT
-        // ======================================================
 
         public void OnUsePrimary_Start()
         {
@@ -131,62 +85,16 @@ namespace Features.Weapons.UnityIntegration
                 TryFireOnce();
         }
 
-        public void OnUsePrimary_Hold() { }
-
         public void OnUsePrimary_Stop()
         {
             triggerHeld = false;
             recoilService.Reset();
         }
 
-        public void OnUseSecondary_Start()
-        {
-            aimService.SetAiming(true);
-        }
-
-        public void OnUseSecondary_Hold() { }
-
-        public void OnUseSecondary_Stop()
-        {
-            aimService.SetAiming(false);
-        }
-
         public void OnReloadPressed()
         {
-            Debug.Log(
-                $"[ReloadPressed] mag={ammoState.ammoInMagazine}/{runtimeStats.magazineSize}, " +
-                $"isReloading={ammoState.isReloading}, " +
-                $"ammoType={config.ammoType?.name}"
-            );
-
-            bool can = reloadService.CanReload(instance, config, ammoState);
-            Debug.Log($"[ReloadPressed] CanReload = {can}");
-
-            if (can)
-            {
-                var result = reloadService.StartReload(instance, config, ammoState);
-                
-                GetComponentInParent<WeaponFxNetwork>()?.NotifyReload(result == ReloadResult.EmptyReload);
-
-                if (animator != null)
-                    animator.Play(
-                        result == ReloadResult.EmptyReload ? "ReloadEmpty" : "Reload"
-                    );
-            }
-        }
-
-
-        // ======================================================
-        // FIRE LOOP
-        // ======================================================
-
-        private void HandleAutomaticFire()
-        {
-            if (!triggerHeld)
-                return;
-
-            if (config.fireMode == FireMode.Auto)
-                TryFireOnce();
+            if (reloadService.CanReload(instance, config, ammoState))
+                reloadService.StartReload(instance, config, ammoState);
         }
 
         private void TryFireOnce()
@@ -194,167 +102,68 @@ namespace Features.Weapons.UnityIntegration
             if (!weaponService.CanShoot(Time.time))
                 return;
 
-            if (ammoState.isReloading)
+            if (ammoState.isReloading || ammoState.ammoInMagazine <= 0)
                 return;
-
-            if (ammoState.ammoInMagazine <= 0)
-            {
-                if (animator != null)
-                    animator.Play("DryFire");
-                return;
-            }
 
             weaponService.RegisterShot(Time.time);
-            FireWeapon();
-        }
-
-        // ======================================================
-        // FIRE
-        // ======================================================
-
-        private void FireWeapon()
-        {
             ammoState.ammoInMagazine--;
-
-            GetComponentInParent<WeaponFxNetwork>()?.NotifyFire();
 
             ApplyRecoil();
             PlayMuzzleFx();
 
-            if (config.isMelee)
-            {
-                PerformMeleeAttack();
-                return;
-            }
-
-            Vector3 origin = playerCamera.transform.position;
-            Vector3 direction = aimService.GetSpreadDirection(playerCamera.transform);
-
-            // === DEBUG RAY ===
-            Debug.DrawRay(
-                origin,
-                direction * runtimeStats.range,
-                Color.red,
-                0.15f
+            var ctx = new EffectContext(
+                GetComponent<IBuffSource>(),
+                null,
+                playerCamera.transform.position,
+                aimService.GetSpreadDirection(playerCamera.transform)
             );
 
-            if (config.isProjectile)
-            {
-                ProjectileSpawnService.I?.SpawnServer(config.projectileConfig, muzzlePoint.position, direction);
-            }
-            else
-            {
-                FireHitscan(origin, direction);
-            }
-        }
-
-        private void FireHitscan(Vector3 origin, Vector3 direction)
-        {
-            var scan = hitscan.FireHitscan(
-                origin,
-                direction,
-                runtimeStats.range,
-                runtimeStats.damage,
-                config.damageType
-            );
-
-            if (scan.hit && scan.target != null)
-            {
-                Debug.DrawRay(
-                    scan.hitPoint,
-                    Vector3.up * 0.25f,
-                    Color.yellow,
-                    0.25f
-                );
-
-                HitInfo hit = weaponService.CreateHit(
-                    scan.hitPoint,
-                    direction,
-                    config.damageType
-                );
-
-                combat.ApplyDamage(
-                    scan.target,
-                    hit,
-                    DamageModifiers.Default
-                );
-            }
-        }
-
-        // ======================================================
-        // HELPERS
-        // ======================================================
-
-        private Vector3 GetSpreadDirection()
-        {
-            float spread = aimService.IsAiming
-                ? runtimeStats.aimSpread
-                : runtimeStats.spread;
-
-            Vector3 dir = playerCamera.transform.forward;
-
-            float yaw = Random.Range(-spread, spread);
-            float pitch = Random.Range(-spread, spread);
-
-            return Quaternion.Euler(pitch, yaw, 0f) * dir;
+            foreach (var def in config.fireEffects)
+                EffectExecutor.Instance.Execute(def, ctx);
         }
 
         private void ApplyRecoil()
         {
-            if (playerCamera == null || !playerCamera.enabled)
-                 return;
-            float recoil = runtimeStats.recoil;
+            if (playerCamera == null) return;
 
-            Vector2 recoilVec = recoilService.GetRecoil();
-
+            Vector2 recoil = recoilService.GetRecoil();
             playerCamera.transform.localRotation *=
-                Quaternion.Euler(-recoilVec.y, recoilVec.x, 0f);
+                Quaternion.Euler(-recoil.y, recoil.x, 0f);
         }
 
         private void PlayMuzzleFx()
         {
-            if (muzzleFlash != null)
-                muzzleFlash.Play();
-
-            if (animator != null)
-                animator?.Play("Fire");
+            muzzleFlash?.Play();
+            animator?.Play("Fire");
         }
 
-        private void PerformMeleeAttack()
+        public void OnUsePrimary_Hold()
         {
-            var hits = meleeService.PerformMeleeAttack(
-                config,
-                playerCamera.transform.position,
-                playerCamera.transform.forward
-            );
-
-            foreach (var h in hits)
-            {
-                HitInfo hit = new HitInfo
-                {
-                    damage = runtimeStats.damage,
-                    type = DamageType.Melee,
-                    point = h.hitPoint,
-                    direction = playerCamera.transform.forward
-                };
-
-                combat.ApplyDamage(
-                    h.target,
-                    hit,
-                    DamageModifiers.Default
-                );
-            }
-
-            animator?.Play("Melee");
+            // ничего не делаем
         }
+
+        public void OnUseSecondary_Start()
+        {
+            aimService?.SetAiming(true);
+        }
+
+        public void OnUseSecondary_Hold()
+        {
+            // ничего
+        }
+
+        public void OnUseSecondary_Stop()
+        {
+            aimService?.SetAiming(false);
+        }
+        // =========================
+        // CLIENT FX (for WeaponFxNetwork)
+        // =========================
 
         public void PlayFireFxClient()
         {
-            if (muzzleFlash != null)
-                muzzleFlash.Play();
-
-            if (animator != null)
-                animator.Play(config != null && config.isMelee ? "Melee" : "Fire");
+            muzzleFlash?.Play();
+            animator?.Play("Fire");
         }
 
         public void PlayReloadFxClient(bool emptyReload)

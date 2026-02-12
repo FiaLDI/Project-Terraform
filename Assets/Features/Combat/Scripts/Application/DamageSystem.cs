@@ -1,6 +1,7 @@
 using UnityEngine;
 using Features.Combat.Domain;
 using Features.Combat.Devices;
+using Features.Effects.Domain;
 
 namespace Features.Combat.Application
 {

@@ -1,67 +1,73 @@
+using Features.Buffs.Application;
+using Features.Buffs.Domain;
+using Features.Stats.Domain;
 using UnityEngine;
-using Features.Combat.Domain;
-using Features.Combat.Application;
 
 namespace Features.Combat.Actors
 {
-    public class HealthComponent : MonoBehaviour, IDamageable
+    public sealed class HealthComponent : MonoBehaviour, IBuffTarget
     {
-        [Header("Health")]
-        public float maxHp = 100f;
-        public float currentHp;
+        [Header("Stats Owner")]
+        [SerializeField] private MonoBehaviour statsOwnerBehaviour;
 
-        [Header("Resistances (optional)")]
-        public ResistProfile resistances;
+        private IStatsOwner statsOwner;
+        private IStatsFacade stats;
+        private BuffSystem buffSystem;
 
-        public System.Action<float, float> OnHealthChanged;
-        public System.Action OnDeath;
+        public event System.Action OnReady;
+
+        // ======================================================
+        // IBuffTarget
+        // ======================================================
+
+        public BuffSystem BuffSystem => buffSystem;
+        public GameObject GameObject => gameObject;
+        public Transform Transform => transform;
+        public bool IsReady => statsOwner != null && statsOwner.IsReady;
+        public IBuffSource OwnerSource => statsOwner as IBuffSource;
+
+        public IStatsFacade GetServerStats() => stats;
+
+        // ======================================================
+        // UNITY
+        // ======================================================
 
         private void Awake()
         {
-            currentHp = maxHp;
-            OnHealthChanged?.Invoke(currentHp, maxHp);
+            statsOwner = statsOwnerBehaviour as IStatsOwner
+                ?? GetComponent<IStatsOwner>();
+
+            buffSystem = GetComponent<BuffSystem>();
+
+            if (statsOwner == null)
+            {
+                Debug.LogError("[HealthComponent] IStatsOwner missing", this);
+                enabled = false;
+                return;
+            }
         }
 
-        // ========= NEW SYSTEM =========
-
-        public ResistProfile GetResistProfile() => resistances;
-
-        public void ApplyDamage(float amount, DamageType type, HitInfo info)
+        private void Start()
         {
-            TakeDamage(amount, type);
+            if (!statsOwner.IsReady)
+                return;
+
+            stats = statsOwner.Facade;
+            OnReady?.Invoke();
         }
 
-        public void ApplyDot(DoTEffectData dot)
+        // ======================================================
+        // DIRECT API (optional)
+        // ======================================================
+
+        public void TakeDamage(float amount)
         {
-            // можно повесить UI-эффект
-            CombatServiceProvider.Service.ApplyDot(this, dot);
+            stats?.Health?.Damage(amount);
         }
 
-        // ========= OLD SYSTEM (compat) =========
-
-        public void TakeDamage(float damageAmount, DamageType damageType)
+        public void Heal(float amount)
         {
-            if (damageAmount <= 0f) return;
-
-            currentHp -= damageAmount;
-            OnHealthChanged?.Invoke(currentHp, maxHp);
-
-            if (currentHp <= 0f)
-                Die();
-        }
-
-        public void Heal(float healAmount)
-        {
-            if (healAmount <= 0f) return;
-
-            currentHp = Mathf.Min(maxHp, currentHp + healAmount);
-            OnHealthChanged?.Invoke(currentHp, maxHp);
-        }
-
-        private void Die()
-        {
-            OnDeath?.Invoke();
-            Destroy(gameObject);
+            stats?.Health?.Heal(amount);
         }
     }
 }

@@ -1,23 +1,23 @@
 using UnityEngine;
+using System;
 using Features.Enemy.Data;
-using Features.Enemy.Domain;
-using Features.Combat.Domain;
-using Features.Combat.Application;
-using Features.Combat.Actors;
 using Features.Stats.Domain;
-using System.Collections.Generic;
 using Features.Stats.UnityIntegration;
+using Features.Buffs.Domain;
+using Features.Buffs.Application;
 
 namespace Features.Enemy.UnityIntegration
 {
-    public sealed class EnemyActor : MonoBehaviour, IDamageable
+    [RequireComponent(typeof(EnemyStats))]
+    [RequireComponent(typeof(BuffSystem))]
+    public sealed class EnemyActor :
+        MonoBehaviour,
+        IBuffTarget
     {
-        [SerializeField] private EnemyConfigSO config;
+        private EnemyStats enemyStats;
+        private BuffSystem buffSystem;
 
-        private CombatService combat;
-        private IHealthStats health;
-
-        private Dictionary<HitboxType, float> multipliers;
+        public event Action OnReady;
 
         // =====================================================
         // UNITY
@@ -25,76 +25,39 @@ namespace Features.Enemy.UnityIntegration
 
         private void Awake()
         {
-            combat = CombatServiceProvider.Service;
-
-            InitHitboxMultipliers();
+            enemyStats = GetComponent<EnemyStats>();
+            buffSystem = GetComponent<BuffSystem>();
         }
 
         private void Start()
         {
-            BindStats();
-        }
-
-        // =====================================================
-        // INIT
-        // =====================================================
-
-        private void BindStats()
-        {
-            var enemyStats = GetComponent<EnemyStats>();
-            if (enemyStats == null || !enemyStats.IsReady)
+            if (enemyStats != null && enemyStats.IsReady)
             {
-                Debug.LogError("[EnemyActor] EnemyStats not ready", this);
-                enabled = false;
-                return;
+                OnReady?.Invoke();
             }
-
-            health = enemyStats.Facade.Health;
+            else
+            {
+                Debug.LogError("[EnemyActor] Stats not ready", this);
+            }
         }
 
-        private void InitHitboxMultipliers()
+        public IStatsFacade GetServerStats()
         {
-            multipliers = new Dictionary<HitboxType, float>();
-
-            if (config == null || config.hitboxes == null)
-                return;
-
-            foreach (var h in config.hitboxes)
-                multipliers[h.type] = h.damageMultiplier;
+            throw new NotImplementedException();
         }
 
         // =====================================================
-        // HITBOX ENTRY POINT
+        // IBuffTarget
         // =====================================================
 
-        public void OnHitboxHit(HitInfo hit, HitboxType box)
-        {
-            float mult = multipliers.TryGetValue(box, out var m) ? m : 1f;
+        public BuffSystem BuffSystem => buffSystem;
 
-            HitInfo modified = hit;
-            modified.damage *= mult;
+        public GameObject GameObject => gameObject;
 
-            combat.ApplyDamage(this, modified, new DamageModifiers());
-        }
+        public Transform Transform => transform;
 
-        // =====================================================
-        // IDamageable (CombatService → Stats)
-        // =====================================================
+        public bool IsReady => enemyStats != null && enemyStats.IsReady;
 
-        public void TakeDamage(float amount, DamageType type)
-        {
-            if (health == null)
-                return;
-
-            health.Damage(amount);
-        }
-
-        public void Heal(float healAmount)
-        {
-            if (health == null)
-                return;
-
-            health.Recover(healAmount);
-        }
+        public IBuffSource OwnerSource => null; // у врага нет владельца
     }
 }

@@ -1,3 +1,5 @@
+using Features.Effects.Domain;
+
 namespace Features.Combat.Domain
 {
     public struct HitInfo

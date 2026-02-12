@@ -14,6 +14,8 @@ namespace Features.Buffs.Domain
 
         IStatsFacade GetServerStats();
 
+        IBuffSource OwnerSource { get; }
+
         bool IsReady { get; }
         event Action OnReady;
     }

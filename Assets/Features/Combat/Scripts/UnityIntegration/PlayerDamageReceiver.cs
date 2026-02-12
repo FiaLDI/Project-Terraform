@@ -3,6 +3,7 @@ using Features.Combat.Domain;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using FishNet.Object;
+using Features.Effects.Domain;
 
 namespace Features.Combat.UnityIntegration
 {

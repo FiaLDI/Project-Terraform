@@ -1,24 +1,36 @@
-using Features.Combat.Domain;
 using Features.Effects.Domain;
-using UnityEngine;
+using Features.Buffs.Domain;
+using Features.Stats.Domain;
 
 namespace Features.Effects.Application
 {
     public sealed class DealDamageEffect : IEffect
     {
-        private readonly float _damage;
+        private readonly float _value;
+        private readonly DamageType _type;
 
-        public DealDamageEffect(float damage)
+        public DealDamageEffect(float value, DamageType type)
         {
-            _damage = damage;
+            _value = value;
+            _type = type;
         }
 
         public void Apply(EffectContext context)
         {
-            foreach (var target in context.Targets)
+            if (context.Targets == null)
+                return;
+
+            foreach (var t in context.Targets)
             {
-                if (target is IDamageable dmg)
-                    dmg.TakeDamage(_damage, DamageType.Generic);
+                if (t?.BuffSystem == null || !t.IsReady)
+                    continue;
+
+                var statsOwner = t.BuffSystem.GetComponent<IStatsOwner>();
+                if (statsOwner == null || !statsOwner.IsReady)
+                    continue;
+
+                var stats = statsOwner.Facade;
+                stats?.Health?.Damage(_value);
             }
         }
     }

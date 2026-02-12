@@ -1,6 +1,7 @@
 using UnityEngine;
 using Features.Stats.Domain;
 using Features.Stats.Adapter;
+using Features.Buffs.Domain;
 
 namespace Features.Stats.UnityIntegration
 {
@@ -11,7 +12,14 @@ namespace Features.Stats.UnityIntegration
         [Header("Preset")]
         [SerializeField] private TurretPresetSO preset;
 
+        private IBuffSource owner;
+
         public StatsFacadeAdapter Adapter { get; private set; }
+
+        public void InitOwner(IBuffSource ownerSource)
+        {
+            owner = ownerSource;
+        }
 
         // =========================
         // SERVER
@@ -48,11 +56,8 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Movement != null)
             {
                 Facade.Movement.ApplyBase(
-                    baseSpeed: 0f,
-                    walk: 0f,
-                    sprint: 0f,
-                    crouch: 0f,
-                    rotation: preset.rotationSpeed
+                    0f, 0f, 0f, 0f,
+                    preset.rotationSpeed
                 );
             }
 
@@ -60,7 +65,13 @@ namespace Features.Stats.UnityIntegration
         }
 
         // =========================
-        // CLIENT (VIEW ONLY)
+        // OWNER ACCESS
+        // =========================
+
+        public IBuffSource GetOwnerSource() => owner;
+
+        // =========================
+        // CLIENT
         // =========================
 
         public override void OnStartClient()
@@ -70,8 +81,6 @@ namespace Features.Stats.UnityIntegration
             Adapter = GetComponent<StatsFacadeAdapter>();
             if (Adapter == null)
                 Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
-
-            Debug.Log("[TurretStats] CLIENT ready (view only)", this);
         }
     }
 }

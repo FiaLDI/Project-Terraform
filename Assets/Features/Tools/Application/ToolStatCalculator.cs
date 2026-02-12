@@ -32,9 +32,7 @@ namespace Features.Tools.Application
             if (def.scannerConfig != null)
             {
                 var cfg = def.scannerConfig;
-                stats.Add(ToolStat.ScanRange, cfg.baseScanRange);
-                stats.Add(ToolStat.ScanSpeed, cfg.baseScanSpeed);
-                stats.Add(ToolStat.Cooldown,  cfg.baseCooldown);
+                stats.Add(ToolStat.Cooldown,  cfg.cooldown);
             }
 
             // ------------------------

@@ -34,3 +34,18 @@ MonoBehaviour:
     prefabId: overload-ability
     lifetime: 10
     useSourcePosition: 0
+    ownership: 0
+  - type: 2
+    targetMode: 1
+    radius: 20
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 1024
+    value: 0
+    buff: {fileID: 11400000, guid: 29adad0be147ef14faf118faf729e575, type: 2}
+    onlySpecificBuff: 0
+    buffId: 
+    prefabId: overload-ability
+    lifetime: 10
+    useSourcePosition: 0
+    ownership: 1

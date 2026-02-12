@@ -1,0 +1,43 @@
+using UnityEngine;
+using FishNet;
+using Features.Effects.Domain;
+
+namespace Features.Effects.Application
+{
+    public sealed class MineNetworkResourceEffect : IEffect
+    {
+        private readonly float _value;
+        private readonly float _range;
+        private readonly LayerMask _mask;
+
+        public MineNetworkResourceEffect(
+            float value,
+            float range,
+            LayerMask mask)
+        {
+            _value = value;
+            _range = range;
+            _mask = mask;
+        }
+
+        public void Apply(EffectContext context)
+        {
+            if (!InstanceFinder.IsServer)
+                return;
+
+            if (!Physics.Raycast(
+                    context.Origin,
+                    context.Direction,
+                    out var hit,
+                    _range,
+                    _mask))
+                return;
+
+            var node = hit.collider.GetComponent<ResourceNodeNetwork>();
+            if (node == null)
+                return;
+
+            node.Mine_Server(_value, 1f);
+        }
+    }
+}

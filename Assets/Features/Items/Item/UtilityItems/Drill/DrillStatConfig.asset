@@ -15,3 +15,61 @@ MonoBehaviour:
   baseMiningSpeed: 1
   baseDamage: 1
   baseRange: 3
+  effects:
+  - type: 6
+    targetMode: 0
+    radius: 0
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 0
+    value: 0
+    damageType: 0
+    buff: {fileID: 0}
+    onlySpecificBuff: 0
+    buffId: 
+    prefabId: 
+    lifetime: 0
+    useSourcePosition: 0
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0.1
+    duration: 0
+    childEffects:
+    - type: 5
+      targetMode: 2
+      radius: 1
+      layerMask:
+        serializedVersion: 2
+        m_Bits: 64
+      value: 0
+      damageType: 0
+      buff: {fileID: 0}
+      onlySpecificBuff: 0
+      buffId: 
+      prefabId: 
+      lifetime: 0
+      useSourcePosition: 0
+      ownership: 0
+      miningValue: 0
+      tickInterval: 0
+      duration: 0
+      childEffects: []
+    - type: 0
+      targetMode: 2
+      radius: 1
+      layerMask:
+        serializedVersion: 2
+        m_Bits: 192
+      value: 5
+      damageType: 4
+      buff: {fileID: 0}
+      onlySpecificBuff: 0
+      buffId: 
+      prefabId: 
+      lifetime: 0
+      useSourcePosition: 0
+      ownership: 0
+      miningValue: 0
+      tickInterval: 0
+      duration: 0
+      childEffects: []

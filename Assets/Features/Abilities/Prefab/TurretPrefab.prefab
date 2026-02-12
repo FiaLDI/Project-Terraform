@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5761957860282841599}
   - component: {fileID: 6123178966133948300}
   - component: {fileID: 8963181072935716269}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube.009
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -98,7 +98,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8566755130572172190}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Barrel_Recoil_Bone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,7 +133,7 @@ GameObject:
   - component: {fileID: 7396581093158410241}
   - component: {fileID: 5616501960361911859}
   - component: {fileID: 8591859974440616745}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_Base2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -221,7 +221,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4882632498232226274}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: 'Turret_Base_Bone '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -256,7 +256,7 @@ GameObject:
   - component: {fileID: 3876166187423069632}
   - component: {fileID: 5713136749018728728}
   - component: {fileID: 5837727409700137123}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube.001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -345,7 +345,7 @@ GameObject:
   - component: {fileID: 469635554446923076}
   - component: {fileID: 7960844049196743642}
   - component: {fileID: 4984350281783698488}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube.010
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -433,7 +433,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7877393443603940191}
   - component: {fileID: 4386018491568941130}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_Armature
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -577,7 +577,7 @@ GameObject:
   - component: {fileID: 8084628276749844931}
   - component: {fileID: 8222177385158750931}
   - component: {fileID: 7802681393416586126}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube.005
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -664,7 +664,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4554396716983118590}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_ONLY_up_and_down_rotation_Bone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -697,7 +697,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6145001486089969691}
-  m_Layer: 7
+  m_Layer: 10
   m_Name: Muzzle Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -730,7 +730,7 @@ GameObject:
   - component: {fileID: 7871634390917804649}
   - component: {fileID: 7798882636485405208}
   - component: {fileID: 5021448821951722414}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube.006
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -829,7 +829,7 @@ GameObject:
   - component: {fileID: 3127127081630111513}
   - component: {fileID: -2609504964404914139}
   - component: {fileID: 7350075856022002700}
-  m_Layer: 7
+  m_Layer: 10
   m_Name: TurretPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -865,9 +865,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4122c357dae6bc342bd5ef25ffdbbbf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurretBehaviour
-  _componentIndexCache: 255
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 3127127081630111513}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 3127127081630111513}
   turretHead: {fileID: 3241219567218010373}
   muzzlePoint: {fileID: 6145001486089969691}
   laser: {fileID: 4386018491568941130}
@@ -888,10 +888,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a598ae0d0a239844191a98d1694e1afb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffSystem
-  _componentIndexCache: 0
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 3127127081630111513}
-  _networkObjectCache: {fileID: 0}
-  debugMode: 0
+  _networkObjectCache: {fileID: 3127127081630111513}
+  debugMode: 1
 --- !u!114 &6859820028838700850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -904,9 +904,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca505d3f0c6a0924e9f4fc09bc86167b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.TurretStats
-  _componentIndexCache: 255
+  _componentIndexCache: 2
   _addedNetworkObject: {fileID: 3127127081630111513}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 3127127081630111513}
   statsProfile: {fileID: 11400000, guid: 3a03d6b694a8583469217fe475480e16, type: 2}
   preset: {fileID: 11400000, guid: 3c0e0f654cc9bbe46b73c974ec5e9f69, type: 2}
 --- !u!114 &394026785594853742
@@ -987,7 +987,12 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 9012733006345588933}
+  - {fileID: 2094240665213674160}
+  - {fileID: 6859820028838700850}
+  - {fileID: -2609504964404914139}
+  - {fileID: 7350075856022002700}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -998,7 +1003,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584307335469823877
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -1013,15 +1018,15 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 10
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 12473250028732760479
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1
 --- !u!114 &-2609504964404914139
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1034,9 +1039,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.UnifiedStatsUpdateSystem
-  _componentIndexCache: 255
+  _componentIndexCache: 3
   _addedNetworkObject: {fileID: 3127127081630111513}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 3127127081630111513}
 --- !u!114 &7350075856022002700
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1049,10 +1054,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbd9dc0870482446b7a003922fa9602, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatsBuffTarget
-  _componentIndexCache: 255
+  _componentIndexCache: 4
   _addedNetworkObject: {fileID: 3127127081630111513}
-  _networkObjectCache: {fileID: 0}
-  statsProvider: {fileID: 0}
+  _networkObjectCache: {fileID: 3127127081630111513}
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0
@@ -1064,7 +1068,7 @@ GameObject:
   - component: {fileID: 5225688813903964701}
   - component: {fileID: 496606616084001968}
   - component: {fileID: 9216232687028473677}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_Barrel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1152,7 +1156,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3241219567218010373}
-  m_Layer: 7
+  m_Layer: 10
   m_Name: Rotator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1187,7 +1191,7 @@ GameObject:
   - component: {fileID: 1046115793946595124}
   - component: {fileID: 7504028956089048427}
   - component: {fileID: 1868095653495417078}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Cube.004
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1276,7 +1280,7 @@ GameObject:
   - component: {fileID: 2047233310957406612}
   - component: {fileID: 1321792634927773545}
   - component: {fileID: 4256799032917563782}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_Base4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1370,7 +1374,7 @@ GameObject:
   - component: {fileID: 8410839551835744141}
   - component: {fileID: 7864825912328919438}
   - component: {fileID: 1159767094521652891}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_Base3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1460,7 +1464,7 @@ GameObject:
   - component: {fileID: 4236667277520213839}
   - component: {fileID: 4179288359314193348}
   - component: {fileID: 5883767424624661848}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_Barrel (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1550,7 +1554,7 @@ GameObject:
   - component: {fileID: 112483957846358284}
   - component: {fileID: 4300747921511729748}
   - component: {fileID: 4900238477645765617}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret_Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}

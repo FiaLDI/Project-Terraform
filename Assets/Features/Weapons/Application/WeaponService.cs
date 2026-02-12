@@ -1,4 +1,5 @@
 using Features.Combat.Domain;
+using Features.Effects.Domain;
 using Features.Weapons.Domain;
 using UnityEngine;
 

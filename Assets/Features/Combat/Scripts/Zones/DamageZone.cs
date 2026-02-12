@@ -1,10 +1,13 @@
 using UnityEngine;
-using Features.Combat.Domain;
-using Features.Combat.Application;
+using FishNet;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
 
 namespace Features.Combat.Zones
 {
-    public class DamageZone : MonoBehaviour
+    [RequireComponent(typeof(Collider))]
+    public sealed class DamageZone : MonoBehaviour
     {
         [Header("Damage Settings")]
         public float damagePerTick = 10f;
@@ -12,34 +15,48 @@ namespace Features.Combat.Zones
         public DamageType damageType = DamageType.Generic;
 
         [Header("Layer Filtering")]
-        public LayerMask damageLayers; // <-- Вот он!
+        public LayerMask damageLayers;
 
         private float timer;
 
+        private EffectDefinition damageEffect;
+
+        private void Awake()
+        {
+            damageEffect = new EffectDefinition
+            {
+                type = EffectType.DealDamage,
+                targetMode = TargetMode.Self, // будет заменён вручную
+                value = damagePerTick
+            };
+        }
+
         private void OnTriggerStay(Collider other)
         {
-            // проверяем слой
-            if ((damageLayers.value & (1 << other.gameObject.layer)) == 0)
-                return; // слой не подходит → выходим
+            if (!InstanceFinder.IsServer)
+                return;
 
-            // пробуем получить IDamageable
-            if (!other.TryGetComponent<IDamageable>(out var target))
+            if ((damageLayers.value & (1 << other.gameObject.layer)) == 0)
+                return;
+
+            if (!other.TryGetComponent<IBuffTarget>(out var target))
                 return;
 
             timer -= Time.deltaTime;
 
-            if (timer <= 0f)
-            {
-                float dmg = damagePerTick;
+            if (timer > 0f)
+                return;
 
-                // ShieldGrid & global modifiers
-                dmg = DamageSystem.ApplyDamageModifiers(target, dmg, damageType);
+            timer = tickInterval;
 
-                // нанести урон
-                target.TakeDamage(dmg, damageType);
+            var ctx = new EffectContext(
+                source: null,
+                targets: new[] { target },
+                origin: transform.position,
+                direction: Vector3.zero
+            );
 
-                timer = tickInterval;
-            }
+            EffectExecutor.Instance.Execute(damageEffect, ctx);
         }
 
         private void OnTriggerExit(Collider other)

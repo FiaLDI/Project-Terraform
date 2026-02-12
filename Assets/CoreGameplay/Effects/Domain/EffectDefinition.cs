@@ -9,7 +9,22 @@ namespace Features.Effects.Domain
         HealInstant,
         ApplyBuff,
         RemoveBuffSource,
-        SpawnPrefab
+        SpawnPrefab,
+        MineNetworkResource,
+        Continuous,
+        StopContinuous,
+        Scan,
+        DealDamageHitscan,
+        SpawnProjectile,
+        MeleeDamage,
+        HitscanDamage
+    }
+
+    public enum OwnershipFilter
+    {
+        Any,
+        SameOwner,
+        DifferentOwner
     }
 
     public enum TargetMode
@@ -29,8 +44,9 @@ namespace Features.Effects.Domain
         public float radius;
         public LayerMask layerMask;
 
-        [Header("Deal / Heal")]
+        [Header("Damage / Heal")]
         public float value;
+        public DamageType damageType;
 
         [Header("Buff")]
         public BuffSO buff;
@@ -38,10 +54,21 @@ namespace Features.Effects.Domain
         [Header("Remove Buff")]
         public bool onlySpecificBuff;
         public string buffId;
+        
 
         [Header("Spawn")]
         public string prefabId;
         public float lifetime;
         public bool useSourcePosition;
+        [Header("Ownership")]
+        public OwnershipFilter ownership;
+        [Header("Mining")]
+        public float miningValue;
+
+        [Header("Continuous")]
+        public float tickInterval;
+        public float duration;
+        public EffectDefinition[] childEffects;
+
     }
 }

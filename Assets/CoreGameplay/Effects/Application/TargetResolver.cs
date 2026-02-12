@@ -11,22 +11,26 @@ namespace Features.Effects.Application
             EffectDefinition def,
             EffectContext ctx)
         {
-            switch (def.targetMode)
+            IBuffTarget[] raw = def.targetMode switch
             {
-                case TargetMode.Self:
-                    return ctx.Source is IBuffTarget self
-                        ? new[] { self }
-                        : System.Array.Empty<IBuffTarget>();
+                TargetMode.Self => ResolveSelf(ctx),
+                TargetMode.Area => ResolveArea(def, ctx),
+                TargetMode.Directional => ResolveDirectional(def, ctx),
+                _ => System.Array.Empty<IBuffTarget>()
+            };
 
-                case TargetMode.Area:
-                    return ResolveArea(def, ctx);
+            return ApplyOwnershipFilter(raw, def, ctx);
+        }
 
-                case TargetMode.Directional:
-                    return ResolveDirectional(def, ctx);
+        // =====================================================
+        // BASE RESOLUTION
+        // =====================================================
 
-                default:
-                    return System.Array.Empty<IBuffTarget>();
-            }
+        private static IBuffTarget[] ResolveSelf(EffectContext ctx)
+        {
+            return ctx.Source is IBuffTarget self
+                ? new[] { self }
+                : System.Array.Empty<IBuffTarget>();
         }
 
         private static IBuffTarget[] ResolveArea(
@@ -67,6 +71,47 @@ namespace Features.Effects.Application
             }
 
             return results.ToArray();
+        }
+
+        // =====================================================
+        // OWNERSHIP FILTER
+        // =====================================================
+
+        private static IBuffTarget[] ApplyOwnershipFilter(
+            IBuffTarget[] targets,
+            EffectDefinition def,
+            EffectContext ctx)
+        {
+            if (def.ownership == OwnershipFilter.Any ||
+                targets.Length == 0)
+                return targets;
+
+            var filtered = new List<IBuffTarget>();
+
+            foreach (var t in targets)
+            {
+                if (t == null)
+                    continue;
+
+                var owner = t.OwnerSource;
+                var source = ctx.Source;
+
+                if (owner == null || source == null)
+                    continue;
+
+                if (def.ownership == OwnershipFilter.SameOwner &&
+                    owner == source)
+                {
+                    filtered.Add(t);
+                }
+                else if (def.ownership == OwnershipFilter.DifferentOwner &&
+                         owner != source)
+                {
+                    filtered.Add(t);
+                }
+            }
+
+            return filtered.ToArray();
         }
     }
 }

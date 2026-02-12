@@ -23,6 +23,21 @@ public sealed class StatsBuffTarget : NetworkBehaviour, IBuffTarget, IBuffSource
     public bool IsReady => statsOwner != null && statsOwner.IsReady && BuffSystem != null;
     public event Action OnReady;
 
+    public IBuffSource OwnerSource
+    {
+        get
+        {
+            // Если это турель — берём владельца из TurretStats
+            var turret = GetComponent<TurretStats>();
+            if (turret != null)
+                return turret.GetOwnerSource();
+
+            // Если игрок — сам себе владелец
+            return this;
+        }
+    }
+
+
     // ================= LIFECYCLE =================
 
     private void Awake()

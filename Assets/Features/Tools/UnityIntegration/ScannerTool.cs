@@ -1,16 +1,24 @@
 using UnityEngine;
+using FishNet;
+using Features.Tools.Data;
 using Features.Items.Domain;
-using Features.Tools.Application;
-using Features.Tools.Domain;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
 using Features.Equipment.Domain;
 
-public class ScannerTool : MonoBehaviour, IUsable, ILocalOnlyUsable
+public sealed class ScannerTool : MonoBehaviour, IUsable
 {
     private Camera cam;
     private ItemInstance instance;
-    private ToolService service;
-    private ToolRuntimeStats stats;
+    private ScannerConfig config;
+
+    private IBuffSource source;
     private float nextScanTime;
+
+    // =====================================================
+    // SETUP
+    // =====================================================
 
     public ScannerTool Setup(ItemInstance inst)
     {
@@ -21,17 +29,35 @@ public class ScannerTool : MonoBehaviour, IUsable, ILocalOnlyUsable
     public void Initialize(Camera camera)
     {
         cam = camera;
-        if (cam == null)
+
+        if (instance == null || instance.itemDefinition == null)
         {
             enabled = false;
             return;
         }
 
-        service = new ToolService();
-        service.Initialize(instance);
-        stats = service.stats;
+        config = instance.itemDefinition.scannerConfig;
+        if (config == null)
+        {
+            Debug.LogError("[ScannerTool] ScannerConfig missing", this);
+            enabled = false;
+            return;
+        }
+
+        source = GetComponentInParent<IBuffSource>();
+        if (source == null)
+        {
+            Debug.LogError("[ScannerTool] IBuffSource missing", this);
+            enabled = false;
+            return;
+        }
+
         enabled = true;
     }
+
+    // =====================================================
+    // INPUT
+    // =====================================================
 
     public void OnUsePrimary_Start() => TryScan();
     public void OnUsePrimary_Hold()  => TryScan();
@@ -41,23 +67,36 @@ public class ScannerTool : MonoBehaviour, IUsable, ILocalOnlyUsable
     public void OnUseSecondary_Hold()  { }
     public void OnUseSecondary_Stop()  { }
 
+    // =====================================================
+    // LOGIC (SERVER ONLY)
+    // =====================================================
+
     private void TryScan()
     {
-        if (cam == null || stats == null) return;
+        if (!InstanceFinder.IsServer)
+            return;
 
-        float cooldown = Mathf.Max(0.01f, stats[ToolStat.Cooldown]);
-        if (Time.time < nextScanTime) return;
+        if (Time.time < nextScanTime)
+            return;
 
-        nextScanTime = Time.time + cooldown;
+        nextScanTime = Time.time + config.cooldown;
 
-        float range = stats[ToolStat.ScanRange];
-        if (range <= 0f) return;
+        Vector3 origin = cam != null
+            ? cam.transform.position
+            : transform.position;
 
-        var objects = Physics.OverlapSphere(cam.transform.position, range);
-        float strength = stats[ToolStat.ScanSpeed];
+        Vector3 direction = cam != null
+            ? cam.transform.forward
+            : transform.forward;
 
-        foreach (var col in objects)
-            if (col.TryGetComponent<IScannable>(out var scan))
-                scan.OnScanned(strength);
+        var ctx = new EffectContext(
+            source,
+            null,           // Targets resolved inside executor
+            origin,
+            direction
+        );
+
+        foreach (var def in config.effects)
+            EffectExecutor.Instance.Execute(def, ctx);
     }
 }

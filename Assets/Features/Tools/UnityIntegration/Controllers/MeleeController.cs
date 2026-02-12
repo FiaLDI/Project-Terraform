@@ -1,19 +1,21 @@
 using UnityEngine;
 using Features.Items.Domain;
-using Features.Combat.Domain;
 using Features.Equipment.Domain;
 using Features.Items.UnityIntegration;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
+using Features.Weapons.Data;
 
-public class MeleeController : MonoBehaviour, IUsable
+public sealed class MeleeController : MonoBehaviour, IUsable
 {
     private Camera cam;
     private ItemInstance instance;
-
-    private float damage;
-    private float range;
+    private WeaponConfig config;
+    private IBuffSource source;
 
     // ======================================================
-    // INITIALIZE (called by EquipmentManager)
+    // INITIALIZE
     // ======================================================
 
     public void Initialize(Camera camera)
@@ -28,57 +30,51 @@ public class MeleeController : MonoBehaviour, IUsable
             return;
         }
 
-        var cfg = instance.itemDefinition.weaponConfig;
-        if (cfg == null)
+        config = instance.itemDefinition.weaponConfig;
+        if (config == null)
         {
             Debug.LogError("[MeleeController] WeaponConfig missing");
             enabled = false;
             return;
         }
 
-        damage = cfg.meleeDamage;
-        range = cfg.meleeRange;
+        source = GetComponentInParent<IBuffSource>();
+        if (source == null)
+        {
+            Debug.LogError("[MeleeController] IBuffSource missing");
+            enabled = false;
+        }
     }
 
     // ======================================================
     // IUsable
     // ======================================================
 
-    public void OnUsePrimary_Start() => DoHit();
-    public void OnUsePrimary_Hold() { }
-    public void OnUsePrimary_Stop() { }
+    public void OnUsePrimary_Start() => ExecuteMelee();
+    public void OnUsePrimary_Hold()  { }
+    public void OnUsePrimary_Stop()  { }
 
     public void OnUseSecondary_Start() { }
-    public void OnUseSecondary_Hold() { }
-    public void OnUseSecondary_Stop() { }
+    public void OnUseSecondary_Hold()  { }
+    public void OnUseSecondary_Stop()  { }
 
     // ======================================================
-    // MELEE HIT
+    // EXECUTION
     // ======================================================
 
-    private void DoHit()
+    private void ExecuteMelee()
     {
-        if (cam == null)
+        if (cam == null || config == null || config.meleeEffects == null)
             return;
 
-        if (!Physics.Raycast(
-                cam.transform.position,
-                cam.transform.forward,
-                out RaycastHit hit,
-                range))
-            return;
+        var ctx = new EffectContext(
+            source: source,
+            targets: null,
+            origin: cam.transform.position,
+            direction: cam.transform.forward
+        );
 
-        if (hit.collider.TryGetComponent<IDamageable>(out var damageable))
-        {
-            damageable.TakeDamage(damage, DamageType.Melee);
-        }
-
-#if UNITY_EDITOR
-        Debug.DrawLine(
-            cam.transform.position,
-            cam.transform.position + cam.transform.forward * range,
-            Color.red,
-            0.15f);
-#endif
+        foreach (var def in config.meleeEffects)
+            EffectExecutor.Instance.Execute(def, ctx);
     }
 }
