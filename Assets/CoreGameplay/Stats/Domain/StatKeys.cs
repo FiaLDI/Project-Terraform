@@ -15,6 +15,25 @@ namespace Features.Stats.Domain
         public static readonly StatKey FireRate =
             new("combat.fireRate");
 
+        public static readonly StatKey FlatDamage =
+            new("combat.damage.flat");
+
+        public static readonly StatKey Spread =
+            new("combat.spread");
+
+        public static readonly StatKey Recoil =
+            new("combat.recoil");
+
+        public static readonly StatKey AimSpread =
+            new("combat.aimSpread");
+
+        public static readonly StatKey Range =
+            new("combat.range");
+
+        public static readonly StatKey MagazineSize =
+            new("combat.magazine");
+
+
         // =========================
         // HEALTH
         // =========================
@@ -62,5 +81,21 @@ namespace Features.Stats.Domain
         // =========================
         public static readonly StatKey MiningPower =
             new("mining.power");
+        
+        public static readonly StatKey MiningSpeed =
+            new("mining.speed");
+        
+        // =========================
+        // SCANNER
+        // =========================
+
+        public static readonly StatKey ScanRange =
+            new("scan.range");
+
+        public static readonly StatKey ScanSpeed =
+            new("scan.speed");
+
+        public static readonly StatKey Cooldown =
+            new("ability.cooldown");
     }
 }

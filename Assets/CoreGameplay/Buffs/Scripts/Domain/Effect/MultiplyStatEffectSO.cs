@@ -9,6 +9,8 @@ public sealed class MultiplyStatEffectSO : BuffEffectSO
     [SerializeField] private string statId;
 
     [SerializeField] private float multiplier = 1f;
+    public string StatId => statId;
+    public float Multiplier => multiplier;
 
     public override void Apply(IStatsFacade stats)
     {

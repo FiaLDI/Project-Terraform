@@ -44,7 +44,15 @@ namespace Features.Stats.UnityIntegration
 
             if (Facade.Combat != null)
             {
-                Facade.Combat.ApplyBase(1f);
+                Facade.Combat.ApplyBase(
+                    config.statsPreset.combat.baseDamageMultiplier,
+                    fireRate: 6f,
+                    spread: 2f,
+                    aimSpread: 0.5f,
+                    recoil: 1f,
+                    range: 100f,
+                    magazineSize: 30
+                );
             }
         }
 
@@ -58,7 +66,15 @@ namespace Features.Stats.UnityIntegration
 
             if (Facade.Combat != null)
             {
-                Facade.Combat.ApplyBase(preset.combat.baseDamageMultiplier);
+                Facade.Combat.ApplyBase(
+                    config.statsPreset.combat.baseDamageMultiplier,
+                    fireRate: 6f,
+                    spread: 2f,
+                    aimSpread: 0.5f,
+                    recoil: 1f,
+                    range: 100f,
+                    magazineSize: 30
+                );
             }
         }
     }

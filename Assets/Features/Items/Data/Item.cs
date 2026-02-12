@@ -1,7 +1,8 @@
 using UnityEngine;
+using Features.Buffs.Domain;
 using Features.Weapons.Data;
-using Features.Items.Domain;
 using Features.Tools.Data;
+using Features.Items.Domain;
 
 namespace Features.Items.Data
 {
@@ -23,17 +24,27 @@ namespace Features.Items.Data
         public bool isStackable = false;
         public int maxStackAmount = 1;
 
-        [Header("Upgrades / Stats")]
-        public ItemStat[] baseStats;
+        // =============================
+        // NEW SYSTEM
+        // =============================
+
+        [Header("Buff Applied When Equipped")]
+        public BuffSO[] equippedBuffs;
+
+        [Header("Upgrade Buffs Per Level")]
         public ItemUpgradeData[] upgrades;
 
-        [Header("World")]
-        public GameObject worldPrefab;
+        // =============================
+        // VISUAL
+        // =============================
 
-        [Header("Equipped")]
+        public GameObject worldPrefab;
         public GameObject equippedPrefab;
 
-        [Header("Feature Configs - Optional Feature-specific configs (they may be null) ")]
+        // =============================
+        // FEATURE CONFIG
+        // =============================
+
         public WeaponConfig weaponConfig;
         public ToolConfig toolConfig;
         public ScannerConfig scannerConfig;

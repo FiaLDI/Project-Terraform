@@ -1,16 +1,17 @@
-using UnityEngine;
+using Features.Stats.Domain;
 using Features.Weapons.Domain;
+using UnityEngine;
 
 namespace Features.Weapons.Application
 {
     public class AimService
     {
-        private WeaponRuntimeStats stats;
+        private ICombatStats stats;
         private bool aiming;
 
         public bool IsAiming => aiming;
 
-        public void Initialize(WeaponRuntimeStats stats)
+        public void Initialize(ICombatStats stats)
         {
             this.stats = stats;
         }
@@ -25,7 +26,7 @@ namespace Features.Weapons.Application
         /// </summary>
         public Vector3 GetSpreadDirection(Transform camTransform)
         {
-            float spread = aiming ? stats.aimSpread : stats.spread;
+            float spread = aiming ? stats.AimSpread : stats.Spread;
 
             Vector3 dir = camTransform.forward;
 

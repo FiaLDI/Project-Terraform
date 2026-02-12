@@ -41,7 +41,15 @@ namespace Features.Stats.UnityIntegration
 
             if (Facade.Combat != null)
             {
-                Facade.Combat.ApplyBase(preset.baseDamageMultiplier);
+                Facade.Combat.ApplyBase(
+                     damageMultiplier: 1f,
+                     fireRate: 6f,
+                     spread: 2f,
+                     aimSpread: 0.5f,
+                     recoil: 1f,
+                     range: 100f,
+                     magazineSize: 30
+                 );
 
                 if (Facade.Combat is ITurretCombatStats tc)
                     tc.ApplyFireRateBase(preset.baseFireRate);

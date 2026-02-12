@@ -1,16 +1,17 @@
-using UnityEngine;
+using Features.Stats.Domain;
 using Features.Weapons.Domain;
+using UnityEngine;
 
 namespace Features.Weapons.Application
 {
     public class RecoilService
     {
-        private WeaponRuntimeStats stats;
+        ICombatStats stats;
         private AnimationCurve pattern;
         private int shotIndex;
 
         public void Initialize(
-            WeaponRuntimeStats stats,
+            ICombatStats stats,
             AnimationCurve recoilPattern = null)
         {
             this.stats = stats;
@@ -23,10 +24,10 @@ namespace Features.Weapons.Application
         /// </summary>
         public Vector2 GetRecoil()
         {
-            float vertical = stats.recoil;
+            float vertical = stats.Recoil;
             float horizontal = Random.Range(
-                -stats.recoil,
-                stats.recoil
+                -stats.Recoil,
+                stats.Recoil
             );
 
             if (pattern != null && pattern.length > 0)

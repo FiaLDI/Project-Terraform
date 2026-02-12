@@ -15,9 +15,9 @@ namespace Features.Stats.UnityIntegration
 
         private ServerGamePhase phase;
 
-        // =========================
+        // =====================================================
         // SERVER
-        // =========================
+        // =====================================================
 
         protected override void InitStats()
         {
@@ -46,7 +46,15 @@ namespace Features.Stats.UnityIntegration
 
             if (Facade.Combat != null)
             {
-                Facade.Combat.ApplyBase(1f);
+                Facade.Combat.ApplyBase(
+                    damageMultiplier: 1f,
+                    fireRate: 6f,
+                    spread: 2f,
+                    aimSpread: 0.5f,
+                    recoil: 1f,
+                    range: 100f,
+                    magazineSize: 30
+                );
             }
 
             if (Facade.Movement != null)
@@ -66,9 +74,9 @@ namespace Features.Stats.UnityIntegration
             }
         }
 
-        // =========================
+        // =====================================================
         // CLIENT (VIEW ONLY)
-        // =========================
+        // =====================================================
 
         public override void OnStartClient()
         {
@@ -78,11 +86,11 @@ namespace Features.Stats.UnityIntegration
             if (Adapter == null)
                 Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
 
-            Debug.Log("[PlayerStats] CLIENT ready (view)", this);
+            Debug.Log("[PlayerStats] CLIENT ready (view only)", this);
         }
 
         // =====================================================
-        // SERVER API (ROLE-SPECIFIC)
+        // SERVER ROLE API
         // =====================================================
 
         [Server]
@@ -118,7 +126,13 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    preset.combat.baseDamageMultiplier
+                    preset.combat.baseDamageMultiplier,
+                    fireRate: 6f,
+                    spread: 2f,
+                    aimSpread: 0.5f,
+                    recoil: 1f,
+                    range: 100f,
+                    magazineSize: 30
                 );
             }
 

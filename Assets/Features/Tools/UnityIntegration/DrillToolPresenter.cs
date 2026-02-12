@@ -1,20 +1,17 @@
 using UnityEngine;
+using FishNet;
 using Features.Effects.Domain;
 using Features.Effects.Application;
 using Features.Buffs.Domain;
-using Features.Items.Domain;
-using Features.Tools.Application;
-using Features.Tools.Domain;
-using FishNet;
+using Features.Stats.Domain;
 using Features.Equipment.Domain;
-using Features.Items.UnityIntegration;
 
 public sealed class DrillToolPresenter : MonoBehaviour, IUsable
 {
     [SerializeField] private DrillToolFX fx;
 
     private IBuffSource source;
-    private ToolRuntimeStats runtimeStats;
+    private IStatsFacade stats;
 
     private EffectDefinition startEffect;
     private EffectDefinition stopEffect;
@@ -27,23 +24,23 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
     {
         source = GetComponentInParent<IBuffSource>();
 
-        var holder = GetComponent<ItemRuntimeHolder>();
-        if (holder == null || holder.Instance == null)
+        var provider = GetComponentInParent<IBuffTarget>();
+        if (provider == null)
         {
-            Debug.LogError("[DrillTool] ItemRuntimeHolder missing", this);
+            Debug.LogError("[Drill] IStatsOwner not found", this);
             return;
         }
 
-        runtimeStats = ToolStatCalculator.Calculate(holder.Instance);
+        stats = provider.GetServerStats();
 
         BuildEffects();
     }
 
     private void BuildEffects()
     {
-        float damage = runtimeStats[ToolStat.Damage];
-        float mining = runtimeStats[ToolStat.MiningSpeed];
-        float range  = runtimeStats[ToolStat.Range];
+        float miningPower = stats.Mining.MiningPower;
+        float damageMult = stats.Combat.DamageMultiplier;
+        float range = stats.Combat.Range;
 
         startEffect = new EffectDefinition
         {
@@ -56,9 +53,9 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
                 {
                     type = EffectType.MineNetworkResource,
                     targetMode = TargetMode.Directional,
-                    radius = 3f,
+                    radius = range,
                     layerMask = LayerMask.GetMask("Resource"),
-                    value = 5f
+                    value = miningPower
                 },
 
                 new EffectDefinition
@@ -66,8 +63,8 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
                     type = EffectType.DealDamage,
                     targetMode = TargetMode.Directional,
                     radius = range,
-                    layerMask = LayerMask.GetMask("Resource"),
-                    value = damage
+                    layerMask = LayerMask.GetMask("Enemy"),
+                    value = damageMult
                 }
             }
         };
@@ -88,13 +85,13 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
         Execute(startEffect);
     }
 
-    public void OnUsePrimary_Hold() { }
-
     public void OnUsePrimary_Stop()
     {
         fx?.Stop();
         Execute(stopEffect);
     }
+
+    public void OnUsePrimary_Hold() { }
 
     public void OnUseSecondary_Start() { }
     public void OnUseSecondary_Hold() { }
@@ -110,16 +107,7 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
             return;
 
         if (source == null)
-        {
-            Debug.LogWarning("[Drill] IBuffSource missing");
             return;
-        }
-
-        if (EffectExecutor.Instance == null)
-        {
-            Debug.LogError("[Drill] EffectExecutor missing");
-            return;
-        }
 
         var ctx = new EffectContext(
             source,
@@ -130,5 +118,4 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
 
         EffectExecutor.Instance.Execute(def, ctx);
     }
-
 }

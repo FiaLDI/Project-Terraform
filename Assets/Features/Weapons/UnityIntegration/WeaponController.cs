@@ -1,13 +1,15 @@
-using UnityEngine;
-using Features.Effects.Domain;
-using Features.Effects.Application;
 using Features.Buffs.Domain;
+using Features.Effects.Application;
+using Features.Effects.Domain;
+using Features.Equipment.Domain;
+using Features.Inventory;
 using Features.Items.Domain;
+using Features.Stats.Domain;
+using Features.Stats.UnityIntegration;
+using Features.Weapons.Application;
 using Features.Weapons.Data;
 using Features.Weapons.Domain;
-using Features.Inventory;
-using Features.Equipment.Domain;
-using Features.Weapons.Application;
+using UnityEngine;
 
 namespace Features.Weapons.UnityIntegration
 {
@@ -18,11 +20,11 @@ namespace Features.Weapons.UnityIntegration
         public Transform muzzlePoint;
         public ParticleSystem muzzleFlash;
         public Animator animator;
+        private IStatsFacade stats;
 
         private ItemInstance instance;
         private WeaponConfig config;
         private WeaponAmmoState ammoState;
-        private WeaponRuntimeStats runtimeStats;
         private IInventoryContext inventory;
         private WeaponService weaponService;
         private ReloadService reloadService;
@@ -32,7 +34,7 @@ namespace Features.Weapons.UnityIntegration
         private bool triggerHeld;
 
         public int CurrentAmmo => ammoState?.ammoInMagazine ?? 0;
-        public int MaxAmmo => runtimeStats?.magazineSize ?? 0;
+        public int MaxAmmo => stats?.Combat.MagazineSize ?? 0;
 
         public WeaponController Setup(ItemInstance inst)
         {
@@ -50,23 +52,31 @@ namespace Features.Weapons.UnityIntegration
         {
             playerCamera = camera;
 
-            runtimeStats = WeaponStatCalculator.Calculate(instance);
+            var statsOwner = GetComponentInParent<PlayerStats>();
+            if (statsOwner == null)
+            {
+                Debug.LogError("[WeaponController] PlayerStats not found");
+                return;
+            }
+
+            stats = statsOwner.Facade;
 
             weaponService = new WeaponService();
-            weaponService.Initialize(runtimeStats);
+            weaponService.Initialize(stats.Combat);
 
             reloadService = new ReloadService(
                 new AmmoService(inventory.Service)
             );
 
             aimService = new AimService();
-            aimService.Initialize(runtimeStats);
+            aimService.Initialize(stats.Combat);
 
             recoilService = new RecoilService();
-            recoilService.Initialize(runtimeStats, config.recoilPattern);
+            recoilService.Initialize(stats.Combat, config.recoilPattern);
 
-            ammoState = new WeaponAmmoState(runtimeStats.magazineSize);
+            ammoState = new WeaponAmmoState(config.magazineSize);
         }
+
 
         private void Update()
         {

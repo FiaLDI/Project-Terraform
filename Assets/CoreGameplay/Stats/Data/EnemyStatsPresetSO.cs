@@ -16,6 +16,12 @@ namespace Features.Enemy.Data
         public class CombatBlock
         {
             public float baseDamageMultiplier = 1f;
+            public float baseFireRate = 5f;
+            public float baseSpread = 2f;
+            public float baseAimSpread = 0.5f;
+            public float baseRange = 100f;
+            public float baseRecoil = 1f;
+            public int baseMagazineSize = 30;
         }
 
         [Header("Health")]

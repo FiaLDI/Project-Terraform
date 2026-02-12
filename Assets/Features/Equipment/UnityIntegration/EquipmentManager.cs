@@ -42,6 +42,8 @@ namespace Features.Equipment.UnityIntegration
 
         private bool initialized;
 
+        private EquipmentItemBuffApplier buffApplier;
+
         // ======================================================
         // UNITY
         // ======================================================
@@ -51,6 +53,7 @@ namespace Features.Equipment.UnityIntegration
             anim = GetComponent<PlayerAnimationController>();
             usageLocal = GetComponent<PlayerUsageController>();
             usageNet = GetComponent<PlayerUsageNetAdapter>();
+            buffApplier = GetComponent<EquipmentItemBuffApplier>();
         }
 
         private void OnDestroy()
@@ -142,10 +145,14 @@ namespace Features.Equipment.UnityIntegration
 
         private void EquipRightHand(ItemInstance inst)
         {
+            buffApplier?.Remove();
+
             ClearRightHand();
 
             if (inst == null || inst.itemDefinition == null)
                 return;
+
+            buffApplier?.Apply(inst);
 
             InstantiateEquippedItem(
                 inst,
@@ -155,8 +162,10 @@ namespace Features.Equipment.UnityIntegration
             );
         }
 
-        private void ClearRightHand()
+       private void ClearRightHand()
         {
+            buffApplier?.Remove();
+
             if (currentRightHandObject != null)
                 Destroy(currentRightHandObject);
 
