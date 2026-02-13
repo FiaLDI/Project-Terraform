@@ -26,10 +26,10 @@ namespace Features.Effects.Application
             EffectContext ctx)
         {
             if (!InstanceFinder.IsServer)
-{
-    Debug.LogError("Spawn blocked: not server");
-    return;
-}
+            {
+                Debug.LogError("Spawn blocked: not server");
+                return;
+            }
 
 
             var prefab = registry.Get(prefabId);
