@@ -27,12 +27,11 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
         var provider = GetComponentInParent<IBuffTarget>();
         if (provider == null)
         {
-            Debug.LogError("[Drill] IStatsOwner not found", this);
+            Debug.LogError("[Drill] IBuffTarget not found", this);
             return;
         }
 
         stats = provider.GetServerStats();
-
         BuildEffects();
     }
 
@@ -45,8 +44,7 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
         startEffect = new EffectDefinition
         {
             type = EffectType.Continuous,
-            value = 0.1f, // tick interval
-
+            value = 0.1f,
             childEffects = new[]
             {
                 new EffectDefinition
@@ -57,7 +55,6 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
                     layerMask = LayerMask.GetMask("Resource"),
                     value = miningPower
                 },
-
                 new EffectDefinition
                 {
                     type = EffectType.DealDamage,
@@ -81,7 +78,7 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
 
     public void OnUsePrimary_Start()
     {
-        fx?.Play(transform.position, transform.forward);
+        TryPlayImpactFx();
         Execute(startEffect);
     }
 
@@ -91,11 +88,43 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
         Execute(stopEffect);
     }
 
-    public void OnUsePrimary_Hold() { }
+    public void OnUsePrimary_Hold()
+    {
+        TryPlayImpactFx();
+    }
 
     public void OnUseSecondary_Start() { }
     public void OnUseSecondary_Hold() { }
     public void OnUseSecondary_Stop() { }
+
+    // ======================================================
+    // IMPACT FX
+    // ======================================================
+
+    private void TryPlayImpactFx()
+    {
+        if (stats == null) return;
+
+        float range = stats.Combat.Range;
+
+        Debug.DrawRay(transform.position, transform.forward * range, Color.red);
+
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, range))
+        {
+            Debug.Log("HIT: " + hit.collider.name);
+
+            fx?.Play(
+                hit.point + hit.normal * 0.02f,
+                hit.normal
+            );
+        }
+        else
+        {
+            Debug.Log("NO HIT");
+        }
+    }
+
+
 
     // ======================================================
     // EXECUTION

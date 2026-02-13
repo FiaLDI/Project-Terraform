@@ -54,6 +54,12 @@ namespace Features.Effects.Application
                 EffectType.Scan =>
                     new ScanEffect(def.value),
 
+                EffectType.SpawnProjectile =>
+                    new SpawnProjectileEffect(
+                        def.projectileConfig
+                    ),
+
+
                 _ => null
             };
         }

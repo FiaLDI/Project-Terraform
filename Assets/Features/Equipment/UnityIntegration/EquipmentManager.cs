@@ -252,20 +252,19 @@ namespace Features.Equipment.UnityIntegration
 
             usable = obj.GetComponent<IUsable>();
 
-            // ✅ Камеру/Initialize даём только локальному владельцу
             var cam = GetLocalCameraOrNull();
 
-            // Оружие имеет свою инициализацию (inventory + camera)
             var weapon = obj.GetComponent<WeaponController>();
             if (weapon != null)
             {
                 weapon.Setup(inst);
                 weapon.Init(inventory);
+
                 if (cam != null)
                     weapon.Initialize(cam);
+
                 return;
             }
-
             // Остальные usable
             if (usable != null && cam != null)
                 usable.Initialize(cam);

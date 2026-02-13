@@ -19,10 +19,6 @@ MonoBehaviour:
   fireMode: 0
   burstCount: 3
   damage: 20
-  damageType: 1
-  headMultiplier: 2
-  limbMultiplier: 0.75
-  armorPenetration: 0.2
   verticalRecoil: 1.5
   horizontalRecoil: 0.5
   recoilPattern:
@@ -42,10 +38,28 @@ MonoBehaviour:
   startingAmmo: 30
   maxDistance: 100
   projectileConfig: {fileID: 11400000, guid: 2ceb90afb49dc0044b3e1140c5c3054b, type: 2}
-  meleeRange: 2
-  meleeDamage: 35
-  meleeAngle: 55
-  meleeImpactForce: 5
   muzzleFlashFX: {fileID: 0}
   hitFX: {fileID: 0}
   bloodFX: {fileID: 0}
+  fireEffects:
+  - type: 10
+    targetMode: 2
+    radius: 0
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 0
+    value: 10
+    damageType: 0
+    buff: {fileID: 0}
+    onlySpecificBuff: 0
+    buffId: 
+    prefabId: 
+    lifetime: 0
+    useSourcePosition: 0
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 11400000, guid: 2ceb90afb49dc0044b3e1140c5c3054b, type: 2}
+    childEffects: []
+  meleeEffects: []

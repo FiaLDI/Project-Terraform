@@ -1,5 +1,6 @@
 using UnityEngine;
 using Features.Buffs.Domain;
+using Features.Weapons.Domain;
 
 namespace Features.Effects.Domain
 {
@@ -68,6 +69,8 @@ namespace Features.Effects.Domain
         [Header("Continuous")]
         public float tickInterval;
         public float duration;
+
+        public ProjectileConfig projectileConfig;
         public EffectDefinition[] childEffects;
 
     }

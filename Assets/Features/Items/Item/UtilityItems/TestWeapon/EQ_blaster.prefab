@@ -1567,8 +1567,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db4fcd2597f18cf479f44d85c252c954, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Weapons.UnityIntegration.WeaponController
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   playerCamera: {fileID: 0}
-  muzzlePoint: {fileID: 651736044580964339}
   muzzleFlash: {fileID: 0}
   animator: {fileID: 0}
 --- !u!114 &7815813871970709354

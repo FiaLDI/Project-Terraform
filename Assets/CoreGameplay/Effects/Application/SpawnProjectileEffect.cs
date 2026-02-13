@@ -9,14 +9,10 @@ namespace Features.Effects.Application
     public sealed class SpawnProjectileEffect : IEffect
     {
         private readonly ProjectileConfig _config;
-        private readonly NetworkObject _owner;
 
-        public SpawnProjectileEffect(
-            ProjectileConfig config,
-            NetworkObject owner)
+        public SpawnProjectileEffect(ProjectileConfig config)
         {
             _config = config;
-            _owner = owner;
         }
 
         public void Apply(EffectContext context)
@@ -34,10 +30,16 @@ namespace Features.Effects.Application
             );
 
             var net = go.GetComponent<NetworkObject>();
-            InstanceFinder.ServerManager.Spawn(go, _owner?.Owner);
+
+            var ownerNetObj =
+                context.Source is Component c
+                    ? c.GetComponentInParent<NetworkObject>()
+                    : null;
+
+            InstanceFinder.ServerManager.Spawn(go, ownerNetObj?.Owner);
 
             var projectile = go.GetComponent<ProjectileNetwork>();
-            projectile.InitServer(_config, _owner);
+            projectile.InitServer(_config, ownerNetObj);
         }
     }
 }
