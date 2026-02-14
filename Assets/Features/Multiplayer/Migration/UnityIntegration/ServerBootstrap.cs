@@ -1,100 +1,64 @@
 using UnityEngine;
 using FishNet;
+using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Transporting;
+using FishNet.Managing.Scened;
 using FishNet.Object;
-using FishNet.Connection;
-using Multiplayer.Application;
-using Multiplayer.Domain;
 
 public sealed class ServerBootstrap : MonoBehaviour
 {
-    [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private string hubSceneName = "NetHubScene";
+    [SerializeField] private NetworkObject loginBridgePrefab;
 
-    private IServerGameFlow flow;
     private NetworkManager net;
 
     private void Awake()
     {
         net = InstanceFinder.NetworkManager;
-        flow = new ServerGameFlow();
 
-        net.ServerManager.OnServerConnectionState += OnServerConnectionState;
-
-        // 👇 ВАЖНО — правильная сигнатура
+        net.ServerManager.OnServerConnectionState += OnServerState;
         net.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
     }
 
     public void StartDedicatedServer()
     {
-        flow.StartServer();
+        ServerCompositionRoot.I.Flow.StartServer();
         net.ServerManager.StartConnection();
     }
 
-    private void OnServerConnectionState(ServerConnectionStateArgs args)
+    private void OnServerState(ServerConnectionStateArgs args)
     {
-        if (args.ConnectionState == LocalConnectionState.Started)
+        if (args.ConnectionState != LocalConnectionState.Started)
+            return;
+
+        Debug.Log("[ServerBootstrap] Server started");
+
+        ServerCompositionRoot.I.Flow.NotifyServerStarted();
+
+        // 🔥 ГРУЗИМ ХАБ
+        var data = new SceneLoadData(hubSceneName)
         {
-            flow.NotifyServerStarted();
-            flow.NotifySceneLoaded();
-            flow.NotifyWorldPrepared();
-        }
+            ReplaceScenes = ReplaceOption.All
+        };
+
+        net.SceneManager.LoadGlobalScenes(data);
     }
 
-    // 👇 ПРАВИЛЬНАЯ сигнатура для твоей версии
-    private void OnRemoteConnectionState(
-        NetworkConnection conn,
-        RemoteConnectionStateArgs args)
+    private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
     {
         if (args.ConnectionState == RemoteConnectionState.Started)
-        {
-            SpawnPlayer(conn);
-        }
-        else if (args.ConnectionState == RemoteConnectionState.Stopped)
-        {
-            DespawnPlayer(conn);
-        }
+            StartCoroutine(SpawnBridgeWhenReady(conn));
     }
 
-    // =========================
-    // SPAWN
-    // =========================
-
-    private void SpawnPlayer(NetworkConnection conn)
+    private System.Collections.IEnumerator SpawnBridgeWhenReady(NetworkConnection conn)
     {
-        if (!PlayerSpawnRegistry.I.HasProvider)
-        {
-            Debug.LogError("No spawn providers registered!");
-            return;
-        }
+        while (!conn.LoadedStartScenes())
+            yield return null;
 
-        if (!PlayerSpawnRegistry.I.TryGetRandom(out var provider))
-        {
-            Debug.LogError("Failed to get spawn provider!");
-            return;
-        }
+        var bridge = Instantiate(loginBridgePrefab);
+        net.ServerManager.Spawn(bridge, conn);
 
-        provider.TryGetSpawnPoint(out var pos, out var rot);
-
-        NetworkObject playerInstance =
-            Instantiate(playerPrefab, pos, rot);
-
-        net.ServerManager.Spawn(playerInstance, conn);
-
-        Debug.Log($"Spawned player for {conn.ClientId}");
-    }
-
-    // =========================
-    // DESPAWN
-    // =========================
-
-    private void DespawnPlayer(NetworkConnection conn)
-    {
-        foreach (var obj in conn.Objects)
-        {
-            net.ServerManager.Despawn(obj);
-        }
-
-        Debug.Log($"Despawned player for {conn.ClientId}");
+        Debug.Log($"[Server] LoginBridge spawned for {conn.ClientId}");
     }
 }

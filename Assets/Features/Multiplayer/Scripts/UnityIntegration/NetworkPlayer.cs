@@ -42,6 +42,7 @@ namespace Features.Player.UnityIntegration
             Debug.Log(
                 $"[NetworkPlayer] Spawned: {name}, IsOwner={IsOwner}",
                 this);
+            Debug.Log($"[NetworkPlayer] IsOwner={IsOwner}, OwnerIsLocal={Owner.IsLocalClient}", this);
 
             var registry = PlayerRegistry.Instance;
             if (registry == null)

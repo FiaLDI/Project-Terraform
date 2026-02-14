@@ -1,5 +1,5 @@
-using FishNet.Object;
 using UnityEngine;
+using FishNet.Object;
 using Unity.Mathematics;
 using System.Collections;
 using Features.Biomes.Domain;
@@ -17,12 +17,8 @@ namespace Features.Biomes.UnityIntegration
 
         [Header("Spawn Points")]
         [SerializeField] private ScenePlayerSpawnPoint spawnPointPrefab;
-
-        [SerializeField, Min(1)]
-        private int spawnPointCount = 4;
-
-        [SerializeField]
-        private float spawnRadius = 15f;
+        [SerializeField, Min(1)] private int spawnPointCount = 4;
+        [SerializeField] private float spawnRadius = 15f;
 
         [Header("Custom Prefab")]
         public GameObject customPrefab;
@@ -39,8 +35,8 @@ namespace Features.Biomes.UnityIntegration
 
         public static WorldConfig World { get; private set; }
 
+        // 🔥 Сигнал готовности мира
         public static event System.Action<int> OnWorldReady;
-
 
         // ======================================================
         // SERVER
@@ -61,6 +57,8 @@ namespace Features.Biomes.UnityIntegration
 
         private IEnumerator ServerGenerateWorld()
         {
+            Debug.Log("[WorldGen] Starting generation...");
+
             // 1️⃣ Биомы
             if (!BiomeRuntimeDatabase.Initialized)
                 BiomeRuntimeDatabase.Build(worldConfig);
@@ -69,15 +67,12 @@ namespace Features.Biomes.UnityIntegration
             manager = new ChunkManager(worldConfig);
             World = worldConfig;
 
-            // 3️⃣ Стартовая генерация чанков
             manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
             manager.ProcessLoadQueue();
 
-            // 🔑 КЛЮЧ: НЕ ждём MeshCollider / физику
-            // Даём PhysX 1 тик, чтобы мир начал существовать
             yield return new WaitForFixedUpdate();
 
-            // 4️⃣ Системы мира
+            // 3️⃣ Мир-системы
             if (systemsPrefab != null)
             {
                 systemsInstance = Instantiate(
@@ -89,17 +84,24 @@ namespace Features.Biomes.UnityIntegration
                 Spawn(systemsInstance);
             }
 
-            // 5️⃣ Spawn-point’ы игроков (логические)
+            // 4️⃣ Spawn points
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();
 
-            // 6️⃣ Кастомные объекты
+            // 🔥 КЛЮЧ: даём кадр чтобы Start() у ScenePlayerSpawnPoint
+            // успел зарегистрировать provider в PlayerSpawnRegistry
+            yield return null;
+
+            // 5️⃣ Кастомные объекты
             if (customPrefab != null)
                 SpawnCustomPrefab();
 
+            Debug.Log("[WorldGen] Generation complete");
+
+            // 🔥 Теперь мир реально готов
             OnWorldReady?.Invoke(WorldSession.WorldVersion);
-            Debug.Log("[WorldGen] World generation completed");
         }
+
 
         private void Update()
         {
@@ -147,7 +149,6 @@ namespace Features.Biomes.UnityIntegration
                 Vector3 pos = origin;
                 Quaternion rot = Quaternion.identity;
 
-                // Лёгкий raycast — только если физика уже есть
                 if (Physics.Raycast(origin, Vector3.down, out var hit, spawnHeightCheck * 2f))
                     pos = hit.point + Vector3.up * 1.5f;
 
@@ -155,7 +156,7 @@ namespace Features.Biomes.UnityIntegration
                 sp.name = $"WorldSpawnPoint_{i}";
             }
 
-            Debug.Log($"[WorldGen] Spawned {spawnPointCount} player spawn points");
+            Debug.Log($"[WorldGen] Spawned {spawnPointCount} spawn points");
         }
     }
 }

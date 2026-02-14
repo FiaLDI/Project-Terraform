@@ -2,19 +2,26 @@ using UnityEngine;
 using FishNet.Managing;
 using FishNet.Transporting;
 using Multiplayer.Application;
-using FishNet.Object;
 
-public sealed class ClientConnectionController : NetworkBehaviour
+public sealed class ClientConnectionController : MonoBehaviour
 {
     public static ClientConnectionController I;
 
     [SerializeField] private NetworkManager networkManager;
 
     private ClientGameFlow flow;
+    private ClientLoginBridge loginBridge;
 
     private void Awake()
     {
+        if (I != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         I = this;
+        DontDestroyOnLoad(gameObject);
 
         flow = new ClientGameFlow();
         flow.OnStateChanged += s => Debug.Log($"[ClientFlow] → {s}");
@@ -44,19 +51,36 @@ public sealed class ClientConnectionController : NetworkBehaviour
         if (args.ConnectionState == LocalConnectionState.Started)
         {
             flow.NotifyConnected();
-            SendLogin();
         }
+        else if (args.ConnectionState == LocalConnectionState.Stopped)
+        {
+            flow.NotifyDisconnected();
+        }
+    }
+
+    // 🔥 вызывается bridge когда он появился
+    public void OnLoginBridgeReady(ClientLoginBridge bridge)
+    {
+        loginBridge = bridge;
+        SendLogin();
     }
 
     private void SendLogin()
     {
+        if (loginBridge == null)
+        {
+            Debug.LogWarning("LoginBridge not ready yet");
+            return;
+        }
+
         string pid = PersistentIdProvider.GetOrCreate();
-        LoginRpc(pid);
+
+        flow.NotifyLoginSent();
+        loginBridge.SendLogin(pid);
     }
 
-    [ServerRpc]
-    private void LoginRpc(string persistentId)
+    public void NotifySpawned()
     {
-        ServerLoginHandler.I.HandleLogin(Owner, persistentId);
+        flow.NotifyPlayerSpawned();
     }
 }

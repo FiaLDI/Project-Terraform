@@ -75,5 +75,13 @@ namespace Multiplayer.Application
             sessions.Clear();
             clientToPersistent.Clear();
         }
+
+        public IEnumerable<PlayerSession> GetOnlineSessions()
+        {
+            foreach (var s in sessions.Values)
+                if (s.IsOnline)
+                    yield return s;
+        }
+
     }
 }

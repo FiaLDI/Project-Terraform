@@ -3034,8 +3034,9 @@ GameObject:
   - component: {fileID: 1900769105}
   - component: {fileID: 1900769104}
   - component: {fileID: 1900769103}
-  - component: {fileID: 1900769102}
+  - component: {fileID: 1900769107}
   - component: {fileID: 1900769106}
+  - component: {fileID: 1900769108}
   m_Layer: 0
   m_Name: MultiplayerSystem
   m_TagString: Untagged
@@ -3043,22 +3044,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1900769102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1900769101}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f479901709b560c45ab0846e57f1ab36, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClientConnectionController
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 1900769106}
-  _networkObjectCache: {fileID: 0}
-  networkManager: {fileID: 1718600624}
 --- !u!114 &1900769103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3084,7 +3069,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 582ea95f1f678f948a7ea5d25e14fb07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ServerBootstrap
-  playerPrefab: {fileID: 1900769106}
+  hubSceneName: NetHubScene
+  loginBridgePrefab: {fileID: 8467901765216138111, guid: b39d7d9364c0bc4459925de9fa30423a, type: 3}
 --- !u!4 &1900769105
 Transform:
   m_ObjectHideFlags: 0
@@ -3109,50 +3095,36 @@ MonoBehaviour:
   m_GameObject: {fileID: 1900769101}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Script: {fileID: 11500000, guid: f479901709b560c45ab0846e57f1ab36, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
-  <IsNested>k__BackingField: 0
-  WasActiveDuringEdit: 1
-  WasActiveDuringEdit_Set1: 1
-  <ComponentIndex>k__BackingField: 0
-  <PredictedSpawn>k__BackingField: {fileID: 0}
-  <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
-  InitializedParentNetworkBehaviour: {fileID: 0}
-  InitializedNestedNetworkObjects: []
-  RuntimeParentNetworkBehaviour: {fileID: 0}
-  RuntimeChildNetworkBehaviours: []
-  _isNetworked: 1
-  _isSpawnable: 1
-  _isGlobal: 0
-  _initializeOrder: 0
-  _preventDespawnOnDisconnect: 0
-  _defaultDespawnType: 0
-  _initializedTimestamp: 0
-  NetworkObserver: {fileID: 0}
-  _enablePrediction: 0
-  _predictionType: 0
-  _graphicalObject: {fileID: 0}
-  _detachGraphicalObject: 0
-  _enableStateForwarding: 1
-  _networkTransform: {fileID: 0}
-  _ownerInterpolation: 1
-  _ownerSmoothedProperties: 255
-  _adaptiveInterpolation: 3
-  _spectatorSmoothedProperties: 255
-  _spectatorInterpolation: 2
-  _enableTeleport: 0
-  _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
-  <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 0
-  SceneId: 3688816315
-  SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+  m_EditorClassIdentifier: Assembly-CSharp::ClientConnectionController
+  networkManager: {fileID: 1718600624}
+--- !u!114 &1900769107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900769101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02d4d0e32235ed7419dfe24ca915f8bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerLoginHandler
+--- !u!114 &1900769108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900769101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c169c1ac0ff98b0479e8037bb81438b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerCompositionRoot
+  playerPrefab: {fileID: 6311823513652316802, guid: 183439e94ff5e2b47ba4afbf933a7f53, type: 3}
+  loginHandler: {fileID: 1900769107}
 --- !u!1001 &1967661711
 PrefabInstance:
   m_ObjectHideFlags: 0

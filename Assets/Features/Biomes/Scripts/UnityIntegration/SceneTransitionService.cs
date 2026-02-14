@@ -17,7 +17,6 @@ public static class SceneTransitionService
             return;
         }
 
-        // 🔴 КРИТИЧНО: сцену грузит ТОЛЬКО сервер
         if (!nm.IsServer)
         {
             Debug.LogWarning("[SceneTransition] Only server can load world scene");

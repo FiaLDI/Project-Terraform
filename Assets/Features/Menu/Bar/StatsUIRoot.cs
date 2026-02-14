@@ -55,41 +55,34 @@ namespace Features.Stats.UI
         /// </summary>
         private void OnPlayerBound(GameObject player)
         {
-            Debug.Log($"[StatsUIRoot] OnPlayerBound: {player.name}", this);
-
             if (player == null)
             {
+                Debug.Log("[StatsUIRoot] OnPlayerBound: NULL (Unbind)", this);
+
                 boundPlayer = null;
                 UnbindAll();
                 return;
             }
 
+            Debug.Log($"[StatsUIRoot] OnPlayerBound: {player.name}", this);
+
             boundPlayer = player;
 
-            // Привязываем всех компонентов к игроку
             foreach (var uiComponent in statsUIComponents)
             {
                 if (uiComponent != null && uiComponent.gameObject.activeInHierarchy)
                 {
-                    Debug.Log($"[StatsUIRoot] Binding {uiComponent.GetType().Name}", this);
-                    
-                    // Вызываем защищённый метод OnPlayerBound через рефлексию
                     var methodInfo = uiComponent.GetType().GetMethod(
                         "OnPlayerBound",
                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
                     );
 
                     if (methodInfo != null)
-                    {
                         methodInfo.Invoke(uiComponent, new object[] { player });
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[StatsUIRoot] OnPlayerBound method not found on {uiComponent.GetType().Name}", uiComponent);
-                    }
                 }
             }
         }
+
 
         /// <summary>
         /// Отвязывает всех компонентов от игрока
@@ -98,21 +91,18 @@ namespace Features.Stats.UI
         {
             foreach (var uiComponent in statsUIComponents)
             {
-                if (uiComponent != null)
-                {
-                    Debug.Log($"[StatsUIRoot] Unbinding {uiComponent.GetType().Name}", this);
+                if (uiComponent == null)
+                    continue;
 
-                    var methodInfo = uiComponent.GetType().GetMethod(
-                        "OnPlayerUnbound",
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
-                    );
+                var methodInfo = uiComponent.GetType().GetMethod(
+                    "OnPlayerUnbound",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
+                );
 
-                    if (methodInfo != null)
-                    {
-                        methodInfo.Invoke(uiComponent, new object[] { boundPlayer });
-                    }
-                }
+                if (methodInfo != null)
+                    methodInfo.Invoke(uiComponent, null);
             }
         }
+
     }
 }
