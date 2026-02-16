@@ -1,0 +1,87 @@
+using System.Collections.Generic;
+using Multiplayer.Domain;
+
+namespace Multiplayer.Application
+{
+    public sealed class SessionManager
+    {
+        private readonly Dictionary<string, PlayerSession> sessions = new();
+        private readonly Dictionary<int, string> clientToPersistent = new();
+
+        private bool acceptingLogins;
+
+        public void BindToFlow(IServerGameFlow flow)
+        {
+            flow.OnStateChanged += OnStateChanged;
+        }
+
+        private void OnStateChanged(ServerGameState state)
+        {
+            acceptingLogins = state == ServerGameState.Running;
+
+            if (state == ServerGameState.ShuttingDown ||
+                state == ServerGameState.Offline)
+            {
+                ClearAll();
+            }
+        }
+
+        public PlayerSession HandleLogin(int clientId, string persistentId)
+        {
+            if (!acceptingLogins)
+                return null;
+
+            if (!sessions.TryGetValue(persistentId, out var session))
+            {
+                session = new PlayerSession(persistentId);
+                sessions[persistentId] = session;
+            }
+
+            session.BindClient(clientId);
+            clientToPersistent[clientId] = persistentId;
+
+            return session;
+        }
+
+        public PlayerSession GetSessionByClient(int clientId)
+        {
+            if (!clientToPersistent.TryGetValue(clientId, out var pid))
+                return null;
+
+            return sessions.TryGetValue(pid, out var session)
+                ? session
+                : null;
+        }
+
+       public void HandleDisconnect(int clientId)
+        {
+            if (!clientToPersistent.TryGetValue(clientId, out var pid))
+                return;
+
+            if (sessions.TryGetValue(pid, out var session))
+            {
+                session.UnbindClient();
+
+                // НЕ удаляем PlayerObject
+                // Он остается в мире
+            }
+
+            clientToPersistent.Remove(clientId);
+        }
+
+
+        private void ClearAll()
+        {
+            sessions.Clear();
+            clientToPersistent.Clear();
+        }
+
+        public IEnumerable<PlayerSession> GetOnlineSessions()
+        {
+            foreach (var s in sessions.Values)
+                if (s.IsOnline)
+                    yield return s;
+        }
+
+    }
+}

@@ -1,128 +1,150 @@
 using UnityEngine;
-using Features.Items.Domain;
-using Features.Tools.Application;
-using Features.Tools.Domain;
-using Features.Resources.UnityIntegration;
-using Features.Combat.Domain;
-using Features.Equipment.Domain;
-using Features.Items.UnityIntegration;
 using FishNet;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
+using Features.Stats.Domain;
+using Features.Equipment.Domain;
 
-public class DrillToolPresenter : MonoBehaviour, IUsable
+public sealed class DrillToolPresenter : MonoBehaviour, IUsable
 {
-    [Header("FX")]
-    public DrillToolFX fx;
+    [SerializeField] private DrillToolFX fx;
 
-    private Camera cam;
-    private ToolRuntimeStats stats;
-    private ToolService toolService;
+    private IBuffSource source;
+    private IStatsFacade stats;
 
-    private bool drilling;
-    private float heat;
-    private const float heatMax = 5f;
-    private float toolMultiplier = 1f;
+    private EffectDefinition startEffect;
+    private EffectDefinition stopEffect;
+
+    // ======================================================
+    // INIT
+    // ======================================================
 
     public void Initialize(Camera camera)
     {
-        cam = camera;
+        source = GetComponentInParent<IBuffSource>();
 
-        var inst = GetComponent<ItemRuntimeHolder>()?.Instance;
-        if (inst == null || inst.itemDefinition == null)
+        var provider = GetComponentInParent<IBuffTarget>();
+        if (provider == null)
         {
-            enabled = false;
+            Debug.LogError("[Drill] IBuffTarget not found", this);
             return;
         }
 
-        toolService = new ToolService();
-        toolService.Initialize(inst);
-
-        stats = toolService.stats;
-        enabled = true;
+        stats = provider.GetServerStats();
+        BuildEffects();
     }
 
-    public void OnUsePrimary_Start() => drilling = true;
-    public void OnUsePrimary_Hold()  => drilling = true;
-    public void OnUsePrimary_Stop()  => drilling = false;
-
-    public void OnUseSecondary_Start() => drilling = true;
-    public void OnUseSecondary_Hold()  => drilling = true;
-    public void OnUseSecondary_Stop()  => drilling = false;
-
-    private void Update()
+    private void BuildEffects()
     {
-        if (!drilling || stats == null)
+        float miningPower = stats.Mining.MiningPower;
+        float damageMult = stats.Combat.DamageMultiplier;
+        float range = stats.Combat.Range;
+
+        startEffect = new EffectDefinition
         {
-            fx?.Stop();
-            heat = Mathf.Max(0, heat - Time.deltaTime * 1.5f);
-            fx?.SetOverheat(false);
-            return;
-        }
-
-        DrillTick();
-    }
-
-    private bool TryGetUseRay(out Ray ray)
-    {
-        // owner client
-        if (cam != null)
-        {
-            ray = new Ray(cam.transform.position, cam.transform.forward);
-            return true;
-        }
-
-        // server (нет камеры)
-        var adapter = GetComponentInParent<PlayerUsageNetAdapter>();
-        if (adapter != null && adapter.TryGetServerAim(out ray))
-            return true;
-
-        ray = default;
-        return false;
-    }
-
-    private void DrillTick()
-    {
-        if (!TryGetUseRay(out var ray))
-        {
-            fx?.Stop();
-            return;
-        }
-
-        float range = stats[ToolStat.Range];
-
-        if (!Physics.Raycast(ray.origin, ray.direction, out var hit, range))
-        {
-            fx?.Stop();
-            return;
-        }
-
-        fx?.Play(hit.point, hit.normal);
-
-        heat += Time.deltaTime;
-        fx?.SetOverheat(heat > heatMax);
-        float mining = stats[ToolStat.MiningSpeed] * toolMultiplier * Time.deltaTime;
-        float dmg    = stats[ToolStat.Damage]      * toolMultiplier * Time.deltaTime;
-
-        var nodeNet = hit.collider.GetComponent<ResourceNodeNetwork>();
-        if (nodeNet != null)
-        {
-            nodeNet.Mine_Server(mining, 1f);
-            return;
-        }
-
-        if (InstanceFinder.IsServerStarted)
-        {
-            var node = hit.collider.GetComponent<ResourceNodePresenter>();
-            if (node != null)
+            type = EffectType.Continuous,
+            value = 0.1f,
+            childEffects = new[]
             {
-                node.ApplyMining(mining);
-                return;
+                new EffectDefinition
+                {
+                    type = EffectType.MineNetworkResource,
+                    targetMode = TargetMode.Directional,
+                    radius = range,
+                    layerMask = LayerMask.GetMask("Resource"),
+                    value = miningPower
+                },
+                new EffectDefinition
+                {
+                    type = EffectType.DealDamage,
+                    targetMode = TargetMode.Directional,
+                    radius = range,
+                    layerMask = LayerMask.GetMask("Enemy"),
+                    value = damageMult
+                }
             }
+        };
 
-            var dmgTarget = hit.collider.GetComponentInParent<IDamageable>();
-            if (dmgTarget != null)
-            {
-                dmgTarget.TakeDamage(dmg, DamageType.Mining);
-            }
+        stopEffect = new EffectDefinition
+        {
+            type = EffectType.StopContinuous
+        };
+    }
+
+    // ======================================================
+    // INPUT
+    // ======================================================
+
+    public void OnUsePrimary_Start()
+    {
+        TryPlayImpactFx();
+        Execute(startEffect);
+    }
+
+    public void OnUsePrimary_Stop()
+    {
+        fx?.Stop();
+        Execute(stopEffect);
+    }
+
+    public void OnUsePrimary_Hold()
+    {
+        TryPlayImpactFx();
+    }
+
+    public void OnUseSecondary_Start() { }
+    public void OnUseSecondary_Hold() { }
+    public void OnUseSecondary_Stop() { }
+
+    // ======================================================
+    // IMPACT FX
+    // ======================================================
+
+    private void TryPlayImpactFx()
+    {
+        if (stats == null) return;
+
+        float range = stats.Combat.Range;
+
+        Debug.DrawRay(transform.position, transform.forward * range, Color.red);
+
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, range))
+        {
+            Debug.Log("HIT: " + hit.collider.name);
+
+            fx?.Play(
+                hit.point + hit.normal * 0.02f,
+                hit.normal
+            );
         }
+        else
+        {
+            Debug.Log("NO HIT");
+        }
+    }
+
+
+
+    // ======================================================
+    // EXECUTION
+    // ======================================================
+
+    private void Execute(EffectDefinition def)
+    {
+        if (!InstanceFinder.IsServer)
+            return;
+
+        if (source == null)
+            return;
+
+        var ctx = new EffectContext(
+            source,
+            null,
+            transform.position,
+            transform.forward
+        );
+
+        EffectExecutor.Instance.Execute(def, ctx);
     }
 }

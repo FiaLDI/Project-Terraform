@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30560278a2268814a890e2671287c82f, type: 3}
+  m_Name: PrefabsRegistry
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPrefabRegistry
+  entries:
+  - id: shield-ability
+    prefab: {fileID: 4097214579380141426, guid: bfadffa03237966499d95fb886e5523d, type: 3}
+  - id: turret-ability
+    prefab: {fileID: 5885013346192204236, guid: d925395fb59a50e4d8c709222ace8e18, type: 3}
+  - id: overload-ability
+    prefab: {fileID: 2992445105395417118, guid: 5012a0444aae56c4695c27e2cdc6e260, type: 3}
+  - id: repair-ability
+    prefab: {fileID: 7817172014945752216, guid: 95054df61e4e5f94dadbb76e2c0d4227, type: 3}
+  - id: charge-ability
+    prefab: {fileID: 4592017043821597109, guid: bd434ba60365e9d4dbe074f133ece67e, type: 3}

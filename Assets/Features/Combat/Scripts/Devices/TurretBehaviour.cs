@@ -1,10 +1,14 @@
 using UnityEngine;
 using System.Collections;
-using Features.Combat.Domain;
-using Features.Stats.Domain;
 using FishNet.Object;
+using Features.Stats.Domain;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
 
-public class TurretBehaviour : NetworkBehaviour, IDamageable
+[RequireComponent(typeof(IStatsOwner))]
+[RequireComponent(typeof(IBuffSource))]
+public sealed class TurretBehaviour : NetworkBehaviour
 {
     [Header("Refs")]
     public Transform turretHead;
@@ -16,36 +20,21 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
     public float lifetime = 25f;
     public LayerMask targetMask;
 
-    // =========================
-    // STATS
-    // =========================
     private IStatsOwner statsOwner;
     private IStatsFacade stats;
+    private IBuffSource source;
 
-    // =========================
-    // STATE
-    // =========================
     private Transform target;
     private float fireTimer;
     private float retargetTimer;
 
     private readonly float sphereHeight = 0.8f;
 
-    // =========================
-    // UNITY
-    // =========================
-
     private void Awake()
     {
         statsOwner = GetComponent<IStatsOwner>();
         stats = statsOwner?.Facade;
-
-        if (statsOwner == null)
-        {
-            Debug.LogError("[TurretBehaviour] IStatsOwner not found", this);
-            enabled = false;
-            return;
-        }
+        source = GetComponent<IBuffSource>();
 
         if (targetMask == 0)
             targetMask = LayerMask.GetMask("Enemy");
@@ -72,10 +61,6 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
 
         TickCombat();
     }
-
-    // =========================
-    // COMBAT
-    // =========================
 
     private void TickCombat()
     {
@@ -110,7 +95,10 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
 
         foreach (var h in hits)
         {
-            if (!h.TryGetComponent<IDamageable>(out _))
+            if (!h.TryGetComponent<IBuffTarget>(out var buffTarget))
+                continue;
+
+            if (!buffTarget.IsReady)
                 continue;
 
             float d = (h.transform.position - center).sqrMagnitude;
@@ -139,10 +127,6 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
         );
     }
 
-    // =========================
-    // FIRING
-    // =========================
-
     private float FireInterval
     {
         get
@@ -161,7 +145,7 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
             if (stats?.Combat == null)
                 return 0f;
 
-            return stats.Combat.DamageMultiplier * FireInterval;
+            return stats.Combat.DamageMultiplier;
         }
     }
 
@@ -170,35 +154,21 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
         if (fireTimer > 0f || target == null)
             return;
 
-        if (target.TryGetComponent<IDamageable>(out var d))
-            d.TakeDamage(DamagePerShot, DamageType.Generic);
+        if (!target.TryGetComponent<IBuffTarget>(out var buffTarget))
+            return;
+
+        var ctx = new EffectContext(
+            source,
+            new[] { buffTarget },
+            muzzlePoint.position,
+            (target.position - muzzlePoint.position).normalized
+        );
+
+        var effect = new DealDamageEffect(DamagePerShot, DamageType.Generic);
+        effect.Apply(ctx);
 
         fireTimer = FireInterval;
     }
-
-    // =========================
-    // DAMAGE
-    // =========================
-
-    public void TakeDamage(float amount, DamageType type)
-    {
-        if (stats?.Health == null)
-            return;
-
-        stats.Health.Damage(amount);
-
-        if (stats.Health.CurrentHp <= 0f && IsServerInitialized)
-            GetComponent<NetworkObject>().Despawn();
-    }
-
-    public void Heal(float amount)
-    {
-        stats?.Health?.Heal(amount);
-    }
-
-    // =========================
-    // LASER
-    // =========================
 
     private void SetupLaser()
     {
@@ -223,29 +193,5 @@ public class TurretBehaviour : NetworkBehaviour, IDamageable
     {
         if (laser)
             laser.enabled = false;
-    }
-
-    // =========================
-    // NETWORKED DESTROY
-    // =========================
-
-    public void ScheduleDestruction(float delay)
-    {
-        if (IsServerInitialized)
-            RpcDestroyAfterDelay(delay);
-    }
-
-    [ObserversRpc]
-    private void RpcDestroyAfterDelay(float delay)
-    {
-        StartCoroutine(DestroyCoroutine(delay));
-    }
-
-    private IEnumerator DestroyCoroutine(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        if (IsServerInitialized)
-            GetComponent<NetworkObject>().Despawn();
     }
 }

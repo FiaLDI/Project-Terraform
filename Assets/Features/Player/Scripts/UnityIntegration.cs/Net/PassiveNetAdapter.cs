@@ -52,9 +52,6 @@ namespace Features.Passives.Net
                 if (so != null) list.Add(so);
                 else Debug.LogWarning($"[PassiveNet] Unknown passive ID: {id}");
             }
-
-            // Обновляем ТОЛЬКО визуал (список для UI), без логики
-            _system.SetPassivesVisuals(list.ToArray());
         }
 
         // --- SERVER API ---
@@ -66,7 +63,7 @@ namespace Features.Passives.Net
 
 
             // 1. Применяем логику (баффы и т.д.)
-            _system.SetPassivesLogic(passives);
+            _system.SetPassives(passives);
 
             // 2. Обновляем сеть
             EquippedIds.Clear();

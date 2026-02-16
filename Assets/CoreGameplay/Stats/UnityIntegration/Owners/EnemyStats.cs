@@ -1,13 +1,11 @@
 using UnityEngine;
-using FishNet.Object;
 using Features.Stats.Domain;
-using Features.Stats.Application;
 using Features.Enemy.Data;
-using Features.Stats.UnityIntegration;
 
-namespace Features.Enemy.UnityIntegration
+namespace Features.Stats.UnityIntegration
 {
     [DefaultExecutionOrder(-400)]
+    [RequireComponent(typeof(StatsBuffTarget))]
     public sealed class EnemyStats : StatsOwnerBase
     {
         [Header("Config")]
@@ -28,7 +26,6 @@ namespace Features.Enemy.UnityIntegration
             }
 
             ApplyDefaultsFromConfig();
-            BindBuffTarget();
         }
 
         private void ApplyDefaultsFromConfig()
@@ -47,7 +44,15 @@ namespace Features.Enemy.UnityIntegration
 
             if (Facade.Combat != null)
             {
-                Facade.Combat.ApplyBase(1f);
+                Facade.Combat.ApplyBase(
+                    config.statsPreset.combat.baseDamageMultiplier,
+                    fireRate: 6f,
+                    spread: 2f,
+                    aimSpread: 0.5f,
+                    recoil: 1f,
+                    range: 100f,
+                    magazineSize: 30
+                );
             }
         }
 
@@ -61,15 +66,16 @@ namespace Features.Enemy.UnityIntegration
 
             if (Facade.Combat != null)
             {
-                Facade.Combat.ApplyBase(preset.combat.baseDamageMultiplier);
+                Facade.Combat.ApplyBase(
+                    config.statsPreset.combat.baseDamageMultiplier,
+                    fireRate: 6f,
+                    spread: 2f,
+                    aimSpread: 0.5f,
+                    recoil: 1f,
+                    range: 100f,
+                    magazineSize: 30
+                );
             }
-        }
-
-        private void BindBuffTarget()
-        {
-            var buffTarget = GetComponent<EnemyBuffTarget>();
-            if (buffTarget != null)
-                buffTarget.SetStats(Facade);
         }
     }
 }

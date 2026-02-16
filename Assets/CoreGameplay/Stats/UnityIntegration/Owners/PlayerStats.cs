@@ -8,15 +8,16 @@ namespace Features.Stats.UnityIntegration
 {
     [DefaultExecutionOrder(-400)]
     [RequireComponent(typeof(ServerGamePhase))]
+    [RequireComponent(typeof(StatsBuffTarget))]
     public sealed class PlayerStats : StatsOwnerBase
     {
         public StatsFacadeAdapter Adapter { get; private set; }
 
         private ServerGamePhase phase;
 
-        // =========================
+        // =====================================================
         // SERVER
-        // =========================
+        // =====================================================
 
         protected override void InitStats()
         {
@@ -25,7 +26,6 @@ namespace Features.Stats.UnityIntegration
             phase = GetComponent<ServerGamePhase>();
 
             ApplyClassDefaults();
-            BindBuffTarget();
 
             Debug.Log("[PlayerStats] SERVER ready → StatsReady", this);
             phase.Reach(GamePhase.StatsReady);
@@ -46,7 +46,15 @@ namespace Features.Stats.UnityIntegration
 
             if (Facade.Combat != null)
             {
-                Facade.Combat.ApplyBase(1f);
+                Facade.Combat.ApplyBase(
+                    damageMultiplier: 1f,
+                    fireRate: 6f,
+                    spread: 2f,
+                    aimSpread: 0.5f,
+                    recoil: 1f,
+                    range: 100f,
+                    magazineSize: 30
+                );
             }
 
             if (Facade.Movement != null)
@@ -66,23 +74,9 @@ namespace Features.Stats.UnityIntegration
             }
         }
 
-        private void BindBuffTarget()
-        {
-            var buffTarget = GetComponent<PlayerBuffTarget>();
-            if (buffTarget != null)
-            {
-                buffTarget.SetStats(Facade);
-                Debug.Log("[PlayerStats] BuffTarget linked", this);
-            }
-            else
-            {
-                Debug.LogWarning("[PlayerStats] PlayerBuffTarget missing", this);
-            }
-        }
-
-        // =========================
+        // =====================================================
         // CLIENT (VIEW ONLY)
-        // =========================
+        // =====================================================
 
         public override void OnStartClient()
         {
@@ -92,11 +86,11 @@ namespace Features.Stats.UnityIntegration
             if (Adapter == null)
                 Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
 
-            Debug.Log("[PlayerStats] CLIENT ready (view)", this);
+            Debug.Log("[PlayerStats] CLIENT ready (view only)", this);
         }
 
         // =====================================================
-        // SERVER API (ROLE-SPECIFIC)
+        // SERVER ROLE API
         // =====================================================
 
         [Server]
@@ -132,7 +126,13 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    preset.combat.baseDamageMultiplier
+                    preset.combat.baseDamageMultiplier,
+                    preset.combat.baseFireRate, 
+                    preset.combat.baseRange,
+                    preset.combat.baseSpread,
+                    preset.combat.baseAimSpread,
+                    preset.combat.baseRecoil,
+                    preset.combat.baseMagazineSize
                 );
             }
 
@@ -153,6 +153,6 @@ namespace Features.Stats.UnityIntegration
                     preset.mining.baseMining
                 );
             }
-}
+        }
     }
 }

@@ -1,15 +1,26 @@
-using Features.Buffs.Domain;
 
 namespace Features.Stats.Domain
 {
-    public interface ICombatStats
+    public interface ICombatStats : IStatModifierTarget
     {
+
         float DamageMultiplier { get; }
+        float FireRate { get; }
+        float Range { get; }
+        float Spread { get; }
+        float AimSpread { get; }
+        float Recoil { get; }
+        int MagazineSize { get; }
 
-        void ApplyBase(float dmg);
-        void ApplyBuff(BuffSO cfg, bool apply);
+        void ApplyBase(
+            float damageMultiplier,
+            float fireRate,
+            float range,
+            float spread,
+            float aimSpread,
+            float recoil,
+            int magazineSize);
 
-        
         void Reset();
     }
 }

@@ -20,6 +20,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private bool hasServerAim;
     private float nextAimSendTime;
 
+    // ======================================================
+    // HANDS
+    // ======================================================
+
     public void OnHandsUpdated(IUsable left, IUsable right, bool twoHanded)
     {
         leftHand = left;
@@ -32,24 +36,24 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         return hasServerAim;
     }
 
-    // ================= PRIMARY =================
+    // ======================================================
+    // PRIMARY
+    // ======================================================
 
     public void PrimaryStart()
     {
         if (!IsOwner) return;
 
-        // FX на клиенте
         clientPrimaryHeld = true;
         rightHand?.OnUsePrimary_Start();
 
-        // локальный-only — не идём на сервер
         if (rightHand is ILocalOnlyUsable)
             return;
 
-        // ✅ хост: НЕ вызываем usable второй раз
         if (IsServerInitialized)
         {
             serverPrimaryHeld = true;
+            (rightHand as IServerUsable)?.ServerPrimaryStart();
             return;
         }
 
@@ -63,12 +67,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         clientPrimaryHeld = false;
         rightHand?.OnUsePrimary_Stop();
 
-        if (rightHand is ILocalOnlyUsable)
-            return;
-
         if (IsServerInitialized)
         {
             serverPrimaryHeld = false;
+            (rightHand as IServerUsable)?.ServerPrimaryStop();
             return;
         }
 
@@ -76,12 +78,22 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void PrimaryStart_Server() => serverPrimaryHeld = true;
+    private void PrimaryStart_Server()
+    {
+        serverPrimaryHeld = true;
+        (rightHand as IServerUsable)?.ServerPrimaryStart();
+    }
 
     [ServerRpc]
-    private void PrimaryStop_Server() => serverPrimaryHeld = false;
+    private void PrimaryStop_Server()
+    {
+        serverPrimaryHeld = false;
+        (rightHand as IServerUsable)?.ServerPrimaryStop();
+    }
 
-    // ================= SECONDARY =================
+    // ======================================================
+    // SECONDARY
+    // ======================================================
 
     public void SecondaryStart()
     {
@@ -90,12 +102,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         clientSecondaryHeld = true;
         rightHand?.OnUseSecondary_Start();
 
-        if (rightHand is ILocalOnlyUsable)
-            return;
-
         if (IsServerInitialized)
         {
             serverSecondaryHeld = true;
+            (rightHand as IServerUsable)?.ServerSecondaryStart();
             return;
         }
 
@@ -109,12 +119,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         clientSecondaryHeld = false;
         rightHand?.OnUseSecondary_Stop();
 
-        if (rightHand is ILocalOnlyUsable)
-            return;
-
         if (IsServerInitialized)
         {
             serverSecondaryHeld = false;
+            (rightHand as IServerUsable)?.ServerSecondaryStop();
             return;
         }
 
@@ -122,24 +130,30 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void SecondaryStart_Server() => serverSecondaryHeld = true;
+    private void SecondaryStart_Server()
+    {
+        serverSecondaryHeld = true;
+        (rightHand as IServerUsable)?.ServerSecondaryStart();
+    }
 
     [ServerRpc]
-    private void SecondaryStop_Server() => serverSecondaryHeld = false;
+    private void SecondaryStop_Server()
+    {
+        serverSecondaryHeld = false;
+        (rightHand as IServerUsable)?.ServerSecondaryStop();
+    }
 
-    // ================= RELOAD =================
+    // ======================================================
+    // RELOAD
+    // ======================================================
 
     public void Reload()
     {
         if (!IsOwner) return;
 
-        // reload почти всегда gameplay → сервер
-        if (rightHand is ILocalOnlyUsable)
-            return;
-
         if (IsServerInitialized)
         {
-            ServerReload_Exec();
+            (rightHand as IServerUsable)?.ServerReload();
             return;
         }
 
@@ -147,32 +161,27 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void Reload_Server() => ServerReload_Exec();
-
-    // ✅ реально выполняется ТОЛЬКО на сервере (и на хосте)
-    private void ServerReload_Exec()
+    private void Reload_Server()
     {
-        if (rightHand is IReloadable r)
-            r.OnReloadPressed();
+        (rightHand as IServerUsable)?.ServerReload();
     }
 
-    // ================= UPDATE =================
+    // ======================================================
+    // UPDATE
+    // ======================================================
 
     private void Update()
     {
-        // SERVER authoritative tick (gameplay)
+        // SERVER authoritative tick
         if (IsServerInitialized)
         {
             if (serverPrimaryHeld)
-                rightHand?.OnUsePrimary_Hold();
-
-            if (serverSecondaryHeld)
-                rightHand?.OnUseSecondary_Hold();
-
-            return;
+            {
+                (rightHand as IServerUsable)?.ServerPrimaryHold();
+            }
         }
 
-        // CLIENT owner tick (FX + aim)
+        // CLIENT owner tick
         if (!IsOwner)
             return;
 
@@ -185,6 +194,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (clientPrimaryHeld || clientSecondaryHeld)
             SendAimToServerThrottled();
     }
+
+    // ======================================================
+    // AIM
+    // ======================================================
 
     private void SendAimToServerThrottled()
     {
@@ -204,7 +217,11 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private void UpdateAim_Server(Vector3 origin, Vector3 forward)
     {
         serverAimOrigin = origin;
-        serverAimForward = forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.forward;
+        serverAimForward =
+            forward.sqrMagnitude > 0.0001f
+                ? forward.normalized
+                : Vector3.forward;
+
         hasServerAim = true;
     }
 }

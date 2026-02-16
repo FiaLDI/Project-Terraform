@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: AbilityLibrary
   m_EditorClassIdentifier: Assembly-CSharp::AbilityLibrarySO
   abilities:
-  - {fileID: 11400000, guid: cd3d053f16cd1754cab26de7a5fd1801, type: 2}
-  - {fileID: 11400000, guid: 00dc3ae3775acae4b850ce8abecd76c8, type: 2}
-  - {fileID: 11400000, guid: 4538c64d06fd4ba4da4265c9dd516bac, type: 2}
-  - {fileID: 11400000, guid: dcfad4cced3d5674ebd56387576f2ca7, type: 2}
-  - {fileID: 11400000, guid: 716f1ca509d1bfb40ac40122c46cac1e, type: 2}
+  - {fileID: 11400000, guid: 70a4341b8e00a504f8903a703e98a948, type: 2}
+  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
+  - {fileID: 11400000, guid: 9f25a008bd763d545acb2fbc496a20b4, type: 2}
+  - {fileID: 11400000, guid: eae8961d2454e974c812d4f8dde3c4ed, type: 2}
+  - {fileID: 11400000, guid: 666fffec4936baa4fa05506260cf0716, type: 2}

@@ -42,6 +42,8 @@ namespace Features.Equipment.UnityIntegration
 
         private bool initialized;
 
+        private EquipmentItemBuffApplier buffApplier;
+
         // ======================================================
         // UNITY
         // ======================================================
@@ -51,6 +53,7 @@ namespace Features.Equipment.UnityIntegration
             anim = GetComponent<PlayerAnimationController>();
             usageLocal = GetComponent<PlayerUsageController>();
             usageNet = GetComponent<PlayerUsageNetAdapter>();
+            buffApplier = GetComponent<EquipmentItemBuffApplier>();
         }
 
         private void OnDestroy()
@@ -142,10 +145,14 @@ namespace Features.Equipment.UnityIntegration
 
         private void EquipRightHand(ItemInstance inst)
         {
+            buffApplier?.Remove();
+
             ClearRightHand();
 
             if (inst == null || inst.itemDefinition == null)
                 return;
+
+            buffApplier?.Apply(inst);
 
             InstantiateEquippedItem(
                 inst,
@@ -155,8 +162,10 @@ namespace Features.Equipment.UnityIntegration
             );
         }
 
-        private void ClearRightHand()
+       private void ClearRightHand()
         {
+            buffApplier?.Remove();
+
             if (currentRightHandObject != null)
                 Destroy(currentRightHandObject);
 
@@ -243,20 +252,19 @@ namespace Features.Equipment.UnityIntegration
 
             usable = obj.GetComponent<IUsable>();
 
-            // ✅ Камеру/Initialize даём только локальному владельцу
             var cam = GetLocalCameraOrNull();
 
-            // Оружие имеет свою инициализацию (inventory + camera)
             var weapon = obj.GetComponent<WeaponController>();
             if (weapon != null)
             {
                 weapon.Setup(inst);
                 weapon.Init(inventory);
+
                 if (cam != null)
                     weapon.Initialize(cam);
+
                 return;
             }
-
             // Остальные usable
             if (usable != null && cam != null)
                 usable.Initialize(cam);

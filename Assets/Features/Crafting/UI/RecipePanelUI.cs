@@ -106,7 +106,8 @@ public class RecipePanelUI : MonoBehaviour
         upgradeInfoText.text =
             $"Current: Lv {inst.level}\n" +
             $"Next: Lv {inst.level + 1}\n" +
-            next.ToStatsText();
+            FormatUpgrade(next);
+
 
         upgradePreviewIcon.sprite =
             next.UpgradedIcon != null ? next.UpgradedIcon : def.icon;
@@ -229,7 +230,8 @@ public class RecipePanelUI : MonoBehaviour
         upgradeInfoText.text =
             $"Current: Lv {inst.level}\n" +
             $"Next: Lv {inst.level + 1}\n" +
-            next.ToStatsText();
+            FormatUpgrade(next);
+
 
         upgradePreviewIcon.sprite =
             next.UpgradedIcon != null ? next.UpgradedIcon : def.icon;
@@ -243,5 +245,37 @@ public class RecipePanelUI : MonoBehaviour
 
         Debug.Log($"[RecipePanelUI] Not enough ingredients for recipe: {recipe.name}");
     }
+
+    private string FormatUpgrade(ItemUpgradeData upgrade)
+    {
+        if (upgrade == null || upgrade.levelBuffs == null)
+            return "";
+
+        System.Text.StringBuilder sb = new();
+
+        foreach (var buff in upgrade.levelBuffs)
+        {
+            if (buff == null)
+                continue;
+
+            foreach (var effect in buff.effects)
+            {
+                if (effect is AddStatEffectSO add)
+                {
+                    string sign = add.value >= 0 ? "+" : "";
+                    sb.AppendLine($"{sign}{add.value} {add.statId}");
+                }
+                else if (effect is MultiplyStatEffectSO mult)
+                {
+                    float percent = (mult.Multiplier - 1f) * 100f;
+                    string sign = percent >= 0 ? "+" : "";
+                    sb.AppendLine($"{sign}{percent:0.#}% {mult.StatId}");
+                }
+            }
+        }
+
+        return sb.ToString();
+    }
+
 
 }

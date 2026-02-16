@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
+using Features.Buffs.Domain;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using FishNet.Object;
@@ -22,15 +23,14 @@ namespace Features.Abilities.Application
         [SerializeField] private AbilitySO[] abilities = new AbilitySO[5];
         public IReadOnlyList<AbilitySO> Abilities => abilities;
 
-        [Header("Auto refs")]
-        public LayerMask groundMask;
-        public AbilityExecutor executor;
-
         [Header("Library")]
         [SerializeField] private AbilityLibrarySO abilityLibrary;
 
         [Header("Network Sync")]
         [SerializeField] private float cooldownSyncInterval = 0.5f;
+
+        [Header("Auto refs")]
+        public LayerMask groundMask;
 
         // =====================================================
         // STATE
@@ -43,6 +43,7 @@ namespace Features.Abilities.Application
         private IEnergyStats energy;
         private AbilityService service;
         private ServerGamePhase phase;
+        private IBuffSource buffSource;
 
         public bool IsReady { get; private set; }
         public IEnergyStats Energy => energy;
@@ -66,9 +67,18 @@ namespace Features.Abilities.Application
         private void Awake()
         {
             phase = GetComponent<ServerGamePhase>();
+
             if (phase == null)
             {
                 Debug.LogError("[AbilityCaster] ServerGamePhase missing", this);
+                enabled = false;
+                return;
+            }
+
+            buffSource = GetComponent<IBuffSource>();
+            if (buffSource == null)
+            {
+                Debug.LogError("[AbilityCaster] IBuffSource missing", this);
                 enabled = false;
                 return;
             }
@@ -115,13 +125,11 @@ namespace Features.Abilities.Application
                 return;
             }
 
-            executor ??= AbilityExecutor.Instance;
-
             service = new AbilityService(
-                owner: gameObject,
+                owner: buffSource,
                 energy: energy,
                 groundMask: groundMask,
-                executor: executor
+                executor: AbilityExecutor.Instance
             );
 
             BindServiceEvents(service);
@@ -129,11 +137,14 @@ namespace Features.Abilities.Application
             if (abilityLibrary == null)
             {
                 abilityLibrary = UnityEngine.Resources.Load<AbilityLibrarySO>("Databases/AbilityLibrary");
+
                 if (abilityLibrary == null)
                     Debug.LogError("[AbilityCaster] AbilityLibrary not found", this);
             }
 
             IsReady = true;
+
+            OnAbilitiesChanged?.Invoke();
 
             Debug.Log("[AbilityCaster] READY → AbilitiesReady", this);
             phase.Reach(GamePhase.AbilitiesReady);

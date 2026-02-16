@@ -1,4 +1,5 @@
 using UnityEngine;
+using Features.Buffs.Domain;
 
 [CreateAssetMenu(menuName = "Items/Upgrade Data")]
 public class ItemUpgradeData : ScriptableObject
@@ -9,6 +10,7 @@ public class ItemUpgradeData : ScriptableObject
     [Header("UI")]
     public Sprite UpgradedIcon;
 
-    [Header("Stat Bonuses")]
-    public ItemStat[] bonusStats;
+    [Header("Buffs")]
+    public BuffSO[] levelBuffs;
 }
+

@@ -1,9 +1,12 @@
-using Features.Buffs.Domain;
 using UnityEngine;
+using Features.Effects.Domain;
 
 namespace Features.Abilities.Domain
 {
-    public abstract class AbilitySO : ScriptableObject, IBuffSource
+    [CreateAssetMenu(
+        fileName = "Ability",
+        menuName = "Game/Abilities/Ability")]
+    public sealed class AbilitySO : ScriptableObject
     {
         [Header("Identity")]
         public string id;
@@ -11,21 +14,19 @@ namespace Features.Abilities.Domain
 
         [Header("UI")]
         public Sprite icon;
-        public Sprite buffIcon;
 
-        [Header("Description")]
-        [TextArea(3, 5)]
+        [TextArea(2, 4)]
         public string description;
 
         [Header("Costs & Cooldowns")]
         public float energyCost = 20f;
         public float cooldown = 12f;
 
-        [Header("Cast Settings")]
-        public AbilityTarget targetType = AbilityTarget.Self;
+        [Header("Cast")]
         public AbilityCastType castType = AbilityCastType.Instant;
-
-        [Tooltip("Время каста для Channel-способностей")]
         public float castTime = 0f;
+
+        [Header("Effects")]
+        public EffectDefinition[] effects;
     }
 }

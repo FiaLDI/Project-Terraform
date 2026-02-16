@@ -237,7 +237,7 @@ public class EnemyEditorWindow : EditorWindow
         // REQUIRED RUNTIME SYSTEMS
         Ensure<EnemyStats>(clone).GetComponent<EnemyStats>().enabled = true;
         Ensure<EnemyActor>(clone);
-        Ensure<EnemyBuffTarget>(clone);
+        Ensure<StatsBuffTarget>(clone);
         Ensure<UnifiedStatsUpdateSystem>(clone);
         Ensure<EnemyHealth>(clone);
 

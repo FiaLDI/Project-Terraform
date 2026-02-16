@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 503690937475818786}
   - component: {fileID: 3026337386978786040}
   - component: {fileID: 6055935766141965224}
+  - component: {fileID: 590685161633467051}
   m_Layer: 0
   m_Name: DropService
   m_TagString: Untagged
@@ -101,3 +102,18 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 0}
     Scale: {x: 0, y: 0, z: 0}
     IsValid: 0
+--- !u!114 &590685161633467051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3672381010110605241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 455c3c228d723b44fb99013540613b23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileSpawnService
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6055935766141965224}
+  _networkObjectCache: {fileID: 0}

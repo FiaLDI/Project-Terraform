@@ -1,7 +1,7 @@
 using UnityEngine;
-using Features.Combat.Domain;
 using Features.Weapons.Domain;
 using Features.Items.Data;
+using Features.Effects.Domain;
 
 namespace Features.Weapons.Data
 {
@@ -18,14 +18,8 @@ namespace Features.Weapons.Data
         public FireMode fireMode = FireMode.Semi;
         public int burstCount = 3;
 
-        [Header("Damage")]
+        [Header("Damage Base (used by effects)")]
         public float damage = 20f;
-        public DamageType damageType = DamageType.Ballistic;
-
-        [Space]
-        public float headMultiplier = 2.0f;
-        public float limbMultiplier = 0.75f;
-        public float armorPenetration = 0.2f;
 
         [Header("Recoil")]
         public float verticalRecoil = 1.5f;
@@ -53,15 +47,15 @@ namespace Features.Weapons.Data
         [Header("Projectile (Optional)")]
         public ProjectileConfig projectileConfig;
 
-        [Header("Melee (Optional)")]
-        public float meleeRange = 2f;
-        public float meleeDamage = 35f;
-        public float meleeAngle = 55f;    // Cone hit
-        public float meleeImpactForce = 5f;
-
         [Header("FX")]
         public GameObject muzzleFlashFX;
         public GameObject hitFX;
         public GameObject bloodFX;
+
+        [Header("Fire Effects")]
+        public EffectDefinition[] fireEffects;
+
+        [Header("Melee Effects")]
+        public EffectDefinition[] meleeEffects;
     }
 }

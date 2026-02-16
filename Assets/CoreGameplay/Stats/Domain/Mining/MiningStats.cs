@@ -1,63 +1,36 @@
-using Features.Buffs.Domain;
-
 namespace Features.Stats.Domain
 {
-    public class MiningStats : IMiningStats
+    public sealed class MiningStats : IMiningStats, IStatModifierTarget
     {
-        // База
-        private float _basePower;
+        public static readonly StatKey MiningPowerKey = StatKeys.MiningPower;
 
-        // Баффы
-        private float _addBonus = 0f;
-        private float _multBonus = 1f;
+        private float _base;
+        private float _add;
+        private float _mult = 1f;
 
-        // Финальное значение
-        public float MiningPower { get; private set; }
+        public float MiningPower => (_base + _add) * _mult;
 
-        public void ApplyBase(float pwr)
+        public void ApplyBase(float power) => _base = power;
+
+        public bool TryAdd(StatKey key, float value)
         {
-            _basePower = pwr;
-            Recalc();
+            if (key.Id != MiningPowerKey.Id) return false;
+            _add += value;
+            return true;
         }
 
-        public void ApplyBuff(BuffSO cfg, bool apply)
+        public bool TryMultiply(StatKey key, float mult)
         {
-            if (cfg == null) return;
-
-            float sign = apply ? 1f : -1f;
-
-            switch (cfg.modType)
-            {
-                case BuffModType.Add:
-                    _addBonus += cfg.value * sign;
-                    break;
-
-                case BuffModType.Mult:
-                    if (apply)
-                        _multBonus *= cfg.value;
-                    else if (cfg.value != 0f)
-                        _multBonus /= cfg.value;
-                    break;
-
-                case BuffModType.Set:
-                    _multBonus = apply ? cfg.value : 1f;
-                    break;
-            }
-
-            Recalc();
+            if (key.Id != MiningPowerKey.Id) return false;
+            _mult *= mult;
+            return true;
         }
 
-        private void Recalc()
-        {
-            MiningPower = (_basePower + _addBonus) * _multBonus;
-            if (MiningPower < 0f)
-                MiningPower = 0f;
-        }
         public void Reset()
         {
-            _basePower = 1f;
-            _addBonus = 0f;
-            _multBonus = 1f;
+            _base = 0f;
+            _add = 0f;
+            _mult = 1f;
         }
     }
 }

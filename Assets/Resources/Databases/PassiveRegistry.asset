@@ -13,6 +13,4 @@ MonoBehaviour:
   m_Name: PassiveRegistry
   m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.Data.PassiveRegistrySO
   allPassives:
-  - {fileID: 11400000, guid: e497cbe8c9ed9ab42a224730970ee31f, type: 2}
-  - {fileID: 11400000, guid: 46d2df12eb2d6e745aa306b4d2a19b6a, type: 2}
-  - {fileID: 11400000, guid: 40c171f4028e3914f906158433749fe8, type: 2}
+  - {fileID: 11400000, guid: 567f67ac3af28ad4e9e3629be706bd9e, type: 2}

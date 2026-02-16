@@ -1,10 +1,10 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using Features.Items.Domain;
 using Features.Abilities.Domain;
 using Features.Buffs.Domain;
-using Features.Buffs.Application;
+using Features.Items.Domain;
+using Features.Stats.Domain;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Features.Menu.Tooltip
 {
@@ -25,7 +25,6 @@ namespace Features.Menu.Tooltip
         private Canvas canvas;
         private bool isVisible;
 
-        // последняя позиция указателя в экранных координатах
         private Vector2? lastPointerPosition;
 
         // =====================================================
@@ -84,26 +83,26 @@ namespace Features.Menu.Tooltip
                 out Vector2 localPos
             );
 
-            float width  = rect.rect.width;
+            float width = rect.rect.width;
             float height = rect.rect.height;
 
-            Vector2 offset    = new Vector2(20f, height * 0.5f + 20f);
+            Vector2 offset = new Vector2(20f, height * 0.5f + 20f);
             Vector2 targetPos = localPos + offset;
 
             Vector2 canvasSize = canvasRect.rect.size;
-            float halfW = width  * 0.5f;
+            float halfW = width * 0.5f;
             float halfH = height * 0.5f;
 
             targetPos.x = Mathf.Clamp(
                 targetPos.x,
                 -canvasSize.x / 2f + halfW + 10f,
-                canvasSize.x  / 2f - halfW - 10f
+                canvasSize.x / 2f - halfW - 10f
             );
 
             targetPos.y = Mathf.Clamp(
                 targetPos.y,
                 -canvasSize.y / 2f + halfH + 10f,
-                canvasSize.y  / 2f - halfH - 10f
+                canvasSize.y / 2f - halfH - 10f
             );
 
             rect.anchoredPosition = targetPos;
@@ -120,36 +119,123 @@ namespace Features.Menu.Tooltip
                 Hide();
                 return;
             }
-            Debug.Log($"[Tooltip] Show item={inst.itemDefinition.id} lvl={inst.level} qty={inst.quantity}");
 
             currentOwner = owner;
 
             var def = inst.itemDefinition;
-            icon.sprite      = def.icon;
-            title.text       = def.itemName;
+
+            icon.sprite = def.icon;
+            title.text = def.itemName;
             description.text = def.description;
-            stats.text       = "";
+            stats.text = "";
 
-            // Level
-            if (inst.level > 0 && def.upgrades != null &&
-                inst.level <= def.upgrades.Length)
+            // LEVEL
+            if (inst.level > 0)
+                stats.text += $"<color=#FFD700>Level {inst.level}</color>\n\n";
+
+            // BASE BUFFS
+            if (def.equippedBuffs != null)
             {
-                stats.text += $"<color=#FFD700>Level {inst.level}</color>\n";
+                foreach (var buff in def.equippedBuffs)
+                    AppendBuff(buff);
+            }
 
-                var up = def.upgrades[inst.level - 1];
-                if (up != null)
+            // UPGRADE BUFFS
+            if (def.upgrades != null &&
+                inst.level >= 0 &&
+                inst.level < def.upgrades.Length)
+            {
+                var upgrade = def.upgrades[inst.level];
+
+                if (upgrade != null && upgrade.levelBuffs != null)
                 {
-                    foreach (var b in up.bonusStats)
-                        stats.text += $"{b.stat}: +{b.value}\n";
+                    stats.text += "\n";
+                    foreach (var buff in upgrade.levelBuffs)
+                        AppendBuff(buff);
                 }
             }
 
-            // Stack
             if (def.isStackable)
                 stats.text += $"\nStack: {inst.quantity}/{def.maxStackAmount}";
 
             Show();
         }
+
+        private void AppendBuff(BuffSO buff)
+        {
+            if (buff == null)
+                return;
+
+            foreach (var effect in buff.effects)
+            {
+                stats.text += FormatEffect(effect) + "\n";
+            }
+        }
+
+        private string FormatEffect(BuffEffectSO effect)
+        {
+            switch (effect)
+            {
+                case AddStatEffectSO add:
+                    return FormatAdd(add);
+
+                case MultiplyStatEffectSO mult:
+                    return FormatMultiply(mult);
+
+                default:
+                    return effect.name;
+            }
+        }
+
+        private string FormatAdd(AddStatEffectSO add)
+        {
+            string statName = GetStatDisplayName(add.statId);
+
+            string sign = add.value >= 0 ? "+" : "";
+            string color = add.value >= 0 ? "#55FF55" : "#FF5555";
+
+            return $"<color={color}>{sign}{add.value}</color> {statName}";
+        }
+
+
+        private string FormatMultiply(MultiplyStatEffectSO mult)
+        {
+            string statName = GetStatDisplayName(mult.StatId);
+
+            float percent = (mult.Multiplier - 1f) * 100f;
+            string sign = percent >= 0 ? "+" : "";
+            string color = percent >= 0 ? "#55FF55" : "#FF5555";
+
+            return $"<color={color}>{sign}{percent:0.#}%</color> {statName}";
+        }
+
+        private string GetStatDisplayName(string id)
+        {
+            return id switch
+            {
+                "combat.damage.mult" => "Damage",
+                "combat.fireRate" => "Fire Rate",
+                "combat.spread" => "Spread",
+                "combat.aimSpread" => "Aim Spread",
+                "combat.range" => "Range",
+                "combat.recoil" => "Recoil",
+                "combat.magazine" => "Magazine Size",
+
+                "health.max" => "Max HP",
+                "health.regen" => "HP Regen",
+
+                "energy.max" => "Max Energy",
+                "energy.regen" => "Energy Regen",
+
+                "move.walk" => "Walk Speed",
+                "move.sprint" => "Sprint Speed",
+
+                "mining.power" => "Mining Power",
+
+                _ => id
+            };
+        }
+
 
         // =====================================================
         // ABILITY TOOLTIP
@@ -165,10 +251,10 @@ namespace Features.Menu.Tooltip
 
             currentOwner = ability;
 
-            icon.sprite      = ability.icon;
-            title.text       = ability.displayName;
+            icon.sprite = ability.icon;
+            title.text = ability.displayName;
             description.text = ability.description;
-            stats.text       = "";
+            stats.text = "";
 
             stats.text += $"Energy: {ability.energyCost}\n";
             stats.text += $"Cooldown: {ability.cooldown:0.0}s\n";
@@ -190,13 +276,15 @@ namespace Features.Menu.Tooltip
 
             currentOwner = cfg;
 
-            icon.sprite      = cfg.icon;
-            title.text       = cfg.displayName;
+            icon.sprite = cfg.icon;
+            title.text = cfg.displayName;
             description.text = cfg.description;
+            stats.text = cfg.isDebuff
+                ? "<color=#FF5555>Debuff</color>"
+                : "<color=#55FF55>Buff</color>";
 
-            stats.text =
-                $"{cfg.stat} {cfg.modType} {cfg.value}\n" +
-                (cfg.isDebuff ? "<color=red>Debuff</color>" : "");
+            foreach (var effect in cfg.effects)
+                stats.text += "\n" + FormatEffect(effect);
 
             Show();
         }

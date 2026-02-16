@@ -1,33 +1,54 @@
-using Features.Stats.Data;
-
 namespace Features.Stats.Domain
 {
-    public class StatsFacade : IStatsFacade, IStatsCollection
+    public sealed class StatsFacade : IStatsFacade
     {
-        public ICombatStats Combat { get; }
-        public IEnergyStats Energy { get; }
         public IHealthStats Health { get; }
+        public IEnergyStats Energy { get; }
+        public ICombatStats Combat { get; }
         public IMovementStats Movement { get; }
         public IMiningStats Mining { get; }
 
-        public StatsFacade(StatsProfileSO profile)
+        private readonly IStatModifierTarget[] _targets;
+
+        public StatsFacade(
+            IHealthStats health,
+            IEnergyStats energy,
+            ICombatStats combat,
+            IMovementStats movement,
+            IMiningStats mining)
         {
-            if (profile.hasCombat)
-                Combat = profile.useTurretCombat
-                    ? new TurretCombatStats()
-                    : new CombatStats();
+            Health = health;
+            Energy = energy;
+            Combat = combat;
+            Movement = movement;
+            Mining = mining;
 
-            if (profile.hasEnergy)
-                Energy = new EnergyStats();
+            _targets = new IStatModifierTarget[]
+            {
+                health as IStatModifierTarget,
+                energy as IStatModifierTarget,
+                combat as IStatModifierTarget,
+                movement as IStatModifierTarget,
+                mining as IStatModifierTarget
+            };
+        }
 
-            if (profile.hasHealth)
-                Health = new HealthStats();
+        public bool TryAdd(StatKey key, float value)
+        {
+            foreach (var t in _targets)
+                if (t != null && t.TryAdd(key, value))
+                    return true;
 
-            if (profile.hasMovement)
-                Movement = new MovementStats();
+            return false;
+        }
 
-            if (profile.hasMining)
-                Mining = new MiningStats();
+        public bool TryMultiply(StatKey key, float multiplier)
+        {
+            foreach (var t in _targets)
+                if (t != null && t.TryMultiply(key, multiplier))
+                    return true;
+
+            return false;
         }
 
         public void ResetAll()
@@ -38,7 +59,5 @@ namespace Features.Stats.Domain
             Movement?.Reset();
             Mining?.Reset();
         }
-
-        public void Tick(float dt) { }
     }
 }

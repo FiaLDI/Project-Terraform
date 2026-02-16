@@ -29,13 +29,27 @@ public sealed class LocalPlayerController : MonoBehaviour
 
     private void OnEnable()
     {
-        NetworkPlayer.OnLocalPlayerSpawned += Bind;
+        PlayerRegistry.SubscribeLocalPlayerReady(OnLocalReady);
     }
 
     private void OnDisable()
     {
-        NetworkPlayer.OnLocalPlayerSpawned -= Bind;
+        PlayerRegistry.UnsubscribeLocalPlayerReady(OnLocalReady);
     }
+
+    private void OnLocalReady(PlayerRegistry reg)
+    {
+        var player = reg.LocalPlayer;
+        if (player == null)
+            return;
+
+        var net = player.GetComponent<NetworkPlayer>();
+        if (net == null || !net.IsOwner)
+            return;
+
+        Bind(net);
+    }
+
 
     // ======================================================
     // BIND / UNBIND

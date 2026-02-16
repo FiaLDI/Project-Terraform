@@ -1,7 +1,8 @@
 using FishNet.Object;
 using UnityEngine;
-using Features.Combat.Application;
-using Features.Combat.Domain;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
 using Features.Weapons.Domain;
 
 [RequireComponent(typeof(Collider))]
@@ -9,12 +10,9 @@ using Features.Weapons.Domain;
 public sealed class ProjectileNetwork : NetworkBehaviour
 {
     private ProjectileConfig cfg;
-    private CombatService combat;
-
     private Rigidbody rb;
     private float lifeTimer;
-
-    private int ownerObjectId = -1;
+    private NetworkObject owner;
 
     public override void OnStartNetwork()
     {
@@ -23,12 +21,10 @@ public sealed class ProjectileNetwork : NetworkBehaviour
     }
 
     [Server]
-    public void InitServer(ProjectileConfig config, NetworkObject owner)
+    public void InitServer(ProjectileConfig config, NetworkObject ownerObj)
     {
         cfg = config;
-        combat = CombatServiceProvider.Service;
-
-        ownerObjectId = owner != null ? owner.ObjectId : -1;
+        owner = ownerObj;
 
         rb.isKinematic = false;
         rb.useGravity = cfg.useGravity;
@@ -36,7 +32,6 @@ public sealed class ProjectileNetwork : NetworkBehaviour
 
         lifeTimer = cfg.lifetime;
 
-        // по желанию: игнор коллизии со всеми коллайдерами владельца
         if (owner != null)
         {
             var ownerCols = owner.GetComponentsInChildren<Collider>(true);
@@ -61,36 +56,29 @@ public sealed class ProjectileNetwork : NetworkBehaviour
         if (!IsServerInitialized || cfg == null)
             return;
 
-        // маска попаданий
         if ((cfg.hitMask.value & (1 << other.gameObject.layer)) == 0)
             return;
 
-        // защита от самопопадания по NetworkObject
-        if (ownerObjectId != -1)
+        if (!other.TryGetComponent<IBuffTarget>(out var target))
+            return;
+
+        var ctx = new EffectContext(
+            owner != null ? owner.GetComponent<IBuffSource>() : null,
+            new[] { target },
+            transform.position,
+            rb.linearVelocity.normalized
+        );
+
+        var def = new EffectDefinition
         {
-            var otherNet = other.GetComponentInParent<FishNet.Object.NetworkObject>();
-            if (otherNet != null && otherNet.ObjectId == ownerObjectId)
-                return;
-        }
+            type = EffectType.DealDamage,
+            value = cfg.damage,
+            targetMode = TargetMode.Self
+        };
 
-        var target = other.GetComponentInParent<IDamageable>();
-        if (target != null)
-        {
-            var dir = rb.linearVelocity.sqrMagnitude > 0.0001f ? rb.linearVelocity.normalized : transform.forward;
+        EffectExecutor.Instance.Execute(def, ctx);
 
-            var hit = new HitInfo
-            {
-                damage = cfg.damage,
-                type = cfg.damageType,
-                point = transform.position,
-                direction = dir
-            };
-
-            // ✅ ТОЛЬКО ЭТО. НИКАКОГО target.TakeDamage ниже!
-            combat.ApplyDamage(target, hit, DamageModifiers.Default);
-        }
-
-        RpcPlayHitFx(transform.position, rb.linearVelocity.sqrMagnitude > 0.0001f ? rb.linearVelocity.normalized : transform.forward);
+        RpcPlayHitFx(transform.position, rb.linearVelocity.normalized);
 
         if (cfg.destroyOnHit)
             Despawn();
