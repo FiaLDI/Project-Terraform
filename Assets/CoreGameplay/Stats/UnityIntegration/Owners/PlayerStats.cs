@@ -127,12 +127,12 @@ namespace Features.Stats.UnityIntegration
             {
                 Facade.Combat.ApplyBase(
                     preset.combat.baseDamageMultiplier,
-                    fireRate: 6f,
-                    spread: 2f,
-                    aimSpread: 0.5f,
-                    recoil: 1f,
-                    range: 100f,
-                    magazineSize: 30
+                    preset.combat.baseFireRate, 
+                    preset.combat.baseRange,
+                    preset.combat.baseSpread,
+                    preset.combat.baseAimSpread,
+                    preset.combat.baseRecoil,
+                    preset.combat.baseMagazineSize
                 );
             }
 
