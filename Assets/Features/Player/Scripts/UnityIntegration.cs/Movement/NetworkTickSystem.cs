@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public sealed class NetworkTickSystem : MonoBehaviour
 {
@@ -6,6 +7,8 @@ public sealed class NetworkTickSystem : MonoBehaviour
 
     public const int TickRate = 60;
     public const float TickDelta = 1f / TickRate;
+
+    public static event Action OnTick;
 
     public int CurrentTick { get; private set; }
 
@@ -24,6 +27,7 @@ public sealed class NetworkTickSystem : MonoBehaviour
         {
             _accumulator -= TickDelta;
             CurrentTick++;
+            OnTick?.Invoke();
         }
     }
 }

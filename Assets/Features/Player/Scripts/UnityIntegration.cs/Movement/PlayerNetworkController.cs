@@ -4,17 +4,31 @@ using UnityEngine;
 using System.Collections.Generic;
 using Features.Player.UnityIntegration;
 
+[RequireComponent(typeof(DeterministicMovement))]
 public class PlayerNetworkController : NetworkBehaviour
 {
     private DeterministicMovement movement;
     private MovementInputHandler inputHandler;
 
-    private Dictionary<int, MoveCommand> inputBuffer = new();
-    private Dictionary<int, PlayerState> stateBuffer = new();
+    private readonly Dictionary<int, MoveCommand> inputBuffer = new();
+    private readonly Dictionary<int, PlayerState> stateBuffer = new();
+
+    private const float HardCorrectionThreshold = 0.5f;
 
     private void Awake()
     {
         movement = GetComponent<DeterministicMovement>();
+    }
+
+    public void InjectInput(MovementInputHandler handler)
+    {
+        inputHandler = handler;
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        movement.IsServerAuthority = true;
     }
 
     public override void OnStartClient()
@@ -22,20 +36,23 @@ public class PlayerNetworkController : NetworkBehaviour
         base.OnStartClient();
 
         if (IsOwner)
-        {
-            inputHandler = FindObjectOfType<MovementInputHandler>();
             GetComponent<PlayerCameraController>()?.SetLocal(true);
-        }
+
+        NetworkTickSystem.OnTick += OnTick;
     }
 
-    private void FixedUpdate()
+    private void OnDestroy()
+    {
+        NetworkTickSystem.OnTick -= OnTick;
+    }
+
+    private void OnTick()
     {
         if (!IsOwner || inputHandler == null)
             return;
 
-        var input = inputHandler.CurrentState;
-
         int tick = NetworkTickSystem.I.CurrentTick;
+        var input = inputHandler.CurrentState;
 
         MoveCommand cmd = new MoveCommand
         {
@@ -45,7 +62,9 @@ public class PlayerNetworkController : NetworkBehaviour
             Jump = input.Jump
         };
 
-        movement.Simulate(cmd);
+        // CLIENT prediction
+        if (!IsServer)
+            movement.Simulate(cmd);
 
         inputBuffer[tick] = cmd;
 
@@ -64,18 +83,13 @@ public class PlayerNetworkController : NetworkBehaviour
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
-        // ❗ Хост уже симулировал
-        if (IsOwner && IsServer)
-            return;
-
         movement.Simulate(cmd);
 
         PlayerState state = new PlayerState
         {
             Tick = cmd.Tick,
             Position = transform.position,
-            Velocity = movement.Velocity,
-            Yaw = cmd.Yaw
+            Velocity = movement.Velocity
         };
 
         SendStateTargetRpc(Owner, state);
@@ -88,40 +102,32 @@ public class PlayerNetworkController : NetworkBehaviour
         if (IsOwner)
             return;
 
-        GetComponent<RemoteInterpolation>()?.ReceiveState(state);
+        GetComponentInChildren<RemoteInterpolation>()
+            ?.ReceiveState(state);
     }
 
     [TargetRpc]
     private void SendStateTargetRpc(NetworkConnection conn, PlayerState serverState)
     {
-        if (IsServer)
-            return;
-
         if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
             return;
 
-        float error = Vector3.Distance(
-            predicted.Position,
-            serverState.Position);
+        float error = Vector3.Distance(predicted.Position, serverState.Position);
 
-        if (error > 0.05f)
+        // ignore micro errors
+        if (error < HardCorrectionThreshold)
+            return;
+
+        // HARD SNAP
+        transform.position = serverState.Position;
+        movement.Velocity = serverState.Velocity;
+
+        int currentTick = NetworkTickSystem.I.CurrentTick;
+
+        for (int t = serverState.Tick + 1; t <= currentTick; t++)
         {
-            transform.position = serverState.Position;
-            movement.Velocity = serverState.Velocity;
-
-            int currentTick = NetworkTickSystem.I.CurrentTick;
-
-            for (int t = serverState.Tick + 1; t <= currentTick; t++)
-            {
-                if (inputBuffer.TryGetValue(t, out var cmd))
-                    movement.Simulate(cmd);
-            }
+            if (inputBuffer.TryGetValue(t, out var cmd))
+                movement.Simulate(cmd);
         }
     }
-
-    public void InjectInput(MovementInputHandler handler)
-    {
-        inputHandler = handler;
-    }
-
 }

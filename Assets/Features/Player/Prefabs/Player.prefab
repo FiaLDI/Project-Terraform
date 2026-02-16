@@ -265,6 +265,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5017748270277261448}
+  - component: {fileID: 2647050478538188210}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -287,6 +288,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8962433313233342359}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2647050478538188210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7012883752185838559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7d262246e3e2484280cf0902c5c4b2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RemoteInterpolation
 --- !u!1 &7080974837919910924
 GameObject:
   m_ObjectHideFlags: 0
@@ -368,7 +381,6 @@ GameObject:
   - component: {fileID: 2072067561037810914}
   - component: {fileID: 211343894895838769}
   - component: {fileID: -4040251124926920918}
-  - component: {fileID: 1116651535848630179}
   - component: {fileID: -6385516875607300160}
   - component: {fileID: 3877391097060386938}
   m_Layer: 8
@@ -890,9 +902,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5004d1afa05106a4193cb383b3ef37f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.MovementStateNetwork
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 6311823513652316802}
-  _networkObjectCache: {fileID: 0}
   Speed: 6
   Gravity: -20
   JumpForce: 7
@@ -900,6 +909,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   groundSnapDistance: 0.4
+  IsServerAuthority: 0
   Velocity: {x: 0, y: 0, z: 0}
 --- !u!114 &3277316184608179795
 MonoBehaviour:
@@ -1111,21 +1121,6 @@ MonoBehaviour:
   _componentIndexCache: 18
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
---- !u!114 &1116651535848630179
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7d262246e3e2484280cf0902c5c4b2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RemoteInterpolation
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 6311823513652316802}
-  _networkObjectCache: {fileID: 0}
 --- !u!136 &-6385516875607300160
 CapsuleCollider:
   m_ObjectHideFlags: 0

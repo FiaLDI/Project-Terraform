@@ -1,8 +1,7 @@
-using UnityEngine;
 using System.Collections.Generic;
-using FishNet.Object;
+using UnityEngine;
 
-public class RemoteInterpolation : NetworkBehaviour
+public class RemoteInterpolation : MonoBehaviour
 {
     private struct Snapshot
     {
@@ -12,7 +11,6 @@ public class RemoteInterpolation : NetworkBehaviour
     }
 
     private readonly List<Snapshot> snapshots = new();
-
     private const float InterpDelay = 0.1f;
 
     public void ReceiveState(PlayerState state)
@@ -32,16 +30,12 @@ public class RemoteInterpolation : NetworkBehaviour
 
     private void Update()
     {
-        if (IsOwner)
-            return;
-
         if (snapshots.Count < 2)
             return;
 
         float renderTime =
-            NetworkTickSystem.I.CurrentTick *
-            NetworkTickSystem.TickDelta -
-            InterpDelay;
+            NetworkTickSystem.I.CurrentTick * NetworkTickSystem.TickDelta
+            - InterpDelay;
 
         while (snapshots.Count >= 2 &&
                snapshots[1].Time <= renderTime)
@@ -53,17 +47,14 @@ public class RemoteInterpolation : NetworkBehaviour
             return;
 
         var from = snapshots[0];
-        var to = snapshots[1];
+        var to   = snapshots[1];
 
         float t = Mathf.InverseLerp(from.Time, to.Time, renderTime);
 
-        transform.position =
-            Vector3.Lerp(from.Position, to.Position, t);
+        Vector3 pos = Vector3.Lerp(from.Position, to.Position, t);
+        float yaw   = Mathf.LerpAngle(from.Yaw, to.Yaw, t);
 
-        float rot =
-            Mathf.LerpAngle(from.Yaw, to.Yaw, t);
-
-        transform.rotation =
-            Quaternion.Euler(0f, rot, 0f);
+        transform.position = pos;
+        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
     }
 }
