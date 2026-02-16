@@ -16,7 +16,7 @@ public class DeterministicMovement : MonoBehaviour
 
     [Header("Ground")]
     [SerializeField] private LayerMask groundMask;
-    [SerializeField] private float groundSnapDistance = 0.4f;
+    [SerializeField] private float groundCheckDistance = 0.2f;
 
     public bool IsServerAuthority;
 
@@ -24,19 +24,17 @@ public class DeterministicMovement : MonoBehaviour
     public bool Grounded { get; private set; }
 
     private CapsuleCollider capsule;
-    private NetworkBehaviour networkBehaviour;
 
     private void Awake()
     {
         capsule = GetComponent<CapsuleCollider>();
-        networkBehaviour = GetComponent<NetworkBehaviour>();
     }
 
     public void Simulate(MoveCommand cmd)
     {
         float dt = NetworkTickSystem.TickDelta;
 
-        // ================= ROTATION =================
+        // ROTATION
         currentYaw = Mathf.LerpAngle(
             currentYaw,
             cmd.Yaw,
@@ -45,20 +43,13 @@ public class DeterministicMovement : MonoBehaviour
 
         transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
-        // ================= GROUND CHECK =================
-        bool shouldCheckGround =
-            IsServerAuthority ||
-            networkBehaviour.IsOwner;
+        // GROUND CHECK
+        Grounded = CheckGround();
 
-        if (shouldCheckGround)
-        {
-            Grounded = CheckGround(out RaycastHit hit);
+        if (Grounded && Velocity.y < 0f)
+            Velocity.y = 0f;
 
-            if (Grounded && Velocity.y < 0f)
-                Velocity.y = 0f;
-        }
-
-        // ================= HORIZONTAL =================
+        // HORIZONTAL
         Vector3 moveDir =
             (transform.forward * cmd.Move.y +
              transform.right * cmd.Move.x).normalized;
@@ -68,61 +59,29 @@ public class DeterministicMovement : MonoBehaviour
         Velocity.x = horizontal.x;
         Velocity.z = horizontal.z;
 
-        // ================= JUMP =================
+        // JUMP
         if (Grounded && cmd.Jump)
         {
             Velocity.y = JumpForce;
             Grounded = false;
         }
 
-        // ================= GRAVITY =================
+        // GRAVITY
         if (!Grounded)
             Velocity.y += Gravity * dt;
 
-        // ================= APPLY MOVE =================
+        // APPLY
         transform.position += Velocity * dt;
-
-        // ================= FINAL SNAP =================
-        if (shouldCheckGround)
-        {
-            if (CheckGround(out RaycastHit hit))
-            {
-                Grounded = true;
-
-                if (Velocity.y < 0f)
-                    Velocity.y = 0f;
-
-                // Snap exactly to ground surface
-                float bottomOffset =
-                    capsule.height * 0.5f;
-
-                transform.position = new Vector3(
-                    transform.position.x,
-                    hit.point.y + bottomOffset,
-                    transform.position.z
-                );
-            }
-            else
-            {
-                Grounded = false;
-            }
-        }
     }
 
-    private bool CheckGround(out RaycastHit hit)
+    private bool CheckGround()
     {
-        float radius = capsule.radius * 0.95f;
+        Vector3 origin = transform.position + Vector3.up * 0.1f;
 
-        Vector3 origin =
-            transform.position +
-            Vector3.up * (capsule.height * 0.5f - radius);
-
-        return Physics.SphereCast(
+        return Physics.Raycast(
             origin,
-            radius,
             Vector3.down,
-            out hit,
-            groundSnapDistance,
+            groundCheckDistance,
             groundMask,
             QueryTriggerInteraction.Ignore
         );

@@ -361,7 +361,6 @@ GameObject:
   - component: {fileID: 6311823513652316802}
   - component: {fileID: 187266121288184345}
   - component: {fileID: 273676337467518626}
-  - component: {fileID: 8671413978466710636}
   - component: {fileID: 9183921448104923755}
   - component: {fileID: 5907872678837714149}
   - component: {fileID: 5082500085448155888}
@@ -703,7 +702,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
   <IsNested>k__BackingField: 0
-  WasActiveDuringEdit: 1
+  WasActiveDuringEdit: 0
   WasActiveDuringEdit_Set1: 1
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
@@ -718,7 +717,7 @@ MonoBehaviour:
   - {fileID: 8363241993167751770}
   - {fileID: 187266121288184345}
   - {fileID: 273676337467518626}
-  - {fileID: 8671413978466710636}
+  - {fileID: 0}
   - {fileID: 5907872678837714149}
   - {fileID: 5082500085448155888}
   - {fileID: 3277316184608179795}
@@ -738,7 +737,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584303727817093968
+  _initializedTimestamp: -8584303327828937694
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -792,52 +791,6 @@ MonoBehaviour:
   _componentIndexCache: 8
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
---- !u!114 &8671413978466710636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
-  _componentIndexCache: 9
-  _addedNetworkObject: {fileID: 6311823513652316802}
-  _networkObjectCache: {fileID: 6311823513652316802}
-  _componentConfiguration: 1
-  _synchronizeParent: 0
-  _packing:
-    Position: 1
-    Rotation: 1
-    Scale: 0
-  _useScaledTime: 1
-  _interpolation: 1
-  _extrapolation: 0
-  _enableTeleport: 0
-  _teleportThreshold: 1
-  _clientAuthoritative: 0
-  _sendToOwner: 1
-  _interval: 1
-  _synchronizePosition: 1
-  _positionSensitivity: 0.001
-  _positionSnapping:
-    X: 0
-    Y: 0
-    Z: 0
-  _synchronizeRotation: 1
-  _rotationSnapping:
-    X: 0
-    Y: 1
-    Z: 0
-  _synchronizeScale: 0
-  _scaleSensitivity: 0.001
-  _scaleSnapping:
-    X: 0
-    Y: 0
-    Z: 0
 --- !u!114 &9183921448104923755
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -908,7 +861,7 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  groundSnapDistance: 0.4
+  groundCheckDistance: 0.2
   IsServerAuthority: 0
   Velocity: {x: 0, y: 0, z: 0}
 --- !u!114 &3277316184608179795

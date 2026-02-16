@@ -13,7 +13,8 @@ public class PlayerNetworkController : NetworkBehaviour
     private readonly Dictionary<int, MoveCommand> inputBuffer = new();
     private readonly Dictionary<int, PlayerState> stateBuffer = new();
 
-    private const float HardCorrectionThreshold = 0.5f;
+    private const float IgnoreErrorThreshold = 0.05f;
+    private const float HardSnapThreshold = 2f;
 
     private void Awake()
     {
@@ -27,14 +28,11 @@ public class PlayerNetworkController : NetworkBehaviour
 
     public override void OnStartServer()
     {
-        base.OnStartServer();
         movement.IsServerAuthority = true;
     }
 
     public override void OnStartClient()
     {
-        base.OnStartClient();
-
         if (IsOwner)
             GetComponent<PlayerCameraController>()?.SetLocal(true);
 
@@ -62,11 +60,18 @@ public class PlayerNetworkController : NetworkBehaviour
             Jump = input.Jump
         };
 
-        // CLIENT prediction
-        if (!IsServer)
-            movement.Simulate(cmd);
-
         inputBuffer[tick] = cmd;
+
+        // ===== CLIENT PREDICTION =====
+        if (!IsServer) // обычный клиент
+        {
+            movement.Simulate(cmd);
+        }
+        else if (IsServer && IsOwner) 
+        {
+            // HOST — симулируем ТОЛЬКО ОДИН РАЗ
+            movement.Simulate(cmd);
+        }
 
         stateBuffer[tick] = new PlayerState
         {
@@ -75,15 +80,18 @@ public class PlayerNetworkController : NetworkBehaviour
             Velocity = movement.Velocity
         };
 
-        SendInputServerRpc(cmd);
+        if (!IsServer) // клиент отправляет
+            SendInputServerRpc(cmd);
 
         inputHandler.ClearOneShotFlags();
     }
 
+
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
-        movement.Simulate(cmd);
+        if (!IsOwner) // если это не host
+            movement.Simulate(cmd);
 
         PlayerState state = new PlayerState
         {
@@ -95,6 +103,7 @@ public class PlayerNetworkController : NetworkBehaviour
         SendStateTargetRpc(Owner, state);
         SendStateObserversRpc(state);
     }
+
 
     [ObserversRpc(BufferLast = true)]
     private void SendStateObserversRpc(PlayerState state)
@@ -114,20 +123,20 @@ public class PlayerNetworkController : NetworkBehaviour
 
         float error = Vector3.Distance(predicted.Position, serverState.Position);
 
-        // ignore micro errors
-        if (error < HardCorrectionThreshold)
+        if (error < IgnoreErrorThreshold)
             return;
 
-        // HARD SNAP
-        transform.position = serverState.Position;
-        movement.Velocity = serverState.Velocity;
-
-        int currentTick = NetworkTickSystem.I.CurrentTick;
-
-        for (int t = serverState.Tick + 1; t <= currentTick; t++)
+        if (error > HardSnapThreshold)
         {
-            if (inputBuffer.TryGetValue(t, out var cmd))
-                movement.Simulate(cmd);
+            transform.position = serverState.Position;
+            movement.Velocity = serverState.Velocity;
+            return;
         }
+
+        // SOFT CORRECTION
+        Vector3 delta = serverState.Position - transform.position;
+        transform.position += delta * 0.5f;
+
+        movement.Velocity = serverState.Velocity;
     }
 }

@@ -15,16 +15,16 @@ public class RemoteInterpolation : MonoBehaviour
 
     public void ReceiveState(PlayerState state)
     {
-        float serverTime = state.Tick * NetworkTickSystem.TickDelta;
+        float time = state.Tick * NetworkTickSystem.TickDelta;
 
         snapshots.Add(new Snapshot
         {
-            Time = serverTime,
+            Time = time,
             Position = state.Position,
             Yaw = state.Yaw
         });
 
-        if (snapshots.Count > 32)
+        if (snapshots.Count > 20)
             snapshots.RemoveAt(0);
     }
 
@@ -34,8 +34,8 @@ public class RemoteInterpolation : MonoBehaviour
             return;
 
         float renderTime =
-            NetworkTickSystem.I.CurrentTick * NetworkTickSystem.TickDelta
-            - InterpDelay;
+            NetworkTickSystem.I.CurrentTick *
+            NetworkTickSystem.TickDelta - InterpDelay;
 
         while (snapshots.Count >= 2 &&
                snapshots[1].Time <= renderTime)
@@ -51,10 +51,11 @@ public class RemoteInterpolation : MonoBehaviour
 
         float t = Mathf.InverseLerp(from.Time, to.Time, renderTime);
 
-        Vector3 pos = Vector3.Lerp(from.Position, to.Position, t);
-        float yaw   = Mathf.LerpAngle(from.Yaw, to.Yaw, t);
-
-        transform.position = pos;
-        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        transform.position = Vector3.Lerp(from.Position, to.Position, t);
+        transform.rotation = Quaternion.Euler(
+            0f,
+            Mathf.LerpAngle(from.Yaw, to.Yaw, t),
+            0f
+        );
     }
 }
