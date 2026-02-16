@@ -5,11 +5,6 @@ using Features.Camera.UnityIntegration;
 
 namespace Features.Player.UnityIntegration
 {
-    /// <summary>
-    /// Локальный контроллер камеры игрока.
-    /// Управляет ГЛОБАЛЬНОЙ Unity Camera через CameraRegistry.
-    /// НЕ шлёт RPC, НЕ двигает игрока напрямую.
-    /// </summary>
     public sealed class PlayerCameraController : MonoBehaviour
     {
         [Header("References")]
@@ -26,74 +21,47 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private float collisionRadius = 0.3f;
         [SerializeField] private float minCameraDistance = 0.5f;
 
-        // ===== Runtime =====
         private UnityEngine.Camera unityCamera;
         private Transform cameraTransform;
 
-        // 🔑 Сервис логики камеры
         private ICameraControlService control;
 
         private float currentTpsDistance = 3f;
         private bool isLocal;
 
-        // 🔑 ТОЛЬКО для записи yaw в input state
-        private PlayerMovementNetAdapter movementNet;
-
-        // ======================================================
-        // LIFECYCLE
-        // ======================================================
-
         private void Awake()
         {
             enabled = false;
 
-            control = new CameraControlService();
-            movementNet = GetComponent<PlayerMovementNetAdapter>();
+            // 🔥 Используем глобальный сервис
+            control = CameraServiceProvider.Control;
         }
-
-        private void OnEnable()
-        {
-            ResolveCamera();
-        }
-
-        private void OnDisable()
-        {
-            unityCamera = null;
-            cameraTransform = null;
-        }
-
-        // ======================================================
-        // INPUT (вызывается InputHandler'ом)
-        // ======================================================
 
         public void SetLookInput(Vector2 input)
         {
-            if (!isLocal || cameraTransform == null)
+            if (!isLocal || control == null)
                 return;
 
             control.SetLookInput(input, mouseSensitivity, Time.deltaTime);
 
             float yaw = control.State.Yaw;
 
-            if (movementNet != null)
-                movementNet.SetLookYaw(yaw);
+            // 🔥 Передаём yaw в глобальный MovementInputHandler
+            var handler = FindObjectOfType<MovementInputHandler>();
+            handler?.SetYaw(yaw);
         }
 
         public void SwitchView()
         {
-            if (!isLocal)
+            if (!isLocal || control == null)
                 return;
 
             control.SwitchView();
         }
 
-        // ======================================================
-        // UPDATE
-        // ======================================================
-
         private void LateUpdate()
         {
-            if (!isLocal)
+            if (!isLocal || control == null)
                 return;
 
             if (cameraTransform == null && !ResolveCamera())
@@ -109,10 +77,6 @@ namespace Features.Player.UnityIntegration
                 UpdateTPS(state);
         }
 
-        // ======================================================
-        // FPS
-        // ======================================================
-
         private void UpdateFPS(PlayerCameraState state)
         {
             if (fpsPoint == null)
@@ -123,15 +87,9 @@ namespace Features.Player.UnityIntegration
                 Quaternion.Euler(state.Pitch, state.Yaw, 0f);
 
             if (headTransform != null)
-            {
                 headTransform.localRotation =
                     Quaternion.Euler(state.Pitch, 0f, 0f);
-            }
         }
-
-        // ======================================================
-        // TPS
-        // ======================================================
 
         private void UpdateTPS(PlayerCameraState state)
         {
@@ -168,10 +126,6 @@ namespace Features.Player.UnityIntegration
                 headTransform.rotation = cameraTransform.rotation;
         }
 
-        // ======================================================
-        // CAMERA RESOLVE
-        // ======================================================
-
         private bool ResolveCamera()
         {
             if (unityCamera != null)
@@ -187,10 +141,6 @@ namespace Features.Player.UnityIntegration
             cameraTransform = unityCamera.transform;
             return true;
         }
-
-        // ======================================================
-        // LOCAL CONTROL
-        // ======================================================
 
         public void SetLocal(bool value)
         {

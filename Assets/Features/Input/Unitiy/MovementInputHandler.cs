@@ -1,10 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Features.Input;
-using Features.Player;
 
 namespace Features.Player.UnityIntegration
 {
+    /// <summary>
+    /// Собирает локальный input.
+    /// НИЧЕГО не отправляет в сеть.
+    /// Используется PlayerNetworkController каждый тик.
+    /// </summary>
     public sealed class MovementInputHandler : MonoBehaviour, IInputContextConsumer
     {
         private PlayerInputContext input;
@@ -17,11 +21,16 @@ namespace Features.Player.UnityIntegration
         private InputAction walkAction;
         private InputAction crouchAction;
 
-        // 🔑 Состояние ввода (батч)
+        // Текущее состояние ввода (батч)
         private PlayerInputState inputState;
 
+        /// <summary>
+        /// Читается PlayerNetworkController’ом каждый тик.
+        /// </summary>
+        public PlayerInputState CurrentState => inputState;
+
         // ======================================================
-        // BIND / UNBIND
+        // BIND
         // ======================================================
 
         public void BindInput(PlayerInputContext ctx)
@@ -38,10 +47,10 @@ namespace Features.Player.UnityIntegration
 
             var p = input.Actions.Player;
 
-            moveAction = p.FindAction("Move", true);
-            jumpAction = p.FindAction("Jump", true);
+            moveAction   = p.FindAction("Move", true);
+            jumpAction   = p.FindAction("Jump", true);
             sprintAction = p.FindAction("Sprint", true);
-            walkAction = p.FindAction("Walk", true);
+            walkAction   = p.FindAction("Walk", true);
             crouchAction = p.FindAction("Crouch", true);
 
             moveAction.Enable();
@@ -50,17 +59,26 @@ namespace Features.Player.UnityIntegration
             walkAction.Enable();
             crouchAction.Enable();
 
+            // Подписки
             moveAction.performed += OnMove;
-            moveAction.canceled += OnMoveCanceled;
+            moveAction.canceled  += OnMoveCanceled;
+
             jumpAction.performed += OnJump;
+
             sprintAction.performed += OnSprintStart;
-            sprintAction.canceled += OnSprintStop;
+            sprintAction.canceled  += OnSprintStop;
+
             walkAction.performed += OnWalkStart;
-            walkAction.canceled += OnWalkStop;
+            walkAction.canceled  += OnWalkStop;
+
             crouchAction.performed += OnCrouch;
 
             bound = true;
         }
+
+        // ======================================================
+        // UNBIND
+        // ======================================================
 
         public void UnbindInput(PlayerInputContext ctx)
         {
@@ -68,12 +86,16 @@ namespace Features.Player.UnityIntegration
                 return;
 
             moveAction.performed -= OnMove;
-            moveAction.canceled -= OnMoveCanceled;
+            moveAction.canceled  -= OnMoveCanceled;
+
             jumpAction.performed -= OnJump;
+
             sprintAction.performed -= OnSprintStart;
-            sprintAction.canceled -= OnSprintStop;
+            sprintAction.canceled  -= OnSprintStop;
+
             walkAction.performed -= OnWalkStart;
-            walkAction.canceled -= OnWalkStop;
+            walkAction.canceled  -= OnWalkStop;
+
             crouchAction.performed -= OnCrouch;
 
             input = null;
@@ -81,37 +103,8 @@ namespace Features.Player.UnityIntegration
         }
 
         // ======================================================
-        // UPDATE (отправка input батчем)
-        // ======================================================
-
-        private void Update()
-        {
-            if (!bound)
-                return;
-
-            var movement = GetMovement();
-            if (movement == null)
-                return;
-
-            // 🔥 единая точка передачи ввода
-            movement.ApplyLocalInput(inputState);
-
-            // one-shot флаги
-            inputState.Jump = false;
-            inputState.Crouch = false;
-        }
-
-        // ======================================================
         // INPUT HANDLERS
         // ======================================================
-
-        private PlayerMovementNetAdapter GetMovement()
-        {
-            var player = LocalPlayerContext.Player;
-            return player != null
-                ? player.GetComponent<PlayerMovementNetAdapter>()
-                : null;
-        }
 
         private void OnMove(InputAction.CallbackContext ctx)
         {
@@ -125,7 +118,7 @@ namespace Features.Player.UnityIntegration
 
         private void OnJump(InputAction.CallbackContext ctx)
         {
-            inputState.Jump = true;
+            inputState.Jump = true; // one-shot
         }
 
         private void OnSprintStart(InputAction.CallbackContext ctx)
@@ -150,7 +143,42 @@ namespace Features.Player.UnityIntegration
 
         private void OnCrouch(InputAction.CallbackContext ctx)
         {
-            inputState.Crouch = true;
+            inputState.Crouch = true; // one-shot
+        }
+
+        // ======================================================
+        // ONE-SHOT RESET
+        // ======================================================
+
+        /// <summary>
+        /// Вызывается после тика в PlayerNetworkController.
+        /// </summary>
+        public void ClearOneShotFlags()
+        {
+            inputState.Jump = false;
+            inputState.Crouch = false;
+        }
+
+        // ======================================================
+        // CAMERA INTEGRATION
+        // ======================================================
+
+        /// <summary>
+        /// Камера записывает yaw сюда.
+        /// </summary>
+        public void SetYaw(float yaw)
+        {
+            inputState.Yaw = yaw;
+        }
+
+        // ======================================================
+        // SAFETY
+        // ======================================================
+
+        private void OnDisable()
+        {
+            if (input != null)
+                UnbindInput(input);
         }
     }
 }

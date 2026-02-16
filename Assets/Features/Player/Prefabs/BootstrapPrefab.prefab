@@ -295,6 +295,7 @@ GameObject:
   - component: {fileID: 4908646979383403430}
   - component: {fileID: 3573662119950025895}
   - component: {fileID: 6935516939186511060}
+  - component: {fileID: 6547510961811995188}
   m_Layer: 0
   m_Name: Input
   m_TagString: Untagged
@@ -503,6 +504,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2accbf60c194ef747aa5187f172c4b1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilityInputHandler
+--- !u!114 &6547510961811995188
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742051322264911869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c97ce33013fe8468b228581984fade, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkTickSystem
 --- !u!1 &1057123202320390765
 GameObject:
   m_ObjectHideFlags: 0
@@ -1909,7 +1922,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7060251833256494328}
-  - component: {fileID: 8090554108341056846}
   - component: {fileID: 2809909849973381705}
   m_Layer: 0
   m_Name: spawn
@@ -1933,19 +1945,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1511663097971046456}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8090554108341056846
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5037748668695186302}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7ac7c9e19e08bf40bb533d66fde66fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerService
-  playerPrefab: {fileID: 6311823513652316802, guid: 183439e94ff5e2b47ba4afbf933a7f53, type: 3}
 --- !u!114 &2809909849973381705
 MonoBehaviour:
   m_ObjectHideFlags: 0
