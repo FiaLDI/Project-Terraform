@@ -7,4 +7,5 @@ public struct MoveCommand
     public float Yaw;
     public bool Jump;
     public bool Sprint;
+    public bool Crouch;
 }

@@ -20,11 +20,16 @@ public class PlayerView : NetworkBehaviour
         if (anim == null)
             return;
 
-        float planarSpeed = new Vector2(
-            movement.Velocity.x,
-            movement.Velocity.z).magnitude;
+        Vector3 localVel =
+            transform.InverseTransformDirection(movement.Velocity);
 
-        anim.SetSpeed(planarSpeed);
+        float forward = localVel.z;
+        float right   = localVel.x;
+
+        float normalizedSpeed =
+            Mathf.Clamp01(new Vector2(forward, right).magnitude / movement.Speed);
+
+        anim.SetSpeed(normalizedSpeed);
         anim.SetGrounded(movement.Grounded);
     }
 }

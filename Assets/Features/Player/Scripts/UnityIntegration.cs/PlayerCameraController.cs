@@ -21,9 +21,10 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private float collisionRadius = 0.3f;
         [SerializeField] private float minCameraDistance = 0.5f;
 
+        [SerializeField] private Vector3 shoulderOffset = new Vector3(0.5f, 0f, 0f);
+
         private UnityEngine.Camera unityCamera;
         private Transform cameraTransform;
-
         private ICameraControlService control;
 
         private float currentTpsDistance = 3f;
@@ -32,8 +33,6 @@ namespace Features.Player.UnityIntegration
         private void Awake()
         {
             enabled = false;
-
-            // 🔥 Используем глобальный сервис
             control = CameraServiceProvider.Control;
         }
 
@@ -46,7 +45,7 @@ namespace Features.Player.UnityIntegration
 
             float yaw = control.State.Yaw;
 
-            // 🔥 Передаём yaw в глобальный MovementInputHandler
+            // Передаём yaw в movement
             var handler = FindObjectOfType<MovementInputHandler>();
             handler?.SetYaw(yaw);
         }
@@ -79,9 +78,6 @@ namespace Features.Player.UnityIntegration
 
         private void UpdateFPS(PlayerCameraState state)
         {
-            if (fpsPoint == null)
-                return;
-
             cameraTransform.position = fpsPoint.position;
             cameraTransform.rotation =
                 Quaternion.Euler(state.Pitch, state.Yaw, 0f);
@@ -93,9 +89,6 @@ namespace Features.Player.UnityIntegration
 
         private void UpdateTPS(PlayerCameraState state)
         {
-            if (cameraPivot == null)
-                return;
-
             cameraPivot.localRotation =
                 Quaternion.Euler(state.Pitch, 0f, 0f);
 
@@ -116,14 +109,20 @@ namespace Features.Player.UnityIntegration
                 Time.deltaTime * tpsSmoothSpeed
             );
 
-            cameraTransform.position =
-                cameraPivot.position - cameraPivot.forward * currentTpsDistance;
+            Vector3 shoulderWorld =
+                cameraPivot.TransformPoint(shoulderOffset);
+
+            Vector3 targetPos =
+                shoulderWorld - cameraPivot.forward * currentTpsDistance;
+
+            cameraTransform.position = Vector3.Lerp(
+                cameraTransform.position,
+                targetPos,
+                1f - Mathf.Exp(-12f * Time.deltaTime)
+            );
 
             cameraTransform.rotation =
                 Quaternion.Euler(state.Pitch, state.Yaw, 0f);
-
-            if (headTransform != null)
-                headTransform.rotation = cameraTransform.rotation;
         }
 
         private bool ResolveCamera()
@@ -144,9 +143,6 @@ namespace Features.Player.UnityIntegration
 
         public void SetLocal(bool value)
         {
-            if (isLocal == value)
-                return;
-
             isLocal = value;
             enabled = value;
         }

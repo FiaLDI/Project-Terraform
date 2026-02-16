@@ -26,10 +26,6 @@ public class PlayerNetworkController : NetworkBehaviour
         inputHandler = handler;
     }
 
-    public override void OnStartServer()
-    {
-        movement.IsServerAuthority = true;
-    }
 
     public override void OnStartClient()
     {
@@ -54,38 +50,52 @@ public class PlayerNetworkController : NetworkBehaviour
 
         MoveCommand cmd = new MoveCommand
         {
-            Tick = tick,
-            Move = input.Move,
-            Yaw  = input.Yaw,
-            Jump = input.Jump
+            Tick   = tick,
+            Move   = input.Move,
+            Yaw    = input.Yaw,
+            Jump   = input.Jump,
+            Crouch = input.Crouch
         };
 
         inputBuffer[tick] = cmd;
 
-        // ===== CLIENT PREDICTION =====
-        if (!IsServer) // обычный клиент
+        // ===== SIMULATION =====
+        if (!IsServer)
         {
+            // обычный клиент
             movement.Simulate(cmd);
         }
-        else if (IsServer && IsOwner) 
+        else if (IsServer && IsOwner)
         {
-            // HOST — симулируем ТОЛЬКО ОДИН РАЗ
+            // хост — один раз
             movement.Simulate(cmd);
         }
 
+        // ===== ANIMATION =====
+        var anim = GetComponent<PlayerAnimationController>();
+
+        if (anim != null)
+        {
+            if (cmd.Jump)
+                anim.TriggerJump();
+
+            anim.SetCrouch(cmd.Crouch);
+        }
+
+        // ===== SAVE STATE =====
         stateBuffer[tick] = new PlayerState
         {
-            Tick = tick,
+            Tick     = tick,
             Position = transform.position,
             Velocity = movement.Velocity
         };
 
-        if (!IsServer) // клиент отправляет
+        // ===== SEND TO SERVER =====
+        if (!IsServer)
             SendInputServerRpc(cmd);
 
         inputHandler.ClearOneShotFlags();
     }
-
 
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)

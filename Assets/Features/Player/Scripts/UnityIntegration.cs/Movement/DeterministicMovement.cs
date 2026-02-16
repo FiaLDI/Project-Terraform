@@ -11,14 +11,12 @@ public class DeterministicMovement : MonoBehaviour
     public float JumpForce = 7f;
 
     [Header("Rotation")]
+    [SerializeField] private float rotationSharpness = 20f;
     private float currentYaw;
-    private const float rotationSharpness = 25f;
 
     [Header("Ground")]
     [SerializeField] private LayerMask groundMask;
     [SerializeField] private float groundCheckDistance = 0.2f;
-
-    public bool IsServerAuthority;
 
     public Vector3 Velocity;
     public bool Grounded { get; private set; }
@@ -28,13 +26,14 @@ public class DeterministicMovement : MonoBehaviour
     private void Awake()
     {
         capsule = GetComponent<CapsuleCollider>();
+        currentYaw = transform.eulerAngles.y;
     }
 
     public void Simulate(MoveCommand cmd)
     {
         float dt = NetworkTickSystem.TickDelta;
 
-        // ROTATION
+        // ===== ROTATION (как в PUBG) =====
         currentYaw = Mathf.LerpAngle(
             currentYaw,
             cmd.Yaw,
@@ -43,13 +42,13 @@ public class DeterministicMovement : MonoBehaviour
 
         transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
-        // GROUND CHECK
+        // ===== GROUND =====
         Grounded = CheckGround();
 
         if (Grounded && Velocity.y < 0f)
             Velocity.y = 0f;
 
-        // HORIZONTAL
+        // ===== HORIZONTAL =====
         Vector3 moveDir =
             (transform.forward * cmd.Move.y +
              transform.right * cmd.Move.x).normalized;
@@ -59,18 +58,16 @@ public class DeterministicMovement : MonoBehaviour
         Velocity.x = horizontal.x;
         Velocity.z = horizontal.z;
 
-        // JUMP
+        // ===== JUMP =====
         if (Grounded && cmd.Jump)
         {
             Velocity.y = JumpForce;
             Grounded = false;
         }
 
-        // GRAVITY
         if (!Grounded)
             Velocity.y += Gravity * dt;
 
-        // APPLY
         transform.position += Velocity * dt;
     }
 
