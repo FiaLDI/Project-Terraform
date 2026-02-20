@@ -126,9 +126,9 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             );
         }
 
-        Debug.Log(
-            $"[EnemyEcsRuntimeBinder] ECS Entity CREATED | index={entity.Index} | patrolPoints={buffer.Length}",
-            this
-        );
+        //Debug.Log(
+        //    $"[EnemyEcsRuntimeBinder] ECS Entity CREATED | index={entity.Index} | patrolPoints={buffer.Length}",
+        //    this
+        //);
     }
 }

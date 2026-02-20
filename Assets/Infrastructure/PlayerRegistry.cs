@@ -92,6 +92,8 @@ namespace Features.Player.UnityIntegration
         /// </summary>
         public void SetLocalPlayer(GameObject player)
         {
+            Debug.Log($"[fix-net] SetLocalPlayer CALLED -> {player.name}", this);
+
             if (player == null)
             {
                 Debug.LogError("[PlayerRegistry] SetLocalPlayer called with NULL", this);

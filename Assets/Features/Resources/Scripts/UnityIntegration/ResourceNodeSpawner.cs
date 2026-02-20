@@ -34,10 +34,8 @@ public class ResourceNodeSpawner : NetworkBehaviour
             Quaternion rot = Quaternion.identity;
 
             NetworkObject nob = Instantiate(resourceNodePrefab, pos, rot);
-            Debug.Log($"[ResourceNodeSpawner] Instantiate {nob.name} at {pos}", nob);
 
             Spawn(nob);
-            Debug.Log($"[ResourceNodeSpawner] Spawned NO id={nob.ObjectId}", nob);
         }
     }
 

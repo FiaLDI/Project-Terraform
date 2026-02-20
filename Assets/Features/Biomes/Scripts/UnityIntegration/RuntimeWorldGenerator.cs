@@ -28,14 +28,13 @@ namespace Features.Biomes.UnityIntegration
         public int unloadDistance = 8;
 
         [Header("Spawn Settings")]
-        public float spawnHeightCheck = 500f;
+        public float spawnHeightCheck = 50f;
 
         private ChunkManager manager;
         private GameObject systemsInstance;
 
         public static WorldConfig World { get; private set; }
 
-        // 🔥 Сигнал готовности мира
         public static event System.Action<int> OnWorldReady;
 
         // ======================================================
@@ -59,11 +58,11 @@ namespace Features.Biomes.UnityIntegration
         {
             Debug.Log("[WorldGen] Starting generation...");
 
-            // 1️⃣ Биомы
+            // 1️Биомы
             if (!BiomeRuntimeDatabase.Initialized)
                 BiomeRuntimeDatabase.Build(worldConfig);
 
-            // 2️⃣ ChunkManager
+            // ChunkManager
             manager = new ChunkManager(worldConfig);
             World = worldConfig;
 
@@ -72,7 +71,7 @@ namespace Features.Biomes.UnityIntegration
 
             yield return new WaitForFixedUpdate();
 
-            // 3️⃣ Мир-системы
+            // Мир-системы
             if (systemsPrefab != null)
             {
                 systemsInstance = Instantiate(
@@ -84,24 +83,47 @@ namespace Features.Biomes.UnityIntegration
                 Spawn(systemsInstance);
             }
 
-            // 4️⃣ Spawn points
+            // 4Spawn points
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();
 
-            // 🔥 КЛЮЧ: даём кадр чтобы Start() у ScenePlayerSpawnPoint
-            // успел зарегистрировать provider в PlayerSpawnRegistry
-            yield return null;
+            yield return WaitForPhysicsReady();
 
-            // 5️⃣ Кастомные объекты
+            // Кастомные объекты
             if (customPrefab != null)
                 SpawnCustomPrefab();
 
             Debug.Log("[WorldGen] Generation complete");
 
-            // 🔥 Теперь мир реально готов
+            // Теперь мир реально готов
             OnWorldReady?.Invoke(WorldSession.WorldVersion);
         }
 
+        private IEnumerator WaitForPhysicsReady()
+        {
+            Debug.Log("[WorldGen] Waiting for physics readiness...");
+
+            int safety = 0;
+
+            while (safety < 50) // максимум ~50 кадров
+            {
+                Vector3 testPoint = GetWorldCenterSpawn();
+
+                if (Physics.Raycast(
+                        testPoint + Vector3.up * 10f,
+                        Vector3.down,
+                        50f))
+                {
+                    Debug.Log("[WorldGen] Physics ready");
+                    yield break;
+                }
+
+                safety++;
+                yield return new WaitForFixedUpdate();
+            }
+
+            Debug.LogWarning("[WorldGen] Physics readiness timeout!");
+        }
 
         private void Update()
         {

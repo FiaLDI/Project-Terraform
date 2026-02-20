@@ -1,7 +1,9 @@
 using FishNet.Object;
+using FishNet.Connection;
 using UnityEngine;
 using Features.Abilities.Application;
 using Features.Interaction.UnityIntegration;
+using FishNet;
 
 namespace Features.Player.UnityIntegration
 {
@@ -32,22 +34,24 @@ namespace Features.Player.UnityIntegration
         }
 
         // =====================================================
-        // CLIENT
+        // CLIENT SPAWN
         // =====================================================
 
         public override void OnStartClient()
         {
             base.OnStartClient();
 
-            Debug.Log(
-                $"[NetworkPlayer] Spawned: {name}, IsOwner={IsOwner}",
-                this);
-            Debug.Log($"[NetworkPlayer] IsOwner={IsOwner}, OwnerIsLocal={Owner.IsLocalClient}", this);
+           Debug.Log(
+                $"[fix-net] OnStartClient -> name={name}, " +
+                $"IsOwner={IsOwner}, " +
+                $"OwnerId={Owner?.ClientId}, ",
+                this
+            );
 
             var registry = PlayerRegistry.Instance;
             if (registry == null)
             {
-                Debug.LogError("[NetworkPlayer] PlayerRegistry missing!", this);
+                Debug.LogError("[fix-net] PlayerRegistry missing!", this);
                 return;
             }
 
@@ -55,13 +59,57 @@ namespace Features.Player.UnityIntegration
 
             if (!IsOwner)
             {
+                Debug.Log("[fix-net] Not owner, disabling local components", this);
                 DisableLocalComponents();
                 return;
             }
 
+            Debug.Log("[fix-net] IsOwner TRUE in OnStartClient", this);
+            SetupAsLocal();
+        }
+
+        // =====================================================
+        // OWNERSHIP CHANGED (КЛЮЧЕВОЕ)
+        // =====================================================
+
+        public override void OnOwnershipClient(NetworkConnection prevOwner)
+        {
+            base.OnOwnershipClient(prevOwner);
+
+            int localId = InstanceFinder.ClientManager.Connection.ClientId;
+
+            Debug.Log(
+                $"[fix-net] OnOwnershipClient -> name={name}, " +
+                $"IsOwner={IsOwner}, " +
+                $"OwnerId={Owner?.ClientId}, " +
+                $"LocalId={localId}",
+                this
+            );
+
+            if (IsOwner)
+            {
+                Debug.Log("[fix-net] Ownership became LOCAL", this);
+                SetupAsLocal();
+            }
+            else
+            {
+                Debug.Log("[fix-net] Ownership removed", this);
+                DisableLocalComponents();
+            }
+        }
+
+        private void SetupAsLocal()
+        {
+            var registry = PlayerRegistry.Instance;
+            if (registry == null)
+                return;
+
             EnableLocalComponents();
             registry.SetLocalPlayer(gameObject);
+
             OnLocalPlayerSpawned?.Invoke(this);
+
+            Debug.Log($"[NetworkPlayer] Set as LOCAL player: {name}", this);
         }
 
         // =====================================================
@@ -72,15 +120,16 @@ namespace Features.Player.UnityIntegration
         {
             base.OnStopClient();
 
-            if (IsOwner && Owner.IsLocalClient)
-                Debug.Log(
-                    $"[NetworkPlayer] Local player despawned: {gameObject.name}",
-                    this);
-
             var registry = PlayerRegistry.Instance;
             if (registry != null)
                 registry.UnregisterPlayer(gameObject);
+
+            Debug.Log($"[NetworkPlayer] Stopped client for {name}", this);
         }
+
+        // =====================================================
+        // LOCAL COMPONENT CONTROL
+        // =====================================================
 
         private void DisableLocalComponents()
         {

@@ -77,8 +77,16 @@ namespace Features.Stats.UI
                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
                     );
 
-                    if (methodInfo != null)
-                        methodInfo.Invoke(uiComponent, new object[] { player });
+                    
+            if (methodInfo != null)
+            {
+                Debug.Log(
+                    $"[StatsUIRoot] Calling OnPlayerBound on {uiComponent.GetType().Name} | " +
+                    $"ExpectedParams={methodInfo.GetParameters().Length}",
+                    uiComponent);
+
+                methodInfo.Invoke(uiComponent, new object[] { player });
+            }
                 }
             }
         }
@@ -96,13 +104,22 @@ namespace Features.Stats.UI
 
                 var methodInfo = uiComponent.GetType().GetMethod(
                     "OnPlayerUnbound",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance
                 );
 
                 if (methodInfo != null)
-                    methodInfo.Invoke(uiComponent, null);
+                {
+                    var paramCount = methodInfo.GetParameters().Length;
+
+                    if (paramCount == 0)
+                        methodInfo.Invoke(uiComponent, null);
+                    else
+                        methodInfo.Invoke(uiComponent, new object[] { boundPlayer });
+                }
             }
         }
+
 
     }
 }

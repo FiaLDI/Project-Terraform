@@ -1,4 +1,5 @@
 using FishNet.Object;
+using UnityEngine;
 
 namespace Multiplayer.Domain
 {
@@ -22,6 +23,8 @@ namespace Multiplayer.Domain
 
         public void UnbindClient()
         {
+            Debug.Log($"[fix-net] Session bound to clientId={ClientId}");
+
             ClientId = null;
         }
 

@@ -1,36 +1,41 @@
 using UnityEngine;
-using FishNet;
-using Multiplayer.Domain;
+using FishNet.Object;
+using System.Collections;
 
-public sealed class WorldReadyStatic : MonoBehaviour
+public sealed class WorldReadyStatic : NetworkBehaviour
 {
     private bool signaled;
 
-    private void Start()
+    public override void OnStartServer()
     {
-        if (!InstanceFinder.IsServer)
-            return;
-
-        SignalReady();
+        base.OnStartServer();
+        Debug.Log("[fix-net] WorldReadyStatic OnStartServer");
+        StartCoroutine(InitializeStaticWorld());
     }
 
-    private void SignalReady()
+    private IEnumerator InitializeStaticWorld()
     {
         if (signaled)
-            return;
+            yield break;
 
         signaled = true;
 
-        var flow = ServerCompositionRoot.I.Flow;
-
-        // Если сервер ещё не в стадии загрузки сцены
-        if (flow.CurrentState == ServerGameState.Starting ||
-            flow.CurrentState == ServerGameState.LoadingScene)
+        while (PlayerSpawnRegistry.I == null ||
+               !PlayerSpawnRegistry.I.HasProvider)
         {
-            flow.NotifySceneLoaded();
-            flow.NotifyWorldPrepared();
+            yield return null;
         }
 
-        Debug.Log("[WorldReadyStatic] Hub is RUNNING");
+        var root = ServerCompositionRoot.I;
+
+        root.Flow.NotifySceneLoaded();
+        root.Flow.NotifyWorldPrepared();
+
+        Debug.Log("[fix-net] Static world RUNNING");
+
+        root.Spawner.RespawnAllOnline();
+
+        if (NetworkTickSystem.I != null)
+            NetworkTickSystem.I.Paused = false;
     }
 }

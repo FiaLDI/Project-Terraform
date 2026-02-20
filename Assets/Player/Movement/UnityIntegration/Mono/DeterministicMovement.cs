@@ -1,39 +1,38 @@
-using FishNet.Object;
 using UnityEngine;
+using FishNet.Object;
 
-[RequireComponent(typeof(CapsuleCollider))]
-[RequireComponent(typeof(NetworkBehaviour))]
-public class DeterministicMovement : MonoBehaviour
+[RequireComponent(typeof(CharacterController))]
+public class DeterministicMovement : NetworkBehaviour
 {
-    [Header("Movement")]
     public float Speed = 6f;
     public float Gravity = -20f;
     public float JumpForce = 7f;
 
-    [Header("Rotation")]
     [SerializeField] private float rotationSharpness = 20f;
+
+    private CharacterController controller;
+
+    private float verticalVelocity;
     private float currentYaw;
 
-    [Header("Ground")]
-    [SerializeField] private LayerMask groundMask;
-    [SerializeField] private float groundCheckDistance = 0.2f;
-
-    public Vector3 Velocity;
-    public bool Grounded { get; private set; }
-
-    private CapsuleCollider capsule;
+    // 👇 добавляем обратно
+    public Vector3 Velocity { get; private set; }
+    public bool Grounded => controller.isGrounded;
 
     private void Awake()
     {
-        capsule = GetComponent<CapsuleCollider>();
+        controller = GetComponent<CharacterController>();
         currentYaw = transform.eulerAngles.y;
     }
 
     public void Simulate(MoveCommand cmd)
     {
+        if (!IsServer)
+            return;
+
         float dt = NetworkTickSystem.TickDelta;
 
-        // ===== ROTATION (как в PUBG) =====
+        // ----- Rotation -----
         currentYaw = Mathf.LerpAngle(
             currentYaw,
             cmd.Yaw,
@@ -42,45 +41,33 @@ public class DeterministicMovement : MonoBehaviour
 
         transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
-        // ===== GROUND =====
-        Grounded = CheckGround();
-
-        if (Grounded && Velocity.y < 0f)
-            Velocity.y = 0f;
-
-        // ===== HORIZONTAL =====
+        // ----- Horizontal -----
         Vector3 moveDir =
-            (transform.forward * cmd.Move.y +
-             transform.right * cmd.Move.x).normalized;
+            transform.forward * cmd.Move.y +
+            transform.right   * cmd.Move.x;
 
-        Vector3 horizontal = moveDir * Speed;
+        moveDir = moveDir.normalized * Speed;
 
-        Velocity.x = horizontal.x;
-        Velocity.z = horizontal.z;
-
-        // ===== JUMP =====
-        if (Grounded && cmd.Jump)
+        // ----- Vertical -----
+        if (controller.isGrounded)
         {
-            Velocity.y = JumpForce;
-            Grounded = false;
+            if (verticalVelocity < 0f)
+                verticalVelocity = -2f;
+
+            if (cmd.Jump)
+                verticalVelocity = JumpForce;
+        }
+        else
+        {
+            verticalVelocity += Gravity * dt;
         }
 
-        if (!Grounded)
-            Velocity.y += Gravity * dt;
-
-        transform.position += Velocity * dt;
-    }
-
-    private bool CheckGround()
-    {
-        Vector3 origin = transform.position + Vector3.up * 0.1f;
-
-        return Physics.Raycast(
-            origin,
-            Vector3.down,
-            groundCheckDistance,
-            groundMask,
-            QueryTriggerInteraction.Ignore
+        Velocity = new Vector3(
+            moveDir.x,
+            verticalVelocity,
+            moveDir.z
         );
+
+        controller.Move(Velocity * dt);
     }
 }

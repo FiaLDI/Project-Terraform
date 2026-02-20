@@ -6,6 +6,9 @@ public static class PersistentIdProvider
 
     public static string GetOrCreate()
     {
+    #if UNITY_EDITOR
+        return System.Guid.NewGuid().ToString();
+    #else
         if (PlayerPrefs.HasKey(Key))
             return PlayerPrefs.GetString(Key);
 
@@ -13,5 +16,7 @@ public static class PersistentIdProvider
         PlayerPrefs.SetString(Key, id);
         PlayerPrefs.Save();
         return id;
+    #endif
     }
+
 }

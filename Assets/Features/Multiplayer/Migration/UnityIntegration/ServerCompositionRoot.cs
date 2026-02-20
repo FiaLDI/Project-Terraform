@@ -1,5 +1,6 @@
 using FishNet;
 using FishNet.Managing;
+using FishNet.Managing.Scened;
 using FishNet.Object;
 using Multiplayer.Application;
 using Multiplayer.Domain;
@@ -38,49 +39,11 @@ public sealed class ServerCompositionRoot : MonoBehaviour
         Flow = new ServerGameFlow();
 
         Sessions = new SessionManager();
-        Sessions.BindToFlow(Flow);
 
-        Spawner = new SpawnService(
-            net,
-            Sessions,
-            Flow,
-            playerPrefab
-        );
+        Spawner = new SpawnService(net, Sessions, Flow, playerPrefab);
 
-        // 🔥 ВАЖНО — внедряем зависимости
-        loginHandler.Construct(
-            Sessions,
-            Spawner,
-            Flow
-        );
+        loginHandler.Construct(Sessions, Spawner, Flow);
 
-        Flow.OnStateChanged += OnServerStateChanged;
-
-        Debug.Log("[CompositionRoot] Server systems initialized (DI complete)");
+        Debug.Log("[CompositionRoot] Server systems initialized");
     }
-
-    private void OnServerStateChanged(ServerGameState state)
-    {
-        if (state == ServerGameState.Starting)
-        {
-            Debug.Log("[CompositionRoot] Clearing sessions on server start");
-
-            Sessions = new SessionManager();
-            Sessions.BindToFlow(Flow);
-
-            Spawner = new SpawnService(
-                InstanceFinder.NetworkManager,
-                Sessions,
-                Flow,
-                playerPrefab
-            );
-
-            loginHandler.Construct(
-                Sessions,
-                Spawner,
-                Flow
-            );
-        }
-    }
-
 }

@@ -25,7 +25,6 @@ public sealed class ServerLoginHandler : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    // ✅ Вызывается CompositionRoot'ом
     public void Construct(
         SessionManager sessions,
         SpawnService spawner,
@@ -42,6 +41,8 @@ public sealed class ServerLoginHandler : MonoBehaviour
 
     public void HandleLogin(NetworkConnection conn, string persistentId)
     {
+        Debug.Log($"[fix-net] HandleLogin: connId={conn.ClientId}, persistentId={persistentId}");
+
         if (!initialized)
         {
             Debug.LogError("ServerLoginHandler not initialized!");
@@ -56,12 +57,6 @@ public sealed class ServerLoginHandler : MonoBehaviour
 
         Debug.Log($"LOGIN RECEIVED {conn.ClientId}");
 
-        if (flow.CurrentState != ServerGameState.Running)
-        {
-            Debug.Log("Login rejected: world not ready");
-            return;
-        }
-
         var session = sessions.HandleLogin(conn.ClientId, persistentId);
 
         if (session == null)
@@ -70,6 +65,14 @@ public sealed class ServerLoginHandler : MonoBehaviour
             return;
         }
 
-        spawner.HandleLoginSpawn(conn, session);
+        // 🔥 ВАЖНО: больше не отклоняем login
+        if (flow.CurrentState == ServerGameState.Running)
+        {
+            spawner.HandleLoginSpawn(conn, session);
+        }
+        else
+        {
+            Debug.Log("[fix-net] World not ready yet, spawn will occur after world init");
+        }
     }
 }

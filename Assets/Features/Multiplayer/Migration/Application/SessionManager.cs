@@ -8,29 +8,8 @@ namespace Multiplayer.Application
         private readonly Dictionary<string, PlayerSession> sessions = new();
         private readonly Dictionary<int, string> clientToPersistent = new();
 
-        private bool acceptingLogins;
-
-        public void BindToFlow(IServerGameFlow flow)
-        {
-            flow.OnStateChanged += OnStateChanged;
-        }
-
-        private void OnStateChanged(ServerGameState state)
-        {
-            acceptingLogins = state == ServerGameState.Running;
-
-            if (state == ServerGameState.ShuttingDown ||
-                state == ServerGameState.Offline)
-            {
-                ClearAll();
-            }
-        }
-
         public PlayerSession HandleLogin(int clientId, string persistentId)
         {
-            if (!acceptingLogins)
-                return null;
-
             if (!sessions.TryGetValue(persistentId, out var session))
             {
                 session = new PlayerSession(persistentId);
