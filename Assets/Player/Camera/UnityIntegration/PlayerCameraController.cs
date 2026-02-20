@@ -127,17 +127,18 @@ namespace Features.Player.UnityIntegration
 
         private bool ResolveCamera()
         {
-            if (unityCamera != null)
-                return true;
-
             if (CameraRegistry.Instance == null)
                 return false;
 
-            unityCamera = CameraRegistry.Instance.CurrentCamera;
-            if (unityCamera == null)
+            var cam = CameraRegistry.Instance.CurrentCamera;
+            if (cam == null)
                 return false;
 
-            cameraTransform = unityCamera.transform;
+            unityCamera = cam;
+            cameraTransform = cam.transform;
+
+            Debug.Log($"[Camera] Attached to {name}");
+
             return true;
         }
 
@@ -145,6 +146,11 @@ namespace Features.Player.UnityIntegration
         {
             isLocal = value;
             enabled = value;
+
+            if (value)
+            {
+                ResolveCamera();   // ← важно
+            }
         }
     }
 }

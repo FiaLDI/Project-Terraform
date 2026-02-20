@@ -14,8 +14,6 @@ public class DeterministicMovement : NetworkBehaviour
 
     private float verticalVelocity;
     private float currentYaw;
-
-    // 👇 добавляем обратно
     public Vector3 Velocity { get; private set; }
     public bool Grounded => controller.isGrounded;
 

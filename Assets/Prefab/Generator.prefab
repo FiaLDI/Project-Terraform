@@ -58,6 +58,8 @@ MonoBehaviour:
   worldConfig: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
   systemsPrefab: {fileID: 2830221871605978793, guid: 63613e7461b902147a0c030a9608a25f, type: 3}
   spawnPointPrefab: {fileID: 7891511044358976705, guid: ac7569557f29c0142be7a8d2cffe30a6, type: 3}
+  spawnPointCount: 4
+  spawnRadius: 15
   customPrefab: {fileID: 5502989716011450611, guid: 12b39b97c144da94682c029abc2ff1a4, type: 3}
   loadDistance: 5
   unloadDistance: 8
@@ -86,8 +88,8 @@ MonoBehaviour:
   RuntimeParentNetworkBehaviour: {fileID: 0}
   RuntimeChildNetworkBehaviours: []
   _isNetworked: 1
-  _isSpawnable: 1
-  _isGlobal: 0
+  _isSpawnable: 0
+  _isGlobal: 1
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0

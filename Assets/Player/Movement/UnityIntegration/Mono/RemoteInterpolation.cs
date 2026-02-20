@@ -13,23 +13,20 @@ public class RemoteInterpolation : MonoBehaviour
     private readonly List<Snapshot> snapshots = new();
     private const float InterpDelay = 0.1f;
 
-   public void ReceiveState(PlayerState state)
-{
-    Debug.Log($"[NET-DEBUG] OBSERVER received state tick={state.Tick} pos={state.Position}");
-
-    float time = Time.time;
-
-    snapshots.Add(new Snapshot
+    public void ReceiveState(PlayerState state)
     {
-        Time = time,
-        Position = state.Position,
-        Yaw = state.Yaw
-    });
+        float time = Time.time;
 
-    if (snapshots.Count > 20)
-        snapshots.RemoveAt(0);
-}
+        snapshots.Add(new Snapshot
+        {
+            Time = time,
+            Position = state.Position,
+            Yaw = state.Yaw
+        });
 
+        if (snapshots.Count > 20)
+            snapshots.RemoveAt(0);
+    }
 
     private void Update()
     {

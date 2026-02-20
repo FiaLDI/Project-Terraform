@@ -78,7 +78,20 @@ public class PlayerNetworkController : NetworkBehaviour
                 return;
 
             if (!inputBuffer.TryGetValue(simulationTick, out var cmd))
-                return;
+            {
+                // используем последний input
+                if (inputBuffer.Count == 0)
+                    cmd = default;
+                else
+                {
+                    int latestTick = -1;
+                    foreach (var kvp in inputBuffer)
+                        if (kvp.Key > latestTick)
+                            latestTick = kvp.Key;
+
+                    cmd = inputBuffer[latestTick];
+                }
+            }
 
             movement.Simulate(cmd);
 
@@ -98,7 +111,6 @@ public class PlayerNetworkController : NetworkBehaviour
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
-        Debug.Log($"[NET-DEBUG] SERVER received input tick={cmd.Tick}");
         inputBuffer[cmd.Tick] = cmd;
     }
 
@@ -126,7 +138,6 @@ public class PlayerNetworkController : NetworkBehaviour
             return;
         }
 
-        // Soft correction
         Vector3 delta = serverState.Position - transform.position;
         transform.position += delta * 0.5f;
     }

@@ -41,6 +41,11 @@ namespace Features.Biomes.UnityIntegration
         // SERVER
         // ======================================================
 
+        private void Start()
+{
+    Debug.Log($"Generator Start | IsSpawned={IsSpawned} | IsServer={IsServer} | IsClient={IsClient}");
+}
+
         public override void OnStartServer()
         {
             base.OnStartServer();
@@ -52,6 +57,32 @@ namespace Features.Biomes.UnityIntegration
             }
 
             StartCoroutine(ServerGenerateWorld());
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            if (IsServer)
+                return;
+
+            StartCoroutine(ClientGenerateWorld());
+        }
+
+        private IEnumerator ClientGenerateWorld()
+        {
+            if (!BiomeRuntimeDatabase.Initialized)
+                BiomeRuntimeDatabase.Build(worldConfig);
+
+            manager = new ChunkManager(worldConfig);
+            World = worldConfig;
+
+            manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
+            manager.ProcessLoadQueue();
+
+            yield return null;
+
+            Debug.Log("[WorldGen] Client world ready");
         }
 
         private IEnumerator ServerGenerateWorld()
