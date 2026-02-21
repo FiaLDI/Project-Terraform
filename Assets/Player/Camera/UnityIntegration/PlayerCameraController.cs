@@ -2,6 +2,7 @@ using UnityEngine;
 using Features.Camera.Application;
 using Features.Camera.Domain;
 using Features.Camera.UnityIntegration;
+using System.Collections;
 
 namespace Features.Player.UnityIntegration
 {
@@ -30,10 +31,19 @@ namespace Features.Player.UnityIntegration
         private float currentTpsDistance = 3f;
         private bool isLocal;
 
+        private ICameraControlService Control => CameraServiceProvider.Control;
+
         private void Awake()
         {
+            Debug.Log($"[camera-fix] {name} Awake | Control NULL? {CameraServiceProvider.Control == null}");
+
             enabled = false;
             control = CameraServiceProvider.Control;
+        }
+
+        private void OnDestroy()
+        {
+            Debug.Log($"[camera-fix] {name} DESTROYED | isLocal={isLocal}");
         }
 
         public void SetLookInput(Vector2 input)
@@ -60,8 +70,23 @@ namespace Features.Player.UnityIntegration
 
         private void LateUpdate()
         {
-            if (!isLocal || control == null)
+            if (!isLocal)
+            {
+                Debug.Log($"[camera-fix] {name} LateUpdate SKIP not local");
                 return;
+            }
+
+            if (Control == null)
+            {
+                Debug.Log($"[camera-fix] {name} LateUpdate SKIP Control NULL");
+                return;
+            }
+
+            if (cameraTransform == null)
+            {
+                Debug.Log($"[camera-fix] {name} LateUpdate cameraTransform NULL");
+                return;
+            }
 
             if (cameraTransform == null && !ResolveCamera())
                 return;
@@ -148,9 +173,12 @@ namespace Features.Player.UnityIntegration
             enabled = value;
 
             if (value)
-            {
-                ResolveCamera();   // ← важно
-            }
+                ResolveCamera();
+        }
+
+        public void ForceReattachCamera()
+        {
+            ResolveCamera();
         }
     }
 }

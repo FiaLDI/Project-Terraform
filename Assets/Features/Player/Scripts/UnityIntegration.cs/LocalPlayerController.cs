@@ -94,7 +94,11 @@ public sealed class LocalPlayerController : MonoBehaviour
 
         var camController = player.GetComponent<PlayerCameraController>();
         if (camController != null)
+        {
             camController.SetLocal(true);
+
+            camController.ForceReattachCamera();
+        }
 
         var cam = Camera.main;
         if (cam != null)

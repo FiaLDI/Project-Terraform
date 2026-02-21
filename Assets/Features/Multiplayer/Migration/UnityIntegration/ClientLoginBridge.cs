@@ -1,6 +1,7 @@
 using UnityEngine;
 using FishNet.Object;
 using FishNet.Connection;
+using System.Collections;
 
 public sealed class ClientLoginBridge : NetworkBehaviour
 {
@@ -36,9 +37,18 @@ public sealed class ClientLoginBridge : NetworkBehaviour
     }
 
     [TargetRpc]
-    public void NotifySpawnedTargetRpc(NetworkConnection conn)
-    {
-        Debug.Log("[fix-net] Server confirmed spawn");
-        ClientConnectionController.I?.NotifySpawned();
-    }
+public void NotifySpawnedTargetRpc(NetworkConnection conn)
+{
+    Debug.Log("[fix-net] Server confirmed spawn");
+
+    StartCoroutine(DelayedNotify());
+}
+
+private IEnumerator DelayedNotify()
+{
+    while (!IsOwner)
+        yield return null;
+
+    ClientConnectionController.I?.NotifySpawned();
+}
 }

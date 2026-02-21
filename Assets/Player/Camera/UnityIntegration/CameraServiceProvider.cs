@@ -5,8 +5,8 @@ using Features.Camera.Application;
 namespace Features.Camera.UnityIntegration
 {
     /// <summary>
-    /// ЕДИНЫЙ глобальный провайдер камеры.
-    /// Один на клиент / хост.
+    /// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+    /// пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ / пїЅпїЅпїЅпїЅ.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
     public sealed class CameraServiceProvider : MonoBehaviour
@@ -16,11 +16,19 @@ namespace Features.Camera.UnityIntegration
 
         private void Awake()
         {
+            Debug.Log($"[camera-fix] CameraServiceProvider Awake | Control NULL? {Control == null}");
+
             if (Control == null)
+            {
                 Control = new CameraControlService();
+                Debug.Log($"[camera-fix] Control CREATED | hash={Control.GetHashCode()}");
+            }
 
             if (Runtime == null)
+            {
                 Runtime = new CameraRuntimeService();
+                Debug.Log($"[camera-fix] Runtime CREATED");
+            }
         }
     }
 }

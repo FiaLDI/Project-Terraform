@@ -47,7 +47,6 @@ public class PlayerNetworkController : NetworkBehaviour
 
         int currentTick = NetworkTickSystem.I.CurrentTick;
 
-        // ================= OWNER SEND INPUT =================
         if (IsOwner)
         {
             if (inputHandler == null)
@@ -65,8 +64,22 @@ public class PlayerNetworkController : NetworkBehaviour
             };
 
             inputBuffer[currentTick] = cmd;
-            SendInputServerRpc(cmd);
 
+            // 🔥 ТОЛЬКО если это клиент, а не хост
+            if (!IsServer)
+            {
+                movement.Simulate(cmd);
+
+                stateBuffer[currentTick] = new PlayerState
+                {
+                    Tick     = currentTick,
+                    Position = transform.position,
+                    Velocity = movement.Velocity,
+                    Yaw      = transform.eulerAngles.y
+                };
+            }
+
+            SendInputServerRpc(cmd);
             inputHandler.ClearOneShotFlags();
         }
 
@@ -132,13 +145,29 @@ public class PlayerNetworkController : NetworkBehaviour
         if (error < IgnoreErrorThreshold)
             return;
 
-        if (error > HardSnapThreshold)
-        {
-            transform.position = serverState.Position;
-            return;
-        }
+        // 🔥 Откатываемся
+        transform.position = serverState.Position;
 
-        Vector3 delta = serverState.Position - transform.position;
-        transform.position += delta * 0.5f;
+        // 🔥 Удаляем старые состояния
+        stateBuffer.Remove(serverState.Tick);
+
+        // 🔥 Пересимулируем input после этого тика
+        int currentTick = NetworkTickSystem.I.CurrentTick;
+
+        for (int tick = serverState.Tick + 1; tick <= currentTick; tick++)
+        {
+            if (inputBuffer.TryGetValue(tick, out var cmd))
+            {
+                movement.Simulate(cmd);
+
+                stateBuffer[tick] = new PlayerState
+                {
+                    Tick     = tick,
+                    Position = transform.position,
+                    Velocity = movement.Velocity,
+                    Yaw      = transform.eulerAngles.y
+                };
+            }
+        }
     }
 }

@@ -25,9 +25,6 @@ public class DeterministicMovement : NetworkBehaviour
 
     public void Simulate(MoveCommand cmd)
     {
-        if (!IsServer)
-            return;
-
         float dt = NetworkTickSystem.TickDelta;
 
         // ----- Rotation -----

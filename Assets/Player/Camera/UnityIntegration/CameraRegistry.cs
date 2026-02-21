@@ -21,7 +21,7 @@ namespace Features.Camera.UnityIntegration
 
         private void Awake()
         {
-            // Singleton
+            Debug.Log($"[camera-fix] CameraRegistry Awake | sceneCamera NULL? {sceneCamera == null}");
             if (Instance != null && Instance != this)
             {
                 Debug.LogWarning(
@@ -32,6 +32,8 @@ namespace Features.Camera.UnityIntegration
             }
 
             Instance = this;
+
+            DontDestroyOnLoad(gameObject);
 
             if (sceneCamera == null)
             {
@@ -59,6 +61,7 @@ namespace Features.Camera.UnityIntegration
 
         public void RegisterCamera(UnityEngine.Camera cam)
         {
+            Debug.Log($"[camera-fix] RegisterCamera {cam.name}");
             if (cam == null)
             {
                 Debug.LogError("[CameraRegistry] Tried to register NULL camera");

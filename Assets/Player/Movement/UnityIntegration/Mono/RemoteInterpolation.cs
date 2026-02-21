@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FishNet.Object;
 using UnityEngine;
 
 public class RemoteInterpolation : MonoBehaviour
@@ -30,6 +31,10 @@ public class RemoteInterpolation : MonoBehaviour
 
     private void Update()
     {
+        var netObj = GetComponentInParent<NetworkObject>();
+        if (netObj != null && netObj.IsOwner)
+            return;
+            
         if (snapshots.Count < 2)
             return;
 

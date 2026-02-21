@@ -108,7 +108,15 @@ public sealed class SpawnService
 
         Debug.Log($"[fix-net] Spawned player for conn={conn.ClientId}");
 
-        NotifyClientSpawned(conn);
+        if (playerObj.TryGetComponent<ClientLoginBridge>(out var bridge))
+        {
+            bridge.NotifySpawnedTargetRpc(conn);
+            Debug.Log($"[fix-net] Direct TargetRpc sent to {conn.ClientId}");
+        }
+        else
+        {
+            Debug.LogError("[fix-net] ClientLoginBridge NOT FOUND on player prefab!");
+        }
     }
 
     // =============================
@@ -128,15 +136,4 @@ public sealed class SpawnService
         return true;
     }
 
-    private void NotifyClientSpawned(NetworkConnection conn)
-    {
-        foreach (var obj in conn.Objects)
-        {
-            if (obj.TryGetComponent<ClientLoginBridge>(out var bridge))
-            {
-                bridge.NotifySpawnedTargetRpc(conn);
-                break;
-            }
-        }
-    }
 }
