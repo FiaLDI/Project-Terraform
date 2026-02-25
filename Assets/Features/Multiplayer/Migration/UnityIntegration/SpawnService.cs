@@ -51,7 +51,7 @@ public sealed class SpawnService
     // =============================
     public void RespawnAllOnline()
     {
-        Debug.Log("[fix-net] === RespawnAllOnline START ===");
+        Debug.Log("[SpawnService] RespawnAllOnline called");
 
         if (!CanSpawnNow())
         {

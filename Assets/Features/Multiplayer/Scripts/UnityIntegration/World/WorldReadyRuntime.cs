@@ -1,39 +1,41 @@
 using UnityEngine;
 using FishNet.Object;
 using System.Collections;
-using Features.Biomes.UnityIntegration;
 
 public sealed class WorldReadyRuntime : NetworkBehaviour
 {
-    private bool signaled;
+    private bool initialized;
+    private WorldProvider provider;
 
     public override void OnStartServer()
     {
         base.OnStartServer();
-
-        RuntimeWorldGenerator.OnWorldReady += OnWorldReady;
+        StartCoroutine(ServerWaitFlow());
     }
 
-    public override void OnStopServer()
+    private IEnumerator ServerWaitFlow()
     {
-        base.OnStopServer();
+        while (provider == null)
+        {
+            provider = FindObjectOfType<WorldProvider>();
+            yield return null;
+        }
 
-        RuntimeWorldGenerator.OnWorldReady -= OnWorldReady;
-    }
+        while (!provider.IsWorldReady.Value)
+        {
+            yield return null;
+        }
 
-    private void OnWorldReady(int version)
-    {
-        if (signaled)
-            return;
+        if (initialized)
+            yield break;
 
-        signaled = true;
+        initialized = true;
 
-        StartCoroutine(InitializeWorld());
+        yield return InitializeWorld();
     }
 
     private IEnumerator InitializeWorld()
     {
-        // Ждём регистрацию spawn providers
         while (PlayerSpawnRegistry.I == null ||
                !PlayerSpawnRegistry.I.HasProvider)
         {
@@ -44,8 +46,6 @@ public sealed class WorldReadyRuntime : NetworkBehaviour
 
         root.Flow.NotifySceneLoaded();
         root.Flow.NotifyWorldPrepared();
-
-        Debug.Log("[fix-net] Server world RUNNING");
 
         root.Spawner.RespawnAllOnline();
 

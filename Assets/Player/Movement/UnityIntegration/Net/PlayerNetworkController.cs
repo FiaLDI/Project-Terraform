@@ -3,6 +3,7 @@ using FishNet.Connection;
 using UnityEngine;
 using System.Collections.Generic;
 using Features.Player.UnityIntegration;
+using System.Collections;
 
 [RequireComponent(typeof(DeterministicMovement))]
 public class PlayerNetworkController : NetworkBehaviour
@@ -169,5 +170,13 @@ public class PlayerNetworkController : NetworkBehaviour
                 };
             }
         }
+    }
+
+    [ServerRpc]
+    public void RequestWorldServerRpc(int seed)
+    {
+        ServerWorldSession.PendingSeed = seed;
+
+        SceneTransitionService.LoadWorldScene();
     }
 }
