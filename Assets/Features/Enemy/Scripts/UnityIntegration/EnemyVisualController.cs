@@ -8,12 +8,8 @@ public sealed class EnemyVisualController : MonoBehaviour
     [Tooltip("Animator Controller для врага")]
     [SerializeField] private RuntimeAnimatorController animatorController;
 
-    [Header("Movement Source")]
-    [SerializeField] private Rigidbody rb;
-
     [Header("Speed Settings")]
-    [SerializeField] private float walkSpeed = 0.2f;
-    [SerializeField] private float runSpeed = 2.5f;
+    [SerializeField] private float runSpeed = 3f;   // должно совпадать с moveSpeed
     [SerializeField] private float dampTime = 0.1f;
 
     [Header("Rotation (Visual Only)")]
@@ -21,7 +17,6 @@ public sealed class EnemyVisualController : MonoBehaviour
     [SerializeField] private float rotationSpeed = 8f;
     [SerializeField] private float minTurnDistance = 0.2f;
 
-    private Vector3 lastPosition;
     private EnemyEcsMoveBridge moveBridge;
 
     private static readonly int SpeedHash =
@@ -35,42 +30,25 @@ public sealed class EnemyVisualController : MonoBehaviour
         if (animatorController != null)
             animator.runtimeAnimatorController = animatorController;
 
-        if (rb == null)
-            rb = GetComponent<Rigidbody>();
-
         if (modelRoot == null && animator != null)
             modelRoot = animator.transform;
 
         moveBridge = GetComponent<EnemyEcsMoveBridge>();
-
-        lastPosition = transform.position;
     }
 
     private void Update()
     {
+        if (animator == null)
+            return;
+
         // =========================
         // SPEED → ANIMATION
         // =========================
-        Vector3 velocity =
-            (transform.position - lastPosition) / Time.deltaTime;
+        float speed = moveBridge != null
+            ? moveBridge.CurrentSpeed
+            : 0f;
 
-        Vector3 horizontalVelocity = new Vector3(
-            velocity.x,
-            0f,
-            velocity.z
-        );
-
-        float speed = horizontalVelocity.magnitude;
-
-        float animSpeed = 0f;
-        if (speed > walkSpeed)
-        {
-            animSpeed = Mathf.InverseLerp(
-                walkSpeed,
-                runSpeed,
-                speed
-            );
-        }
+        float animSpeed = Mathf.Clamp01(speed / runSpeed);
 
         animator.SetFloat(
             SpeedHash,
@@ -82,10 +60,11 @@ public sealed class EnemyVisualController : MonoBehaviour
         // =========================
         // ROTATION → BY AI TARGET
         // =========================
-        if (moveBridge != null)
+        if (moveBridge != null && modelRoot != null)
         {
             Vector3 toTarget =
                 moveBridge.CurrentTarget - transform.position;
+
             toTarget.y = 0f;
 
             if (toTarget.sqrMagnitude >
@@ -101,7 +80,5 @@ public sealed class EnemyVisualController : MonoBehaviour
                 );
             }
         }
-
-        lastPosition = transform.position;
     }
 }

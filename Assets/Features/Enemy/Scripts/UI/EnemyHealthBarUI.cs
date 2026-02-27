@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Features.Camera.UnityIntegration;
 using Features.Enemy.UnityIntegration;
+using Features.Stats.Domain;
 
 
 namespace Features.Enemy
@@ -13,7 +14,7 @@ namespace Features.Enemy
         [SerializeField] private Image fillImage;
 
         [Header("Target")]
-        [SerializeField] private EnemyHealth target;
+        [SerializeField] private IStatsFacade target;
         [SerializeField] private Transform headAnchor;
 
         private Canvas canvas;
@@ -49,7 +50,7 @@ namespace Features.Enemy
         private void Start()
         {
             if (target == null)
-                target = GetComponentInParent<EnemyHealth>();
+                target = GetComponentInParent<IStatsFacade>();
 
             if (target == null)
             {
@@ -58,23 +59,12 @@ namespace Features.Enemy
                 return;
             }
 
-            if (headAnchor == null)
-            {
-                var go = new GameObject("HeadAnchor");
-                go.transform.SetParent(target.transform);
-                go.transform.localPosition = Vector3.up * 2f;
-                headAnchor = go.transform;
-            }
-
             if (fillImage == null)
             {
                 Debug.LogError("[EnemyHealthBarUI] FillImage missing", this);
                 enabled = false;
                 return;
             }
-
-            // 🔥 регистрируемся как view
-            target.RegisterHealthView(this);
 
             UpdateFillImmediate();
         }
@@ -93,6 +83,8 @@ namespace Features.Enemy
             transform.position = headAnchor.position;
             transform.LookAt(cam.transform, Vector3.up);
 
+            targetFill = target.Health.CurrentHp;
+
             fillImage.fillAmount = targetFill;
         }
 
@@ -100,12 +92,6 @@ namespace Features.Enemy
         {
             if (CameraRegistry.Instance != null)
                 CameraRegistry.Instance.OnCameraChanged -= HandleCameraChanged;
-        }
-
-        private void OnDestroy()
-        {
-            if (target != null)
-                target.UnregisterHealthView(this);
         }
 
         // =====================================================
