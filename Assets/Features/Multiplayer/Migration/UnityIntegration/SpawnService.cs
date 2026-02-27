@@ -23,55 +23,107 @@ public sealed class SpawnService
         this.sessionManager = sessionManager;
         this.flow = flow;
         this.playerPrefab = prefab;
-
-        flow.OnStateChanged += OnServerStateChanged;
-
-        if (PlayerSpawnRegistry.I != null)
-            PlayerSpawnRegistry.I.OnProviderRegistered += TrySpawnAllPending;
     }
 
+    // =============================
+    // LOGIN SPAWN (первый вход)
+    // =============================
     public void HandleLoginSpawn(NetworkConnection conn, PlayerSession session)
-    {
-        if (!CanSpawnNow())
+{
+        if (session.PlayerObject != null)
+        {
+            Debug.Log($"[fix-net] Login spawn skipped, already has player for {conn.ClientId}");
             return;
+        }
+
+        if (!CanSpawnNow())
+        {
+            Debug.Log($"[fix-net] World not ready, spawn deferred for {conn.ClientId}");
+            return;
+        }
 
         SpawnInternal(conn, session);
     }
 
-    private void OnServerStateChanged(ServerGameState state)
-    {
-        if (state != ServerGameState.Running)
-            return;
 
-        TrySpawnAllPending();
-    }
-
-    private void TrySpawnAllPending()
+    // =============================
+    // SCENE RESPAWN (смена сцены)
+    // =============================
+    public void RespawnAllOnline()
     {
+        Debug.Log("[SpawnService] RespawnAllOnline called");
+
         if (!CanSpawnNow())
+        {
+            Debug.Log("[fix-net] Respawn aborted: world not ready");
             return;
+        }
 
         foreach (var session in sessionManager.GetOnlineSessions())
         {
-            if (!session.IsOnline)
-                continue;
-
-            if (session.PlayerObject != null)
-                continue;
-
             if (!nm.ServerManager.Clients.TryGetValue(session.ClientId.Value, out var conn))
                 continue;
 
+            if (session.PlayerObject == null)
+            {
+                Debug.Log($"[fix-net] First spawn for {conn.ClientId}");
+                SpawnInternal(conn, session);
+                continue;
+            }
+
+            Debug.Log($"[fix-net] Respawning existing player for {conn.ClientId}");
+
+            nm.ServerManager.Despawn(session.PlayerObject);
+            session.SetPlayerObject(null);
+
             SpawnInternal(conn, session);
+        }
+
+        Debug.Log("[fix-net] === RespawnAllOnline END ===");
+    }
+
+
+    // =============================
+    // INTERNAL SPAWN
+    // =============================
+    private void SpawnInternal(NetworkConnection conn, PlayerSession session)
+    {
+        if (!PlayerSpawnRegistry.I.TryGetRandom(out var provider))
+        {
+            Debug.LogWarning("[fix-net] No spawn providers available.");
+            return;
+        }
+
+        if (!provider.TryGetSpawnPoint(out var pos, out var rot))
+        {
+            Debug.LogWarning("[fix-net] Spawn point unavailable.");
+            return;
+        }
+
+        var playerObj = Object.Instantiate(playerPrefab, pos, rot);
+
+        nm.ServerManager.Spawn(playerObj, conn);
+
+        session.SetPlayerObject(playerObj);
+
+        Debug.Log($"[fix-net] Spawned player for conn={conn.ClientId}");
+
+        if (playerObj.TryGetComponent<ClientLoginBridge>(out var bridge))
+        {
+            bridge.NotifySpawnedTargetRpc(conn);
+            Debug.Log($"[fix-net] Direct TargetRpc sent to {conn.ClientId}");
+        }
+        else
+        {
+            Debug.LogError("[fix-net] ClientLoginBridge NOT FOUND on player prefab!");
         }
     }
 
+    // =============================
+    // UTIL
+    // =============================
     private bool CanSpawnNow()
     {
-        Debug.Log($"CanSpawnNow? State={flow.CurrentState} " +
-              $"RegistryNull={PlayerSpawnRegistry.I == null} " +
-              $"HasProvider={(PlayerSpawnRegistry.I != null && PlayerSpawnRegistry.I.HasProvider)}");
-
         if (flow.CurrentState != ServerGameState.Running)
             return false;
 
@@ -82,71 +134,6 @@ public sealed class SpawnService
             return false;
 
         return true;
-    }
-
-    private void SpawnInternal(NetworkConnection conn, PlayerSession session)
-{
-    if (!PlayerSpawnRegistry.I.TryGetRandom(out var provider))
-    {
-        Debug.LogWarning("No spawn providers available.");
-        return;
-    }
-
-    if (!provider.TryGetSpawnPoint(out var pos, out var rot))
-        return;
-
-    var playerObj = Object.Instantiate(playerPrefab, pos, rot);
-
-    nm.ServerManager.Spawn(playerObj, conn);
-
-    session.SetPlayerObject(playerObj);
-
-    Debug.Log($"Spawned NEW player for {conn.ClientId}");
-
-    NotifyClientSpawned(conn);
-}
-
-
-
-
-    private void NotifyClientSpawned(NetworkConnection conn)
-    {
-        foreach (var obj in conn.Objects)
-        {
-            if (obj.TryGetComponent<ClientLoginBridge>(out var bridge))
-            {
-                bridge.NotifySpawnedTargetRpc(conn);
-                break;
-            }
-        }
-    }
-
-    public void RespawnAllOnline()
-    {
-        foreach (var session in sessionManager.GetOnlineSessions())
-        {
-            if (!session.IsOnline)
-                continue;
-
-            if (!nm.ServerManager.Clients.TryGetValue(session.ClientId.Value, out var conn))
-                continue;
-
-            void Handler(NetworkConnection c, bool asServer)
-            {
-                // отписываемся сразу
-                conn.OnLoadedStartScenes -= Handler;
-
-                if (session.PlayerObject != null)
-                {
-                    nm.ServerManager.Despawn(session.PlayerObject);
-                    session.SetPlayerObject(null);
-                }
-
-                SpawnInternal(conn, session);
-            }
-
-            conn.OnLoadedStartScenes += Handler;
-        }
     }
 
 }

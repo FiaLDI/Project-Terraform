@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using System.Collections;
 using Features.Biomes.Domain;
 using Features.Biomes.Application;
+using Features.Player.UnityIntegration;
 
 namespace Features.Biomes.UnityIntegration
 {
@@ -28,15 +29,14 @@ namespace Features.Biomes.UnityIntegration
         public int unloadDistance = 8;
 
         [Header("Spawn Settings")]
-        public float spawnHeightCheck = 500f;
+        public float spawnHeightCheck = 50f;
 
         private ChunkManager manager;
-        private GameObject systemsInstance;
+        private WorldProvider worldProvider;
+        private Transform trackedPlayer;
+        private int worldSeed;
 
         public static WorldConfig World { get; private set; }
-
-        // 🔥 Сигнал готовности мира
-        public static event System.Action<int> OnWorldReady;
 
         // ======================================================
         // SERVER
@@ -45,37 +45,132 @@ namespace Features.Biomes.UnityIntegration
         public override void OnStartServer()
         {
             base.OnStartServer();
-
-            if (worldConfig == null)
-            {
-                Debug.LogError("[RuntimeWorldGenerator] WorldConfig is NULL!");
-                return;
-            }
-
-            StartCoroutine(ServerGenerateWorld());
+            StartCoroutine(ServerFlow());
         }
 
-        private IEnumerator ServerGenerateWorld()
+        private IEnumerator ServerFlow()
         {
-            Debug.Log("[WorldGen] Starting generation...");
+            yield return WaitForWorldProvider();
+            InitializeSeed(worldSeed);
 
-            // 1️⃣ Биомы
+            yield return ServerGenerateWorld();
+
+            worldProvider.SetWorldReady();
+        }
+
+        // ======================================================
+        // CLIENT
+        // ======================================================
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            if (IsServer && !IsClient)
+                 return;
+
+            StartCoroutine(ClientFlow());
+        }
+
+        private IEnumerator ClientFlow()
+        {
+            yield return WaitForWorldProvider();
+            InitializeSeed(worldSeed);
+
+            yield return ClientGenerateWorld();
+
+            yield return WaitForLocalPlayerController();
+        }
+
+        private IEnumerator WaitForLocalPlayerController()
+        {
+            while (LocalPlayerController.I == null ||
+                LocalPlayerController.I.BoundPlayer == null)
+            {
+                yield return null;
+            }
+
+            trackedPlayer = LocalPlayerController.I.BoundPlayer.transform;
+
+            Debug.Log("[WorldGen] Streaming bound to LocalPlayerController");
+        }
+
+        private void OnLocalPlayerReady(PlayerRegistry registry)
+        {
+            trackedPlayer = registry.LocalPlayer.transform;
+            Debug.Log("[WorldGen] Local player attached to streaming");
+        }
+
+        private void OnDestroy()
+        {
+            PlayerRegistry.UnsubscribeLocalPlayerReady(OnLocalPlayerReady);
+        }
+
+        // ======================================================
+        // COMMON
+        // ======================================================
+
+        private IEnumerator WaitForWorldProvider()
+        {
+            while (true)
+            {
+                if (worldProvider == null)
+                    worldProvider = FindObjectOfType<WorldProvider>();
+
+                if (worldProvider != null && worldProvider.Seed.Value != 0)
+                {
+                    worldSeed = worldProvider.Seed.Value;
+                    Debug.Log($"[world-gen] seed='{worldSeed}'");
+                    yield break;
+                }
+
+                yield return null;
+            }
+        }
+
+        private void InitializeSeed(int seed)
+        {
+            worldConfig.seed = seed;
+            UnityEngine.Random.InitState(seed);
+        }
+
+        // ======================================================
+        // CLIENT GENERATION
+        // ======================================================
+
+        private IEnumerator ClientGenerateWorld()
+        {
             if (!BiomeRuntimeDatabase.Initialized)
                 BiomeRuntimeDatabase.Build(worldConfig);
 
-            // 2️⃣ ChunkManager
             manager = new ChunkManager(worldConfig);
             World = worldConfig;
 
-            manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
+            yield return null;
+
+            Debug.Log("[WorldGen] Client world ready");
+        }
+
+        // ======================================================
+        // SERVER GENERATION
+        // ======================================================
+
+        private IEnumerator ServerGenerateWorld()
+        {
+            if (!BiomeRuntimeDatabase.Initialized)
+                BiomeRuntimeDatabase.Build(worldConfig);
+
+            manager = new ChunkManager(worldConfig);
+            World = worldConfig;
+
+            manager.UpdateChunks(GetWorldCenterSpawn(), loadDistance, unloadDistance);
             manager.ProcessLoadQueue();
 
             yield return new WaitForFixedUpdate();
 
-            // 3️⃣ Мир-системы
             if (systemsPrefab != null)
             {
-                systemsInstance = Instantiate(
+                var systemsInstance = Instantiate(
                     systemsPrefab,
                     GetWorldCenterSpawn(),
                     Quaternion.identity
@@ -84,37 +179,60 @@ namespace Features.Biomes.UnityIntegration
                 Spawn(systemsInstance);
             }
 
-            // 4️⃣ Spawn points
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();
 
-            // 🔥 КЛЮЧ: даём кадр чтобы Start() у ScenePlayerSpawnPoint
-            // успел зарегистрировать provider в PlayerSpawnRegistry
-            yield return null;
+            yield return WaitForPhysicsReady();
 
-            // 5️⃣ Кастомные объекты
             if (customPrefab != null)
                 SpawnCustomPrefab();
-
-            Debug.Log("[WorldGen] Generation complete");
-
-            // 🔥 Теперь мир реально готов
-            OnWorldReady?.Invoke(WorldSession.WorldVersion);
         }
 
+        // ======================================================
+        // STREAMING (CLIENT ONLY)
+        // ======================================================
 
         private void Update()
         {
-            if (!IsServer || manager == null)
+            if (manager == null)
                 return;
 
-            manager.UpdateChunks(Vector3.zero, loadDistance, unloadDistance);
+            if (IsServer && !IsClient)
+                return;
+
+            if (trackedPlayer == null)
+                return;
+
+            manager.UpdateChunks(trackedPlayer.position, loadDistance, unloadDistance);
             manager.ProcessLoadQueue();
         }
 
         // ======================================================
         // HELPERS
         // ======================================================
+
+        private IEnumerator WaitForPhysicsReady()
+        {
+            int safety = 0;
+
+            while (safety < 50)
+            {
+                Vector3 testPoint = GetWorldCenterSpawn();
+
+                if (Physics.Raycast(
+                        testPoint + Vector3.up * 10f,
+                        Vector3.down,
+                        50f))
+                {
+                    yield break;
+                }
+
+                safety++;
+                yield return new WaitForFixedUpdate();
+            }
+
+            Debug.LogWarning("[WorldGen] Physics readiness timeout");
+        }
 
         private Vector3 GetWorldCenterSpawn()
         {
@@ -147,16 +265,13 @@ namespace Features.Biomes.UnityIntegration
                 Vector3 origin = center + new Vector3(offset2D.x, spawnHeightCheck, offset2D.y);
 
                 Vector3 pos = origin;
-                Quaternion rot = Quaternion.identity;
 
                 if (Physics.Raycast(origin, Vector3.down, out var hit, spawnHeightCheck * 2f))
                     pos = hit.point + Vector3.up * 1.5f;
 
-                var sp = Instantiate(spawnPointPrefab, pos, rot);
+                var sp = Instantiate(spawnPointPrefab, pos, Quaternion.identity);
                 sp.name = $"WorldSpawnPoint_{i}";
             }
-
-            Debug.Log($"[WorldGen] Spawned {spawnPointCount} spawn points");
         }
     }
 }

@@ -1,34 +1,21 @@
-using Features.Input;
 using FishNet;
 using FishNet.Managing.Scened;
-using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public static class SceneTransitionService
 {
     public const string WORLD_SCENE = "TestScene";
 
-    public static void RequestWorldScene()
+    public static void LoadWorldScene()
     {
         var nm = InstanceFinder.NetworkManager;
-        if (nm == null)
-        {
-            Debug.LogError("[SceneTransition] NetworkManager not found");
+        if (nm == null || !nm.IsServer)
             return;
-        }
-
-        if (!nm.IsServer)
-        {
-            Debug.LogWarning("[SceneTransition] Only server can load world scene");
-            return;
-        }
 
         var data = new SceneLoadData(WORLD_SCENE)
         {
-            ReplaceScenes = ReplaceOption.All
+            ReplaceScenes = ReplaceOption.All,
         };
 
         nm.SceneManager.LoadGlobalScenes(data);
     }
-
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using FishNet.Object;
 using FishNet.Connection;
+using System.Collections;
 
 public sealed class ClientLoginBridge : NetworkBehaviour
 {
@@ -13,6 +14,7 @@ public sealed class ClientLoginBridge : NetworkBehaviour
 
         Debug.Log("[LoginBridge] Owner ready");
 
+        // ❌ НЕ логинимся здесь
         ClientConnectionController.I?.OnLoginBridgeReady(this);
     }
 
@@ -21,6 +23,7 @@ public sealed class ClientLoginBridge : NetworkBehaviour
         if (!IsOwner)
             return;
 
+        Debug.Log("[fix-net] Sending login to server");
         LoginServerRpc(persistentId);
     }
 
@@ -28,17 +31,24 @@ public sealed class ClientLoginBridge : NetworkBehaviour
     private void LoginServerRpc(string persistentId, NetworkConnection sender = null)
     {
         if (sender == null)
-        {
-            Debug.LogError("LoginServerRpc sender NULL");
             return;
-        }
 
         ServerLoginHandler.I.HandleLogin(sender, persistentId);
     }
 
     [TargetRpc]
-    public void NotifySpawnedTargetRpc(NetworkConnection conn)
-    {
-        ClientConnectionController.I?.NotifySpawned();
-    }
+public void NotifySpawnedTargetRpc(NetworkConnection conn)
+{
+    Debug.Log("[fix-net] Server confirmed spawn");
+
+    StartCoroutine(DelayedNotify());
+}
+
+private IEnumerator DelayedNotify()
+{
+    while (!IsOwner)
+        yield return null;
+
+    ClientConnectionController.I?.NotifySpawned();
+}
 }

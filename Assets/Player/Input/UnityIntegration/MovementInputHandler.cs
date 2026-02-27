@@ -175,7 +175,7 @@ namespace Features.Player.UnityIntegration
         // SAFETY
         // ======================================================
 
-        private void OnDisable()
+        private void OnDestroy()
         {
             if (input != null)
                 UnbindInput(input);

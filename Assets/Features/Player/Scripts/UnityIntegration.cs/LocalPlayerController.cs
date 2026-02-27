@@ -57,7 +57,8 @@ public sealed class LocalPlayerController : MonoBehaviour
 
     public void Bind(NetworkPlayer player)
     {
-        // Защита: вдруг по ошибке прилетит не-owner
+        Debug.Log($"[fix-net] LocalPlayerController.Bind -> {player.name}");
+
         if (!player.IsOwner)
         {
             Debug.LogWarning("[LocalPlayerController] Bind called for non-owner player, ignoring", player);
@@ -69,7 +70,6 @@ public sealed class LocalPlayerController : MonoBehaviour
 
         Debug.Log($"[LocalPlayerController] Bind to {player.name}");
 
-        // unbind старого локального
         if (boundPlayer != null)
             Unbind(boundPlayer);
 
@@ -94,7 +94,11 @@ public sealed class LocalPlayerController : MonoBehaviour
 
         var camController = player.GetComponent<PlayerCameraController>();
         if (camController != null)
+        {
             camController.SetLocal(true);
+
+            camController.ForceReattachCamera();
+        }
 
         var cam = Camera.main;
         if (cam != null)

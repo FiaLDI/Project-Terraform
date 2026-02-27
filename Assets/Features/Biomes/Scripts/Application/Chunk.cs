@@ -80,7 +80,9 @@ public class Chunk
         var blend = world.GetDominantBiome(coord);
         BiomeConfig biome = blend.biome;
 
+        // =========================
         // LOD0
+        // =========================
         MeshData data0 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
@@ -88,11 +90,14 @@ public class Chunk
             world,
             biome.useLowPoly
         );
+
         Mesh lod0 = TerrainMeshGenerator.BuildMesh(data0);
         lod0.MarkDynamic();
         _runtimeMeshes.Add(lod0);
 
+        // =========================
         // LOD1
+        // =========================
         MeshData data1 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
@@ -100,11 +105,14 @@ public class Chunk
             world,
             biome.useLowPoly
         );
+
         Mesh lod1 = TerrainMeshGenerator.BuildMesh(data1);
         lod1.MarkDynamic();
         _runtimeMeshes.Add(lod1);
 
+        // =========================
         // LOD2
+        // =========================
         MeshData data2 = MeshDataGenerator.GenerateData(
             coord,
             chunkSize,
@@ -112,22 +120,31 @@ public class Chunk
             world,
             biome.useLowPoly
         );
+
         Mesh lod2 = TerrainMeshGenerator.BuildMesh(data2);
         lod2.MarkDynamic();
         _runtimeMeshes.Add(lod2);
 
-        // Нормали через Burst (нативная часть тоже обновится)
+        // =========================
+        // Нормали (Burst)
+        // =========================
         BurstMeshUtility.RecalculateNormalsBurst(lod0);
         BurstMeshUtility.RecalculateNormalsBurst(lod1);
         BurstMeshUtility.RecalculateNormalsBurst(lod2);
 
-        // Render объект
+        // ВАЖНО: финализируем данные перед физикой
+        lod0.UploadMeshData(false);
+
+        // =========================
+        // RENDER OBJECT
+        // =========================
         var renderObj = new GameObject("Mesh_LOD");
         renderObj.transform.SetParent(rootObject.transform, false);
         renderObj.layer = LayerMask.NameToLayer("Default");
 
         var mf = renderObj.AddComponent<MeshFilter>();
         var mr = renderObj.AddComponent<MeshRenderer>();
+
         BiomeMaterialUtility.ApplyBiomeMaterial(mr, biome, world);
 
         mf.sharedMesh = lod0;
@@ -139,16 +156,18 @@ public class Chunk
         lodComp.lod1Distance = 80f;
         lodComp.lod2Distance = 160f;
 
-        // Collider объект (LOD0)
+        // =========================
+        // COLLIDER OBJECT
+        // =========================
         var colliderObj = new GameObject("Mesh_Collider_LOD0");
         colliderObj.transform.SetParent(rootObject.transform, false);
         colliderObj.layer = LayerMask.NameToLayer("Default");
 
         var mc = colliderObj.AddComponent<MeshCollider>();
-        mc.sharedMesh = lod0; // используем тот же Mesh, без копий
 
-        // фиксированный ре-кукинг
-        colliderObj.AddComponent<ChunkColliderLODFixed>().physicsMesh = lod0;
+        // Принудительный ре-кукинг
+        mc.sharedMesh = null;
+        mc.sharedMesh = lod0;
     }
 
     private void GenerateImmediateMesh()
@@ -162,8 +181,12 @@ public class Chunk
             world,
             biome.useLowPoly
         );
+
         m.MarkDynamic();
         _runtimeMeshes.Add(m);
+
+        BurstMeshUtility.RecalculateNormalsBurst(m);
+        m.UploadMeshData(false);
 
         var go = new GameObject("Mesh");
         go.transform.SetParent(rootObject.transform, false);
@@ -175,8 +198,10 @@ public class Chunk
         mf.sharedMesh = m;
 
         var mc = go.AddComponent<MeshCollider>();
+        mc.sharedMesh = null;
         mc.sharedMesh = m;
     }
+
 
     // ================================================================
     // MEGA SPAWN

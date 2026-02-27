@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FishNet.Object;
 using UnityEngine;
 
 public class RemoteInterpolation : MonoBehaviour
@@ -15,7 +16,7 @@ public class RemoteInterpolation : MonoBehaviour
 
     public void ReceiveState(PlayerState state)
     {
-        float time = state.Tick * NetworkTickSystem.TickDelta;
+        float time = Time.time;
 
         snapshots.Add(new Snapshot
         {
@@ -30,12 +31,14 @@ public class RemoteInterpolation : MonoBehaviour
 
     private void Update()
     {
+        var netObj = GetComponentInParent<NetworkObject>();
+        if (netObj != null && netObj.IsOwner)
+            return;
+            
         if (snapshots.Count < 2)
             return;
 
-        float renderTime =
-            NetworkTickSystem.I.CurrentTick *
-            NetworkTickSystem.TickDelta - InterpDelay;
+        float renderTime = Time.time - InterpDelay;
 
         while (snapshots.Count >= 2 &&
                snapshots[1].Time <= renderTime)

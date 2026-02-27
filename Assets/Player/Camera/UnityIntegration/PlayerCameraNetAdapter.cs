@@ -1,3 +1,4 @@
+using FishNet.Connection;
 using FishNet.Object;
 using UnityEngine;
 
@@ -5,28 +6,35 @@ namespace Features.Player.UnityIntegration
 {
     public sealed class PlayerCameraNetAdapter : NetworkBehaviour
     {
-        private PlayerCameraController controller;
+        // private PlayerCameraController controller;
 
-        public override void OnStartNetwork()
-        {
-            base.OnStartNetwork();
+        // public override void OnStartClient()
+        // {
+        //     base.OnStartClient();
 
-            controller = GetComponent<PlayerCameraController>();
+        //     controller = GetComponent<PlayerCameraController>();
 
-            if (controller == null)
-            {
-                Debug.LogError($"[CameraNet] PlayerCameraController missing on {name}");
-                return;
-            }
+        //     Debug.Log($"[camera-fix] {name} OnStartClient | IsOwner={IsOwner}");
 
-            bool isLocal = Owner != null && Owner.IsLocalClient;
-            controller.SetLocal(isLocal);
-        }
+        //     if (controller == null)
+        //     {
+        //         Debug.LogError($"[camera-fix] {name} MISSING PlayerCameraController");
+        //         return;
+        //     }
 
-        public override void OnStopClient()
-        {
-            if (controller != null)
-                controller.SetLocal(false);
-        }
+        //     controller.SetLocal(IsOwner);
+        // }
+
+        // public override void OnOwnershipClient(NetworkConnection prevOwner)
+        // {
+        //     Debug.Log($"[CameraNet] Ownership changed on {name} | IsOwner={IsOwner}");
+        //     controller?.SetLocal(IsOwner);
+        // }
+
+        // public override void OnStopClient()
+        // {
+        //     if (IsOwner)
+        //         controller?.SetLocal(false);
+        // }
     }
 }

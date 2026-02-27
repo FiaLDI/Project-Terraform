@@ -12,6 +12,8 @@ public sealed class NetworkTickSystem : MonoBehaviour
 
     public int CurrentTick { get; private set; }
 
+    public bool Paused { get; set; }
+
     private float _accumulator;
 
     private void Awake()
@@ -21,6 +23,9 @@ public sealed class NetworkTickSystem : MonoBehaviour
 
     private void Update()
     {
+        if (Paused)
+            return;
+            
         _accumulator += Time.deltaTime;
 
         while (_accumulator >= TickDelta)

@@ -14,6 +14,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
 
     // === PUBLIC DATA FOR VISUALS ===
     public Vector3 CurrentTarget { get; private set; }
+    public float CurrentSpeed { get; private set; }
 
     private Entity entity;
     private EntityManager em;
@@ -81,6 +82,14 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
 
         Vector3 next =
             pos + forward * moveSpeed * Time.fixedDeltaTime;
+
+        CurrentSpeed = moveSpeed;
+
+        if (dir.sqrMagnitude < 0.01f)
+        {
+            CurrentSpeed = 0f;
+            return;
+        }
 
         rb.MovePosition(next);
 

@@ -1,38 +1,41 @@
 using UnityEngine;
-using FishNet;
+using FishNet.Object;
 using System.Collections;
-using Features.Biomes.UnityIntegration;
 
-public sealed class WorldReadyRuntime : MonoBehaviour
+public sealed class WorldReadyRuntime : NetworkBehaviour
 {
-    private bool signaled;
+    private bool initialized;
+    private WorldProvider provider;
 
-    private void OnEnable()
+    public override void OnStartServer()
     {
-        RuntimeWorldGenerator.OnWorldReady += OnWorldReady;
+        base.OnStartServer();
+        StartCoroutine(ServerWaitFlow());
     }
 
-    private void OnDisable()
+    private IEnumerator ServerWaitFlow()
     {
-        RuntimeWorldGenerator.OnWorldReady -= OnWorldReady;
+        while (provider == null)
+        {
+            provider = FindObjectOfType<WorldProvider>();
+            yield return null;
+        }
+
+        while (!provider.IsWorldReady.Value)
+        {
+            yield return null;
+        }
+
+        if (initialized)
+            yield break;
+
+        initialized = true;
+
+        yield return InitializeWorld();
     }
 
-    private void OnWorldReady(int version)
+    private IEnumerator InitializeWorld()
     {
-        if (!InstanceFinder.IsServer)
-            return;
-
-        if (signaled)
-            return;
-
-        signaled = true;
-
-        StartCoroutine(WaitForSpawnProvidersAndRun());
-    }
-
-    private IEnumerator WaitForSpawnProvidersAndRun()
-    {
-        // 🔥 Ждём регистрацию spawn points
         while (PlayerSpawnRegistry.I == null ||
                !PlayerSpawnRegistry.I.HasProvider)
         {
@@ -44,9 +47,9 @@ public sealed class WorldReadyRuntime : MonoBehaviour
         root.Flow.NotifySceneLoaded();
         root.Flow.NotifyWorldPrepared();
 
-        // 🔥 Переспавниваем всех онлайн игроков
         root.Spawner.RespawnAllOnline();
 
-        Debug.Log("[WorldReadyRuntime] Procedural world is RUNNING");
+        if (NetworkTickSystem.I != null)
+            NetworkTickSystem.I.Paused = false;
     }
 }

@@ -32,11 +32,11 @@ public sealed class ServerBootstrap : MonoBehaviour
         if (args.ConnectionState != LocalConnectionState.Started)
             return;
 
-        Debug.Log("[ServerBootstrap] Server started");
+        Debug.Log("[fix-net] Server started");
 
         ServerCompositionRoot.I.Flow.NotifyServerStarted();
 
-        // 🔥 ГРУЗИМ ХАБ
+        // Загружаем хаб-сцену
         var data = new SceneLoadData(hubSceneName)
         {
             ReplaceScenes = ReplaceOption.All
@@ -47,18 +47,28 @@ public sealed class ServerBootstrap : MonoBehaviour
 
     private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
     {
-        if (args.ConnectionState == RemoteConnectionState.Started)
-            StartCoroutine(SpawnBridgeWhenReady(conn));
+        if (args.ConnectionState != RemoteConnectionState.Started)
+            return;
+
+        Debug.Log($"[fix-net] Client connected: {conn.ClientId}");
+
+        StartCoroutine(SpawnBridgeWhenReady(conn));
     }
 
     private System.Collections.IEnumerator SpawnBridgeWhenReady(NetworkConnection conn)
     {
+        // Ждём пока клиент полностью загрузит стартовые сцены
         while (!conn.LoadedStartScenes())
             yield return null;
 
+        // Дополнительная защита — вдруг клиент уже отключился
+        if (!conn.IsActive)
+            yield break;
+
         var bridge = Instantiate(loginBridgePrefab);
+
         net.ServerManager.Spawn(bridge, conn);
 
-        Debug.Log($"[Server] LoginBridge spawned for {conn.ClientId}");
+        Debug.Log($"[fix-net] LoginBridge spawned for {conn.ClientId}");
     }
 }
