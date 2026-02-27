@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 8233381831209847639}
   - component: {fileID: 7834474082500247267}
+  - component: {fileID: 8530069077275815002}
+  - component: {fileID: 7105733683561832181}
   m_Layer: 0
   m_Name: Shield
   m_TagString: Untagged
@@ -45,6 +47,75 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7487d41433301644db1f15fce2d72d5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShieldGridBehaviour
+--- !u!114 &8530069077275815002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4097214579380141426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 0
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours:
+  - {fileID: 7105733683561832181}
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  _initializedTimestamp: -8584293877765972348
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 0
+  _predictionType: 0
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 255
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 255
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 4
+  <SpawnableCollectionId>k__BackingField: 0
+  <AssetPathHash>k__BackingField: 7664067803210581119
+  SceneId: 0
+  SerializedTransformProperties:
+    Position: {x: 118.97656, y: 8.586287, z: 138.7803}
+    Rotation: {x: -0, y: -0.38268346, z: -0, w: 0.92387956}
+    Scale: {x: 3.7809873, y: 3.7809875, z: 3.7809873}
+    IsValid: 1
+--- !u!114 &7105733683561832181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4097214579380141426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a6a39c46bf52104ba8efe3100bce3f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.EmptyNetworkBehaviour
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 8530069077275815002}
+  _networkObjectCache: {fileID: 8530069077275815002}
 --- !u!1001 &1180858870700031948
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,9 +1,7 @@
+using Features.Camera.UnityIntegration;
+using Features.Stats.Adapter;
 using UnityEngine;
 using UnityEngine.UI;
-using Features.Camera.UnityIntegration;
-using Features.Enemy.UnityIntegration;
-using Features.Stats.Domain;
-
 
 namespace Features.Enemy
 {
@@ -14,17 +12,11 @@ namespace Features.Enemy
         [SerializeField] private Image fillImage;
 
         [Header("Target")]
-        [SerializeField] private IStatsFacade target;
+        [SerializeField] private HealthStatsAdapter target;
         [SerializeField] private Transform headAnchor;
 
         private Canvas canvas;
         private UnityEngine.Camera cam;
-
-        private float current;
-        private float max;
-        private float targetFill = 1f;
-
-        private float updateTimer;
 
         // =====================================================
         // UNITY
@@ -38,6 +30,7 @@ namespace Features.Enemy
 
         private void OnEnable()
         {
+            // Камера
             if (CameraRegistry.Instance != null)
             {
                 CameraRegistry.Instance.OnCameraChanged += HandleCameraChanged;
@@ -45,20 +38,26 @@ namespace Features.Enemy
                 if (CameraRegistry.Instance.CurrentCamera != null)
                     HandleCameraChanged(CameraRegistry.Instance.CurrentCamera);
             }
+
+            // Target
+            if (target == null)
+                target = GetComponentInParent<HealthStatsAdapter>();
+
+            if (target != null)
+                target.OnHealthChanged += OnHealthChanged;
+        }
+
+        private void OnDisable()
+        {
+            if (CameraRegistry.Instance != null)
+                CameraRegistry.Instance.OnCameraChanged -= HandleCameraChanged;
+
+            if (target != null)
+                target.OnHealthChanged -= OnHealthChanged;
         }
 
         private void Start()
         {
-            if (target == null)
-                target = GetComponentInParent<IStatsFacade>();
-
-            if (target == null)
-            {
-                Debug.LogError("[EnemyHealthBarUI] EnemyHealth not found", this);
-                enabled = false;
-                return;
-            }
-
             if (fillImage == null)
             {
                 Debug.LogError("[EnemyHealthBarUI] FillImage missing", this);
@@ -66,58 +65,43 @@ namespace Features.Enemy
                 return;
             }
 
-            UpdateFillImmediate();
+            if (target == null)
+            {
+                Debug.LogError("[EnemyHealthBarUI] HealthStatsAdapter not found", this);
+                enabled = false;
+                return;
+            }
+
+            // Принудительное начальное обновление
+            if (target.IsReady)
+                OnHealthChanged(target.CurrentHp, target.MaxHp);
         }
 
         private void LateUpdate()
         {
-            updateTimer += Time.deltaTime;
-            if (updateTimer < 0.05f)
-                return;
-
-            updateTimer = 0f;
-
             if (cam == null || headAnchor == null)
                 return;
 
             transform.position = headAnchor.position;
-            transform.LookAt(cam.transform, Vector3.up);
-
-            targetFill = target.Health.CurrentHp;
-
-            fillImage.fillAmount = targetFill;
-        }
-
-        private void OnDisable()
-        {
-            if (CameraRegistry.Instance != null)
-                CameraRegistry.Instance.OnCameraChanged -= HandleCameraChanged;
+            transform.LookAt(cam.transform);
         }
 
         // =====================================================
-        // VIEW API (вызывается EnemyHealth)
+        // EVENT
         // =====================================================
 
-        public void SetHealth(float hp, float maxHp)
+        private void OnHealthChanged(float hp, float maxHp)
         {
-            current = hp;
-            max = maxHp;
+            float fill = maxHp > 0f ? hp / maxHp : 0f;
+            fillImage.fillAmount = fill;
 
-            targetFill = max > 0f ? current / max : 0f;
-
-            if (current <= 0f)
+            if (hp <= 0f)
                 Invoke(nameof(Hide), 1f);
         }
 
         // =====================================================
         // HELPERS
         // =====================================================
-
-        private void UpdateFillImmediate()
-        {
-            targetFill = max > 0f ? current / max : 1f;
-            fillImage.fillAmount = targetFill;
-        }
 
         private void Hide()
         {

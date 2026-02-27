@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Features.Stats.Domain
 {

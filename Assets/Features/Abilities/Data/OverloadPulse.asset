@@ -28,6 +28,7 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 0
     value: 0
+    damageType: 0
     buff: {fileID: 0}
     onlySpecificBuff: 0
     buffId: 
@@ -35,13 +36,19 @@ MonoBehaviour:
     lifetime: 10
     useSourcePosition: 0
     ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []
   - type: 2
-    targetMode: 1
+    targetMode: 0
     radius: 20
     layerMask:
       serializedVersion: 2
       m_Bits: 1024
     value: 0
+    damageType: 0
     buff: {fileID: 11400000, guid: 29adad0be147ef14faf118faf729e575, type: 2}
     onlySpecificBuff: 0
     buffId: 
@@ -49,3 +56,48 @@ MonoBehaviour:
     lifetime: 10
     useSourcePosition: 0
     ownership: 1
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []
+  - type: 2
+    targetMode: 1
+    radius: 20
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 1024
+    value: 0
+    damageType: 0
+    buff: {fileID: 11400000, guid: 29adad0be147ef14faf118faf729e575, type: 2}
+    onlySpecificBuff: 0
+    buffId: 
+    prefabId: overload-ability
+    lifetime: 10
+    useSourcePosition: 0
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []
+  - type: 2
+    targetMode: 0
+    radius: 20
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 1280
+    value: 0
+    damageType: 0
+    buff: {fileID: 11400000, guid: 5314777b6e907bd44887d1b44066e1df, type: 2}
+    onlySpecificBuff: 0
+    buffId: 
+    prefabId: 
+    lifetime: 0
+    useSourcePosition: 0
+    ownership: 1
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []

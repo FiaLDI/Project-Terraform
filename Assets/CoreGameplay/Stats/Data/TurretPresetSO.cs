@@ -18,6 +18,7 @@ public class TurretPresetSO : ScriptableObject
     [System.Serializable]
     public class CombatBlock
     {
+        public float baseDamage = 1f;
         public float baseDamageMultiplier = 1f;
         public float baseFireRate = 5f;
         public float baseSpread = 2f;

@@ -47,7 +47,7 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    damageMultiplier: 1f,
+                    baseDamage: 1f,
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,

@@ -5,18 +5,6 @@ namespace Features.Stats.Domain
     public class CombatStats : ICombatStats, IStatModifierTarget
     {
         // =========================
-        // STAT KEYS
-        // =========================
-
-        private static readonly StatKey DamageKey = StatKeys.DamageMultiplier;
-        private static readonly StatKey FireRateKey = StatKeys.FireRate;
-        private static readonly StatKey SpreadKey = StatKeys.Spread;
-        private static readonly StatKey AimSpreadKey = StatKeys.AimSpread;
-        private static readonly StatKey RangeKey = StatKeys.Range;
-        private static readonly StatKey RecoilKey = StatKeys.Recoil;
-        private static readonly StatKey MagazineKey = StatKeys.MagazineSize;
-
-        // =========================
         // BASE
         // =========================
 
@@ -29,10 +17,10 @@ namespace Features.Stats.Domain
         private int _baseMagazine;
 
         // =========================
-        // ADD
+        // ADD (flat bonuses)
         // =========================
 
-        private float _addDamage;
+        private float _flatDamage;
         private float _addFireRate;
         private float _addSpread;
         private float _addAimSpread;
@@ -41,10 +29,10 @@ namespace Features.Stats.Domain
         private int _addMagazine;
 
         // =========================
-        // MULT
+        // MULTIPLIERS
         // =========================
 
-        private float _multDamage = 1f;
+        private float _damageMultiplier = 1f;
         private float _multFireRate = 1f;
         private float _multSpread = 1f;
         private float _multAimSpread = 1f;
@@ -55,20 +43,36 @@ namespace Features.Stats.Domain
         // PROPERTIES
         // =========================
 
-        public float DamageMultiplier => (_baseDamage + _addDamage) * _multDamage;
-        public float FireRate => (_baseFireRate + _addFireRate) * _multFireRate;
-        public float Spread => (_baseSpread + _addSpread) * _multSpread;
-        public float AimSpread => (_baseAimSpread + _addAimSpread) * _multAimSpread;
-        public float Range => (_baseRange + _addRange) * _multRange;
-        public float Recoil => (_baseRecoil + _addRecoil) * _multRecoil;
-        public int MagazineSize => Mathf.Max(0, _baseMagazine + _addMagazine);
+        public float BaseDamage => _baseDamage;
+        public float DamageMultiplier => _damageMultiplier;
+
+        public float FinalDamage =>
+            (_baseDamage + _flatDamage) * _damageMultiplier;
+
+        public float FireRate =>
+            (_baseFireRate + _addFireRate) * _multFireRate;
+
+        public float Spread =>
+            (_baseSpread + _addSpread) * _multSpread;
+
+        public float AimSpread =>
+            (_baseAimSpread + _addAimSpread) * _multAimSpread;
+
+        public float Range =>
+            (_baseRange + _addRange) * _multRange;
+
+        public float Recoil =>
+            (_baseRecoil + _addRecoil) * _multRecoil;
+
+        public int MagazineSize =>
+            Mathf.Max(0, _baseMagazine + _addMagazine);
 
         // =========================
         // APPLY BASE
         // =========================
 
         public void ApplyBase(
-            float damageMultiplier,
+            float baseDamage,
             float fireRate,
             float spread,
             float aimSpread,
@@ -76,7 +80,7 @@ namespace Features.Stats.Domain
             float recoil,
             int magazineSize)
         {
-            _baseDamage = damageMultiplier;
+            _baseDamage = baseDamage;
             _baseFireRate = fireRate;
             _baseSpread = spread;
             _baseAimSpread = aimSpread;
@@ -91,32 +95,91 @@ namespace Features.Stats.Domain
 
         public bool TryAdd(StatKey key, float value)
         {
-            if (key.Id == DamageKey.Id) { _addDamage += value; return true; }
-            if (key.Id == FireRateKey.Id) { _addFireRate += value; return true; }
-            if (key.Id == SpreadKey.Id) { _addSpread += value; return true; }
-            if (key.Id == AimSpreadKey.Id) { _addAimSpread += value; return true; }
-            if (key.Id == RangeKey.Id) { _addRange += value; return true; }
-            if (key.Id == RecoilKey.Id) { _addRecoil += value; return true; }
-            if (key.Id == MagazineKey.Id) { _addMagazine += Mathf.RoundToInt(value); return true; }
+            if (key.Id == StatKeys.FlatDamage.Id)
+            {
+                _flatDamage += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.FireRate.Id)
+            {
+                _addFireRate += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Spread.Id)
+            {
+                _addSpread += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.AimSpread.Id)
+            {
+                _addAimSpread += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Range.Id)
+            {
+                _addRange += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Recoil.Id)
+            {
+                _addRecoil += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.MagazineSize.Id)
+            {
+                _addMagazine += Mathf.RoundToInt(value);
+                return true;
+            }
 
             return false;
         }
 
         public bool TryMultiply(StatKey key, float multiplier)
         {
-            if (key.Id == DamageKey.Id) { _multDamage *= multiplier; return true; }
-            if (key.Id == FireRateKey.Id) { _multFireRate *= multiplier; return true; }
-            if (key.Id == SpreadKey.Id) { _multSpread *= multiplier; return true; }
-            if (key.Id == AimSpreadKey.Id) { _multAimSpread *= multiplier; return true; }
-            if (key.Id == RangeKey.Id) { _multRange *= multiplier; return true; }
-            if (key.Id == RecoilKey.Id) { _multRecoil *= multiplier; return true; }
+            if (key.Id == StatKeys.DamageMultiplier.Id)
+            {
+                _damageMultiplier *= multiplier;
+                return true;
+            }
+
+            if (key.Id == StatKeys.FireRate.Id)
+            {
+                _multFireRate *= multiplier;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Spread.Id)
+            {
+                _multSpread *= multiplier;
+                return true;
+            }
+
+            if (key.Id == StatKeys.AimSpread.Id)
+            {
+                _multAimSpread *= multiplier;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Range.Id)
+            {
+                _multRange *= multiplier;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Recoil.Id)
+            {
+                _multRecoil *= multiplier;
+                return true;
+            }
 
             return false;
         }
-
-        // =========================
-        // RESET
-        // =========================
 
         public void Reset()
         {
@@ -128,7 +191,7 @@ namespace Features.Stats.Domain
             _baseRecoil = 0f;
             _baseMagazine = 0;
 
-            _addDamage = 0f;
+            _flatDamage = 0f;
             _addFireRate = 0f;
             _addSpread = 0f;
             _addAimSpread = 0f;
@@ -136,7 +199,7 @@ namespace Features.Stats.Domain
             _addRecoil = 0f;
             _addMagazine = 0;
 
-            _multDamage = 1f;
+            _damageMultiplier = 1f;
             _multFireRate = 1f;
             _multSpread = 1f;
             _multAimSpread = 1f;

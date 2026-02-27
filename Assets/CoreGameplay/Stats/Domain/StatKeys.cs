@@ -9,9 +9,6 @@ namespace Features.Stats.Domain
         // =========================
         // COMBAT
         // =========================
-        public static readonly StatKey DamageMultiplier =
-            new("combat.damage.mult");
-
         public static readonly StatKey FireRate =
             new("combat.fireRate");
 
@@ -32,7 +29,9 @@ namespace Features.Stats.Domain
 
         public static readonly StatKey MagazineSize =
             new("combat.magazine");
-
+        
+        public static readonly StatKey DamageMultiplier =
+            new("combat.damage.mult");
 
         // =========================
         // HEALTH

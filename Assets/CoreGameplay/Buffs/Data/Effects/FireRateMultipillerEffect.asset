@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7106f6b4490274a44a7213352308a0f2, type: 3}
-  m_Name: New Add Stat Effect SO
-  m_EditorClassIdentifier: Assembly-CSharp::AddStatEffectSO
-  statId: energy.max
-  value: 100
+  m_Script: {fileID: 11500000, guid: 601b368a39f8bfb47a44cc3fc8cb8920, type: 3}
+  m_Name: FireRateMultipillerEffect
+  m_EditorClassIdentifier: Assembly-CSharp::MultiplyStatEffectSO
+  statId: combat.fireRate
+  multiplier: 1.5
