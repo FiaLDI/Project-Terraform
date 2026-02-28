@@ -14,7 +14,7 @@ public class CharacterCreateController : MonoBehaviour
         _progress = PlayerProgressService.Instance;
 
         classDropdown.ClearOptions();
-        classDropdown.AddOptions(new List<string> { "engineer", "miner", "fighter", "comms" });
+        classDropdown.AddOptions(new List<string> { "tech", "miner", "fighter", "comms" });
     }
 
     public void OnCreate()

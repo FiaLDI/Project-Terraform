@@ -89,7 +89,7 @@ namespace Features.Player.UnityIntegration
 
             string classId =
                 string.IsNullOrEmpty(preInitClassId)
-                    ? "0" // default
+                    ? "tech"
                     : preInitClassId;
 
             var cls = classLibrary.FindById(classId);
