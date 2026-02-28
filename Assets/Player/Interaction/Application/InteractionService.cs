@@ -8,16 +8,17 @@ namespace Features.Interaction.Application
         public bool TryGetInteractable(InteractionRayHit hit, out IInteractable interactable)
         {
             interactable = null;
+            
 
-            if (!hit.Hit)
+            if (!hit.Hit || hit.HitInfo.collider == null)
                 return false;
 
-            var col = hit.HitInfo.collider;
+            interactable = hit.HitInfo.collider.GetComponent<IInteractable>();
 
-            interactable = col.GetComponentInParent<IInteractable>();
+            if (interactable == null)
+                interactable = hit.HitInfo.collider.GetComponentInParent<IInteractable>();
 
             return interactable != null;
         }
-
     }
 }
