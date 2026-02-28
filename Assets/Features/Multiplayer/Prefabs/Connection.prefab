@@ -9,10 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7615858319593489270}
-  - component: {fileID: 4349386546448475355}
+  - component: {fileID: 7705494702772246659}
   - component: {fileID: 8467901765216138111}
   m_Layer: 0
-  m_Name: LogibBriidge
+  m_Name: Connection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,7 +33,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4349386546448475355
+--- !u!114 &7705494702772246659
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,12 +42,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 3891601111180975169}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26852978d7673074a8b84d20940f59d1, type: 3}
+  m_Script: {fileID: 11500000, guid: bf6199c145b84434e8077a7628d6c922, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClientLoginBridge
-  _componentIndexCache: 255
+  m_EditorClassIdentifier: Assembly-CSharp::ConnectionObject
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 8467901765216138111}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 8467901765216138111}
 --- !u!114 &8467901765216138111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -66,7 +66,8 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 7705494702772246659}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -77,7 +78,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584293465493143744
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -92,12 +93,12 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 5
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 8488317579961045608
+  <AssetPathHash>k__BackingField: 7140227911723598552
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Position: {x: -11.85676, y: 0, z: -0.19277}
+    Rotation: {x: -0, y: -0, z: -0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1

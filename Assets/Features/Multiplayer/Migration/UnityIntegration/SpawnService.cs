@@ -29,13 +29,29 @@ public sealed class SpawnService
     // LOGIN SPAWN (первый вход)
     // =============================
     public void HandleLoginSpawn(NetworkConnection conn, PlayerSession session)
-{
+    {
+        // 🔥 РЕКОННЕКТ
         if (session.PlayerObject != null)
         {
-            Debug.Log($"[fix-net] Login spawn skipped, already has player for {conn.ClientId}");
+            Debug.Log($"[Reconnect] Reassigning ownership to {conn.ClientId}");
+
+            var netObj = session.PlayerObject;
+
+            // Если у объекта уже есть владелец — убрать
+            if (netObj.Owner != null)
+            {
+                netObj.RemoveOwnership();
+            }
+
+            // Назначить нового владельца
+            netObj.GiveOwnership(conn);
+
+            session.BindClient(conn.ClientId);
+
             return;
         }
 
+        // 🟢 Обычный спавн
         if (!CanSpawnNow())
         {
             Debug.Log($"[fix-net] World not ready, spawn deferred for {conn.ClientId}");
@@ -44,7 +60,6 @@ public sealed class SpawnService
 
         SpawnInternal(conn, session);
     }
-
 
     // =============================
     // SCENE RESPAWN (смена сцены)
@@ -107,16 +122,6 @@ public sealed class SpawnService
         session.SetPlayerObject(playerObj);
 
         Debug.Log($"[fix-net] Spawned player for conn={conn.ClientId}");
-
-        if (playerObj.TryGetComponent<ClientLoginBridge>(out var bridge))
-        {
-            bridge.NotifySpawnedTargetRpc(conn);
-            Debug.Log($"[fix-net] Direct TargetRpc sent to {conn.ClientId}");
-        }
-        else
-        {
-            Debug.LogError("[fix-net] ClientLoginBridge NOT FOUND on player prefab!");
-        }
     }
 
     // =============================

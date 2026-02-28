@@ -1,5 +1,4 @@
 using Features.Stats.Domain;
-using static UnityEditor.VersionControl.Asset;
 
 namespace Features.Stats.Domain
 {

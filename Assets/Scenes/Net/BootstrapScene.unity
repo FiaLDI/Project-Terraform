@@ -3070,7 +3070,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ServerBootstrap
   hubSceneName: NetHubScene
-  loginBridgePrefab: {fileID: 8467901765216138111, guid: b39d7d9364c0bc4459925de9fa30423a, type: 3}
+  connectionObjectPrefab: {fileID: 8467901765216138111, guid: b39d7d9364c0bc4459925de9fa30423a, type: 3}
 --- !u!4 &1900769105
 Transform:
   m_ObjectHideFlags: 0
