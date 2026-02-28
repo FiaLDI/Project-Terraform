@@ -51,7 +51,19 @@ namespace Features.Effects.Application
             }
 
             if (lifetime > 0f)
-                Destroy(go, lifetime);
+            {
+                StartCoroutine(DespawnAfter(netObj, lifetime));
+            }
+        }
+
+        private System.Collections.IEnumerator DespawnAfter(NetworkObject netObj, float time)
+        {
+            yield return new WaitForSeconds(time);
+
+            if (netObj != null && netObj.IsSpawned)
+            {
+                netObj.Despawn();
+            }
         }
 
         private static Vector3 ResolveSourcePosition(IBuffSource source)

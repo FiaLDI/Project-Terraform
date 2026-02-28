@@ -1,39 +1,42 @@
 using UnityEngine;
+using FishNet;
 
 namespace Features.Combat.Devices
 {
+    [RequireComponent(typeof(SphereCollider))]
     public class ShieldGridBehaviour : MonoBehaviour
     {
-        private float _radius;
-        private float _deathTime;
-        private float _reduceFactor;
+        [Header("Shield Settings")]
+        [SerializeField] private float pushForce = 15f;
+        [SerializeField] private LayerMask Enemy;
 
-        private GameObject _owner;
+        private SphereCollider _collider;
 
-        public void Init(float radius, float duration, float reductionPercent, GameObject owner)
+        private void Awake()
         {
-            _radius = radius;
-            _deathTime = Time.time + duration;
-            _reduceFactor = Mathf.Clamp01(1f - reductionPercent / 100f);
-
-            _owner = owner;
-            transform.localScale = Vector3.one * _radius * 2f;
+            _collider = GetComponent<SphereCollider>();
+            _collider.isTrigger = true; // работаем как зона
         }
 
-        public bool IsInside(Vector3 pos)
+        private void OnTriggerStay(Collider other)
         {
-            return Vector3.Distance(transform.position, pos) <= _radius;
-        }
+            // Авторитет только сервер
+            if (!InstanceFinder.IsServer)
+                return;
 
-        public float ModifyDamage(float dmg)
-        {
-            return dmg * _reduceFactor;
-        }
+            // Только враги
+            if ((Enemy.value & (1 << other.gameObject.layer)) == 0)
+                return;
 
-        private void Update()
-        {
-            if (Time.time >= _deathTime)
-                Destroy(gameObject);
+            if (!other.attachedRigidbody)
+                return;
+
+            Vector3 dir = (other.transform.position - transform.position).normalized;
+
+            other.attachedRigidbody.AddForce(
+                dir * pushForce,
+                ForceMode.Force
+            );
         }
     }
 }

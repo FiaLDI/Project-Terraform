@@ -13,9 +13,6 @@ namespace Features.Biomes.UnityIntegration
         [Header("World Settings")]
         public WorldConfig worldConfig;
 
-        [Header("Systems Prefab (World-only)")]
-        public GameObject systemsPrefab;
-
         [Header("Spawn Points")]
         [SerializeField] private ScenePlayerSpawnPoint spawnPointPrefab;
         [SerializeField, Min(1)] private int spawnPointCount = 4;
@@ -167,17 +164,6 @@ namespace Features.Biomes.UnityIntegration
             manager.ProcessLoadQueue();
 
             yield return new WaitForFixedUpdate();
-
-            if (systemsPrefab != null)
-            {
-                var systemsInstance = Instantiate(
-                    systemsPrefab,
-                    GetWorldCenterSpawn(),
-                    Quaternion.identity
-                );
-
-                Spawn(systemsInstance);
-            }
 
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();

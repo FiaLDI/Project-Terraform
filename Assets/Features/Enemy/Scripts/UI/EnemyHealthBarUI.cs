@@ -72,7 +72,6 @@ namespace Features.Enemy
                 return;
             }
 
-            // Принудительное начальное обновление
             if (target.IsReady)
                 OnHealthChanged(target.CurrentHp, target.MaxHp);
         }
