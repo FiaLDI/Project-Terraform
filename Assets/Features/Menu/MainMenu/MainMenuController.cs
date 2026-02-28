@@ -27,6 +27,7 @@ public class MainMenuController : MonoBehaviour
 
     public void OnSettingsPressed()
     {
+        MainMenuFSM.Instance.Switch(MainMenuStateId.Settings);
         SettingsMenu.I.Open();
     }
 

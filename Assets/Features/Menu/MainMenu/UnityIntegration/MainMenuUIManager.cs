@@ -9,6 +9,7 @@ public class MainMenuUIManager : MonoBehaviour
     public GameObject characterSelectPanel;
     public GameObject characterCreatePanel;
     public GameObject startGamePanel;
+    public GameObject SettingsMenuPanel;
 
     private Dictionary<MainMenuStateId, GameObject> _panels;
 
@@ -22,6 +23,7 @@ public class MainMenuUIManager : MonoBehaviour
             { MainMenuStateId.CharacterSelect, characterSelectPanel },
             { MainMenuStateId.CharacterCreate, characterCreatePanel },
             { MainMenuStateId.StartGame, startGamePanel },
+            { MainMenuStateId.Settings, SettingsMenuPanel }
         };
     }
 

@@ -15,12 +15,15 @@ public class SettingsMenu : MonoBehaviour, IUIScreen
 
     private SettingsMenuController controller;
 
+    private MainMenuFSM mainMenuFSM;
+
     private void Awake()
     {
         I = this;
 
         panel.SetActive(false);
         controller = GetComponent<SettingsMenuController>();
+        mainMenuFSM = GetComponentInParent<MainMenuFSM>();
 
         backButton.onClick.AddListener(OnBack);
         applyButton.onClick.AddListener(OnApply);
@@ -56,14 +59,15 @@ public class SettingsMenu : MonoBehaviour, IUIScreen
 
     private void OnBack()
     {
-        UIStackManager.I.Pop();
+        UIStackManager.I.Pop(mainMenuFSM);
     }
 
     private void OnApply()
     {
         controller?.ApplySettings();
         SettingsStorage.Save();
-        UIStackManager.I.Pop();
+        UIStackManager.I.Pop(mainMenuFSM);
+
     }
 
     private void OnReset()

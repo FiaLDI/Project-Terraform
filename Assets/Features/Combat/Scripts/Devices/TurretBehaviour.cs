@@ -175,11 +175,8 @@ public sealed class TurretBehaviour : NetworkBehaviour
 
         if (damage <= 0f)
         {
-            Debug.LogWarning("[Turret] DamagePerShot <= 0");
             return;
         }
-
-        Debug.Log($"[Turret] FinalDamage = {damage}");
 
         var ctx = new EffectContext(
             source,

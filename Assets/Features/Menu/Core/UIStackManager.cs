@@ -57,6 +57,27 @@ public class UIStackManager : MonoBehaviour
         }
     }
 
+    public void Pop(MainMenuFSM mainMenuFSM)
+    {
+        mainMenuFSM.Switch(MainMenuStateId.Play);
+
+        if (stack.Count == 0)
+            return;
+
+        stack.Pop().Hide();
+
+        if (stack.Count > 0)
+        {
+            var top = stack.Peek();
+            top.Show();
+            TrySetMode(top.Mode);
+        }
+        else
+        {
+            TrySetMode(InputMode.Gameplay);
+        }
+    }
+
     // ======================================================
     // HELPERS
     // ======================================================
@@ -99,10 +120,7 @@ public class UIStackManager : MonoBehaviour
         TrySetMode(InputMode.Gameplay);
     }
 
-
     public bool HasScreens =>
         stack.Count > 0 &&
         stack.Peek().Mode != InputMode.Gameplay;
-
-
 }

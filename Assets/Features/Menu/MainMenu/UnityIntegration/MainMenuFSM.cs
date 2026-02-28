@@ -32,11 +32,11 @@ public class MainMenuFSM : MonoBehaviour
     {
         return current switch
         {
-            MainMenuStateId.Play => MainMenuStateId.Play, // уже на корне\
+            MainMenuStateId.Play => MainMenuStateId.Play,
             MainMenuStateId.CharacterSelect => MainMenuStateId.Play,
             MainMenuStateId.CharacterCreate => MainMenuStateId.CharacterSelect,
         MainMenuStateId.StartGame => MainMenuStateId.CharacterSelect,
-            MainMenuStateId.Settings => MainMenuStateId.Play, // выход из настроек в главное меню
+            MainMenuStateId.Settings => MainMenuStateId.Play,
             _ => MainMenuStateId.Play
         };
     }
