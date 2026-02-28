@@ -8,6 +8,9 @@ namespace Multiplayer.Domain
         public string PersistentId { get; }
         public int? ClientId { get; private set; }
         public NetworkObject PlayerObject { get; private set; }
+        public string CharacterId { get; private set; }
+        public string ClassId { get; private set; }
+        public int Level { get; private set; }
 
         public bool IsOnline => ClientId.HasValue;
 
@@ -31,6 +34,13 @@ namespace Multiplayer.Domain
         public void SetPlayerObject(NetworkObject obj)
         {
             PlayerObject = obj;
+        }
+
+        public void SetCharacterData(string charId, string classId, int level)
+        {
+            CharacterId = charId;
+            ClassId = classId;
+            Level = level;
         }
     }
 }

@@ -10,9 +10,6 @@ public sealed class ClientConnectionController : MonoBehaviour
     [SerializeField] private NetworkManager networkManager;
 
     private ClientGameFlow flow;
-    private ClientLoginBridge loginBridge;
-
-    private bool hasLoggedIn;
 
     private void Awake()
     {
@@ -31,14 +28,10 @@ public sealed class ClientConnectionController : MonoBehaviour
         networkManager.ClientManager.OnClientConnectionState += OnClientState;
     }
 
-    // 🔹 Для UI
     public ClientGameFlow GetFlow() => flow;
 
     public void Connect(string ip, ushort port)
     {
-        hasLoggedIn = false;
-        loginBridge = null;
-
         networkManager.TransportManager.Transport.SetClientAddress(ip);
         networkManager.TransportManager.Transport.SetPort(port);
 
@@ -46,10 +39,8 @@ public sealed class ClientConnectionController : MonoBehaviour
         networkManager.ClientManager.StartConnection();
     }
 
-    // 🔹 Для UI
     public void Disconnect()
     {
-        flow.NotifyDisconnected();
         networkManager.ClientManager.StopConnection();
     }
 
@@ -63,35 +54,5 @@ public sealed class ClientConnectionController : MonoBehaviour
         {
             flow.NotifyDisconnected();
         }
-    }
-
-    // 🔥 Вызывается из ClientLoginBridge.OnStartClient()
-    public void OnLoginBridgeReady(ClientLoginBridge bridge)
-    {
-        loginBridge = bridge;
-        TrySendLogin();
-    }
-
-    private void TrySendLogin()
-    {
-        if (hasLoggedIn)
-            return;
-
-        if (loginBridge == null)
-            return;
-
-        hasLoggedIn = true;
-
-        string pid = PersistentIdProvider.GetOrCreate();
-
-        Debug.Log("[fix-net] Sending Login RPC");
-
-        flow.NotifyLoginSent();
-        loginBridge.SendLogin(pid);
-    }
-
-    public void NotifySpawned()
-    {
-        flow.NotifyPlayerSpawned();
     }
 }

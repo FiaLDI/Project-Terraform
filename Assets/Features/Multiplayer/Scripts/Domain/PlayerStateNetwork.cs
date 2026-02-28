@@ -1,5 +1,6 @@
 ﻿using Features.Class.Net;
 using Features.Classes.Data;
+using Features.Stats.UnityIntegration;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -45,6 +46,7 @@ namespace Features.Player.UnityIntegration
 
         private PlayerClassLibrarySO classLibrary;
         private string preInitClassId;
+        private int preInitLevel = 1;
 
         // =====================================================
         // LIFECYCLE
@@ -71,9 +73,10 @@ namespace Features.Player.UnityIntegration
         /// <summary>
         /// Вызывается сервером ДО Spawn (NetworkPlayerService).
         /// </summary>
-        public void PreInitClass(string classId)
+       public void PreInit(string classId, int level)
         {
             preInitClassId = classId;
+            preInitLevel = Mathf.Max(1, level);
         }
 
         // =====================================================
@@ -84,7 +87,6 @@ namespace Features.Player.UnityIntegration
         {
             base.OnSpawnServer(conn);
 
-            // 1️⃣ Определяем класс
             string classId =
                 string.IsNullOrEmpty(preInitClassId)
                     ? "0" // default
@@ -104,8 +106,13 @@ namespace Features.Player.UnityIntegration
             _classId.Value = classId;
             _visualId.Value = cls.visualPreset.id;
 
-            // 3️⃣ Запускаем серверный pipeline (GamePhase сделает остальное)
             netAdapter.ApplyClass(classId);
+
+            var stats = GetComponent<PlayerStats>();
+            if (stats != null)
+            {
+                stats.SetLevel(preInitLevel);
+            }
 
             Debug.Log(
                 $"[PlayerStateNetwork] Spawned with class='{classId}', visual='{_visualId.Value}'",

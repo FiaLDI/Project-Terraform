@@ -11,10 +11,9 @@ public class MainMenuController : MonoBehaviour
         fsm.Init(new Dictionary<MainMenuStateId, IMainMenuState>
         {
             { MainMenuStateId.Play, new PlayMenuState() },
-            { MainMenuStateId.ModeSelect, new ModeSelectState() },
             { MainMenuStateId.CharacterSelect, new CharacterSelectState(controller) },
             { MainMenuStateId.CharacterCreate, new CharacterCreateState() },
-            { MainMenuStateId.MultiplayerPlaceholder, new MultiplayerPlaceholderState() },
+            { MainMenuStateId.StartGame, new StartGameState() },
             { MainMenuStateId.Settings, new SettingsState() }
         });
 
@@ -23,7 +22,7 @@ public class MainMenuController : MonoBehaviour
 
     public void OnPlayPressed()
     {
-        MainMenuFSM.Instance.Switch(MainMenuStateId.ModeSelect);
+        MainMenuFSM.Instance.Switch(MainMenuStateId.CharacterSelect);
     }
 
     public void OnSettingsPressed()

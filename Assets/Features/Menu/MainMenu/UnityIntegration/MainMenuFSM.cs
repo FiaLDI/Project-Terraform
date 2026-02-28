@@ -32,11 +32,10 @@ public class MainMenuFSM : MonoBehaviour
     {
         return current switch
         {
-            MainMenuStateId.Play => MainMenuStateId.Play, // уже на корне
-            MainMenuStateId.ModeSelect => MainMenuStateId.Play,
-            MainMenuStateId.CharacterSelect => MainMenuStateId.ModeSelect,
+            MainMenuStateId.Play => MainMenuStateId.Play, // уже на корне\
+            MainMenuStateId.CharacterSelect => MainMenuStateId.Play,
             MainMenuStateId.CharacterCreate => MainMenuStateId.CharacterSelect,
-            MainMenuStateId.MultiplayerPlaceholder => MainMenuStateId.ModeSelect,
+        MainMenuStateId.StartGame => MainMenuStateId.CharacterSelect,
             MainMenuStateId.Settings => MainMenuStateId.Play, // выход из настроек в главное меню
             _ => MainMenuStateId.Play
         };
@@ -52,9 +51,8 @@ public class MainMenuFSM : MonoBehaviour
 public enum MainMenuStateId
 {
     Play,
-    ModeSelect,
     CharacterSelect,
     CharacterCreate,
-    MultiplayerPlaceholder,
+    StartGame,
     Settings
 }

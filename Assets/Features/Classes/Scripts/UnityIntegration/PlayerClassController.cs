@@ -17,7 +17,7 @@ public sealed class PlayerClassController : MonoBehaviour
     [SerializeField] private PlayerClassLibrarySO library;
 
     [Header("Default Class ID")]
-    [SerializeField] private string defaultClassId = "engineer";
+    [SerializeField] private string defaultClassId = "0";
 
     // =====================================================
     // COMPONENTS
@@ -67,10 +67,17 @@ public sealed class PlayerClassController : MonoBehaviour
 
     public void ApplyClass(string classId)
     {
-        var cfg = library.FindById(classId)
-            ?? library.FindById(defaultClassId);
+       Debug.Log($"[CLASS] Requested classId = {classId}");
 
-        currentClass = cfg;
+            var cfg = library.FindById(classId);
+
+            if (cfg == null)
+            {
+                Debug.LogWarning($"[CLASS] Class '{classId}' not found. Using default '{defaultClassId}'");
+                cfg = library.FindById(defaultClassId);
+            }
+
+            currentClass = cfg;
 
         classService.SelectClass(cfg);
         abilityCaster.SetAbilities(cfg.abilities.ToArray());

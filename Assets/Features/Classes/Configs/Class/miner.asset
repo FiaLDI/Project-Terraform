@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99765ebccd44b9045b8a57a3d08f8918, type: 3}
+  m_Name: miner
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Classes.Data.PlayerClassConfigSO
+  id: miner
+  displayName: Techimas
+  description: 
+  preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
+  visualPreset: {fileID: 11400000, guid: ffc13c66519696d408de5657c3919e32, type: 2}
+  passives:
+  - {fileID: 11400000, guid: 567f67ac3af28ad4e9e3629be706bd9e, type: 2}
+  abilities:
+  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
+  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
+  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
+  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
+  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}

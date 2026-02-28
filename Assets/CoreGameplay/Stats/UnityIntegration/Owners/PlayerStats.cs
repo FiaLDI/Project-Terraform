@@ -14,6 +14,8 @@ namespace Features.Stats.UnityIntegration
         public StatsFacadeAdapter Adapter { get; private set; }
 
         private ServerGamePhase phase;
+        private int level = 1;
+        public int Level => level;
 
         // =====================================================
         // SERVER
@@ -92,6 +94,36 @@ namespace Features.Stats.UnityIntegration
         // =====================================================
         // SERVER ROLE API
         // =====================================================
+
+        [Server]
+        public void SetLevel(int newLevel)
+        {
+            if (!IsReady)
+                return;
+
+            level = Mathf.Max(1, newLevel);
+
+            ApplyLevelScaling();
+
+            Debug.Log($"[PlayerStats] Level set to {level}", this);
+        }
+
+        [Server]
+        private void ApplyLevelScaling()
+        {
+            float hpMultiplier = 1f + (level - 1) * 0.05f;     // +5% HP за уровень
+            float dmgMultiplier = 1f + (level - 1) * 0.03f;    // +3% урона
+            float energyMultiplier = 1f + (level - 1) * 0.04f; // +4% энергии
+
+            //if (Facade.Health != null)
+            //    Facade.Health.ApplyMultiplier(hpMultiplier);
+
+            //if (Facade.Combat != null)
+            //    Facade.Combat.ApplyDamageMultiplier(dmgMultiplier);
+
+            //if (Facade.Energy != null)
+            //    Facade.Energy.ApplyMaxMultiplier(energyMultiplier);
+        }
 
         [Server]
         public void ResetAndApplyDefaults()

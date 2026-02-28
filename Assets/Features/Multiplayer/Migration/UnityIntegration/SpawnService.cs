@@ -5,6 +5,9 @@ using FishNet.Object;
 using FishNet.Managing;
 using Multiplayer.Domain;
 using Multiplayer.Application;
+using Features.Class.Net;
+using Features.Stats.UnityIntegration;
+using Features.Player.UnityIntegration;
 
 public sealed class SpawnService
 {
@@ -30,33 +33,21 @@ public sealed class SpawnService
     // =============================
     public void HandleLoginSpawn(NetworkConnection conn, PlayerSession session)
     {
-        // 🔥 РЕКОННЕКТ
         if (session.PlayerObject != null)
         {
-            Debug.Log($"[Reconnect] Reassigning ownership to {conn.ClientId}");
-
             var netObj = session.PlayerObject;
 
-            // Если у объекта уже есть владелец — убрать
             if (netObj.Owner != null)
-            {
                 netObj.RemoveOwnership();
-            }
 
-            // Назначить нового владельца
             netObj.GiveOwnership(conn);
-
             session.BindClient(conn.ClientId);
 
             return;
         }
 
-        // 🟢 Обычный спавн
         if (!CanSpawnNow())
-        {
-            Debug.Log($"[fix-net] World not ready, spawn deferred for {conn.ClientId}");
             return;
-        }
 
         SpawnInternal(conn, session);
     }
@@ -101,27 +92,25 @@ public sealed class SpawnService
     // =============================
     // INTERNAL SPAWN
     // =============================
-    private void SpawnInternal(NetworkConnection conn, PlayerSession session)
+   private NetworkObject SpawnInternal(NetworkConnection conn, PlayerSession session)
     {
         if (!PlayerSpawnRegistry.I.TryGetRandom(out var provider))
-        {
-            Debug.LogWarning("[fix-net] No spawn providers available.");
-            return;
-        }
+            return null;
 
         if (!provider.TryGetSpawnPoint(out var pos, out var rot))
-        {
-            Debug.LogWarning("[fix-net] Spawn point unavailable.");
-            return;
-        }
+            return null;
 
         var playerObj = Object.Instantiate(playerPrefab, pos, rot);
+        var state = playerObj.GetComponent<PlayerStateNetwork>();
+        state.PreInit(session.ClassId, session.Level);
 
         nm.ServerManager.Spawn(playerObj, conn);
 
         session.SetPlayerObject(playerObj);
 
         Debug.Log($"[fix-net] Spawned player for conn={conn.ClientId}");
+
+        return playerObj;
     }
 
     // =============================

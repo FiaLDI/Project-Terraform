@@ -22,15 +22,21 @@ public sealed class MainMenuNetworkBridge : MonoBehaviour
         switch (state)
         {
             case ClientGameState.Connecting:
-                MainMenuUIManager.Instance.Show(MainMenuStateId.MultiplayerPlaceholder);
+            case ClientGameState.Authenticating:
+            case ClientGameState.WaitingForSpawn:
+                // показать loading overlay
+                MainMenuUIManager.Instance.gameObject.SetActive(true);
                 break;
 
             case ClientGameState.Playing:
-                UnityEngine.SceneManagement.SceneManager.LoadScene("HubScene");
+                // просто скрыть меню
+                MainMenuUIManager.Instance.gameObject.SetActive(false);
                 break;
 
             case ClientGameState.Disconnected:
-                MainMenuUIManager.Instance.Show(MainMenuStateId.Play);
+                // вернуть меню
+                MainMenuUIManager.Instance.gameObject.SetActive(true);
+                MainMenuFSM.Instance.Switch(MainMenuStateId.Play);
                 break;
         }
     }

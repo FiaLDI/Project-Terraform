@@ -6,10 +6,9 @@ public class MainMenuUIManager : MonoBehaviour
     public static MainMenuUIManager Instance { get; private set; }
 
     public GameObject playPanel;
-    public GameObject modeSelectPanel;
     public GameObject characterSelectPanel;
     public GameObject characterCreatePanel;
-    public GameObject multiplayerPlaceholderPanel;
+    public GameObject startGamePanel;
 
     private Dictionary<MainMenuStateId, GameObject> _panels;
 
@@ -20,15 +19,20 @@ public class MainMenuUIManager : MonoBehaviour
         _panels = new Dictionary<MainMenuStateId, GameObject>
         {
             { MainMenuStateId.Play, playPanel },
-            { MainMenuStateId.ModeSelect, modeSelectPanel },
             { MainMenuStateId.CharacterSelect, characterSelectPanel },
             { MainMenuStateId.CharacterCreate, characterCreatePanel },
-            { MainMenuStateId.MultiplayerPlaceholder, multiplayerPlaceholderPanel }
+            { MainMenuStateId.StartGame, startGamePanel },
         };
     }
 
     public void Show(MainMenuStateId state)
     {
+        if (!_panels.ContainsKey(state))
+        {
+            Debug.LogError($"Panel for state {state} not registered!");
+            return;
+        }
+
         foreach (var p in _panels)
             p.Value.SetActive(p.Key == state);
     }

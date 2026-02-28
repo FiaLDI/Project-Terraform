@@ -54,10 +54,12 @@ public class CharacterSelectController : MonoBehaviour
         => MainMenuFSM.Instance.Switch(MainMenuStateId.CharacterCreate);
 
     public void OnBack()
-        => MainMenuFSM.Instance.Switch(MainMenuStateId.ModeSelect);
+        => MainMenuFSM.Instance.Switch(MainMenuStateId.Play);
 
     public void OnPlay()
-        => UnityEngine.SceneManagement.SceneManager.LoadScene("HubScene");
+    {
+        MainMenuFSM.Instance.Switch(MainMenuStateId.StartGame);
+    }
 
     public void OnDelete()
     {

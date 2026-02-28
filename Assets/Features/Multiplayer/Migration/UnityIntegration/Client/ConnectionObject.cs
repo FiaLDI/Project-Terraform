@@ -11,20 +11,35 @@ public sealed class ConnectionObject : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        Debug.Log("[ConnectionObject] Owner ready, sending login");
-
         string pid = PersistentIdProvider.GetOrCreate();
-        SendLoginServerRpc(pid);
+
+        var active = PlayerProgressService.Instance.GetActiveCharacter();
+        Debug.Log($"[LOGIN] Sending classId = {active.classId}");
+        
+        SendLoginServerRpc(
+            pid,
+            active.characterId,
+            active.classId,
+            active.level);
     }
 
     [ServerRpc]
-    private void SendLoginServerRpc(string persistentId, NetworkConnection sender = null)
+    private void SendLoginServerRpc(
+        string persistentId,
+        string characterId,
+        string classId,
+        int level,
+        NetworkConnection sender = null)
     {
+        
         if (sender == null)
             return;
 
-        Debug.Log($"[ConnectionObject] Login RPC from {sender.ClientId}");
-
-        ServerLoginHandler.I.HandleLogin(sender, persistentId);
+        ServerLoginHandler.I.HandleLogin(
+            sender,
+            persistentId,
+            characterId,
+            classId,
+            level);
     }
 }
