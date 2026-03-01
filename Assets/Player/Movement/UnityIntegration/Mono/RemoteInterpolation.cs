@@ -9,10 +9,11 @@ public class RemoteInterpolation : MonoBehaviour
         public float Time;
         public Vector3 Position;
         public float Yaw;
+        public float Pitch;
     }
 
     private readonly List<Snapshot> snapshots = new();
-    private const float InterpDelay = 0.1f;
+    private const float InterpDelay = 0.2f;
 
     public void ReceiveState(PlayerState state)
     {
@@ -22,7 +23,8 @@ public class RemoteInterpolation : MonoBehaviour
         {
             Time = time,
             Position = state.Position,
-            Yaw = state.Yaw
+            Yaw = state.Yaw,
+            Pitch = state.Pitch
         });
 
         if (snapshots.Count > 20)
@@ -60,5 +62,12 @@ public class RemoteInterpolation : MonoBehaviour
             Mathf.LerpAngle(from.Yaw, to.Yaw, t),
             0f
         );
+        float pitch = Mathf.Lerp(
+            from.Pitch,
+            to.Pitch,
+            t
+        );
+        var head = GetComponentInChildren<HeadPitchController>();
+        head?.SetRemotePitch(pitch);
     }
 }

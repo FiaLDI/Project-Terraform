@@ -23,7 +23,11 @@ public static class SettingsStorage
     public static int Quality          { get => PlayerPrefs.GetInt(QUALITY, 2);       set => PlayerPrefs.SetInt(QUALITY, value); }
     public static bool VSync           { get => PlayerPrefs.GetInt(VSYNC, 1)==1;      set => PlayerPrefs.SetInt(VSYNC, value?1:0 ); }
 
-    public static float Sensitivity    { get => PlayerPrefs.GetFloat(SENS, 1f);       set => PlayerPrefs.SetFloat(SENS, value); }
+    public static float Sensitivity
+    {
+        get => PlayerPrefs.GetFloat(SENS, 1f);
+        set => PlayerPrefs.SetFloat(SENS, Mathf.Clamp(value, 0.1f, 40f));
+    }
 
     // -------- SAVE / RESET ----------
     public static void Save() => PlayerPrefs.Save();

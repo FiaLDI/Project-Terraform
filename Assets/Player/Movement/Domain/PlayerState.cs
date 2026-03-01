@@ -6,4 +6,5 @@ public struct PlayerState
     public Vector3 Position;
     public Vector3 Velocity;
     public float Yaw;
+    public float Pitch;
 }

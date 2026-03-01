@@ -1,6 +1,8 @@
+using Features.Game;
+using Features.Input;
+using Features.Player.UnityIntegration;
 using UnityEngine;
 using UnityEngine.UI;
-using Features.Input;
 
 public class SettingsMenu : MonoBehaviour, IUIScreen
 {
@@ -59,17 +61,28 @@ public class SettingsMenu : MonoBehaviour, IUIScreen
 
     private void OnBack()
     {
-        UIStackManager.I.Pop(mainMenuFSM);
+        if(mainMenuFSM != null) { 
+            UIStackManager.I.Pop(mainMenuFSM);
+        } else { 
+            UIStackManager.I.Pop();
+        }
     }
 
     private void OnApply()
     {
         controller?.ApplySettings();
         SettingsStorage.Save();
-        UIStackManager.I.Pop(mainMenuFSM);
 
+        var bootstrap = GetComponentInParent<BootstrapRoot>();
+        var player = bootstrap?.LocalPlayer;
+        player?.GetComponent<PlayerCameraController>()?.RefreshSensitivity();
+
+        if (mainMenuFSM != null)
+            UIStackManager.I.Pop(mainMenuFSM);
+        else
+            UIStackManager.I.Pop();
     }
-
+    
     private void OnReset()
     {
         SettingsStorage.ResetToDefaults();

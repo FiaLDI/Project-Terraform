@@ -171,6 +171,11 @@ namespace Features.Player.UnityIntegration
             inputState.Yaw = yaw;
         }
 
+        public void SetPitch(float pitch)
+        {
+            inputState.Pitch = pitch;
+        }
+
         // ======================================================
         // SAFETY
         // ======================================================
@@ -180,5 +185,7 @@ namespace Features.Player.UnityIntegration
             if (input != null)
                 UnbindInput(input);
         }
+
+
     }
 }

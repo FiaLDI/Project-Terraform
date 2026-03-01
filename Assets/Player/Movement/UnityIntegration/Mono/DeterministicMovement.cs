@@ -27,13 +27,7 @@ public class DeterministicMovement : NetworkBehaviour
     {
         float dt = NetworkTickSystem.TickDelta;
 
-        // ----- Rotation -----
-        currentYaw = Mathf.LerpAngle(
-            currentYaw,
-            cmd.Yaw,
-            1f - Mathf.Exp(-rotationSharpness * dt)
-        );
-
+        currentYaw = cmd.Yaw;
         transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         // ----- Horizontal -----
@@ -64,5 +58,18 @@ public class DeterministicMovement : NetworkBehaviour
         );
 
         controller.Move(Velocity * dt);
+    }
+
+    public void Teleport(Vector3 position, float yaw, float verticalVel)
+    {
+        controller.enabled = false;
+
+        transform.position = position;
+        currentYaw = yaw;
+        verticalVelocity = verticalVel;
+
+        transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
+
+        controller.enabled = true;
     }
 }
