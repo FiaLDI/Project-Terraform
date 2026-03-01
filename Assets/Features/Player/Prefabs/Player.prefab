@@ -42,7 +42,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5728575651840416725}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: leftHandTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -73,7 +73,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6661307558894028265}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Crouch Fps Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1158711919289892428}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Crouch Tps Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,7 +135,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5376905879590580319}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Tps point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -166,7 +166,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2683651113482784269}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: CameraPivot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -197,7 +197,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7222833214983773515}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: rightHandTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -228,7 +228,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8282239097301865665}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: CameraController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -265,7 +265,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5017748270277261448}
   - component: {fileID: 2647050478538188210}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -309,7 +309,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5175878013477234654}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Fps point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -325,7 +325,7 @@ Transform:
   m_GameObject: {fileID: 7080974837919910924}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.276, z: 0.717}
+  m_LocalPosition: {x: 0, y: 2.901, z: 0.476}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -806,11 +806,13 @@ MonoBehaviour:
   cameraPivot: {fileID: 2683651113482784269}
   fpsPoint: {fileID: 5175878013477234654}
   headTransform: {fileID: 0}
-  mouseSensitivity: 100
+  headYawBone: {fileID: 0}
+  headYawLimit: 40
+  bodyTurnSpeed: 360
   tpsSmoothSpeed: 7
   collisionMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1791
   collisionRadius: 0.3
   minCameraDistance: 0.5
   shoulderOffset: {x: 0.5, y: 0, z: 0}
@@ -859,9 +861,13 @@ MonoBehaviour:
   _componentIndexCache: 11
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
-  Speed: 6
+  WalkSpeed: 10
+  SprintSpeed: 20
+  CrouchSpeed: 2
   Gravity: -20
   JumpForce: 7
+  crouchHeight: 2
+  normalHeight: 3
   rotationSharpness: 20
 --- !u!114 &3277316184608179795
 MonoBehaviour:

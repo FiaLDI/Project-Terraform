@@ -7,4 +7,8 @@ public struct PlayerState
     public Vector3 Velocity;
     public float Yaw;
     public float Pitch;
+    public bool Jump;
+    public bool Crouch;
+    public bool Sprint;
+    public bool Grounded;
 }

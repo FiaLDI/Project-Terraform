@@ -75,7 +75,8 @@ public class PlayerNetworkController : NetworkBehaviour
                 Yaw    = input.Yaw,
                 Pitch  = input.Pitch,
                 Jump   = input.Jump,
-                Crouch = input.Crouch
+                Crouch = input.Crouch,
+                Sprint = input.Sprint
             };
 
             inputBuffer[currentTick] = cmd;
@@ -128,7 +129,10 @@ public class PlayerNetworkController : NetworkBehaviour
                 Position = transform.position,
                 Velocity = movement.Velocity,
                 Yaw      = transform.eulerAngles.y,
-                Pitch    = cmd.Pitch
+                Pitch    = cmd.Pitch,
+                Grounded = movement.Grounded,
+                Crouch   = movement.IsCrouching,
+                Jump     = movement.JumpedThisTick
             };
 
             SendStateObserversRpc(state);
