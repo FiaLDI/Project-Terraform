@@ -203,4 +203,45 @@ public class PlayerNetworkController : NetworkBehaviour
 
         SceneTransitionService.LoadWorldScene();
     }
+
+    [ServerRpc]
+    public void RequestReturnToHubServerRpc()
+    {
+        SceneTransitionService.LoadHubScene();
+    }
+
+    [ServerRpc]
+    public void RequestReturnToSpawnServerRpc()
+    {
+        if (!PlayerSpawnRegistry.I.TryGetSpawnPoint(out var pos, out var rot))
+            return;
+
+        TeleportTo(pos, rot);
+    }
+
+    [Server]
+    private void TeleportTo(Vector3 position, Quaternion rotation)
+    {
+        inputBuffer.Clear();
+        stateBuffer.Clear();
+
+        movement.Teleport(position, rotation.eulerAngles.y, 0f);
+
+        int tick = NetworkTickSystem.I.CurrentTick;
+
+        PlayerState state = new PlayerState
+        {
+            Tick     = tick,
+            Position = transform.position,
+            Velocity = movement.Velocity,
+            Yaw      = transform.eulerAngles.y,
+            Pitch    = 0f,
+            Grounded = movement.Grounded,
+            Crouch   = movement.IsCrouching,
+            Jump     = false
+        };
+
+        SendStateObserversRpc(state);
+        SendStateTargetRpc(Owner, state);
+    }
 }

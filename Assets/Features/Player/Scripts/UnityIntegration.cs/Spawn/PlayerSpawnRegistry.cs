@@ -79,4 +79,15 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
     {
         providers.RemoveAll(p => p == null || (p is Object o && o == null));
     }
+
+    public bool TryGetSpawnPoint(out Vector3 pos, out Quaternion rot)
+    {
+        pos = default;
+        rot = default;
+
+        if (!TryGetRandom(out var provider))
+            return false;
+
+        return provider.TryGetSpawnPoint(out pos, out rot);
+    }
 }
