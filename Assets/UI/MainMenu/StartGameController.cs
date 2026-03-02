@@ -11,6 +11,8 @@ public sealed class StartGameController : MonoBehaviour
 
     private void Start()
     {
+        ipField.text = "localhost";
+        portField.text = "7777";
         appMode = FindObjectOfType<AppModeController>();
     }
 

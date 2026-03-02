@@ -240,5 +240,13 @@ namespace Features.Abilities.Application
         {
             return _cooldowns.TryGetValue(ab, out float t) ? t : 0f;
         }
+
+        public float GetChannelRemaining()
+        {
+            if (!_isChanneling)
+                return 0f;
+
+            return Mathf.Max(0f, _channelDuration - _channelTimer);
+        }
     }
 }

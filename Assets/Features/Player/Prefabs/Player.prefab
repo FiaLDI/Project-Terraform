@@ -428,10 +428,10 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   abilityLibrary: {fileID: 0}
-  cooldownSyncInterval: 0.5
   groundMask:
     serializedVersion: 2
     m_Bits: 256
+  debugCooldown: 0
 --- !u!114 &2889153697471037876
 MonoBehaviour:
   m_ObjectHideFlags: 0
