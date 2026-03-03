@@ -17,7 +17,16 @@ namespace Features.Camera.UnityIntegration
         private UnityEngine.Camera sceneCamera;
 
         public UnityEngine.Camera CurrentCamera { get; private set; }
+
+        [Header("FPS View")]
+        [SerializeField] private Transform viewModelRoot;
+        [SerializeField] private GameObject fpsArmsPrefab;
+
+        private Transform weaponSocket;
+        public Transform WeaponSocket => weaponSocket;
         public event Action<UnityEngine.Camera> OnCameraChanged;
+
+        private GameObject fpsInstance;
 
         private void Awake()
         {
@@ -97,6 +106,38 @@ namespace Features.Camera.UnityIntegration
             CameraServiceProvider.Runtime?.ClearCamera();
             CurrentCamera = null;
             OnCameraChanged?.Invoke(null);
+        }
+
+        public void InitializeFPS()
+        {
+            if (CurrentCamera == null)
+                return;
+
+            if (viewModelRoot == null)
+            {
+                Debug.LogError("[CameraRegistry] ViewModelRoot not assigned");
+                return;
+            }
+
+            if (fpsArmsPrefab == null)
+                return;
+
+            if (weaponSocket != null)
+                return; // уже создано
+
+            fpsInstance = Instantiate(fpsArmsPrefab, viewModelRoot);
+            fpsInstance.transform.localPosition = Vector3.zero;
+            fpsInstance.transform.localRotation = Quaternion.identity;
+
+            weaponSocket = fpsInstance.transform.Find("WeaponSocket");
+        }
+    
+        public void SetFPSVisible(bool visible)
+        {
+            if (fpsInstance == null)
+                return;
+
+            fpsInstance.SetActive(visible);
         }
     }
 }

@@ -20,18 +20,13 @@ MonoBehaviour:
   category: 0
   isStackable: 0
   maxStackAmount: 1
-  baseStats:
-  - stat: 0
-    value: 0
-  - stat: 1
-    value: 0
-  - stat: 2
-    value: 0
+  equippedBuffs: []
   upgrades:
   - {fileID: 11400000, guid: 239c04098b298d747a7fd7bdd8ba7539, type: 2}
   - {fileID: 11400000, guid: ee6490e5359f5e1438a8d05b268cb222, type: 2}
   worldPrefab: {fileID: 3952411509711560424, guid: bd56aab88089e964fb272206af7a97db, type: 3}
   equippedPrefab: {fileID: 2901227947270850009, guid: 69243a768c69957449be67fb8157f0ff, type: 3}
+  viewModelPrefab: {fileID: 3592765929068593648, guid: d0431562bd8576349b10578349af508b, type: 3}
   weaponConfig: {fileID: 0}
   toolConfig: {fileID: 11400000, guid: e87f0838fda80df4397ac8878713e692, type: 2}
   scannerConfig: {fileID: 0}

@@ -40,10 +40,9 @@ namespace Features.Tools.Application
                 EffectExecutor.Instance.Execute(modified, baseContext);
             }
         }
-
+        
         private EffectDefinition ModifyByRuntimeStats(EffectDefinition def)
         {
-            // Копируем struct (чтобы не портить исходный)
             var result = def;
 
             switch (result.type)
@@ -57,9 +56,10 @@ namespace Features.Tools.Application
                     break;
             }
 
-            // range модификатор
             if (result.radius > 0f)
-                result.radius *= _stats[ToolStat.Range];
+            {
+                result.radius = def.radius + _stats[ToolStat.Range];
+            }
 
             return result;
         }

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Tools.Data.ToolConfig
   baseMiningSpeed: 1
   baseDamage: 1
-  baseRange: 3
+  baseRange: 10
   effects:
   - type: 6
     targetMode: 0
@@ -34,6 +34,7 @@ MonoBehaviour:
     miningValue: 0
     tickInterval: 0.1
     duration: 0
+    projectileConfig: {fileID: 0}
     childEffects:
     - type: 5
       targetMode: 2
@@ -53,6 +54,7 @@ MonoBehaviour:
       miningValue: 0
       tickInterval: 0
       duration: 0
+      projectileConfig: {fileID: 0}
       childEffects: []
     - type: 0
       targetMode: 2
@@ -72,4 +74,5 @@ MonoBehaviour:
       miningValue: 0
       tickInterval: 0
       duration: 0
+      projectileConfig: {fileID: 0}
       childEffects: []

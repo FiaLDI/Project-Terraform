@@ -46,7 +46,7 @@ namespace Features.Effects.Application
                     ),
 
                 EffectType.Continuous =>
-                    new ContinuousEffect(def.value, def.childEffects),
+                    new ContinuousEffect(def.tickInterval, def.childEffects),
 
                 EffectType.StopContinuous =>
                     new StopContinuousEffect(),

@@ -1,20 +1,29 @@
-using UnityEngine;
-using FishNet;
-using Features.Effects.Domain;
-using Features.Effects.Application;
 using Features.Buffs.Domain;
-using Features.Stats.Domain;
+using Features.Camera.UnityIntegration;
+using Features.Effects.Application;
+using Features.Effects.Domain;
 using Features.Equipment.Domain;
+using Features.Stats.Domain;
+using Features.Tools.Application;
+using Features.Tools.Data;
+using Features.Tools.Domain;
+using FishNet;
+using UnityEngine;
 
-public sealed class DrillToolPresenter : MonoBehaviour, IUsable
+public sealed class DrillToolPresenter : MonoBehaviour, IUsable, IServerUsable
 {
     [SerializeField] private DrillToolFX fx;
+    [SerializeField] private ToolConfig toolDefinition; // <-- База инструмента
 
     private IBuffSource source;
     private IStatsFacade stats;
+    private PlayerUsageNetAdapter usage;
 
     private EffectDefinition startEffect;
     private EffectDefinition stopEffect;
+
+    private ToolEffectPipeline pipeline;
+    private ToolRuntimeStats runtimeStats;
 
     // ======================================================
     // INIT
@@ -23,6 +32,7 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
     public void Initialize(Camera camera)
     {
         source = GetComponentInParent<IBuffSource>();
+        usage  = GetComponentInParent<PlayerUsageNetAdapter>();
 
         var provider = GetComponentInParent<IBuffTarget>();
         if (provider == null)
@@ -32,36 +42,41 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
         }
 
         stats = provider.GetServerStats();
-        BuildEffects();
+
+        if (InstanceFinder.IsServer)
+        {
+            BuildEffects();     // базовые эффекты инструмента
+            BuildPipeline();    // runtime статы + pipeline
+        }
     }
+
+    // ======================================================
+    // EFFECT BUILD (БАЗА ИНСТРУМЕНТА)
+    // ======================================================
 
     private void BuildEffects()
     {
-        float miningPower = stats.Mining.MiningPower;
-        float damageMult = stats.Combat.DamageMultiplier;
-        float range = stats.Combat.Range;
-
         startEffect = new EffectDefinition
         {
             type = EffectType.Continuous,
-            value = 0.1f,
+            tickInterval = 0.1f,
             childEffects = new[]
             {
                 new EffectDefinition
                 {
                     type = EffectType.MineNetworkResource,
                     targetMode = TargetMode.Directional,
-                    radius = range,
+                    radius = toolDefinition.baseRange,
                     layerMask = LayerMask.GetMask("Resource"),
-                    value = miningPower
+                    value = toolDefinition.baseMiningSpeed
                 },
                 new EffectDefinition
                 {
                     type = EffectType.DealDamage,
                     targetMode = TargetMode.Directional,
-                    radius = range,
+                    radius = toolDefinition.baseRange,
                     layerMask = LayerMask.GetMask("Enemy"),
-                    value = damageMult
+                    value = toolDefinition.baseDamage
                 }
             }
         };
@@ -73,78 +88,128 @@ public sealed class DrillToolPresenter : MonoBehaviour, IUsable
     }
 
     // ======================================================
-    // INPUT
+    // RUNTIME STATS (ПРЕДМЕТ + ПЕРСОНАЖ)
     // ======================================================
 
-    public void OnUsePrimary_Start()
+    private ToolRuntimeStats BuildRuntimeStats()
     {
-        TryPlayImpactFx();
-        Execute(startEffect);
+        var runtime = new ToolRuntimeStats();
+
+        // --- БАЗА ИНСТРУМЕНТА ---
+        runtime.Add(ToolStat.MiningSpeed, toolDefinition.baseMiningSpeed);
+        runtime.Add(ToolStat.Range, toolDefinition.baseRange);
+        runtime.Add(ToolStat.Damage, toolDefinition.baseDamage);
+
+        // --- БОНУСЫ ПЕРСОНАЖА ---
+        runtime.Add(ToolStat.MiningSpeed, stats.Mining.MiningPower);
+        runtime.Add(ToolStat.Range, stats.Combat.Range);
+        runtime.Add(ToolStat.Damage, stats.Combat.DamageMultiplier);
+
+        return runtime;
     }
 
-    public void OnUsePrimary_Stop()
+    private void BuildPipeline()
     {
-        fx?.Stop();
-        Execute(stopEffect);
+        runtimeStats = BuildRuntimeStats();
+
+        pipeline = new ToolEffectPipeline(
+            source,
+            runtimeStats,
+            new[] { startEffect }
+        );
     }
 
-    public void OnUsePrimary_Hold()
-    {
-        TryPlayImpactFx();
-    }
+    // ======================================================
+    // CLIENT INPUT (VFX ONLY)
+    // ======================================================
+
+    public void OnUsePrimary_Start()  => TryPlayImpactFx();
+    public void OnUsePrimary_Stop()   => fx?.Stop();
+    public void OnUsePrimary_Hold()   => TryPlayImpactFx();
 
     public void OnUseSecondary_Start() { }
-    public void OnUseSecondary_Hold() { }
-    public void OnUseSecondary_Stop() { }
+    public void OnUseSecondary_Hold()  { }
+    public void OnUseSecondary_Stop()  { }
 
     // ======================================================
-    // IMPACT FX
+    // SERVER AUTHORITATIVE
+    // ======================================================
+
+    public void ServerPrimaryStart()
+    {
+        if (!InstanceFinder.IsServer || pipeline == null)
+            return;
+
+        if (!TryGetServerAim(out Ray ray))
+            return;
+
+        pipeline.Execute(ray.origin, ray.direction);
+    }
+
+    public void ServerPrimaryHold()
+    {
+        if (!InstanceFinder.IsServer || pipeline == null)
+            return;
+
+        if (!TryGetServerAim(out Ray ray))
+            return;
+
+        pipeline.Execute(ray.origin, ray.direction);
+    }
+
+    public void ServerPrimaryStop()
+    {
+        if (!InstanceFinder.IsServer)
+            return;
+
+        EffectExecutor.Instance.Execute(
+            stopEffect,
+            new EffectContext(source, null, transform.position, transform.forward)
+        );
+    }
+
+    public void ServerSecondaryStart() { }
+    public void ServerSecondaryStop()  { }
+    public void ServerSecondaryHold()  { }
+    public void ServerReload()         { }
+
+    // ======================================================
+    // AIM (SERVER)
+    // ======================================================
+
+    private bool TryGetServerAim(out Ray ray)
+    {
+        ray = default;
+
+        if (usage == null)
+            return false;
+
+        return usage.TryGetServerAim(out ray);
+    }
+
+    // ======================================================
+    // CLIENT FX
     // ======================================================
 
     private void TryPlayImpactFx()
     {
-        if (stats == null) return;
+        var cam = CameraRegistry.Instance?.CurrentCamera;
+
+        if (cam == null || stats == null)
+            return;
 
         float range = stats.Combat.Range;
 
-        Debug.DrawRay(transform.position, transform.forward * range, Color.red);
-
-        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, range))
+        if (Physics.Raycast(
+                cam.transform.position,
+                cam.transform.forward,
+                out RaycastHit hit,
+                range))
         {
-            Debug.Log("HIT: " + hit.collider.name);
-
             fx?.Play(
                 hit.point + hit.normal * 0.02f,
                 hit.normal
             );
         }
-        else
-        {
-            Debug.Log("NO HIT");
-        }
-    }
-
-
-
-    // ======================================================
-    // EXECUTION
-    // ======================================================
-
-    private void Execute(EffectDefinition def)
-    {
-        if (!InstanceFinder.IsServer)
-            return;
-
-        if (source == null)
-            return;
-
-        var ctx = new EffectContext(
-            source,
-            null,
-            transform.position,
-            transform.forward
-        );
-
-        EffectExecutor.Instance.Execute(def, ctx);
     }
 }

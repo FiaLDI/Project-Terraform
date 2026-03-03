@@ -117,6 +117,10 @@ private float headYawOffset;
                 UpdateFPS(state);
             else
                 UpdateTPS(state);
+            
+            bool isFPS = control.State.Blend < 0.5f;
+
+            CameraRegistry.Instance?.SetFPSVisible(isFPS);
         }
 
         private void UpdateFPS(PlayerCameraState state)

@@ -40,6 +40,7 @@ namespace Features.Items.Data
 
         public GameObject worldPrefab;
         public GameObject equippedPrefab;
+        public GameObject viewModelPrefab;
 
         // =============================
         // FEATURE CONFIG
