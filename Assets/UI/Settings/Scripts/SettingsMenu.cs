@@ -88,4 +88,10 @@ public class SettingsMenu : MonoBehaviour, IUIScreen
         SettingsStorage.ResetToDefaults();
         controller?.LoadSettingsUI();
     }
+
+    private void OnDestroy()
+    {
+        if (I == this)
+            I = null;
+    }
 }
