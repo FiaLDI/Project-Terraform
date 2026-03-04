@@ -53,6 +53,15 @@ namespace Features.Effects.Application
 
                 EffectType.Scan =>
                     new ScanEffect(def.value),
+                
+               EffectType.ScanResourceEffect =>
+                    new ScanResourceEffect(
+                        def.prefabId,
+                        def.radius,
+                        def.layerMask,
+                        def.lifetime,
+                        def.heightOffset
+                    ),
 
                 EffectType.SpawnProjectile =>
                     new SpawnProjectileEffect(

@@ -1,3 +1,5 @@
+using System.Linq;
+using Features.Buffs.Domain;
 using Features.Items.Data;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
@@ -5,12 +7,11 @@ using Features.Resources.Application;
 using Features.Resources.Data;
 using Features.Resources.Domain;
 using UnityEngine;
-using System.Linq;
 
 namespace Features.Resources.UnityIntegration
 {
     [RequireComponent(typeof(Collider))]
-    public class ResourceNodePresenter : MonoBehaviour
+    public class ResourceNodePresenter : MonoBehaviour, IScannable
     {
         [Header("Resource Config")]
         public ResourceSO config;
@@ -160,5 +161,7 @@ namespace Features.Resources.UnityIntegration
                 renderer.material.color = Color.Lerp(Color.red, Color.green, healthPct);
             }
         }
+
+        public void OnScanned(float scanSpeed) { }
     }
 }

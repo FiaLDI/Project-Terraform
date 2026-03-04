@@ -8,6 +8,7 @@ using Features.Items.UnityIntegration;
 using Features.Player.UnityIntegration;
 using Features.Weapons.UnityIntegration;
 using FishNet.Object;
+using GameKit.Dependencies.Utilities;
 using UnityEngine;
 
 namespace Features.Equipment.UnityIntegration
@@ -174,6 +175,11 @@ namespace Features.Equipment.UnityIntegration
                 holder.SetInstance(inst);
 
                 rightHandUsable = currentRightHandObject.GetComponent<IUsable>();
+
+                if (rightHandUsable is ScannerTool scanner)
+                {
+                    scanner.Setup(inst);
+                }
             }
 
             // VIEW MODEL (ТОЛЬКО owner)

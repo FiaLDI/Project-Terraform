@@ -82,5 +82,33 @@ namespace Features.Effects.Application
 
             return null;
         }
+
+        public void SpawnAtPosition(
+            string prefabId,
+            Vector3 position,
+            Quaternion rotation,
+            float lifetime,
+            NetworkConnection owner = null)
+        {
+            if (!InstanceFinder.IsServer)
+            {
+                Debug.LogError("Spawn blocked: not server");
+                return;
+            }
+
+            var prefab = registry.Get(prefabId);
+            if (prefab == null)
+                return;
+
+            var go = Instantiate(prefab, position, rotation);
+
+            if (go.TryGetComponent(out NetworkObject netObj))
+            {
+                InstanceFinder.ServerManager.Spawn(go, owner);
+
+                if (lifetime > 0f)
+                    StartCoroutine(DespawnAfter(netObj, lifetime));
+            }
+        }
     }
 }

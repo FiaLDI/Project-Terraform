@@ -23,3 +23,5 @@ MonoBehaviour:
     prefab: {fileID: 7817172014945752216, guid: 95054df61e4e5f94dadbb76e2c0d4227, type: 3}
   - id: charge-ability
     prefab: {fileID: 4592017043821597109, guid: bd434ba60365e9d4dbe074f133ece67e, type: 3}
+  - id: scan-item
+    prefab: {fileID: 311603181526516735, guid: b4c76907bee5ede42abc08c97f05be0f, type: 3}

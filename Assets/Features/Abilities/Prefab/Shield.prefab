@@ -51,7 +51,7 @@ MonoBehaviour:
   pushForce: 15
   Enemy:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
 --- !u!114 &8530069077275815002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,7 +82,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584293255119148836
+  _initializedTimestamp: -8584289734395455239
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -102,9 +102,9 @@ MonoBehaviour:
   <AssetPathHash>k__BackingField: 7664067803210581119
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 118.97656, y: 8.586287, z: 138.7803}
+    Position: {x: 0, y: 0, z: 0}
     Rotation: {x: -0, y: -0.38268346, z: -0, w: 0.92387956}
-    Scale: {x: 3.7809873, y: 3.7809875, z: 3.7809873}
+    Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
 --- !u!114 &7257386864522406868
 MonoBehaviour:

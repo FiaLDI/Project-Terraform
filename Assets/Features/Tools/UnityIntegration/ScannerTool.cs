@@ -78,6 +78,14 @@ public sealed class ScannerTool : MonoBehaviour, IUsable
 
         if (Time.time < nextScanTime)
             return;
+        
+        
+
+        if (config == null)
+        {
+            Debug.LogError("[ScannerTool] config.effects is NULL");
+            return;
+        }
 
         nextScanTime = Time.time + config.cooldown;
 
@@ -95,6 +103,12 @@ public sealed class ScannerTool : MonoBehaviour, IUsable
             origin,
             direction
         );
+
+        if (EffectExecutor.Instance == null)
+        {
+            Debug.LogError("[ScannerTool] EffectExecutor.Instance is NULL");
+            return;
+        }
 
         foreach (var def in config.effects)
             EffectExecutor.Instance.Execute(def, ctx);
