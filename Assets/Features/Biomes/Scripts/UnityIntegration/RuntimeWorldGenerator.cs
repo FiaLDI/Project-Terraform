@@ -26,7 +26,7 @@ namespace Features.Biomes.UnityIntegration
         public int unloadDistance = 8;
 
         [Header("Spawn Settings")]
-        public float spawnHeightCheck = 50f;
+        public float spawnHeightCheck = 20f;
 
         private ChunkManager manager;
         private WorldProvider worldProvider;
@@ -145,6 +145,12 @@ namespace Features.Biomes.UnityIntegration
 
             yield return null;
 
+            if (customPrefab != null)
+            {
+                var pos = GetWorldCenterSpawn();
+                Instantiate(customPrefab, pos, Quaternion.identity);
+            }
+
             Debug.Log("[WorldGen] Client world ready");
         }
 
@@ -169,9 +175,6 @@ namespace Features.Biomes.UnityIntegration
                 SpawnPlayerSpawnPoints();
 
             yield return WaitForPhysicsReady();
-
-            if (customPrefab != null)
-                SpawnCustomPrefab();
         }
 
         // ======================================================
@@ -233,12 +236,6 @@ namespace Features.Biomes.UnityIntegration
 
             float h = worldConfig.GetHeight(new float2(cx, cz));
             return new Vector3(cx, h + 2f, cz);
-        }
-
-        private void SpawnCustomPrefab()
-        {
-            var pos = GetWorldCenterSpawn();
-            Instantiate(customPrefab, pos, Quaternion.identity);
         }
 
         private void SpawnPlayerSpawnPoints()

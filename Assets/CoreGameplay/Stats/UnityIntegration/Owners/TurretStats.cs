@@ -67,7 +67,7 @@ namespace Features.Stats.UnityIntegration
             {
                 Facade.Movement.ApplyBase(
                     0f, 0f, 0f, 0f,
-                    preset.rotationSpeed
+                    preset.rotationSpeed, 0f,0f
                 );
             }
 

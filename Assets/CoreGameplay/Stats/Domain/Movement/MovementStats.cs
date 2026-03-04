@@ -10,6 +10,8 @@ namespace Features.Stats.Domain
         private float _baseSprint;
         private float _baseCrouch;
         private float _baseRotation;
+        private float _baseGravity;
+        private float _baseJumpHeight;
 
         // ================= ADD =================
         private float _speedAdd;
@@ -17,6 +19,8 @@ namespace Features.Stats.Domain
         private float _sprintAdd;
         private float _crouchAdd;
         private float _rotationAdd;
+        private float _gravityAdd;
+        private float _jumpAdd;
 
         // ================= MULT =================
         private float _speedMult = 1f;
@@ -24,6 +28,8 @@ namespace Features.Stats.Domain
         private float _sprintMult = 1f;
         private float _crouchMult = 1f;
         private float _rotationMult = 1f;
+        private float _gravityMult = 1f;
+        private float _jumpMult = 1f;
 
         // ================= FINAL =================
         public float BaseSpeed => (_baseSpeed + _speedAdd) * _speedMult;
@@ -31,6 +37,8 @@ namespace Features.Stats.Domain
         public float SprintSpeed => (_baseSprint + _sprintAdd) * _sprintMult;
         public float CrouchSpeed => (_baseCrouch + _crouchAdd) * _crouchMult;
         public float RotationSpeed => (_baseRotation + _rotationAdd) * _rotationMult;
+        public float Gravity => (_baseGravity + _gravityAdd) * _gravityMult;
+        public float JumpHeight => (_baseJumpHeight + _jumpAdd) * _jumpMult;
 
         // ================= BASE =================
         public void ApplyBase(
@@ -38,13 +46,17 @@ namespace Features.Stats.Domain
             float walk,
             float sprint,
             float crouch,
-            float rotation)
+            float rotation,
+            float gravity,
+            float jumpHeight)
         {
             _baseSpeed = baseSpeed;
             _baseWalk = walk;
             _baseSprint = sprint;
             _baseCrouch = crouch;
             _baseRotation = rotation;
+            _baseGravity = gravity;
+            _baseJumpHeight = jumpHeight;
         }
 
         // ================= MODIFIERS =================
@@ -75,7 +87,16 @@ namespace Features.Stats.Domain
                 _rotationAdd += value;
                 return true;
             }
-
+            if (key == StatKeys.Gravity)
+            {
+                _gravityAdd += value;
+                return true;
+            }
+            if (key == StatKeys.JumpHeight)
+            {
+                _jumpAdd += value;
+                return true;
+            }
             return false;
         }
 
@@ -104,6 +125,16 @@ namespace Features.Stats.Domain
             if (key == StatKeys.RotationSpeed)
             {
                 _rotationMult *= value;
+                return true;
+            }
+            if (key == StatKeys.Gravity)
+            {
+                _gravityMult *= value;
+                return true;
+            }
+            if (key == StatKeys.JumpHeight)
+            {
+                _jumpMult *= value;
                 return true;
             }
 

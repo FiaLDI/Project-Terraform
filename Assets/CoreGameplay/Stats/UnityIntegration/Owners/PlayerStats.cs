@@ -66,7 +66,9 @@ namespace Features.Stats.UnityIntegration
                     walk: 5f,
                     sprint: 6.5f,
                     crouch: 3.5f,
-                    rotation: 180f
+                    rotation: 180f,
+                    gravity: -40f,
+                    jumpHeight: 1.2f
                 );
             }
 
@@ -175,7 +177,9 @@ namespace Features.Stats.UnityIntegration
                     preset.movement.walkSpeed,
                     preset.movement.sprintSpeed,
                     preset.movement.crouchSpeed,
-                    preset.movement.rotationSpeed
+                    preset.movement.rotationSpeed,
+                    preset.movement.gravity,
+                    preset.movement.jumpHeight
                 );
             }
 

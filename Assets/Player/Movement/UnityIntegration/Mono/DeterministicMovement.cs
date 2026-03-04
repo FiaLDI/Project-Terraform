@@ -1,14 +1,12 @@
 using UnityEngine;
 using FishNet.Object;
+using Features.Stats.Adapter;
 
 [RequireComponent(typeof(CharacterController))]
 public class DeterministicMovement : NetworkBehaviour
-{    public float CurrentMaxSpeed { get; private set; }
+{    
+    public float CurrentMaxSpeed { get; private set; }
     public bool JumpedThisTick { get; private set; }
-
-    public float WalkSpeed = 10f;
-    public float SprintSpeed = 20f;
-    public float CrouchSpeed = 2f;
 
     public float Gravity = -40f;
     public float JumpForce = 7f;
@@ -17,6 +15,7 @@ public class DeterministicMovement : NetworkBehaviour
     [SerializeField] private float normalHeight = 3f;
 
     [SerializeField] private float rotationSharpness = 20f;
+    [SerializeField] private float jumpHeight = 1.2f;
 
     private CharacterController controller;
     private bool isCrouching;
@@ -27,28 +26,34 @@ public class DeterministicMovement : NetworkBehaviour
     public Vector3 Velocity { get; private set; }
     public bool Grounded => controller.isGrounded;
     public bool IsCrouching => isCrouching;
+    private MovementStatsAdapter movementStats;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+
+        var stats = GetComponent<StatsFacadeAdapter>();
+        if (stats != null)
+            movementStats = stats.MovementStats;
+
         currentYaw = transform.eulerAngles.y;
     }
 
     public void Simulate(MoveCommand cmd)
     {
+        TryResolveStats();
         float dt = NetworkTickSystem.TickDelta;
 
         currentYaw = cmd.Yaw;
         transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         // ================= SPEED =================
-        float speed = WalkSpeed;
+        float speed = 5f;
 
-        if (cmd.Sprint && !cmd.Crouch)
-            speed = SprintSpeed;
-
-        if (cmd.Crouch)
-            speed = CrouchSpeed;
+        if (movementStats != null && movementStats.IsReady)
+        {
+            speed = movementStats.GetSpeed(cmd.Sprint, cmd.Crouch);
+        }
 
         CurrentMaxSpeed = speed;
 
@@ -83,7 +88,7 @@ public class DeterministicMovement : NetworkBehaviour
 
             if (cmd.Jump && !cmd.Crouch)
             {
-                verticalVelocity = JumpForce;
+                verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * Gravity);
                 JumpedThisTick = true;
             }
         }
@@ -114,5 +119,15 @@ public class DeterministicMovement : NetworkBehaviour
         transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         controller.enabled = true;
+    }
+
+    private void TryResolveStats()
+    {
+        if (movementStats != null)
+            return;
+
+        var stats = GetComponent<StatsFacadeAdapter>();
+        if (stats != null)
+            movementStats = stats.MovementStats;
     }
 }

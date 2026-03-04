@@ -54,7 +54,7 @@ MonoBehaviour:
   fogGradientScale: 10
   enableFog: 1
   fogMode: 2
-  fogColor: {r: 0, g: 0.46446562, b: 1, a: 1}
+  fogColor: {r: 0.069996394, g: 0.088245906, b: 0.10943389, a: 1}
   fogDensity: 0.05
   fogLinearStart: 0
   fogLinearEnd: 150

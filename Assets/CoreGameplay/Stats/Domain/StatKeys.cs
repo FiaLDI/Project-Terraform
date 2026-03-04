@@ -75,6 +75,12 @@ namespace Features.Stats.Domain
         public static readonly StatKey RotationSpeed =
             new("move.rotation");
 
+        public static readonly StatKey Gravity =
+            new("move.gravity");
+
+        public static readonly StatKey JumpHeight =
+            new("move.jump.height");
+
         // =========================
         // MINING
         // =========================

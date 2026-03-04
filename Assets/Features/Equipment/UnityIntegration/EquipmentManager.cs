@@ -132,6 +132,11 @@ namespace Features.Equipment.UnityIntegration
             UpdateWeaponPose(model.rightHand.item);
 
             usageNet?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
+
+            if (IsOwner && !IsServerInitialized)
+            {
+                usageNet.SyncHands_Server();
+            }
         }
 
         // ======================================================

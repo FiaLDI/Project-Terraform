@@ -39,6 +39,8 @@ namespace Features.Stats.Application
             public float sprintSpeed = 8f;
             public float crouchSpeed = 2f;
             public float rotationSpeed = 0f;
+            public float gravity = -40f;
+            public float jumpHeight = 1.2f;
         }
 
         [System.Serializable]

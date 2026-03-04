@@ -1,6 +1,7 @@
 using FishNet.Object;
 using UnityEngine;
 using Features.Equipment.Domain;
+using Features.Equipment.UnityIntegration;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
@@ -223,5 +224,14 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
                 : Vector3.forward;
 
         hasServerAim = true;
+    }
+
+    [ServerRpc]
+    public void SyncHands_Server()
+    {
+        var equip = GetComponent<EquipmentManager>();
+
+        rightHand = equip.GetRightHandUsable();
+        leftHand = equip.GetLeftHandUsable();
     }
 }
