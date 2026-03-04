@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using UnityEngine.SceneManagement;
 
 namespace Features.Camera.UnityIntegration
 {
@@ -25,8 +26,10 @@ namespace Features.Camera.UnityIntegration
         private Transform weaponSocket;
         public Transform WeaponSocket => weaponSocket;
         public event Action<UnityEngine.Camera> OnCameraChanged;
+        public event Action<bool> OnFPSModeChanged;
 
         private GameObject fpsInstance;
+        public bool IsFPSActive => fpsInstance != null && fpsInstance.activeSelf;
 
         private void Awake()
         {
@@ -51,8 +54,24 @@ namespace Features.Camera.UnityIntegration
                 );
                 return;
             }
+            SceneManager.sceneLoaded += OnSceneLoaded;
 
             RegisterCamera(sceneCamera);
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            ResetFPS();
+        }
+
+        private void ResetFPS()
+        {
+            if (fpsInstance != null)
+                Destroy(fpsInstance);
+
+            fpsInstance = null;
+            weaponSocket = null;
+            OnFPSModeChanged?.Invoke(false);
         }
 
         private void OnDestroy()
@@ -62,6 +81,7 @@ namespace Features.Camera.UnityIntegration
                 UnregisterCurrent();
                 Instance = null;
             }
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         // ======================================================
@@ -122,14 +142,16 @@ namespace Features.Camera.UnityIntegration
             if (fpsArmsPrefab == null)
                 return;
 
-            if (weaponSocket != null)
-                return; // уже создано
+            if (fpsInstance != null)
+                return;
 
             fpsInstance = Instantiate(fpsArmsPrefab, viewModelRoot);
             fpsInstance.transform.localPosition = Vector3.zero;
             fpsInstance.transform.localRotation = Quaternion.identity;
 
             weaponSocket = fpsInstance.transform.Find("WeaponSocket");
+
+            OnFPSModeChanged?.Invoke(true);
         }
     
         public void SetFPSVisible(bool visible)
@@ -138,6 +160,7 @@ namespace Features.Camera.UnityIntegration
                 return;
 
             fpsInstance.SetActive(visible);
+            OnFPSModeChanged?.Invoke(visible);
         }
     }
 }

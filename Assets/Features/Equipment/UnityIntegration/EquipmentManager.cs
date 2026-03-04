@@ -60,6 +60,8 @@ namespace Features.Equipment.UnityIntegration
         private void OnDestroy()
         {
             UnsubscribeInventory();
+            ClearRightHand();
+            ClearLeftHand();
         }
 
         // ======================================================
