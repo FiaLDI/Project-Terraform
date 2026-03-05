@@ -1,7 +1,5 @@
 using UnityEngine;
 using Features.Buffs.Domain;
-using Features.Weapons.Data;
-using Features.Tools.Data;
 using Features.Items.Domain;
 
 namespace Features.Items.Data
