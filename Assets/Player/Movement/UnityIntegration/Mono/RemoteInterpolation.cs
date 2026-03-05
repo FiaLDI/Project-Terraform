@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.Player.UnityIntegration;
 using FishNet.Object;
 using UnityEngine;
 
@@ -8,11 +9,23 @@ public class RemoteInterpolation : MonoBehaviour
     {
         public float Time;
         public Vector3 Position;
+        public Vector3 Velocity;
         public float Yaw;
+        public float Pitch;
+        public bool Jump;
+        public bool Crouch;
+        public bool Sprint;
+        public bool Grounded;
     }
 
     private readonly List<Snapshot> snapshots = new();
-    private const float InterpDelay = 0.1f;
+    private const float InterpDelay = 0.2f;
+    private PlayerAnimationController anim;
+
+    public void Awake()
+    {
+        anim = GetComponentInParent<PlayerAnimationController>();
+    }
 
     public void ReceiveState(PlayerState state)
     {
@@ -22,7 +35,12 @@ public class RemoteInterpolation : MonoBehaviour
         {
             Time = time,
             Position = state.Position,
-            Yaw = state.Yaw
+            Yaw = state.Yaw,
+            Pitch = state.Pitch,
+            Jump   = state.Jump,
+            Crouch = state.Crouch,
+            Sprint = state.Sprint,
+            Grounded = state.Grounded
         });
 
         if (snapshots.Count > 20)
@@ -60,5 +78,23 @@ public class RemoteInterpolation : MonoBehaviour
             Mathf.LerpAngle(from.Yaw, to.Yaw, t),
             0f
         );
+        float pitch = Mathf.Lerp(
+            from.Pitch,
+            to.Pitch,
+            t
+        );
+        var head = GetComponentInChildren<HeadPitchController>();
+        head?.SetRemotePitch(pitch);
+
+        if (anim != null)
+        {
+            float speed = new Vector2(to.Velocity.x, to.Velocity.z).magnitude;
+            anim.SetSpeed(speed);
+            anim.SetGrounded(to.Grounded);
+            anim.SetCrouch(to.Crouch);
+
+            if (to.Jump)
+                anim.TriggerJump();
+        }
     }
 }

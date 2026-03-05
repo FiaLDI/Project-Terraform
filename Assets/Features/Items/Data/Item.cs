@@ -1,7 +1,5 @@
 using UnityEngine;
 using Features.Buffs.Domain;
-using Features.Weapons.Data;
-using Features.Tools.Data;
 using Features.Items.Domain;
 
 namespace Features.Items.Data
@@ -40,14 +38,9 @@ namespace Features.Items.Data
 
         public GameObject worldPrefab;
         public GameObject equippedPrefab;
+        public GameObject viewModelPrefab;
 
-        // =============================
-        // FEATURE CONFIG
-        // =============================
-
-        public WeaponConfig weaponConfig;
-        public ToolConfig toolConfig;
-        public ScannerConfig scannerConfig;
-        public ThrowableConfig throwableConfig;
+        [Header("Actions")]
+        public ItemActionDefinition[] actions;
     }
 }

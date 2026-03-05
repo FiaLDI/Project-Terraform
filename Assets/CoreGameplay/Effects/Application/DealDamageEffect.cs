@@ -1,6 +1,6 @@
 using Features.Effects.Domain;
-using Features.Buffs.Domain;
 using Features.Stats.Domain;
+using UnityEngine;
 
 namespace Features.Effects.Application
 {
@@ -17,6 +17,7 @@ namespace Features.Effects.Application
 
         public void Apply(EffectContext context)
         {
+            
             if (context.Targets == null)
                 return;
 
@@ -25,7 +26,8 @@ namespace Features.Effects.Application
                 if (t?.BuffSystem == null || !t.IsReady)
                     continue;
 
-                var statsOwner = t.BuffSystem.GetComponent<IStatsOwner>();
+                var statsOwner = t.BuffSystem.GetComponentInParent<IStatsOwner>();
+
                 if (statsOwner == null || !statsOwner.IsReady)
                     continue;
 

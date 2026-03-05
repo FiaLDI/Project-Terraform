@@ -151,6 +151,8 @@ namespace Features.Class.Net
             // 3️⃣ пассивы / бафы / server-side abilities
             classController.ApplyClass(pendingClassId);
 
+            GetComponent<MovementStatsSync>()?.SendSnapshot();
+
             // 4️⃣ abilities → clients (РОВНО 1 РАЗ)
             StartCoroutine(SendAbilitiesOnce(cfg));
 

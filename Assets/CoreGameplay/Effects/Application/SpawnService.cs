@@ -51,7 +51,19 @@ namespace Features.Effects.Application
             }
 
             if (lifetime > 0f)
-                Destroy(go, lifetime);
+            {
+                StartCoroutine(DespawnAfter(netObj, lifetime));
+            }
+        }
+
+        private System.Collections.IEnumerator DespawnAfter(NetworkObject netObj, float time)
+        {
+            yield return new WaitForSeconds(time);
+
+            if (netObj != null && netObj.IsSpawned)
+            {
+                netObj.Despawn();
+            }
         }
 
         private static Vector3 ResolveSourcePosition(IBuffSource source)
@@ -69,6 +81,34 @@ namespace Features.Effects.Application
                 return no.Owner;
 
             return null;
+        }
+
+        public void SpawnAtPosition(
+            string prefabId,
+            Vector3 position,
+            Quaternion rotation,
+            float lifetime,
+            NetworkConnection owner = null)
+        {
+            if (!InstanceFinder.IsServer)
+            {
+                Debug.LogError("Spawn blocked: not server");
+                return;
+            }
+
+            var prefab = registry.Get(prefabId);
+            if (prefab == null)
+                return;
+
+            var go = Instantiate(prefab, position, rotation);
+
+            if (go.TryGetComponent(out NetworkObject netObj))
+            {
+                InstanceFinder.ServerManager.Spawn(go, owner);
+
+                if (lifetime > 0f)
+                    StartCoroutine(DespawnAfter(netObj, lifetime));
+            }
         }
     }
 }

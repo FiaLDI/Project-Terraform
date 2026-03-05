@@ -16,9 +16,6 @@ public sealed class PlayerClassController : MonoBehaviour
     [Header("Classes Library")]
     [SerializeField] private PlayerClassLibrarySO library;
 
-    [Header("Default Class ID")]
-    [SerializeField] private string defaultClassId = "engineer";
-
     // =====================================================
     // COMPONENTS
     // =====================================================
@@ -55,9 +52,14 @@ public sealed class PlayerClassController : MonoBehaviour
             return;
         }
 
+        string safeDefault =
+            library.classes.Count > 0
+                ? library.classes[0].id
+                : null;
+
         classService = new PlayerClassService(
             library.classes,
-            defaultClassId
+            safeDefault
         );
     }
 
@@ -67,11 +69,20 @@ public sealed class PlayerClassController : MonoBehaviour
 
     public void ApplyClass(string classId)
     {
-        var cfg = library.FindById(classId)
-            ?? library.FindById(defaultClassId);
+       Debug.Log($"[CLASS] Requested classId = {classId}");
+
+        var cfg = library.FindById(classId);
+
+        if (cfg == null)
+        {
+            string safeDefault =
+                library.classes.Count > 0
+                    ? library.classes[0].id
+                    : null;
+            cfg = library.FindById(safeDefault);
+        }
 
         currentClass = cfg;
-
         classService.SelectClass(cfg);
         abilityCaster.SetAbilities(cfg.abilities.ToArray());
 

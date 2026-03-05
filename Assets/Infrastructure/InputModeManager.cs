@@ -131,7 +131,7 @@ namespace Features.Input
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            Time.timeScale = pauseTime ? 0f : 1f;
+            Time.timeScale = 1f;
         }
     }
 }

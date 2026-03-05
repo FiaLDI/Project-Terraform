@@ -8,4 +8,5 @@ public struct PlayerInputState
     public bool Jump;
     public bool Crouch;
     public float Yaw;
+    public float Pitch;
 }

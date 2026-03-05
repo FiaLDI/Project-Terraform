@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99765ebccd44b9045b8a57a3d08f8918, type: 3}
   m_Name: Tech
   m_EditorClassIdentifier: Assembly-CSharp::Features.Classes.Data.PlayerClassConfigSO
-  id: 0
+  id: tech
   displayName: Tech
   description: 
   preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}

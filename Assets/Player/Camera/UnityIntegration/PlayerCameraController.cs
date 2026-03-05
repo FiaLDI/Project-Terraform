@@ -12,15 +12,17 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Transform fpsPoint;
         [SerializeField] private Transform headTransform;
+        [SerializeField] private Transform headYawBone;
+        [SerializeField] private float headYawLimit = 40f;
+        [SerializeField] private float bodyTurnSpeed = 360f;
 
-        [Header("Settings")]
-        [SerializeField] private float mouseSensitivity = 100f;
         [SerializeField] private float tpsSmoothSpeed = 7f;
 
         [Header("TPS Collision")]
         [SerializeField] private LayerMask collisionMask;
         [SerializeField] private float collisionRadius = 0.3f;
         [SerializeField] private float minCameraDistance = 0.5f;
+        private float currentSensitivity;
 
         [SerializeField] private Vector3 shoulderOffset = new Vector3(0.5f, 0f, 0f);
 
@@ -28,10 +30,24 @@ namespace Features.Player.UnityIntegration
         private Transform cameraTransform;
         private ICameraControlService control;
 
-        private float currentTpsDistance = 3f;
+        private float currentTpsDistance = 5f;
         private bool isLocal;
 
         private ICameraControlService Control => CameraServiceProvider.Control;
+
+        private const float BASE_MULTIPLIER = 100f;
+        private float bodyYaw;
+private float headYawOffset;
+
+        private void Start()
+        {
+            currentSensitivity = SettingsStorage.Sensitivity * BASE_MULTIPLIER;
+        }
+
+        public void RefreshSensitivity()
+        {
+            currentSensitivity = SettingsStorage.Sensitivity * BASE_MULTIPLIER;
+        }
 
         private void Awake()
         {
@@ -51,13 +67,15 @@ namespace Features.Player.UnityIntegration
             if (!isLocal || control == null)
                 return;
 
-            control.SetLookInput(input, mouseSensitivity, Time.deltaTime);
+            float sens = SettingsStorage.Sensitivity * BASE_MULTIPLIER;
+            control.SetLookInput(input, sens, Time.deltaTime);
 
             float yaw = control.State.Yaw;
+            float pitch = control.State.Pitch;
 
-            // Передаём yaw в movement
             var handler = FindObjectOfType<MovementInputHandler>();
             handler?.SetYaw(yaw);
+            handler?.SetPitch(pitch);
         }
 
         public void SwitchView()
@@ -99,6 +117,10 @@ namespace Features.Player.UnityIntegration
                 UpdateFPS(state);
             else
                 UpdateTPS(state);
+            
+            bool isFPS = control.State.Blend < 0.5f;
+
+            CameraRegistry.Instance?.SetFPSVisible(isFPS);
         }
 
         private void UpdateFPS(PlayerCameraState state)
@@ -128,11 +150,7 @@ namespace Features.Player.UnityIntegration
                 minCameraDistance
             );
 
-            currentTpsDistance = Mathf.Lerp(
-                currentTpsDistance,
-                targetDistance,
-                Time.deltaTime * tpsSmoothSpeed
-            );
+            currentTpsDistance = targetDistance;
 
             Vector3 shoulderWorld =
                 cameraPivot.TransformPoint(shoulderOffset);
@@ -140,14 +158,9 @@ namespace Features.Player.UnityIntegration
             Vector3 targetPos =
                 shoulderWorld - cameraPivot.forward * currentTpsDistance;
 
-            cameraTransform.position = Vector3.Lerp(
-                cameraTransform.position,
-                targetPos,
-                1f - Mathf.Exp(-12f * Time.deltaTime)
-            );
-
+            cameraTransform.position = targetPos;
             cameraTransform.rotation =
-                Quaternion.Euler(state.Pitch, state.Yaw, 0f);
+            Quaternion.Euler(state.Pitch, state.Yaw, 0f);
         }
 
         private bool ResolveCamera()

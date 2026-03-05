@@ -14,6 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Application.StatsPresetSO
   combat:
     baseDamageMultiplier: 1
+    baseFireRate: 5
+    baseSpread: 2
+    baseAimSpread: 0.5
+    baseRange: 100
+    baseRecoil: 1
+    baseMagazineSize: 30
   energy:
     baseMaxEnergy: 150
     baseRegen: 1
@@ -23,8 +29,10 @@ MonoBehaviour:
   movement:
     baseSpeed: 5
     walkSpeed: 4
-    sprintSpeed: 8
+    sprintSpeed: 20
     crouchSpeed: 2
     rotationSpeed: 0
+    gravity: -20
+    jumpHeight: 1.2
   mining:
     baseMining: 1

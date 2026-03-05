@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 6576416249327536489}
   - component: {fileID: -7241866246749863152}
   - component: {fileID: 2649077292248347901}
+  - component: {fileID: 7636323655788308600}
   m_Layer: 0
   m_Name: weapon_blaster_bullet
   m_TagString: Untagged
@@ -32,13 +33,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1788979334579304981}
   serializedVersion: 2
-  m_LocalRotation: {x: -4.3297806e-17, y: 0.7071068, z: 0.7071068, w: -4.3297806e-17}
-  m_LocalPosition: {x: -5.27038, y: 1.095, z: 1.295}
+  m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
 --- !u!114 &3165731839791936421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,7 +70,9 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 7031336251099903893}
+  - {fileID: 2649077292248347901}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -80,7 +83,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584289033372642701
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -95,15 +98,15 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 20
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 14739089962163438504
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Position: {x: -5.27038, y: 1.095, z: 1.295}
+    Rotation: {x: -4.3297806e-17, y: 0.7071068, z: 0.7071068, w: -4.3297806e-17}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1
 --- !u!114 &7031336251099903893
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -116,9 +119,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 643b0ed2529e2f74dbb29933e1bb497c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldItemNetwork
-  _componentIndexCache: 255
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 570478251995708191}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 570478251995708191}
 --- !u!65 &2708175349947706500
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -222,7 +225,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!114 &2649077292248347901
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -235,6 +238,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 902ed620214cee349ac60b6166e58484, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileNetwork
+  _componentIndexCache: 1
+  _addedNetworkObject: {fileID: 570478251995708191}
+  _networkObjectCache: {fileID: 570478251995708191}
+--- !u!114 &7636323655788308600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1788979334579304981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 570478251995708191}
   _networkObjectCache: {fileID: 0}
+  _componentConfiguration: 0
+  _synchronizeParent: 0
+  _packing:
+    Position: 1
+    Rotation: 1
+    Scale: 0
+  _useScaledTime: 1
+  _interpolation: 2
+  _extrapolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  _clientAuthoritative: 0
+  _sendToOwner: 1
+  _interval: 1
+  _synchronizePosition: 1
+  _positionSensitivity: 0.001
+  _positionSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+  _synchronizeRotation: 1
+  _rotationSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+  _synchronizeScale: 0
+  _scaleSensitivity: 0.001
+  _scaleSnapping:
+    X: 0
+    Y: 0
+    Z: 0

@@ -22,15 +22,22 @@ MonoBehaviour:
   castTime: 0
   effects:
   - type: 4
-    targetMode: 0
+    targetMode: 1
     radius: 0
     layerMask:
       serializedVersion: 2
       m_Bits: 0
     value: 0
+    damageType: 0
     buff: {fileID: 0}
     onlySpecificBuff: 0
     buffId: 
     prefabId: shield-ability
     lifetime: 10
     useSourcePosition: 1
+    ownership: 1
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []

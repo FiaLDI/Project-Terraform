@@ -70,16 +70,21 @@ namespace Features.Inventory.UI
             if (player == null)
             {
                 initialized = false;
+
+                if (inventory != null)
+                    inventory.OnInventoryChanged -= Refresh;
+
                 inventory = null;
+
                 if (bagWindow != null)
                     bagWindow.SetActive(false);
+
                 return;
             }
 
-            if (initialized)
-                return;
-
-            Debug.Log("[InventoryUIView] Bound to player: " + player.name, this);
+            // 🔥 если уже был другой inventory — отписываемся
+            if (inventory != null)
+                inventory.OnInventoryChanged -= Refresh;
 
             inventory = player.GetComponent<InventoryManager>();
             if (inventory == null)
@@ -88,18 +93,15 @@ namespace Features.Inventory.UI
                 return;
             }
 
+            Debug.Log("[InventoryUIView] Rebinding to player: " + player.name, this);
+
             InitDrag(player);
 
             inventory.OnInventoryChanged += Refresh;
-            Debug.Log("[InventoryUIView] Subscribed to OnInventoryChanged");
-            initialized = true;
-            Refresh();
 
-            if (pendingShow)
-            {
-                pendingShow = false;
-                Show();
-            }
+            initialized = true;
+
+            Refresh();
         }
 
         private void InitDrag(GameObject player)

@@ -19,7 +19,7 @@ namespace Features.Quests.UnityIntegration.Adapters
             //EnemyHealth.GlobalEnemyKilled -= HandleEnemyKilled;
         }
 
-        private void HandleEnemyKilled(EnemyHealth enemy)
+        private void HandleEnemyKilled()
         {
             // Отправляем именно enemy.EnemyId
             //questManager?.Service.HandleEvent(

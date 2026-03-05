@@ -13,9 +13,6 @@ namespace Features.Biomes.UnityIntegration
         [Header("World Settings")]
         public WorldConfig worldConfig;
 
-        [Header("Systems Prefab (World-only)")]
-        public GameObject systemsPrefab;
-
         [Header("Spawn Points")]
         [SerializeField] private ScenePlayerSpawnPoint spawnPointPrefab;
         [SerializeField, Min(1)] private int spawnPointCount = 4;
@@ -29,7 +26,7 @@ namespace Features.Biomes.UnityIntegration
         public int unloadDistance = 8;
 
         [Header("Spawn Settings")]
-        public float spawnHeightCheck = 50f;
+        public float spawnHeightCheck = 20f;
 
         private ChunkManager manager;
         private WorldProvider worldProvider;
@@ -148,6 +145,12 @@ namespace Features.Biomes.UnityIntegration
 
             yield return null;
 
+            if (customPrefab != null)
+            {
+                var pos = GetWorldCenterSpawn();
+                Instantiate(customPrefab, pos, Quaternion.identity);
+            }
+
             Debug.Log("[WorldGen] Client world ready");
         }
 
@@ -168,24 +171,10 @@ namespace Features.Biomes.UnityIntegration
 
             yield return new WaitForFixedUpdate();
 
-            if (systemsPrefab != null)
-            {
-                var systemsInstance = Instantiate(
-                    systemsPrefab,
-                    GetWorldCenterSpawn(),
-                    Quaternion.identity
-                );
-
-                Spawn(systemsInstance);
-            }
-
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();
 
             yield return WaitForPhysicsReady();
-
-            if (customPrefab != null)
-                SpawnCustomPrefab();
         }
 
         // ======================================================
@@ -247,12 +236,6 @@ namespace Features.Biomes.UnityIntegration
 
             float h = worldConfig.GetHeight(new float2(cx, cz));
             return new Vector3(cx, h + 2f, cz);
-        }
-
-        private void SpawnCustomPrefab()
-        {
-            var pos = GetWorldCenterSpawn();
-            Instantiate(customPrefab, pos, Quaternion.identity);
         }
 
         private void SpawnPlayerSpawnPoints()

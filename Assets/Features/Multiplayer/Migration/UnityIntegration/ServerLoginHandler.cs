@@ -39,40 +39,20 @@ public sealed class ServerLoginHandler : MonoBehaviour
         Debug.Log("[ServerLoginHandler] Constructed via DI");
     }
 
-    public void HandleLogin(NetworkConnection conn, string persistentId)
+    public void HandleLogin(
+        NetworkConnection conn,
+        string persistentId,
+        string characterId,
+        string classId,
+        int level)
     {
-        Debug.Log($"[fix-net] HandleLogin: connId={conn.ClientId}, persistentId={persistentId}");
-
-        if (!initialized)
-        {
-            Debug.LogError("ServerLoginHandler not initialized!");
-            return;
-        }
-
-        if (conn == null)
-        {
-            Debug.LogError("Login failed: conn is NULL");
-            return;
-        }
-
-        Debug.Log($"LOGIN RECEIVED {conn.ClientId}");
-
+        Debug.Log($"[SERVER] Received classId = {classId}");
         var session = sessions.HandleLogin(conn.ClientId, persistentId);
 
-        if (session == null)
-        {
-            Debug.Log("Session rejected");
-            return;
-        }
+        session.SetCharacterData(characterId, classId, level);
+        Debug.Log($"[SESSION] Stored classId = {session.ClassId}");
 
-        // 🔥 ВАЖНО: больше не отклоняем login
         if (flow.CurrentState == ServerGameState.Running)
-        {
             spawner.HandleLoginSpawn(conn, session);
-        }
-        else
-        {
-            Debug.Log("[fix-net] World not ready yet, spawn will occur after world init");
-        }
     }
 }

@@ -68,4 +68,15 @@ public class PlayerVisualController : MonoBehaviour
 
         Debug.Log($"[PlayerVisualController] ✅ Visual applied successfully: {presetId}", this);
     }
+
+    public void SetLocalModelVisible(bool visible)
+    {
+        if (_spawnedModel == null)
+            return;
+
+        foreach (var renderer in _spawnedModel.GetComponentsInChildren<Renderer>(true))
+        {
+            renderer.enabled = visible;
+        }
+    }
 }

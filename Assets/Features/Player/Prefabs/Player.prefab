@@ -42,7 +42,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5728575651840416725}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: leftHandTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -73,7 +73,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6661307558894028265}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Crouch Fps Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1158711919289892428}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Crouch Tps Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,7 +135,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5376905879590580319}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Tps point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -151,7 +151,7 @@ Transform:
   m_GameObject: {fileID: 4690187423227937073}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 7, z: -6}
+  m_LocalPosition: {x: 5, y: 15, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -166,7 +166,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2683651113482784269}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: CameraPivot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -197,7 +197,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7222833214983773515}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: rightHandTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -228,7 +228,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8282239097301865665}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: CameraController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -265,7 +265,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5017748270277261448}
   - component: {fileID: 2647050478538188210}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -309,7 +309,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5175878013477234654}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Fps point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -325,7 +325,7 @@ Transform:
   m_GameObject: {fileID: 7080974837919910924}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.276, z: 0.717}
+  m_LocalPosition: {x: 0, y: 2.901, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -382,6 +382,8 @@ GameObject:
   - component: {fileID: -4040251124926920918}
   - component: {fileID: 5405596545601332632}
   - component: {fileID: -3112033191411523419}
+  - component: {fileID: 3778525526496260052}
+  - component: {fileID: 3302508318773783486}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -428,10 +430,10 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   abilityLibrary: {fileID: 0}
-  cooldownSyncInterval: 0.5
   groundMask:
     serializedVersion: 2
     m_Bits: 256
+  debugCooldown: 0
 --- !u!114 &2889153697471037876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -475,7 +477,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerClassController
   library: {fileID: 11400000, guid: 7cf9dd02606876848acd0bb963f6a0a5, type: 2}
-  defaultClassId: 0
 --- !u!114 &1686559364612444093
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -569,6 +570,7 @@ MonoBehaviour:
   networkController: {fileID: 187266121288184345}
   playerCameraController: {fileID: 9183921448104923755}
   abilityCasterNet: {fileID: 273676337467518626}
+  visualController: {fileID: 0}
 --- !u!114 &283238272492682892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -595,9 +597,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1f799338663830408287c69e1f56a70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.EquipmentManager
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
   rightHandTransform: {fileID: 7222833214983773515}
   leftHandTransform: {fileID: 5728575651840416725}
-  playerCamera: {fileID: 0}
 --- !u!114 &217312396618154767
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -807,11 +811,13 @@ MonoBehaviour:
   cameraPivot: {fileID: 2683651113482784269}
   fpsPoint: {fileID: 5175878013477234654}
   headTransform: {fileID: 0}
-  mouseSensitivity: 100
+  headYawBone: {fileID: 0}
+  headYawLimit: 40
+  bodyTurnSpeed: 360
   tpsSmoothSpeed: 7
   collisionMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1791
   collisionRadius: 0.3
   minCameraDistance: 0.5
   shoulderOffset: {x: 0.5, y: 0, z: 0}
@@ -860,10 +866,12 @@ MonoBehaviour:
   _componentIndexCache: 11
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
-  Speed: 6
   Gravity: -20
   JumpForce: 7
+  crouchHeight: 2
+  normalHeight: 3
   rotationSharpness: 20
+  jumpHeight: 1.2
 --- !u!114 &3277316184608179795
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1114,3 +1122,30 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 1.5, z: 0}
+--- !u!114 &3778525526496260052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47af45b3d91c921489852efb70b94a19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.MovementStatsSync
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &3302508318773783486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ac87626e41348844bd1334159d45404, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.StatsFacadeAdapter

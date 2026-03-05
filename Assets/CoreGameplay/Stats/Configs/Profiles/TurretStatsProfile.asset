@@ -17,4 +17,4 @@ MonoBehaviour:
   hasCombat: 1
   hasMovement: 1
   hasMining: 0
-  useTurretCombat: 0
+  useTurretCombat: 1

@@ -9,7 +9,7 @@ using FishNet.Object;
 public sealed class ServerBootstrap : MonoBehaviour
 {
     [SerializeField] private string hubSceneName = "NetHubScene";
-    [SerializeField] private NetworkObject loginBridgePrefab;
+    [SerializeField] private NetworkObject connectionObjectPrefab;
 
     private NetworkManager net;
 
@@ -52,23 +52,20 @@ public sealed class ServerBootstrap : MonoBehaviour
 
         Debug.Log($"[fix-net] Client connected: {conn.ClientId}");
 
-        StartCoroutine(SpawnBridgeWhenReady(conn));
+        StartCoroutine(SpawnConnectionObject(conn));
     }
 
-    private System.Collections.IEnumerator SpawnBridgeWhenReady(NetworkConnection conn)
+    private System.Collections.IEnumerator SpawnConnectionObject(NetworkConnection conn)
     {
-        // Ждём пока клиент полностью загрузит стартовые сцены
         while (!conn.LoadedStartScenes())
             yield return null;
 
-        // Дополнительная защита — вдруг клиент уже отключился
         if (!conn.IsActive)
             yield break;
 
-        var bridge = Instantiate(loginBridgePrefab);
+        var obj = Instantiate(connectionObjectPrefab);
+        net.ServerManager.Spawn(obj, conn);
 
-        net.ServerManager.Spawn(bridge, conn);
-
-        Debug.Log($"[fix-net] LoginBridge spawned for {conn.ClientId}");
+        Debug.Log($"[fix-net] ConnectionObject spawned for {conn.ClientId}");
     }
 }

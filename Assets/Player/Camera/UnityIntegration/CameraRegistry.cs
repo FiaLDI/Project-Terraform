@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using UnityEngine.SceneManagement;
 
 namespace Features.Camera.UnityIntegration
 {
@@ -17,7 +18,18 @@ namespace Features.Camera.UnityIntegration
         private UnityEngine.Camera sceneCamera;
 
         public UnityEngine.Camera CurrentCamera { get; private set; }
+
+        [Header("FPS View")]
+        [SerializeField] private Transform viewModelRoot;
+        [SerializeField] private GameObject fpsArmsPrefab;
+
+        private Transform weaponSocket;
+        public Transform WeaponSocket => weaponSocket;
         public event Action<UnityEngine.Camera> OnCameraChanged;
+        public event Action<bool> OnFPSModeChanged;
+
+        private GameObject fpsInstance;
+        public bool IsFPSActive => fpsInstance != null && fpsInstance.activeSelf;
 
         private void Awake()
         {
@@ -42,8 +54,24 @@ namespace Features.Camera.UnityIntegration
                 );
                 return;
             }
+            SceneManager.sceneLoaded += OnSceneLoaded;
 
             RegisterCamera(sceneCamera);
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            ResetFPS();
+        }
+
+        private void ResetFPS()
+        {
+            if (fpsInstance != null)
+                Destroy(fpsInstance);
+
+            fpsInstance = null;
+            weaponSocket = null;
+            OnFPSModeChanged?.Invoke(false);
         }
 
         private void OnDestroy()
@@ -53,6 +81,7 @@ namespace Features.Camera.UnityIntegration
                 UnregisterCurrent();
                 Instance = null;
             }
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         // ======================================================
@@ -97,6 +126,41 @@ namespace Features.Camera.UnityIntegration
             CameraServiceProvider.Runtime?.ClearCamera();
             CurrentCamera = null;
             OnCameraChanged?.Invoke(null);
+        }
+
+        public void InitializeFPS()
+        {
+            if (CurrentCamera == null)
+                return;
+
+            if (viewModelRoot == null)
+            {
+                Debug.LogError("[CameraRegistry] ViewModelRoot not assigned");
+                return;
+            }
+
+            if (fpsArmsPrefab == null)
+                return;
+
+            if (fpsInstance != null)
+                return;
+
+            fpsInstance = Instantiate(fpsArmsPrefab, viewModelRoot);
+            fpsInstance.transform.localPosition = Vector3.zero;
+            fpsInstance.transform.localRotation = Quaternion.identity;
+
+            weaponSocket = fpsInstance.transform.Find("WeaponSocket");
+
+            OnFPSModeChanged?.Invoke(true);
+        }
+    
+        public void SetFPSVisible(bool visible)
+        {
+            if (fpsInstance == null)
+                return;
+
+            fpsInstance.SetActive(visible);
+            OnFPSModeChanged?.Invoke(visible);
         }
     }
 }

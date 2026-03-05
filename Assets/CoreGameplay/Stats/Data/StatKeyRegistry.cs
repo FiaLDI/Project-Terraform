@@ -14,10 +14,12 @@ public static class StatKeyRegistry
 
         "combat.damage",
 
-        "movement.walkSpeed",
-        "movement.sprintSpeed",
-        "movement.crouchSpeed",
-        "movement.rotation",
+        "move.walkSpeed",
+        "move.sprintSpeed",
+        "move.crouchSpeed",
+        "move.rotation",
+        "move.gravity",
+        "move.jump.height",
 
         "turret.fireRate",
 

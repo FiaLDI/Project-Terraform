@@ -239,7 +239,7 @@ public class EnemyEditorWindow : EditorWindow
         Ensure<EnemyActor>(clone);
         Ensure<StatsBuffTarget>(clone);
         Ensure<UnifiedStatsUpdateSystem>(clone);
-        Ensure<EnemyHealth>(clone);
+        //Ensure<EnemyHealth>(clone);
 
         PrefabUtility.SaveAsPrefabAsset(clone, outputPath);
         DestroyImmediate(clone);

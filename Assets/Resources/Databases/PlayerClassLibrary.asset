@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Classes.Data.PlayerClassLibrarySO
   classes:
   - {fileID: 11400000, guid: 166429277b235e449bf169d6bc90a2ee, type: 2}
+  - {fileID: 11400000, guid: 10b72569d6273024d9318188a0bd591c, type: 2}

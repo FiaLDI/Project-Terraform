@@ -5,50 +5,53 @@ public sealed class EnemyVisualController : MonoBehaviour
     [Header("Animator")]
     [SerializeField] private Animator animator;
 
-    [Tooltip("Animator Controller для врага")]
     [SerializeField] private RuntimeAnimatorController animatorController;
 
     [Header("Speed Settings")]
-    [SerializeField] private float runSpeed = 3f;   // должно совпадать с moveSpeed
+    [SerializeField] private float runSpeed = 3f;
     [SerializeField] private float dampTime = 0.1f;
 
     [Header("Rotation (Visual Only)")]
     [SerializeField] private Transform modelRoot;
     [SerializeField] private float rotationSpeed = 8f;
-    [SerializeField] private float minTurnDistance = 0.2f;
-
-    private EnemyEcsMoveBridge moveBridge;
+    [SerializeField] private float minTurnDistance = 0.01f;
 
     private static readonly int SpeedHash =
         Animator.StringToHash("Speed");
+
+    private Vector3 lastPosition;
 
     private void Awake()
     {
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
-        if (animatorController != null)
+        if (animatorController != null && animator != null)
             animator.runtimeAnimatorController = animatorController;
 
         if (modelRoot == null && animator != null)
             modelRoot = animator.transform;
-
-        moveBridge = GetComponent<EnemyEcsMoveBridge>();
     }
 
-    private void Update()
+    private void Start()
+    {
+        lastPosition = transform.position;
+    }
+
+    private void LateUpdate()
     {
         if (animator == null)
             return;
 
-        // =========================
-        // SPEED → ANIMATION
-        // =========================
-        float speed = moveBridge != null
-            ? moveBridge.CurrentSpeed
-            : 0f;
+        Vector3 currentPosition = transform.position;
 
-        float animSpeed = Mathf.Clamp01(speed / runSpeed);
+        Vector3 delta = currentPosition - lastPosition;
+        delta.y = 0f;
+
+        float rawSpeed =
+            delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+
+        float animSpeed = Mathf.Clamp01(rawSpeed / runSpeed);
 
         animator.SetFloat(
             SpeedHash,
@@ -57,28 +60,20 @@ public sealed class EnemyVisualController : MonoBehaviour
             Time.deltaTime
         );
 
-        // =========================
-        // ROTATION → BY AI TARGET
-        // =========================
-        if (moveBridge != null && modelRoot != null)
+        // Rotation (visual only)
+        if (modelRoot != null &&
+            delta.sqrMagnitude > minTurnDistance * minTurnDistance)
         {
-            Vector3 toTarget =
-                moveBridge.CurrentTarget - transform.position;
+            Quaternion targetRotation =
+                Quaternion.LookRotation(delta.normalized);
 
-            toTarget.y = 0f;
-
-            if (toTarget.sqrMagnitude >
-                minTurnDistance * minTurnDistance)
-            {
-                Quaternion targetRotation =
-                    Quaternion.LookRotation(toTarget.normalized);
-
-                modelRoot.rotation = Quaternion.Slerp(
-                    modelRoot.rotation,
-                    targetRotation,
-                    rotationSpeed * Time.deltaTime
-                );
-            }
+            modelRoot.rotation = Quaternion.Slerp(
+                modelRoot.rotation,
+                targetRotation,
+                rotationSpeed * Time.deltaTime
+            );
         }
+
+        lastPosition = currentPosition;
     }
 }

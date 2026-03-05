@@ -1,14 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Features.Equipment.Domain;
 using Features.Player;
 using Features.Game;
 
 namespace Features.Equipment.UnityIntegration
 {
     /// <summary>
-    /// Глобальный контроллер использования (стрельба, вторичное, перезарядка),
-    /// который читает input и прокидывает его на PlayerUsageNetAdapter локального игрока.
+    /// Читает input и прокидывает действия предметов в PlayerUsageNetAdapter.
     /// </summary>
     public class PlayerUsageController : MonoBehaviour, IInputContextConsumer
     {
@@ -16,14 +14,19 @@ namespace Features.Equipment.UnityIntegration
 
         private bool usingPrimary;
         private bool usingSecondary;
+
         private bool bound;
 
-        // Локальный адаптер с игрока, берём через BootstrapRoot
+        // ======================================================
+        // LOCAL NET ADAPTER
+        // ======================================================
+
         private PlayerUsageNetAdapter Net
         {
             get
             {
                 var player = BootstrapRoot.I?.LocalPlayer;
+
                 return player != null
                     ? player.GetComponent<PlayerUsageNetAdapter>()
                     : null;
@@ -43,6 +46,7 @@ namespace Features.Equipment.UnityIntegration
                 UnbindInput(input);
 
             input = ctx;
+
             if (input == null)
                 return;
 
@@ -59,7 +63,7 @@ namespace Features.Equipment.UnityIntegration
 
             UnbindActions();
 
-            usingPrimary   = false;
+            usingPrimary = false;
             usingSecondary = false;
 
             input = null;
@@ -78,13 +82,13 @@ namespace Features.Equipment.UnityIntegration
 
             Enable(p, "Use", "SecondaryUse", "Reload");
 
-            p.FindAction("Use").performed        += OnPrimaryStart;
-            p.FindAction("Use").canceled         += OnPrimaryStop;
+            p.FindAction("Use").performed += OnPrimaryStart;
+            p.FindAction("Use").canceled += OnPrimaryStop;
 
             p.FindAction("SecondaryUse").performed += OnSecondaryStart;
-            p.FindAction("SecondaryUse").canceled  += OnSecondaryStop;
+            p.FindAction("SecondaryUse").canceled += OnSecondaryStop;
 
-            p.FindAction("Reload").performed     += OnReload;
+            p.FindAction("Reload").performed += OnReload;
         }
 
         private void UnbindActions()
@@ -94,13 +98,13 @@ namespace Features.Equipment.UnityIntegration
 
             var p = input.Actions.Player;
 
-            p.FindAction("Use").performed        -= OnPrimaryStart;
-            p.FindAction("Use").canceled         -= OnPrimaryStop;
+            p.FindAction("Use").performed -= OnPrimaryStart;
+            p.FindAction("Use").canceled -= OnPrimaryStop;
 
             p.FindAction("SecondaryUse").performed -= OnSecondaryStart;
-            p.FindAction("SecondaryUse").canceled  -= OnSecondaryStop;
+            p.FindAction("SecondaryUse").canceled -= OnSecondaryStop;
 
-            p.FindAction("Reload").performed     -= OnReload;
+            p.FindAction("Reload").performed -= OnReload;
 
             Disable(p, "Use", "SecondaryUse", "Reload");
         }
@@ -114,10 +118,11 @@ namespace Features.Equipment.UnityIntegration
             usingPrimary = true;
 
             var net = Net;
+
             if (net != null)
-                net.PrimaryStart();
+                net.ActionStart(ItemActionType.Primary);
             else
-                Debug.LogWarning("[PlayerUsageController] PrimaryStart: Net adapter not found on LocalPlayer", this);
+                Debug.LogWarning("[PlayerUsageController] PrimaryStart: Net adapter not found", this);
         }
 
         private void OnPrimaryStop(InputAction.CallbackContext _)
@@ -125,8 +130,9 @@ namespace Features.Equipment.UnityIntegration
             usingPrimary = false;
 
             var net = Net;
+
             if (net != null)
-                net.PrimaryStop();
+                net.ActionStop(ItemActionType.Primary);
         }
 
         // ======================================================
@@ -138,10 +144,9 @@ namespace Features.Equipment.UnityIntegration
             usingSecondary = true;
 
             var net = Net;
+
             if (net != null)
-                net.SecondaryStart();
-            else
-                Debug.LogWarning("[PlayerUsageController] SecondaryStart: Net adapter not found on LocalPlayer", this);
+                net.ActionStart(ItemActionType.Secondary);
         }
 
         private void OnSecondaryStop(InputAction.CallbackContext _)
@@ -149,8 +154,9 @@ namespace Features.Equipment.UnityIntegration
             usingSecondary = false;
 
             var net = Net;
+
             if (net != null)
-                net.SecondaryStop();
+                net.ActionStop(ItemActionType.Secondary);
         }
 
         // ======================================================
@@ -160,10 +166,9 @@ namespace Features.Equipment.UnityIntegration
         private void OnReload(InputAction.CallbackContext _)
         {
             var net = Net;
+
             if (net != null)
-                net.Reload();
-            else
-                Debug.LogWarning("[PlayerUsageController] Reload: Net adapter not found on LocalPlayer", this);
+                net.ActionStart(ItemActionType.Reload);
         }
 
         // ======================================================
@@ -180,21 +185,6 @@ namespace Features.Equipment.UnityIntegration
         {
             foreach (var n in names)
                 map.FindAction(n, true).Disable();
-        }
-
-        private static bool TryGetAim(out Vector3 pos, out Vector3 forward)
-        {
-            var cam = UnityEngine.Camera.main;
-            if (cam == null)
-            {
-                pos     = default;
-                forward = Vector3.forward;
-                return false;
-            }
-
-            pos     = cam.transform.position;
-            forward = cam.transform.forward;
-            return true;
         }
     }
 }

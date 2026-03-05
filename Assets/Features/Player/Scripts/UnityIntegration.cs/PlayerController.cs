@@ -1,5 +1,6 @@
 using UnityEngine;
 using FishNet.Object;
+using Features.Camera.UnityIntegration;
 
 namespace Features.Player.UnityIntegration
 {
@@ -9,6 +10,7 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private PlayerNetworkController networkController;
         [SerializeField] private PlayerCameraController playerCameraController;
         [SerializeField] private AbilityCasterNetAdapter abilityCasterNet;
+        [SerializeField] private PlayerVisualController visualController;
 
         private void Awake()
         {
@@ -16,6 +18,8 @@ namespace Features.Player.UnityIntegration
             if (networkController == null) networkController = GetComponent<PlayerNetworkController>();
             if (playerCameraController == null) playerCameraController = GetComponent<PlayerCameraController>();
             if (abilityCasterNet == null) abilityCasterNet = GetComponent<AbilityCasterNetAdapter>();
+            if (visualController == null)
+                visualController = GetComponent<PlayerVisualController>();
         }
 
         public override void OnStartClient()
@@ -29,8 +33,19 @@ namespace Features.Player.UnityIntegration
             var net = GetComponent<PlayerNetworkController>();
 
             net.InjectInput(input);
+
+            if (CameraRegistry.Instance != null)
+            {
+                CameraRegistry.Instance.OnFPSModeChanged += OnFPSModeChanged;
+
+                OnFPSModeChanged(CameraRegistry.Instance.IsFPSActive);
+            }
         }
 
+        private void OnFPSModeChanged(bool isFPS)
+        {
+            visualController?.SetLocalModelVisible(!isFPS);
+        }
 
         public override void OnStopClient()
         {
@@ -40,6 +55,8 @@ namespace Features.Player.UnityIntegration
             {
                 playerCameraController?.SetLocal(false);
             }
+            if (CameraRegistry.Instance != null)
+                CameraRegistry.Instance.OnFPSModeChanged -= OnFPSModeChanged;
         }
     }
 }

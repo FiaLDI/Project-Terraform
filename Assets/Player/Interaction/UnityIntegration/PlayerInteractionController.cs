@@ -32,7 +32,7 @@ public sealed class PlayerInteractionController :
         var player = BootstrapRoot.I?.LocalPlayer;
         if (player != null)
         {
-            nearby = player.GetComponent<INearbyInteractables>();
+            nearby = player.GetComponentInChildren<INearbyInteractables>();
             Debug.Log($"[PIC] Start: nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
         }
 
@@ -112,15 +112,14 @@ public sealed class PlayerInteractionController :
             return;
         }
 
-        // гарантированно есть nearby
-        if (nearby == null)
-        {
-            nearby = player.GetComponent<INearbyInteractables>();
-            Debug.Log($"[PIC] TryInteract: reacquired nearby={(nearby != null ? nearby.ToString() : "NULL")}", this);
+        nearby = player.GetComponentInChildren<INearbyInteractables>();
 
-            // если резолвер уже был создан с null-nearby – пересоздаём
-            if (resolver != null && nearby != null)
-                resolver = new InteractionResolver(InteractionServiceProvider.Ray, nearby);
+        if (InteractionServiceProvider.Ray != null && nearby != null)
+        {
+            resolver = new InteractionResolver(
+                InteractionServiceProvider.Ray,
+                nearby
+            );
         }
 
         double currentTime = Time.realtimeSinceStartup;
@@ -131,7 +130,7 @@ public sealed class PlayerInteractionController :
         }
         lastInteractTime = currentTime;
 
-        if (interactionBlocked || resolver == null || nearby == null)
+        if (interactionBlocked || resolver == null)
         {
             Debug.Log("[PlayerInteractionController] TryInteract: resolver or nearby is NULL", this);
             return;

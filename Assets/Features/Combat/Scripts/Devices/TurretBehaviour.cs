@@ -20,8 +20,6 @@ public sealed class TurretBehaviour : NetworkBehaviour
     public float lifetime = 25f;
     public LayerMask targetMask;
 
-    private IStatsOwner statsOwner;
-    private IStatsFacade stats;
     private IBuffSource source;
 
     private Transform target;
@@ -30,10 +28,18 @@ public sealed class TurretBehaviour : NetworkBehaviour
 
     private readonly float sphereHeight = 0.8f;
 
+    // =============================
+    // Lazy access (БЕЗ кеширования)
+    // =============================
+
+    private IStatsOwner StatsOwner =>
+        GetComponent<IStatsOwner>();
+
+    private IStatsFacade Stats =>
+        StatsOwner?.Facade;
+
     private void Awake()
     {
-        statsOwner = GetComponent<IStatsOwner>();
-        stats = statsOwner?.Facade;
         source = GetComponent<IBuffSource>();
 
         if (targetMask == 0)
@@ -56,7 +62,11 @@ public sealed class TurretBehaviour : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsServerInitialized || statsOwner == null || !statsOwner.IsReady)
+        if (!IsServerInitialized)
+            return;
+
+        var owner = StatsOwner;
+        if (owner == null || !owner.IsReady || owner.Facade == null)
             return;
 
         TickCombat();
@@ -112,7 +122,11 @@ public sealed class TurretBehaviour : NetworkBehaviour
 
     private void RotateToTarget()
     {
-        if (!turretHead || target == null || stats?.Movement == null)
+        if (!turretHead || target == null)
+            return;
+
+        var stats = Stats;
+        if (stats?.Movement == null)
             return;
 
         Vector3 dir = target.position - turretHead.position;
@@ -131,6 +145,8 @@ public sealed class TurretBehaviour : NetworkBehaviour
     {
         get
         {
+            var stats = Stats;
+
             if (stats?.Combat is ITurretCombatStats tc && tc.FireRate > 0f)
                 return Mathf.Max(0.02f, 1f / tc.FireRate);
 
@@ -142,10 +158,8 @@ public sealed class TurretBehaviour : NetworkBehaviour
     {
         get
         {
-            if (stats?.Combat == null)
-                return 0f;
-
-            return stats.Combat.DamageMultiplier;
+            var stats = Stats;
+            return stats?.Combat?.FinalDamage ?? 0f;
         }
     }
 
@@ -157,6 +171,13 @@ public sealed class TurretBehaviour : NetworkBehaviour
         if (!target.TryGetComponent<IBuffTarget>(out var buffTarget))
             return;
 
+        float damage = DamagePerShot;
+
+        if (damage <= 0f)
+        {
+            return;
+        }
+
         var ctx = new EffectContext(
             source,
             new[] { buffTarget },
@@ -164,7 +185,7 @@ public sealed class TurretBehaviour : NetworkBehaviour
             (target.position - muzzlePoint.position).normalized
         );
 
-        var effect = new DealDamageEffect(DamagePerShot, DamageType.Generic);
+        var effect = new DealDamageEffect(damage, DamageType.Generic);
         effect.Apply(ctx);
 
         fireTimer = FireInterval;

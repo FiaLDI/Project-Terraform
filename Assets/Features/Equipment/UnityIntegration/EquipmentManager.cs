@@ -1,48 +1,33 @@
-﻿using Features.Camera.UnityIntegration;
-using Features.Equipment.Domain;
+﻿using Features.Buffs.Application;
+using Features.Buffs.Domain;
+using Features.Camera.UnityIntegration;
 using Features.Game;
 using Features.Inventory;
 using Features.Inventory.UnityIntegration;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player.UnityIntegration;
-using Features.Weapons.UnityIntegration;
 using FishNet.Object;
 using UnityEngine;
 
 namespace Features.Equipment.UnityIntegration
 {
-    /// <summary>
-    /// Спавнит/удаляет предметы в руках на основе InventoryModel (left/right hand slots).
-    /// Работает на всех клиентах (чтобы другие видели экип), но камеру/Initialize(IUsable) даёт только owner.
-    /// Также напрямую обновляет локальный ввод (PlayerUsageController) и сетевой адаптер (PlayerUsageNetAdapter)
-    /// на этом же player root.
-    /// </summary>
-    public sealed class EquipmentManager : MonoBehaviour
+    public sealed class EquipmentManager : NetworkBehaviour
     {
         [Header("Hands")]
         [SerializeField] private Transform rightHandTransform;
         [SerializeField] private Transform leftHandTransform;
 
-        [Header("Camera (optional override)")]
-        [SerializeField] private UnityEngine.Camera playerCamera;
-
-        private PlayerAnimationController anim;
-        private PlayerUsageController usageLocal;
         private PlayerUsageNetAdapter usageNet;
 
         private GameObject currentRightHandObject;
         private GameObject currentLeftHandObject;
-
-        private IUsable rightHandUsable;
-        private IUsable leftHandUsable;
+        private GameObject currentViewWeapon;
 
         private IInventoryContext inventory;
         private InventoryManager invManager;
 
         private bool initialized;
-
-        private EquipmentItemBuffApplier buffApplier;
 
         // ======================================================
         // UNITY
@@ -50,15 +35,23 @@ namespace Features.Equipment.UnityIntegration
 
         private void Awake()
         {
-            anim = GetComponent<PlayerAnimationController>();
-            usageLocal = GetComponent<PlayerUsageController>();
             usageNet = GetComponent<PlayerUsageNetAdapter>();
-            buffApplier = GetComponent<EquipmentItemBuffApplier>();
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            if (IsOwner && initialized)
+                EquipFromInventory();
         }
 
         private void OnDestroy()
         {
             UnsubscribeInventory();
+
+            ClearRightHand();
+            ClearLeftHand();
         }
 
         // ======================================================
@@ -70,7 +63,6 @@ namespace Features.Equipment.UnityIntegration
             if (inventory == null)
                 return;
 
-            // если уже инициализированы — перепривязка
             UnsubscribeInventory();
 
             this.inventory = inventory;
@@ -79,6 +71,7 @@ namespace Features.Equipment.UnityIntegration
             SubscribeInventory();
 
             initialized = true;
+
             EquipFromInventory();
         }
 
@@ -87,7 +80,6 @@ namespace Features.Equipment.UnityIntegration
             if (inventory == null)
                 return;
 
-            // ✅ симметрично с UnsubscribeInventory()
             if (invManager != null)
                 invManager.OnInventoryChanged += EquipFromInventory;
             else if (inventory.Service != null)
@@ -106,7 +98,7 @@ namespace Features.Equipment.UnityIntegration
         }
 
         // ======================================================
-        // INVENTORY → EQUIPMENT
+        // EQUIP
         // ======================================================
 
         public void EquipFromInventory()
@@ -115,28 +107,28 @@ namespace Features.Equipment.UnityIntegration
                 return;
 
             var model = inventory.Model;
+
             if (model == null)
                 return;
 
-            // ---------- RIGHT HAND ----------
             EquipRightHand(model.rightHand.item);
 
-            bool isTwoHanded =
+            bool twoHanded =
                 model.rightHand.item?.itemDefinition?.isTwoHanded == true;
 
-            // ---------- LEFT HAND ----------
-            if (isTwoHanded)
+            if (twoHanded)
                 ClearLeftHand();
             else
                 EquipLeftHand(model.leftHand.item);
 
-            // ---------- ANIMATION ----------
-            UpdateWeaponPose(model.rightHand.item);
+            usageNet?.OnHandsUpdated(
+                currentLeftHandObject,
+                currentRightHandObject,
+                twoHanded
+            );
 
-            // ---------- USAGE (LOCAL + NET) ----------
-            var player = BootstrapRoot.I?.LocalPlayer;
-            var usageNet = player != null ? player.GetComponent<PlayerUsageNetAdapter>() : null;
-            usageNet?.OnHandsUpdated(leftHandUsable, rightHandUsable, isTwoHanded);
+            if (IsOwner && !IsServerInitialized)
+                usageNet.SyncHands_Server();
         }
 
         // ======================================================
@@ -145,32 +137,53 @@ namespace Features.Equipment.UnityIntegration
 
         private void EquipRightHand(ItemInstance inst)
         {
-            buffApplier?.Remove();
-
             ClearRightHand();
 
             if (inst == null || inst.itemDefinition == null)
                 return;
 
-            buffApplier?.Apply(inst);
+            var prefab = inst.itemDefinition.equippedPrefab;
 
-            InstantiateEquippedItem(
-                inst,
-                rightHandTransform,
-                out currentRightHandObject,
-                out rightHandUsable
-            );
+            if (prefab != null)
+            {
+                currentRightHandObject =
+                    Instantiate(prefab, rightHandTransform);
+
+                currentRightHandObject.transform.localPosition = Vector3.zero;
+                currentRightHandObject.transform.localRotation = Quaternion.identity;
+
+                var holder =
+                    currentRightHandObject.GetComponent<ItemRuntimeHolder>() ??
+                    currentRightHandObject.AddComponent<ItemRuntimeHolder>();
+
+                var owner = GetComponent<IBuffSource>();
+                holder.SetInstance(inst, owner);
+
+                ApplyItemBuffs(holder);
+            }
+
+            if (IsOwner)
+                SpawnViewModel(inst);
         }
 
-       private void ClearRightHand()
+        private void ClearRightHand()
         {
-            buffApplier?.Remove();
+            var holder = currentRightHandObject?.GetComponent<ItemRuntimeHolder>();
+
+            if (holder != null)
+                RemoveItemBuffs(holder);
 
             if (currentRightHandObject != null)
                 Destroy(currentRightHandObject);
 
+            if (currentViewWeapon != null)
+                Destroy(currentViewWeapon);
+
             currentRightHandObject = null;
-            rightHandUsable = null;
+            currentViewWeapon = null;
+
+            if (IsOwner)
+                CameraRegistry.Instance?.SetFPSVisible(false);
         }
 
         // ======================================================
@@ -184,110 +197,131 @@ namespace Features.Equipment.UnityIntegration
             if (inst == null || inst.itemDefinition == null)
                 return;
 
-            InstantiateEquippedItem(
-                inst,
-                leftHandTransform,
-                out currentLeftHandObject,
-                out leftHandUsable
-            );
+            var prefab = inst.itemDefinition.equippedPrefab;
+
+            if (prefab != null)
+            {
+                currentLeftHandObject =
+                    Instantiate(prefab, leftHandTransform);
+
+                currentLeftHandObject.transform.localPosition = Vector3.zero;
+                currentLeftHandObject.transform.localRotation = Quaternion.identity;
+
+                var holder =
+                    currentLeftHandObject.GetComponent<ItemRuntimeHolder>() ??
+                    currentLeftHandObject.AddComponent<ItemRuntimeHolder>();
+
+                var owner = GetComponent<IBuffSource>();
+                holder.SetInstance(inst, owner);
+
+                ApplyItemBuffs(holder);
+            }
         }
 
         private void ClearLeftHand()
         {
+            var holder = currentLeftHandObject?.GetComponent<ItemRuntimeHolder>();
+
+            if (holder != null)
+                RemoveItemBuffs(holder);
+
             if (currentLeftHandObject != null)
                 Destroy(currentLeftHandObject);
 
             currentLeftHandObject = null;
-            leftHandUsable = null;
         }
 
         // ======================================================
-        // ANIMATION
+        // VIEW MODEL
         // ======================================================
 
-        private void UpdateWeaponPose(ItemInstance rightHandItem)
+        private void SpawnViewModel(ItemInstance inst)
         {
-            if (anim == null)
+            var camReg = CameraRegistry.Instance;
+
+            if (camReg == null)
                 return;
 
-            if (rightHandItem == null || rightHandItem.itemDefinition == null)
+            if (inst.itemDefinition.viewModelPrefab == null)
             {
-                anim.SetWeaponPose(0); // no weapon
+                camReg.SetFPSVisible(false);
                 return;
             }
 
-            anim.SetWeaponPose(
-                rightHandItem.itemDefinition.isTwoHanded ? 2 : 1
-            );
-        }
+            camReg.InitializeFPS();
+            camReg.SetFPSVisible(true);
 
-        // ======================================================
-        // INSTANTIATION
-        // ======================================================
+            var socket = camReg.WeaponSocket;
 
-        private void InstantiateEquippedItem(
-            ItemInstance inst,
-            Transform parent,
-            out GameObject obj,
-            out IUsable usable)
-        {
-            obj = null;
-            usable = null;
-
-            if (inst == null || inst.itemDefinition == null || parent == null)
+            if (socket == null)
                 return;
 
-            var prefab = inst.itemDefinition.equippedPrefab;
-            if (prefab == null)
-                return;
+            currentViewWeapon =
+                Instantiate(inst.itemDefinition.viewModelPrefab, socket);
 
-            obj = Instantiate(prefab, parent);
-            obj.transform.localPosition = Vector3.zero;
-            obj.transform.localRotation = Quaternion.identity;
+            currentViewWeapon.transform.localPosition = Vector3.zero;
+            currentViewWeapon.transform.localRotation = Quaternion.identity;
 
             var holder =
-                obj.GetComponent<ItemRuntimeHolder>() ??
-                obj.AddComponent<ItemRuntimeHolder>();
-            holder.SetInstance(inst);
+                currentViewWeapon.GetComponent<ItemRuntimeHolder>() ??
+                currentViewWeapon.AddComponent<ItemRuntimeHolder>();
 
-            usable = obj.GetComponent<IUsable>();
+            var owner = GetComponent<IBuffSource>();
+            holder.SetInstance(inst, owner);
+        }
 
-            var cam = GetLocalCameraOrNull();
+        // ======================================================
+        // BUFFS
+        // ======================================================
 
-            var weapon = obj.GetComponent<WeaponController>();
-            if (weapon != null)
-            {
-                weapon.Setup(inst);
-                weapon.Init(inventory);
-
-                if (cam != null)
-                    weapon.Initialize(cam);
-
+        private void ApplyItemBuffs(ItemRuntimeHolder holder)
+        {
+            if (!IsServerInitialized)
                 return;
+
+            var inst = holder.Instance;
+            var source = holder.Source;
+
+            if (inst == null || inst.itemDefinition == null)
+                return;
+
+            var buffs = inst.itemDefinition.equippedBuffs;
+
+            if (buffs == null || buffs.Length == 0)
+                return;
+
+            var buffSystem = GetComponent<BuffSystem>();
+
+            foreach (var buff in buffs)
+            {
+                buffSystem.Add(
+                    buff,
+                    source,
+                    BuffLifetimeMode.WhileSourceAlive
+                );
             }
-            // Остальные usable
-            if (usable != null && cam != null)
-                usable.Initialize(cam);
         }
 
-        private bool IsLocalOwner()
+        private void RemoveItemBuffs(ItemRuntimeHolder holder)
         {
-            var nob = GetComponent<NetworkObject>();
-            return nob != null && nob.IsOwner;
-        }
+            if (!IsServerInitialized)
+                return;
 
-        private UnityEngine.Camera GetLocalCameraOrNull()
-        {
-            if (!IsLocalOwner())
-                return null;
+            var inst = holder.Instance;
+            var source = holder.Source;
 
-            if (playerCamera != null)
-                return playerCamera;
+            if (inst == null || inst.itemDefinition == null)
+                return;
 
-            if (CameraRegistry.Instance != null && CameraRegistry.Instance.CurrentCamera != null)
-                return CameraRegistry.Instance.CurrentCamera;
+            var buffs = inst.itemDefinition.equippedBuffs;
 
-            return UnityEngine.Camera.main;
+            if (buffs == null || buffs.Length == 0)
+                return;
+
+            var buffSystem = GetComponent<BuffSystem>();
+
+            foreach (var buff in buffs)
+                buffSystem.RemoveBySourceAndId(source, buff.buffId);
         }
 
         // ======================================================
@@ -302,14 +336,15 @@ namespace Features.Equipment.UnityIntegration
             rightHandTransform = sockets.rightHandSocket;
             leftHandTransform = sockets.leftHandSocket;
 
-            EquipFromInventory();
+            if (initialized)
+                EquipFromInventory();
         }
 
         // ======================================================
         // PUBLIC API
         // ======================================================
 
-        public IUsable GetRightHandUsable() => rightHandUsable;
-        public IUsable GetLeftHandUsable() => leftHandUsable;
+        public GameObject GetRightHandObject() => currentRightHandObject;
+        public GameObject GetLeftHandObject() => currentLeftHandObject;
     }
 }

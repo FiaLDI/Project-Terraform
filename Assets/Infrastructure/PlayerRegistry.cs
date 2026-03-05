@@ -68,7 +68,6 @@ namespace Features.Player.UnityIntegration
                 return;
 
             _players.Add(player);
-            Debug.Log($"[PlayerRegistry] Registered player: {player.name}", this);
         }
 
         public void UnregisterPlayer(GameObject player)
@@ -80,8 +79,6 @@ namespace Features.Player.UnityIntegration
 
             if (LocalPlayer == player)
                 ClearLocalPlayer();
-
-            Debug.Log($"[PlayerRegistry] Unregistered player: {player.name}", this);
         }
 
         // ================= LOCAL PLAYER =================
@@ -92,8 +89,6 @@ namespace Features.Player.UnityIntegration
         /// </summary>
         public void SetLocalPlayer(GameObject player)
         {
-            Debug.Log($"[fix-net] SetLocalPlayer CALLED -> {player.name}", this);
-
             if (player == null)
             {
                 Debug.LogError("[PlayerRegistry] SetLocalPlayer called with NULL", this);
@@ -104,7 +99,6 @@ namespace Features.Player.UnityIntegration
                 return;
 
             LocalPlayer = player;
-            Debug.Log($"[PlayerRegistry] Local player set: {player.name}", this);
 
             // -------- cache components --------
             LocalInventory = player.GetComponent<InventoryManager>();
@@ -119,15 +113,11 @@ namespace Features.Player.UnityIntegration
             if (LocalPlayerStats == null)
                 Debug.LogWarning("[PlayerRegistry] PlayerStats not found on local player", player);
 
-            // -------- notify --------
-            Debug.Log("[PlayerRegistry] Invoking OnLocalPlayerReady", this);
             OnLocalPlayerReady?.Invoke(this);
         }
 
         private void ClearLocalPlayer()
         {
-            Debug.Log("[PlayerRegistry] Local player cleared", this);
-
             LocalPlayer = null;
             LocalInventory = null;
             LocalAbilities = null;
@@ -155,7 +145,6 @@ namespace Features.Player.UnityIntegration
         {
             OnLocalPlayerReady += cb;
 
-            // если локальный игрок уже есть — вызываем сразу
             if (Instance != null && Instance.LocalPlayer != null)
                 cb(Instance);
         }

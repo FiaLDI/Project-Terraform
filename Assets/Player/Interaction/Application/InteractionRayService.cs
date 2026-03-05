@@ -39,8 +39,5 @@ namespace Features.Interaction.Application
 
             return new InteractionRayHit(hit, hitInfo);
         }
-
-
-
     }
 }

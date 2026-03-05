@@ -50,8 +50,8 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 0}
   buffTickPrefab: {fileID: 4242902371435607120, guid: 1acb7981248a90344a45200b34ddb325, type: 3}
   dropServicePrefab: {fileID: 6055935766141965224, guid: 947621783752f0a41822c6773055d624, type: 3}
-  WorldProviderPrefab: {fileID: 6123895787757850465, guid: 08e53e380611a644e8b89fd0f25f787f, type: 3}
-  worldGeneratorPrefab: {fileID: 7688760262762765644, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
+  AbilityServicePrefab: {fileID: 7281519894632746162, guid: 5ecd79518866a664194b6b727d51d4c6, type: 3}
+  ItemTickPrefab: {fileID: 5495814805613166294, guid: e642c8d4f93759844a71048a2f64ff8c, type: 3}
 --- !u!114 &266174252655695751
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -72,6 +72,7 @@ namespace Features.Player.UnityIntegration
             walkAction.canceled  += OnWalkStop;
 
             crouchAction.performed += OnCrouch;
+            crouchAction.canceled  += ctx => inputState.Crouch = false;
 
             bound = true;
         }
@@ -156,7 +157,6 @@ namespace Features.Player.UnityIntegration
         public void ClearOneShotFlags()
         {
             inputState.Jump = false;
-            inputState.Crouch = false;
         }
 
         // ======================================================
@@ -171,6 +171,11 @@ namespace Features.Player.UnityIntegration
             inputState.Yaw = yaw;
         }
 
+        public void SetPitch(float pitch)
+        {
+            inputState.Pitch = pitch;
+        }
+
         // ======================================================
         // SAFETY
         // ======================================================
@@ -180,5 +185,7 @@ namespace Features.Player.UnityIntegration
             if (input != null)
                 UnbindInput(input);
         }
+
+
     }
 }

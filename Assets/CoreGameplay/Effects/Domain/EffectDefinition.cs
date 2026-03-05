@@ -18,7 +18,8 @@ namespace Features.Effects.Domain
         DealDamageHitscan,
         SpawnProjectile,
         MeleeDamage,
-        HitscanDamage
+        HitscanDamage,
+        ScanResourceEffect
     }
 
     public enum OwnershipFilter
@@ -55,6 +56,7 @@ namespace Features.Effects.Domain
         [Header("Remove Buff")]
         public bool onlySpecificBuff;
         public string buffId;
+        public float heightOffset;
         
 
         [Header("Spawn")]

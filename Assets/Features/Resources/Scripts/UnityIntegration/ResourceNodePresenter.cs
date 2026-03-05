@@ -1,3 +1,5 @@
+using System.Linq;
+using Features.Buffs.Domain;
 using Features.Items.Data;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
@@ -5,12 +7,11 @@ using Features.Resources.Application;
 using Features.Resources.Data;
 using Features.Resources.Domain;
 using UnityEngine;
-using System.Linq;
 
 namespace Features.Resources.UnityIntegration
 {
     [RequireComponent(typeof(Collider))]
-    public class ResourceNodePresenter : MonoBehaviour
+    public class ResourceNodePresenter : MonoBehaviour, IScannable
     {
         [Header("Resource Config")]
         public ResourceSO config;
@@ -108,11 +109,11 @@ namespace Features.Resources.UnityIntegration
             if (config.drops == null || config.drops.Length == 0)
                 return new ItemInstance[0];
 
-            var items = _drops.RollDrops(config.drops); // IEnumerable<Item>
+            var items = _drops.RollDrops(config.drops);
 
             return items
                 .Where(i => i != null)
-                .Select(i => new ItemInstance(i, 1))   // ← создаём ItemInstance
+                .Select(i => new ItemInstance(i, 1)) 
                 .ToArray();
         }
 
@@ -135,7 +136,7 @@ namespace Features.Resources.UnityIntegration
 
             var holder = go.GetComponent<ItemRuntimeHolder>()
                        ?? go.AddComponent<ItemRuntimeHolder>();
-            holder.SetInstance(inst);
+            holder.SetInstance(inst, null);
         }
 
         // =========================
@@ -160,5 +161,7 @@ namespace Features.Resources.UnityIntegration
                 renderer.material.color = Color.Lerp(Color.red, Color.green, healthPct);
             }
         }
+
+        public void OnScanned(float scanSpeed) { }
     }
 }

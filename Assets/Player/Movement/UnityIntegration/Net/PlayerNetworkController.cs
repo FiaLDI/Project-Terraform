@@ -27,6 +27,19 @@ public class PlayerNetworkController : NetworkBehaviour
         inputHandler = handler;
     }
 
+    private void Update()
+    {
+        if (!IsOwner)
+            return;
+
+        if (inputHandler == null)
+            return;
+
+        float yaw = inputHandler.CurrentState.Yaw;
+
+        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+    }
+
     public override void OnStartNetwork()
     {
         base.OnStartNetwork();
@@ -60,13 +73,14 @@ public class PlayerNetworkController : NetworkBehaviour
                 Tick   = currentTick,
                 Move   = input.Move,
                 Yaw    = input.Yaw,
+                Pitch  = input.Pitch,
                 Jump   = input.Jump,
-                Crouch = input.Crouch
+                Crouch = input.Crouch,
+                Sprint = input.Sprint
             };
 
             inputBuffer[currentTick] = cmd;
 
-            // 🔥 ТОЛЬКО если это клиент, а не хост
             if (!IsServer)
             {
                 movement.Simulate(cmd);
@@ -87,7 +101,7 @@ public class PlayerNetworkController : NetworkBehaviour
         // ================= SERVER SIMULATION =================
         if (IsServer)
         {
-            int simulationTick = currentTick - 1;
+            int simulationTick = currentTick;
             if (simulationTick < 0)
                 return;
 
@@ -114,7 +128,11 @@ public class PlayerNetworkController : NetworkBehaviour
                 Tick     = simulationTick,
                 Position = transform.position,
                 Velocity = movement.Velocity,
-                Yaw      = transform.eulerAngles.y
+                Yaw      = transform.eulerAngles.y,
+                Pitch    = cmd.Pitch,
+                Grounded = movement.Grounded,
+                Crouch   = movement.IsCrouching,
+                Jump     = movement.JumpedThisTick
             };
 
             SendStateObserversRpc(state);
@@ -131,6 +149,9 @@ public class PlayerNetworkController : NetworkBehaviour
     [ObserversRpc(BufferLast = true)]
     private void SendStateObserversRpc(PlayerState state)
     {
+        if (IsOwner)
+            return;
+
         GetComponentInChildren<RemoteInterpolation>()
             ?.ReceiveState(state);
     }
@@ -146,8 +167,11 @@ public class PlayerNetworkController : NetworkBehaviour
         if (error < IgnoreErrorThreshold)
             return;
 
-        // 🔥 Откатываемся
-        transform.position = serverState.Position;
+        movement.Teleport(
+            serverState.Position,
+            serverState.Yaw,
+            serverState.Velocity.y
+        );
 
         // 🔥 Удаляем старые состояния
         stateBuffer.Remove(serverState.Tick);
@@ -178,5 +202,46 @@ public class PlayerNetworkController : NetworkBehaviour
         ServerWorldSession.PendingSeed = seed;
 
         SceneTransitionService.LoadWorldScene();
+    }
+
+    [ServerRpc]
+    public void RequestReturnToHubServerRpc()
+    {
+        SceneTransitionService.LoadHubScene();
+    }
+
+    [ServerRpc]
+    public void RequestReturnToSpawnServerRpc()
+    {
+        if (!PlayerSpawnRegistry.I.TryGetSpawnPoint(out var pos, out var rot))
+            return;
+
+        TeleportTo(pos, rot);
+    }
+
+    [Server]
+    private void TeleportTo(Vector3 position, Quaternion rotation)
+    {
+        inputBuffer.Clear();
+        stateBuffer.Clear();
+
+        movement.Teleport(position, rotation.eulerAngles.y, 0f);
+
+        int tick = NetworkTickSystem.I.CurrentTick;
+
+        PlayerState state = new PlayerState
+        {
+            Tick     = tick,
+            Position = transform.position,
+            Velocity = movement.Velocity,
+            Yaw      = transform.eulerAngles.y,
+            Pitch    = 0f,
+            Grounded = movement.Grounded,
+            Crouch   = movement.IsCrouching,
+            Jump     = false
+        };
+
+        SendStateObserversRpc(state);
+        SendStateTargetRpc(Owner, state);
     }
 }

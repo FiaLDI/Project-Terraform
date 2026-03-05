@@ -14,6 +14,8 @@ namespace Features.Stats.UnityIntegration
         public StatsFacadeAdapter Adapter { get; private set; }
 
         private ServerGamePhase phase;
+        private int level = 1;
+        public int Level => level;
 
         // =====================================================
         // SERVER
@@ -47,7 +49,7 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    damageMultiplier: 1f,
+                    baseDamage: 1f,
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,
@@ -64,7 +66,9 @@ namespace Features.Stats.UnityIntegration
                     walk: 5f,
                     sprint: 6.5f,
                     crouch: 3.5f,
-                    rotation: 180f
+                    rotation: 180f,
+                    gravity: -40f,
+                    jumpHeight: 1.2f
                 );
             }
 
@@ -92,6 +96,36 @@ namespace Features.Stats.UnityIntegration
         // =====================================================
         // SERVER ROLE API
         // =====================================================
+
+        [Server]
+        public void SetLevel(int newLevel)
+        {
+            if (!IsReady)
+                return;
+
+            level = Mathf.Max(1, newLevel);
+
+            ApplyLevelScaling();
+
+            Debug.Log($"[PlayerStats] Level set to {level}", this);
+        }
+
+        [Server]
+        private void ApplyLevelScaling()
+        {
+            float hpMultiplier = 1f + (level - 1) * 0.05f;     // +5% HP за уровень
+            float dmgMultiplier = 1f + (level - 1) * 0.03f;    // +3% урона
+            float energyMultiplier = 1f + (level - 1) * 0.04f; // +4% энергии
+
+            //if (Facade.Health != null)
+            //    Facade.Health.ApplyMultiplier(hpMultiplier);
+
+            //if (Facade.Combat != null)
+            //    Facade.Combat.ApplyDamageMultiplier(dmgMultiplier);
+
+            //if (Facade.Energy != null)
+            //    Facade.Energy.ApplyMaxMultiplier(energyMultiplier);
+        }
 
         [Server]
         public void ResetAndApplyDefaults()
@@ -143,7 +177,9 @@ namespace Features.Stats.UnityIntegration
                     preset.movement.walkSpeed,
                     preset.movement.sprintSpeed,
                     preset.movement.crouchSpeed,
-                    preset.movement.rotationSpeed
+                    preset.movement.rotationSpeed,
+                    preset.movement.gravity,
+                    preset.movement.jumpHeight
                 );
             }
 

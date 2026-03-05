@@ -5,11 +5,15 @@ public class ServerServicesSpawner : NetworkBehaviour
 {
     [SerializeField] private NetworkObject buffTickPrefab;
     [SerializeField] private NetworkObject dropServicePrefab;
+    [SerializeField] private NetworkObject AbilityServicePrefab;
+    [SerializeField] private NetworkObject ItemTickPrefab;
 
     public override void OnStartServer()
     {
         SpawnService(buffTickPrefab);
         SpawnService(dropServicePrefab);
+        SpawnService(AbilityServicePrefab);
+        SpawnService(ItemTickPrefab);
     }
 
     private void SpawnService(NetworkObject prefab)

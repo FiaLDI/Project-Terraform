@@ -6,6 +6,7 @@ using Features.Buffs.Domain;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 
 namespace Features.Abilities.Application
@@ -15,10 +16,6 @@ namespace Features.Abilities.Application
     [RequireComponent(typeof(PlayerStats))]
     public sealed class AbilityCaster : NetworkBehaviour
     {
-        // =====================================================
-        // CONFIG
-        // =====================================================
-
         [Header("Ability slots")]
         [SerializeField] private AbilitySO[] abilities = new AbilitySO[5];
         public IReadOnlyList<AbilitySO> Abilities => abilities;
@@ -26,19 +23,18 @@ namespace Features.Abilities.Application
         [Header("Library")]
         [SerializeField] private AbilityLibrarySO abilityLibrary;
 
-        [Header("Network Sync")]
-        [SerializeField] private float cooldownSyncInterval = 0.5f;
-
         [Header("Auto refs")]
         public LayerMask groundMask;
 
-        // =====================================================
-        // STATE
-        // =====================================================
+        // ================= NETWORK STATE =================
 
-        private float[] cooldownValues = new float[5];
-        private float[] lastSyncedCooldowns = new float[5];
-        private float syncTimer;
+        public readonly SyncList<float> Cooldowns = new();
+
+        public readonly SyncVar<bool> NetIsChanneling = new();
+        public readonly SyncVar<int> NetChannelSlot = new();
+        public readonly SyncVar<float> NetChannelRemaining = new();
+
+        // ================= RUNTIME =================
 
         private IEnergyStats energy;
         private AbilityService service;
@@ -46,67 +42,114 @@ namespace Features.Abilities.Application
         private IBuffSource buffSource;
 
         public bool IsReady { get; private set; }
-        public IEnergyStats Energy => energy;
 
-        // =====================================================
-        // EVENTS
-        // =====================================================
+        // ================= EVENTS (CLIENT SIDE) =================
 
         public event Action OnAbilitiesChanged;
-        public event Action<AbilitySO> OnAbilityCast;
         public event Action<AbilitySO, float, float> OnCooldownChanged;
         public event Action<AbilitySO> OnChannelStarted;
         public event Action<AbilitySO, float, float> OnChannelProgress;
         public event Action<AbilitySO> OnChannelCompleted;
+        private int lastChannelSlot = -1;
+
+        // ================= EVENTS =================
+
+        public event Action<AbilitySO> OnAbilityCast;
         public event Action<AbilitySO> OnChannelInterrupted;
 
         // =====================================================
-        // LIFECYCLE
-        // =====================================================
+
+        [SerializeField] private bool debugCooldown = false;
 
         private void Awake()
         {
             phase = GetComponent<ServerGamePhase>();
-
-            if (phase == null)
-            {
-                Debug.LogError("[AbilityCaster] ServerGamePhase missing", this);
-                enabled = false;
-                return;
-            }
-
             buffSource = GetComponent<IBuffSource>();
-            if (buffSource == null)
-            {
-                Debug.LogError("[AbilityCaster] IBuffSource missing", this);
-                enabled = false;
-                return;
-            }
 
-            for (int i = 0; i < cooldownValues.Length; i++)
-            {
-                cooldownValues[i] = 0f;
-                lastSyncedCooldowns[i] = 0f;
-            }
+            Cooldowns.OnChange += OnCooldownSync;
+            NetIsChanneling.OnChange += OnChannelStateChanged;
+            NetChannelRemaining.OnChange += OnChannelRemainingChanged;
         }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
+            AbilityTickSystem.Register(this);
             phase.OnPhaseReached += OnPhaseReached;
         }
 
         public override void OnStopServer()
         {
-            if (phase != null)
-                phase.OnPhaseReached -= OnPhaseReached;
-
+            AbilityTickSystem.Unregister(this);
+            phase.OnPhaseReached -= OnPhaseReached;
             base.OnStopServer();
         }
 
-        // =====================================================
-        // PHASE
-        // =====================================================
+        // ================= SERVER TICK =================
+
+        public void ServerTick(float dt)
+        {
+            if (!IsReady || service == null)
+                return;
+
+            service.Tick(dt);
+
+            for (int i = 0; i < abilities.Length; i++)
+            {
+                if (abilities[i] == null)
+                    continue;
+
+
+
+                if (debugCooldown && IsServer)
+                {
+                    Debug.Log(
+                        $"[SERVER] Player={OwnerId} Slot={i} CD={Cooldowns[i]:F2}",
+                        this
+                    );
+                }
+
+                Cooldowns[i] = service.GetCooldownRemaining(abilities[i]);
+            }
+
+            if (service.IsChanneling)
+            {
+                NetIsChanneling.Value = true;
+                NetChannelSlot.Value = Array.IndexOf(abilities, service.CurrentChannelAbility);
+                NetChannelRemaining.Value = service.GetChannelRemaining();
+            }
+            else
+            {
+                NetIsChanneling.Value = false;
+                NetChannelSlot.Value = -1;
+                NetChannelRemaining.Value = 0f;
+            }
+        }
+
+        private void OnCooldownSync(SyncListOperation op, int index, float oldValue, float newValue, bool asServer)
+        {
+            if (asServer)
+                return;
+
+            if (index < 0 || index >= abilities.Length)
+                return;
+
+            var ability = abilities[index];
+            if (ability == null)
+                return;
+            
+            if (debugCooldown && !asServer)
+            {
+                Debug.Log(
+                    $"[CLIENT] Player={OwnerId} Slot={index} CD={newValue:F2}",
+                    this
+                );
+            }
+
+            OnCooldownChanged?.Invoke(ability, newValue, ability.cooldown);
+        }
+
+        // ================= INIT =================
 
         private void OnPhaseReached(GamePhase p)
         {
@@ -119,12 +162,6 @@ namespace Features.Abilities.Application
             var stats = GetComponent<PlayerStats>();
             energy = stats?.Facade?.Energy;
 
-            if (energy == null)
-            {
-                Debug.LogError("[AbilityCaster] EnergyStats missing", this);
-                return;
-            }
-
             service = new AbilityService(
                 owner: buffSource,
                 energy: energy,
@@ -132,105 +169,24 @@ namespace Features.Abilities.Application
                 executor: AbilityExecutor.Instance
             );
 
-            BindServiceEvents(service);
-
-            if (abilityLibrary == null)
-            {
-                abilityLibrary = UnityEngine.Resources.Load<AbilityLibrarySO>("Databases/AbilityLibrary");
-
-                if (abilityLibrary == null)
-                    Debug.LogError("[AbilityCaster] AbilityLibrary not found", this);
-            }
-
             IsReady = true;
 
-            OnAbilitiesChanged?.Invoke();
+            Cooldowns.Clear();
+            for (int i = 0; i < abilities.Length; i++)
+                Cooldowns.Add(0f);
 
-            Debug.Log("[AbilityCaster] READY → AbilitiesReady", this);
+            OnAbilitiesChanged?.Invoke();
             phase.Reach(GamePhase.AbilitiesReady);
         }
 
-        private void BindServiceEvents(AbilityService s)
-        {
-            s.OnAbilityCast += a => OnAbilityCast?.Invoke(a);
-            s.OnCooldownChanged += (a, r, m) => OnCooldownChanged?.Invoke(a, r, m);
-            s.OnChannelStarted += a => OnChannelStarted?.Invoke(a);
-            s.OnChannelProgress += (a, t, m) => OnChannelProgress?.Invoke(a, t, m);
-            s.OnChannelCompleted += a => OnChannelCompleted?.Invoke(a);
-            s.OnChannelInterrupted += a => OnChannelInterrupted?.Invoke(a);
-        }
+        // ================= API =================
 
-        // =====================================================
-        // UPDATE
-        // =====================================================
-
-        private void LateUpdate()
-        {
-            if (!IsReady || service == null)
-                return;
-
-            if (!IsServerInitialized)
-                return;
-
-            service.Tick(Time.deltaTime);
-
-            syncTimer += Time.deltaTime;
-            if (syncTimer >= cooldownSyncInterval)
-            {
-                syncTimer = 0f;
-                SyncCooldownsIfChanged();
-            }
-        }
-
-        // =====================================================
-        // SYNC
-        // =====================================================
-
-        private void SyncCooldownsIfChanged()
-        {
-            for (int i = 0; i < abilities.Length; i++)
-            {
-                if (abilities[i] == null)
-                    continue;
-
-                float newCooldown = service.GetCooldownRemaining(abilities[i]);
-                cooldownValues[i] = newCooldown;
-
-                if (Mathf.Abs(lastSyncedCooldowns[i] - newCooldown) > 0.1f)
-                {
-                    lastSyncedCooldowns[i] = newCooldown;
-                    RpcSyncCooldown(i, newCooldown);
-                }
-            }
-        }
-
-        // =====================================================
-        // PUBLIC API
-        // =====================================================
-
-        public void SetAbilities(AbilitySO[] newAbilities)
-        {
-            for (int i = 0; i < abilities.Length; i++)
-                abilities[i] = (newAbilities != null && i < newAbilities.Length)
-                    ? newAbilities[i]
-                    : null;
-
-            if (IsReady)
-                OnAbilitiesChanged?.Invoke();
-        }
-
-        public bool TryCastWithContext(
-            int index,
-            out AbilitySO ability,
-            out AbilityContext ctx)
+        public bool TryCastWithContext(int index, out AbilitySO ability, out AbilityContext ctx)
         {
             ability = null;
             ctx = default;
 
-            if (!PhaseAssert.Require(phase, GamePhase.AbilitiesReady, this))
-                return false;
-
-            if (!IsReady || !phase.IsAtLeast(GamePhase.AbilitiesReady))
+            if (!IsReady)
                 return false;
 
             if (index < 0 || index >= abilities.Length)
@@ -243,6 +199,8 @@ namespace Features.Abilities.Application
             bool ok = service.TryCast(ability, index);
             if (!ok)
                 return false;
+            
+            OnAbilityCast?.Invoke(ability);
 
             ctx = ability.castType == AbilityCastType.Instant
                 ? service.LastInstantContext
@@ -251,45 +209,53 @@ namespace Features.Abilities.Application
             return true;
         }
 
-        public float GetCooldown(int index)
+        private void OnChannelStateChanged(bool prev, bool next, bool asServer)
         {
-            if (!IsReady || index < 0 || index >= abilities.Length)
-                return 0f;
-
-            return cooldownValues[index];
-        }
-
-        public AbilitySO FindAbilityById(string id)
-        {
-            if (abilityLibrary == null || string.IsNullOrEmpty(id))
-                return null;
-
-            return abilityLibrary.FindById(id);
-        }
-
-        public bool IsChanneling => service?.IsChanneling ?? false;
-        public AbilitySO CurrentChannelAbility => service?.CurrentChannelAbility;
-
-        // =====================================================
-        // RPC
-        // =====================================================
-
-        [ObserversRpc]
-        private void RpcSyncCooldown(int slotIndex, float cooldownValue)
-        {
-            if (slotIndex < 0 || slotIndex >= cooldownValues.Length)
+            if (!IsClient)
                 return;
 
-            cooldownValues[slotIndex] = cooldownValue;
-
-            if (slotIndex < abilities.Length && abilities[slotIndex] != null)
+            if (next && NetChannelSlot.Value >= 0)
             {
-                OnCooldownChanged?.Invoke(
-                    abilities[slotIndex],
-                    cooldownValue,
-                    abilities[slotIndex].cooldown
-                );
+                lastChannelSlot = NetChannelSlot.Value;
+                OnChannelStarted?.Invoke(abilities[lastChannelSlot]);
+                return;
             }
+
+            if (prev && !next)
+            {
+                if (lastChannelSlot >= 0)
+                    OnChannelCompleted?.Invoke(abilities[lastChannelSlot]);
+
+                lastChannelSlot = -1;
+            }
+        }
+
+        private void OnChannelRemainingChanged(float prev, float next, bool asServer)
+        {
+            if (!IsClient)
+                return;
+
+            if (!NetIsChanneling.Value || NetChannelSlot.Value < 0)
+                return;
+
+            var ability = abilities[NetChannelSlot.Value];
+            float total = ability.castTime;
+            float elapsed = total - next;
+
+            OnChannelProgress?.Invoke(ability, elapsed, total);
+        }
+
+        public void SetAbilities(AbilitySO[] newAbilities)
+        {
+            for (int i = 0; i < abilities.Length; i++)
+            {
+                abilities[i] = (newAbilities != null && i < newAbilities.Length)
+                    ? newAbilities[i]
+                    : null;
+            }
+
+            if (IsReady)
+                OnAbilitiesChanged?.Invoke();
         }
     }
 }

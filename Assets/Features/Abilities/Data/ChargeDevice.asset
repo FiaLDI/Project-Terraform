@@ -28,22 +28,38 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 0
     value: 0
+    damageType: 0
     buff: {fileID: 11400000, guid: 24bf73a6d2db35c4d8f0845a69a9b859, type: 2}
     onlySpecificBuff: 0
     buffId: 
-    prefabId: 
+    heightOffset: 0
+    prefabId: charge-ability
     lifetime: 100
     useSourcePosition: 1
-  - type: 4
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []
+  - type: 2
     targetMode: 0
     radius: 10
     layerMask:
       serializedVersion: 2
       m_Bits: 0
     value: 0
-    buff: {fileID: 0}
+    damageType: 0
+    buff: {fileID: 11400000, guid: 2b72c61531ba0c24e9136daa9d4defd2, type: 2}
     onlySpecificBuff: 0
     buffId: 
-    prefabId: charge-ability
-    lifetime: 100
+    heightOffset: 0
+    prefabId: 
+    lifetime: 0
     useSourcePosition: 1
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []
