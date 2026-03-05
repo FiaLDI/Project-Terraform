@@ -39,20 +39,20 @@ public class AmmoCounterUI : MonoBehaviour
         bool twoHanded)
     {
 
-        if (right is UsableGun gun)
-        {
+        //if (right is UsableGun gun)
+        //{
 
-            if (gun.AmmoProvider != null)
-            {
-                ammoProvider = gun.AmmoProvider;
-                root.SetActive(true);
-                return;
-            }
-            else
-            {
-                Debug.LogWarning("[AmmoUI] AmmoProvider IS NULL");
-            }
-        }
+        //    if (gun.AmmoProvider != null)
+        //    {
+        //        ammoProvider = gun.AmmoProvider;
+        //        root.SetActive(true);
+        //        return;
+        //    }
+        //    else
+        //    {
+        //        Debug.LogWarning("[AmmoUI] AmmoProvider IS NULL");
+        //    }
+        //}
 
         ammoProvider = null;
         root.SetActive(false);

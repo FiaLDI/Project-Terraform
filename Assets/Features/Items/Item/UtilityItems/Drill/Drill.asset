@@ -20,7 +20,9 @@ MonoBehaviour:
   category: 0
   isStackable: 0
   maxStackAmount: 1
-  equippedBuffs: []
+  equippedBuffs:
+  - {fileID: 11400000, guid: 24bf73a6d2db35c4d8f0845a69a9b859, type: 2}
+  - {fileID: 11400000, guid: 2b72c61531ba0c24e9136daa9d4defd2, type: 2}
   upgrades:
   - {fileID: 11400000, guid: 239c04098b298d747a7fd7bdd8ba7539, type: 2}
   - {fileID: 11400000, guid: ee6490e5359f5e1438a8d05b268cb222, type: 2}

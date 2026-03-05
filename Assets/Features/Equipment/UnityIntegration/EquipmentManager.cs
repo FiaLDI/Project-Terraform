@@ -1,4 +1,6 @@
-﻿using Features.Camera.UnityIntegration;
+﻿using Features.Buffs.Application;
+using Features.Buffs.Domain;
+using Features.Camera.UnityIntegration;
 using Features.Game;
 using Features.Inventory;
 using Features.Inventory.UnityIntegration;
@@ -47,6 +49,7 @@ namespace Features.Equipment.UnityIntegration
         private void OnDestroy()
         {
             UnsubscribeInventory();
+
             ClearRightHand();
             ClearLeftHand();
         }
@@ -139,7 +142,6 @@ namespace Features.Equipment.UnityIntegration
             if (inst == null || inst.itemDefinition == null)
                 return;
 
-            // TPS MODEL
             var prefab = inst.itemDefinition.equippedPrefab;
 
             if (prefab != null)
@@ -154,16 +156,23 @@ namespace Features.Equipment.UnityIntegration
                     currentRightHandObject.GetComponent<ItemRuntimeHolder>() ??
                     currentRightHandObject.AddComponent<ItemRuntimeHolder>();
 
-                holder.SetInstance(inst);
+                var owner = GetComponent<IBuffSource>();
+                holder.SetInstance(inst, owner);
+
+                ApplyItemBuffs(holder);
             }
 
-            // FPS MODEL
             if (IsOwner)
                 SpawnViewModel(inst);
         }
 
         private void ClearRightHand()
         {
+            var holder = currentRightHandObject?.GetComponent<ItemRuntimeHolder>();
+
+            if (holder != null)
+                RemoveItemBuffs(holder);
+
             if (currentRightHandObject != null)
                 Destroy(currentRightHandObject);
 
@@ -202,12 +211,20 @@ namespace Features.Equipment.UnityIntegration
                     currentLeftHandObject.GetComponent<ItemRuntimeHolder>() ??
                     currentLeftHandObject.AddComponent<ItemRuntimeHolder>();
 
-                holder.SetInstance(inst);
+                var owner = GetComponent<IBuffSource>();
+                holder.SetInstance(inst, owner);
+
+                ApplyItemBuffs(holder);
             }
         }
 
         private void ClearLeftHand()
         {
+            var holder = currentLeftHandObject?.GetComponent<ItemRuntimeHolder>();
+
+            if (holder != null)
+                RemoveItemBuffs(holder);
+
             if (currentLeftHandObject != null)
                 Destroy(currentLeftHandObject);
 
@@ -249,7 +266,62 @@ namespace Features.Equipment.UnityIntegration
                 currentViewWeapon.GetComponent<ItemRuntimeHolder>() ??
                 currentViewWeapon.AddComponent<ItemRuntimeHolder>();
 
-            holder.SetInstance(inst);
+            var owner = GetComponent<IBuffSource>();
+            holder.SetInstance(inst, owner);
+        }
+
+        // ======================================================
+        // BUFFS
+        // ======================================================
+
+        private void ApplyItemBuffs(ItemRuntimeHolder holder)
+        {
+            if (!IsServerInitialized)
+                return;
+
+            var inst = holder.Instance;
+            var source = holder.Source;
+
+            if (inst == null || inst.itemDefinition == null)
+                return;
+
+            var buffs = inst.itemDefinition.equippedBuffs;
+
+            if (buffs == null || buffs.Length == 0)
+                return;
+
+            var buffSystem = GetComponent<BuffSystem>();
+
+            foreach (var buff in buffs)
+            {
+                buffSystem.Add(
+                    buff,
+                    source,
+                    BuffLifetimeMode.WhileSourceAlive
+                );
+            }
+        }
+
+        private void RemoveItemBuffs(ItemRuntimeHolder holder)
+        {
+            if (!IsServerInitialized)
+                return;
+
+            var inst = holder.Instance;
+            var source = holder.Source;
+
+            if (inst == null || inst.itemDefinition == null)
+                return;
+
+            var buffs = inst.itemDefinition.equippedBuffs;
+
+            if (buffs == null || buffs.Length == 0)
+                return;
+
+            var buffSystem = GetComponent<BuffSystem>();
+
+            foreach (var buff in buffs)
+                buffSystem.RemoveBySourceAndId(source, buff.buffId);
         }
 
         // ======================================================

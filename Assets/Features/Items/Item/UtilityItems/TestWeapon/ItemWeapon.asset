@@ -20,7 +20,8 @@ MonoBehaviour:
   category: 1
   isStackable: 0
   maxStackAmount: 1
-  equippedBuffs: []
+  equippedBuffs:
+  - {fileID: 11400000, guid: b4b1f20e5eedd294f81af59828976a3d, type: 2}
   upgrades: []
   worldPrefab: {fileID: 5623920380077416888, guid: ef926a9d8b8d277429a27e39b80fd891, type: 3}
   equippedPrefab: {fileID: 7630994810210633461, guid: e704bdd2fb9e9194c8bec615a95e8268, type: 3}

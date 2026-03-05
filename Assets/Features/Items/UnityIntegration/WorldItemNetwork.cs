@@ -90,7 +90,7 @@ public sealed class WorldItemNetwork : NetworkBehaviour
             gameObject.AddComponent<ItemRuntimeHolder>();
 
         runtimeHolder.SetInstance(
-            new ItemInstance(def, quantity.Value, level.Value)
+            new ItemInstance(def, quantity.Value, level.Value), null
         );
 
         runtimeApplied = true;

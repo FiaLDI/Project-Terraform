@@ -109,11 +109,11 @@ namespace Features.Resources.UnityIntegration
             if (config.drops == null || config.drops.Length == 0)
                 return new ItemInstance[0];
 
-            var items = _drops.RollDrops(config.drops); // IEnumerable<Item>
+            var items = _drops.RollDrops(config.drops);
 
             return items
                 .Where(i => i != null)
-                .Select(i => new ItemInstance(i, 1))   // ← создаём ItemInstance
+                .Select(i => new ItemInstance(i, 1)) 
                 .ToArray();
         }
 
@@ -136,7 +136,7 @@ namespace Features.Resources.UnityIntegration
 
             var holder = go.GetComponent<ItemRuntimeHolder>()
                        ?? go.AddComponent<ItemRuntimeHolder>();
-            holder.SetInstance(inst);
+            holder.SetInstance(inst, null);
         }
 
         // =========================
