@@ -36,7 +36,7 @@ public class WeaponController : MonoBehaviour,
 
     public WeaponController Setup(ItemInstance inst)
     {
-        config = inst.itemDefinition.weaponConfig;
+        //config = inst.itemDefinition.weaponConfig;
         return this;
     }
 

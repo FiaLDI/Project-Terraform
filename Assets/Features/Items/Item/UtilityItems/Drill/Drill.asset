@@ -27,7 +27,54 @@ MonoBehaviour:
   worldPrefab: {fileID: 3952411509711560424, guid: bd56aab88089e964fb272206af7a97db, type: 3}
   equippedPrefab: {fileID: 2901227947270850009, guid: 69243a768c69957449be67fb8157f0ff, type: 3}
   viewModelPrefab: {fileID: 3592765929068593648, guid: d0431562bd8576349b10578349af508b, type: 3}
-  weaponConfig: {fileID: 0}
-  toolConfig: {fileID: 11400000, guid: e87f0838fda80df4397ac8878713e692, type: 2}
-  scannerConfig: {fileID: 0}
-  throwableConfig: {fileID: 0}
+  actions:
+  - actionType: 0
+    cooldown: 0
+    tickInterval: 0.01
+    windupTime: 0
+    reloadTime: 0
+    burstCount: 0
+    burstInterval: 0
+    effects:
+    - type: 5
+      targetMode: 2
+      radius: 3
+      layerMask:
+        serializedVersion: 2
+        m_Bits: 64
+      value: 10
+      damageType: 0
+      buff: {fileID: 0}
+      onlySpecificBuff: 0
+      buffId: 
+      heightOffset: 0
+      prefabId: 
+      lifetime: 0
+      useSourcePosition: 0
+      ownership: 0
+      miningValue: 0
+      tickInterval: 0
+      duration: 0
+      projectileConfig: {fileID: 0}
+      childEffects: []
+    - type: 0
+      targetMode: 2
+      radius: 3
+      layerMask:
+        serializedVersion: 2
+        m_Bits: 192
+      value: 5
+      damageType: 0
+      buff: {fileID: 0}
+      onlySpecificBuff: 0
+      buffId: 
+      heightOffset: 0
+      prefabId: 
+      lifetime: 0
+      useSourcePosition: 0
+      ownership: 0
+      miningValue: 0
+      tickInterval: 0
+      duration: 0
+      projectileConfig: {fileID: 0}
+      childEffects: []

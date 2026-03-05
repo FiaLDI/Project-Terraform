@@ -35,9 +35,9 @@ public class ThrowableController : MonoBehaviour, IUsable
     {
         cam = camera;
 
-        var cfg = instance.itemDefinition.throwableConfig;
-        projectilePrefab = cfg.projectilePrefab;
-        throwForce = cfg.baseThrowForce;
+        //var cfg = instance.itemDefinition.throwableConfig;
+        //projectilePrefab = cfg.projectilePrefab;
+        //throwForce = cfg.baseThrowForce;
     }
 
     // ======================================================

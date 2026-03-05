@@ -1,34 +1,57 @@
 using FishNet.Object;
 using UnityEngine;
 using Features.Equipment.Domain;
+using Features.Items.Domain;
+using Features.Items.UnityIntegration;
+using Features.Buffs.Domain;
 using Features.Equipment.UnityIntegration;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
     [SerializeField] private float aimSendRate = 20f;
 
-    private IUsable rightHand;
-    private IUsable leftHand;
-
-    private bool clientPrimaryHeld;
-    private bool clientSecondaryHeld;
-
-    private bool serverPrimaryHeld;
-    private bool serverSecondaryHeld;
-
     private Vector3 serverAimOrigin;
     private Vector3 serverAimForward = Vector3.forward;
     private bool hasServerAim;
+
     private float nextAimSendTime;
+
+    // ======================================================
+    // RUNTIME
+    // ======================================================
+
+    private EquipmentRuntime equipmentRuntime;
+
+    private ItemInstance rightHandInstance;
+    private ItemRuntimeContext activeRuntime;
+
+    private IBuffSource source;
+
+    // ======================================================
+    // INIT
+    // ======================================================
+
+    private void Awake()
+    {
+        source = GetComponent<IBuffSource>();
+        equipmentRuntime = new EquipmentRuntime(source);
+    }
 
     // ======================================================
     // HANDS
     // ======================================================
 
-    public void OnHandsUpdated(IUsable left, IUsable right, bool twoHanded)
+    public void OnHandsUpdated(GameObject left, GameObject right, bool twoHanded)
     {
-        leftHand = left;
-        rightHand = right;
+        rightHandInstance = null;
+
+        if (right != null)
+        {
+            var holder = right.GetComponent<ItemRuntimeHolder>();
+
+            if (holder != null)
+                rightHandInstance = holder.Instance;
+        }
     }
 
     public bool TryGetServerAim(out Ray ray)
@@ -38,133 +61,83 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     // ======================================================
-    // PRIMARY
+    // ACTION START
     // ======================================================
 
-    public void PrimaryStart()
+    public void ActionStart(ItemActionType action)
     {
-        if (!IsOwner) return;
-
-        clientPrimaryHeld = true;
-        rightHand?.OnUsePrimary_Start();
-
-        if (rightHand is ILocalOnlyUsable)
+        if (!IsOwner)
             return;
 
         if (IsServerInitialized)
         {
-            serverPrimaryHeld = true;
-            (rightHand as IServerUsable)?.ServerPrimaryStart();
+            ExecuteAction(action);
             return;
         }
 
-        PrimaryStart_Server();
-    }
-
-    public void PrimaryStop()
-    {
-        if (!IsOwner) return;
-
-        clientPrimaryHeld = false;
-        rightHand?.OnUsePrimary_Stop();
-
-        if (IsServerInitialized)
-        {
-            serverPrimaryHeld = false;
-            (rightHand as IServerUsable)?.ServerPrimaryStop();
-            return;
-        }
-
-        PrimaryStop_Server();
+        ActionStart_Server(action);
     }
 
     [ServerRpc]
-    private void PrimaryStart_Server()
+    private void ActionStart_Server(ItemActionType action)
     {
-        serverPrimaryHeld = true;
-        (rightHand as IServerUsable)?.ServerPrimaryStart();
-    }
-
-    [ServerRpc]
-    private void PrimaryStop_Server()
-    {
-        serverPrimaryHeld = false;
-        (rightHand as IServerUsable)?.ServerPrimaryStop();
+        ExecuteAction(action);
     }
 
     // ======================================================
-    // SECONDARY
+    // ACTION STOP
     // ======================================================
 
-    public void SecondaryStart()
+    public void ActionStop(ItemActionType action)
     {
-        if (!IsOwner) return;
-
-        clientSecondaryHeld = true;
-        rightHand?.OnUseSecondary_Start();
+        if (!IsOwner)
+            return;
 
         if (IsServerInitialized)
         {
-            serverSecondaryHeld = true;
-            (rightHand as IServerUsable)?.ServerSecondaryStart();
+            StopAction(action);
             return;
         }
 
-        SecondaryStart_Server();
-    }
-
-    public void SecondaryStop()
-    {
-        if (!IsOwner) return;
-
-        clientSecondaryHeld = false;
-        rightHand?.OnUseSecondary_Stop();
-
-        if (IsServerInitialized)
-        {
-            serverSecondaryHeld = false;
-            (rightHand as IServerUsable)?.ServerSecondaryStop();
-            return;
-        }
-
-        SecondaryStop_Server();
+        ActionStop_Server(action);
     }
 
     [ServerRpc]
-    private void SecondaryStart_Server()
+    private void ActionStop_Server(ItemActionType action)
     {
-        serverSecondaryHeld = true;
-        (rightHand as IServerUsable)?.ServerSecondaryStart();
-    }
-
-    [ServerRpc]
-    private void SecondaryStop_Server()
-    {
-        serverSecondaryHeld = false;
-        (rightHand as IServerUsable)?.ServerSecondaryStop();
+        StopAction(action);
     }
 
     // ======================================================
-    // RELOAD
+    // EXECUTION
     // ======================================================
 
-    public void Reload()
+    private void ExecuteAction(ItemActionType action)
     {
-        if (!IsOwner) return;
-
-        if (IsServerInitialized)
-        {
-            (rightHand as IServerUsable)?.ServerReload();
+        if (rightHandInstance == null || rightHandInstance.IsEmpty)
             return;
-        }
 
-        Reload_Server();
+        if (!TryGetServerAim(out var ray))
+            return;
+
+        activeRuntime = equipmentRuntime.GetRuntime(
+            rightHandInstance,
+            action
+        );
+
+        if (activeRuntime == null)
+            return;
+
+        activeRuntime.StartUse(ray.origin, ray.direction);
     }
 
-    [ServerRpc]
-    private void Reload_Server()
+    private void StopAction(ItemActionType action)
     {
-        (rightHand as IServerUsable)?.ServerReload();
+        if (activeRuntime == null)
+            return;
+
+        activeRuntime.StopUse();
+        activeRuntime = null;
     }
 
     // ======================================================
@@ -173,31 +146,22 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private void Update()
     {
-        // SERVER authoritative tick
-        if (IsServerInitialized)
+        // SERVER — continuous aim update
+        if (IsServerInitialized && activeRuntime != null)
         {
-            if (serverPrimaryHeld)
-            {
-                (rightHand as IServerUsable)?.ServerPrimaryHold();
-            }
+            if (TryGetServerAim(out var ray))
+                activeRuntime.UpdateAim(ray.origin, ray.direction);
         }
 
-        // CLIENT owner tick
+        // CLIENT — send aim
         if (!IsOwner)
             return;
 
-        if (clientPrimaryHeld)
-            rightHand?.OnUsePrimary_Hold();
-
-        if (clientSecondaryHeld)
-            rightHand?.OnUseSecondary_Hold();
-
-        if (clientPrimaryHeld || clientSecondaryHeld)
-            SendAimToServerThrottled();
+        SendAimToServerThrottled();
     }
 
     // ======================================================
-    // AIM
+    // AIM SYNC
     // ======================================================
 
     private void SendAimToServerThrottled()
@@ -208,16 +172,21 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         nextAimSendTime = Time.time + (1f / Mathf.Max(1f, aimSendRate));
 
         var cam = Camera.main;
+
         if (cam == null)
             return;
 
-        UpdateAim_Server(cam.transform.position, cam.transform.forward);
+        UpdateAim_Server(
+            cam.transform.position,
+            cam.transform.forward
+        );
     }
 
     [ServerRpc(RequireOwnership = true)]
     private void UpdateAim_Server(Vector3 origin, Vector3 forward)
     {
         serverAimOrigin = origin;
+
         serverAimForward =
             forward.sqrMagnitude > 0.0001f
                 ? forward.normalized
@@ -226,12 +195,16 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         hasServerAim = true;
     }
 
+    // ======================================================
+    // SYNC HANDS
+    // ======================================================
+
     [ServerRpc]
     public void SyncHands_Server()
     {
-        var equip = GetComponent<EquipmentManager>();
+        // var equip = GetComponent<EquipmentManager>();
 
-        rightHand = equip.GetRightHandUsable();
-        leftHand = equip.GetLeftHandUsable();
+        // rightHand = equip.GetRightHandUsable();
+        // leftHand = equip.GetLeftHandUsable();
     }
 }

@@ -41,10 +41,10 @@ namespace Features.Weapons.UnityIntegration
 
         private WeaponController FindRightHandWeapon()
         {
-            var usable = equipment?.GetRightHandUsable();
-            if (usable is Component c)
-                return c.GetComponent<WeaponController>()
-                    ?? c.GetComponentInChildren<WeaponController>();
+            //var usable = equipment?.GetRightHandUsable();
+            //if (usable is Component c)
+            //    return c.GetComponent<WeaponController>()
+            //        ?? c.GetComponentInChildren<WeaponController>();
 
             return null;
         }

@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3004782540662337175}
   - component: {fileID: 5390881465833290671}
-  - component: {fileID: -7066233538334018445}
   m_Layer: 0
   m_Name: EI_Drill 1
   m_TagString: Untagged
@@ -46,18 +45,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcd804cce9b45e7488e0fa4b95db57d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Items.UnityIntegration.ItemRuntimeHolder
---- !u!114 &-7066233538334018445
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2901227947270850009}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c420ac3bbcfb68646800a89b9bd38ffc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScannerTool
 --- !u!1 &3428463221233762893
 GameObject:
   m_ObjectHideFlags: 0

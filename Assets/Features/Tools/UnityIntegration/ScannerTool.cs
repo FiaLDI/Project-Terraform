@@ -36,7 +36,7 @@ public sealed class ScannerTool : MonoBehaviour, IUsable
             return;
         }
 
-        config = instance.itemDefinition.scannerConfig;
+        //config = instance.itemDefinition.scannerConfig;
         if (config == null)
         {
             Debug.LogError("[ScannerTool] ScannerConfig missing", this);

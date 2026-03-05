@@ -42,13 +42,7 @@ namespace Features.Items.Data
         public GameObject equippedPrefab;
         public GameObject viewModelPrefab;
 
-        // =============================
-        // FEATURE CONFIG
-        // =============================
-
-        public WeaponConfig weaponConfig;
-        public ToolConfig toolConfig;
-        public ScannerConfig scannerConfig;
-        public ThrowableConfig throwableConfig;
+        [Header("Actions")]
+        public ItemActionDefinition[] actions;
     }
 }

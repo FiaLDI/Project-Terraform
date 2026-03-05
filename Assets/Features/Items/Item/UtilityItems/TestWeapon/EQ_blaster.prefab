@@ -1518,8 +1518,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2519917625898195000}
   - component: {fileID: 1601091557299623829}
-  - component: {fileID: 3745714799587804188}
-  - component: {fileID: 7815813871970709354}
   m_Layer: 0
   m_Name: EQ_blaster
   m_TagString: Untagged
@@ -1555,36 +1553,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcd804cce9b45e7488e0fa4b95db57d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Items.UnityIntegration.ItemRuntimeHolder
---- !u!114 &3745714799587804188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7630994810210633461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: db4fcd2597f18cf479f44d85c252c954, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Weapons.UnityIntegration.WeaponController
-  _componentIndexCache: 0
-  _addedNetworkObject: {fileID: 0}
-  _networkObjectCache: {fileID: 0}
-  playerCamera: {fileID: 0}
-  muzzleFlash: {fileID: 0}
-  animator: {fileID: 0}
---- !u!114 &7815813871970709354
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7630994810210633461}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4cf43d462c889e940bfd2ebb200dfbff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UsableGun
 --- !u!1 &7699587253072160869
 GameObject:
   m_ObjectHideFlags: 0

@@ -21,14 +21,22 @@ public sealed class ProjectileNetwork : NetworkBehaviour
     }
 
     [Server]
-    public void InitServer(ProjectileConfig config, NetworkObject ownerObj)
+    public void InitServer(
+        ProjectileConfig config,
+        NetworkObject ownerObj,
+        Vector3 direction)
     {
         cfg = config;
         owner = ownerObj;
 
         rb.isKinematic = false;
         rb.useGravity = cfg.useGravity;
-        rb.linearVelocity = transform.forward * cfg.speed;
+
+        direction.Normalize();
+
+        transform.rotation = Quaternion.LookRotation(direction);
+
+        rb.linearVelocity = direction * cfg.speed;
 
         lifeTimer = cfg.lifetime;
 
@@ -36,6 +44,7 @@ public sealed class ProjectileNetwork : NetworkBehaviour
         {
             var ownerCols = owner.GetComponentsInChildren<Collider>(true);
             var myCol = GetComponent<Collider>();
+
             foreach (var c in ownerCols)
                 Physics.IgnoreCollision(myCol, c, true);
         }

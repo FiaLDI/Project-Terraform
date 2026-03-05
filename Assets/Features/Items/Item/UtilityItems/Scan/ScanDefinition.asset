@@ -25,7 +25,33 @@ MonoBehaviour:
   worldPrefab: {fileID: 3952411509711560424, guid: fac2248d998e43b4d8dbc4c0eb25b2b7, type: 3}
   equippedPrefab: {fileID: 2901227947270850009, guid: 268a7b8d19aac4847bd331692331f9d4, type: 3}
   viewModelPrefab: {fileID: 3592765929068593648, guid: 2adcf5b39e1302b48b7bfbc1880da45b, type: 3}
-  weaponConfig: {fileID: 0}
-  toolConfig: {fileID: 0}
-  scannerConfig: {fileID: 11400000, guid: 68880795e437f2a4580d20542efaf3c7, type: 2}
-  throwableConfig: {fileID: 0}
+  actions:
+  - actionType: 0
+    cooldown: 5
+    tickInterval: 0.01
+    windupTime: 0
+    reloadTime: 0
+    burstCount: 2
+    burstInterval: 0
+    effects:
+    - type: 13
+      targetMode: 0
+      radius: 100
+      layerMask:
+        serializedVersion: 2
+        m_Bits: 64
+      value: 0
+      damageType: 0
+      buff: {fileID: 0}
+      onlySpecificBuff: 0
+      buffId: 
+      heightOffset: 1.5
+      prefabId: scan-item
+      lifetime: 3
+      useSourcePosition: 0
+      ownership: 0
+      miningValue: 0
+      tickInterval: 0
+      duration: 0
+      projectileConfig: {fileID: 0}
+      childEffects: []

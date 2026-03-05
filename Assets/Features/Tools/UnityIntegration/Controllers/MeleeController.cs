@@ -30,7 +30,7 @@ public sealed class MeleeController : MonoBehaviour, IUsable
             return;
         }
 
-        config = instance.itemDefinition.weaponConfig;
+        //config = instance.itemDefinition.weaponConfig;
         if (config == null)
         {
             Debug.LogError("[MeleeController] WeaponConfig missing");

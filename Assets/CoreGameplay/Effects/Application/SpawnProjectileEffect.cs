@@ -23,10 +23,12 @@ namespace Features.Effects.Application
             if (_config == null)
                 return;
 
+            Vector3 dir = context.Direction.normalized;
+
             var go = Object.Instantiate(
                 _config.projectilePrefab,
                 context.Origin,
-                Quaternion.LookRotation(context.Direction)
+                Quaternion.LookRotation(dir)
             );
 
             var net = go.GetComponent<NetworkObject>();
@@ -36,10 +38,10 @@ namespace Features.Effects.Application
                     ? c.GetComponentInParent<NetworkObject>()
                     : null;
 
-            InstanceFinder.ServerManager.Spawn(go, ownerNetObj?.Owner);
+            InstanceFinder.ServerManager.Spawn(net, ownerNetObj?.Owner);
 
             var projectile = go.GetComponent<ProjectileNetwork>();
-            projectile.InitServer(_config, ownerNetObj);
+            projectile.InitServer(_config, ownerNetObj, dir);
         }
     }
 }
