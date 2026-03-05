@@ -1,10 +1,8 @@
 using FishNet.Object;
 using UnityEngine;
-using Features.Equipment.Domain;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Buffs.Domain;
-using Features.Equipment.UnityIntegration;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {

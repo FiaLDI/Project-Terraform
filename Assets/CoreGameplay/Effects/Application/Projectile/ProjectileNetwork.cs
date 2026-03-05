@@ -29,6 +29,8 @@ public sealed class ProjectileNetwork : NetworkBehaviour
         cfg = config;
         owner = ownerObj;
 
+        rb ??= GetComponent<Rigidbody>();
+
         rb.isKinematic = false;
         rb.useGravity = cfg.useGravity;
 
@@ -39,15 +41,6 @@ public sealed class ProjectileNetwork : NetworkBehaviour
         rb.linearVelocity = direction * cfg.speed;
 
         lifeTimer = cfg.lifetime;
-
-        if (owner != null)
-        {
-            var ownerCols = owner.GetComponentsInChildren<Collider>(true);
-            var myCol = GetComponent<Collider>();
-
-            foreach (var c in ownerCols)
-                Physics.IgnoreCollision(myCol, c, true);
-        }
     }
 
     private void Update()

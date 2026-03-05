@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Features.Equipment.Domain;
 using Features.Player;
 using Features.Game;
 
