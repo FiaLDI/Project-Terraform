@@ -20,8 +20,6 @@ namespace Features.World.UI
         [Header("Available chains")]
         [SerializeField] private QuestChainAsset[] availableChains;
 
-        private GameObject boundPlayer;
-
         public InputMode Mode => InputMode.Dialog;
 
         protected override void OnEnable()
@@ -39,7 +37,6 @@ namespace Features.World.UI
 
         protected override void OnPlayerBound(GameObject player)
         {
-            boundPlayer = player;
             root.SetActive(false);
         }
 
@@ -68,6 +65,11 @@ namespace Features.World.UI
 
         public void OnGenerateWorldClicked()
         {
+            if (BoundPlayer == null)
+            {
+                Debug.LogError("WorldGeneratorUI: BoundPlayer is null");
+                return;
+            }
             if (!int.TryParse(seedInput.text, out int seed))
                 return;
 
@@ -81,7 +83,7 @@ namespace Features.World.UI
                 .Select(c => c.chainId)
                 .ToList();
 
-            var net = boundPlayer.GetComponent<PlayerNetworkController>();
+            var net = BoundPlayer.GetComponent<PlayerNetworkController>();
 
             net.RequestWorldServerRpc(seed, questIds, chainIds);
 

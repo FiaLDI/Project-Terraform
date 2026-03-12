@@ -15,8 +15,10 @@ MonoBehaviour:
   questId: quest_quest_800043
   questName: bobob
   description: bobob
-  scope: 0
-  killEnemies: []
+  scope: 1
+  killEnemies:
+  - enemyId: enemy_3ee078
+    requiredKills: 5
   collectItems: []
   reachPointId: 
   rewards: []

@@ -1,22 +1,35 @@
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using UnityEngine;
+using System.Collections.Generic;
 using Features.Quests.Domain;
 using Features.Quests.Data;
 using Features.Quests.Application;
-using UnityEngine;
+using Features.Player.UI;
 
 public class PlayerQuestComponent : NetworkBehaviour
 {
-    public QuestService Service { get; private set; }
+    public readonly SyncDictionary<string, QuestNetState> Quests = new();
 
+    private QuestService service;
     private QuestChainService chainService;
 
     [SerializeField] private QuestDatabaseAsset questDatabase;
     [SerializeField] private QuestChainDatabaseAsset chainDatabase;
 
+    private readonly List<QuestNetState> pendingUpdates = new();
+    private float batchTimer;
+
+    private const float BATCH_INTERVAL = 0.2f;
+
     public override void OnStartServer()
     {
-        Service = new QuestService();
-        chainService = new QuestChainService(Service);
+        service = new QuestService();
+        chainService = new QuestChainService(service);
+
+        service.OnQuestAdded += OnQuestAdded;
+        service.OnQuestUpdated += OnQuestUpdated;
+        service.OnQuestRemoved += OnQuestRemoved;
 
         SubscribeEvents();
         GiveInitialQuests();
@@ -26,6 +39,71 @@ public class PlayerQuestComponent : NetworkBehaviour
     {
         UnsubscribeEvents();
     }
+
+    private void Update()
+    {
+        if (!IsServer)
+            return;
+
+        batchTimer += Time.deltaTime;
+
+        if (batchTimer >= BATCH_INTERVAL)
+        {
+            FlushBatch();
+            batchTimer = 0f;
+        }
+    }
+
+    private void FlushBatch()
+    {
+        foreach (var q in pendingUpdates)
+        {
+            Quests[q.questId] = q;
+        }
+
+        pendingUpdates.Clear();
+    }
+
+    // =============================
+    // QuestService events
+    // =============================
+
+    private void OnQuestAdded(QuestRuntime quest)
+    {
+        var id = quest.Definition.Id.Value;
+
+        var state = new QuestNetState(
+            id,
+            quest.GetTotalProgress(),
+            quest.GetTotalTarget(),
+            false
+        );
+
+        pendingUpdates.Add(state);
+    }
+
+    private void OnQuestUpdated(QuestRuntime quest)
+    {
+        var id = quest.Definition.Id.Value;
+
+        var state = new QuestNetState(
+            id,
+            quest.GetTotalProgress(),
+            quest.GetTotalTarget(),
+            quest.State == QuestState.Completed
+        );
+
+        pendingUpdates.Add(state);
+    }
+
+    private void OnQuestRemoved(QuestRuntime quest)
+    {
+        Quests.Remove(quest.Definition.Id.Value);
+    }
+
+    // =============================
+    // QuestEventBus
+    // =============================
 
     private void SubscribeEvents()
     {
@@ -45,13 +123,23 @@ public class PlayerQuestComponent : NetworkBehaviour
         QuestEventBus.Unsubscribe<TickEvent>(HandleEvent);
     }
 
-    private void HandleEvent(object source, IQuestEvent e)
+    private void HandleEvent<T>(object source, T e)
+        where T : IQuestEvent
     {
         if (source != gameObject)
             return;
 
-        Service.HandleEvent(e);
+        service.HandleEvent(e);
     }
+
+    private PlayerUIRoot GetLocalPlayer()
+    {
+        return GetComponentInParent<PlayerUIRoot>();
+    }
+
+    // =============================
+    // Initial quests
+    // =============================
 
     private void GiveInitialQuests()
     {
@@ -60,7 +148,7 @@ public class PlayerQuestComponent : NetworkBehaviour
             var def = questDatabase.GetDefinition(id);
 
             if (def != null)
-                Service.StartQuest(def);
+                service.StartQuest(def);
         }
 
         foreach (var id in ServerWorldSession.PendingChainIds)

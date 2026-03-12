@@ -2,248 +2,212 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-using Features.Quests.Domain;
-using System.Collections;
-using System.Linq;
+using Features.Quests.Data;
+using FishNet.Object.Synchronizing;
+using Features.Player.UI;
+using Features.Quests.UnityIntegration;
 
-namespace Features.Quests.UnityIntegration
+public class QuestUIRuntime : MonoBehaviour
 {
-    public class QuestUIRuntime : MonoBehaviour
+    [Header("HUD")]
+    [SerializeField] private Transform hudContainer;
+    [SerializeField] private GameObject hudEntryTemplate;
+
+    [Header("Journal")]
+    [SerializeField] private Transform listParent;
+    [SerializeField] private GameObject journalEntryTemplate;
+    [SerializeField] private QuestJournalScreen journalScreen;
+
+    [Header("Database")]
+    [SerializeField] private QuestDatabaseAsset questDatabase;
+
+    private PlayerQuestComponent questComponent;
+
+    private readonly Dictionary<string, GameObject> hudEntries = new();
+    private readonly Dictionary<string, GameObject> journalEntries = new();
+
+    // =========================================================
+    // LIFECYCLE
+    // =========================================================
+
+    private void OnEnable()
     {
-        [Header("HUD")]
-        [SerializeField] private Transform hudContainer;
-        [SerializeField] private GameObject hudEntryTemplate;
-        [SerializeField] private int maxHudQuests = 5;
+        if (PlayerUIRoot.I != null)
+            PlayerUIRoot.I.OnPlayerBound += OnPlayerBound;
+    }
 
-        [Header("Journal")]
-        [SerializeField] private Transform listParent;
-        [SerializeField] private GameObject journalEntryTemplate;
-        [SerializeField] private QuestJournalScreen journalScreen;
+    private void OnDisable()
+    {
+        if (PlayerUIRoot.I != null)
+            PlayerUIRoot.I.OnPlayerBound -= OnPlayerBound;
 
-        [Header("Filter Buttons")]
-        [SerializeField] private Button btnAll;
-        [SerializeField] private Button btnActive;
-        [SerializeField] private Button btnCompleted;
+        if (questComponent != null)
+            questComponent.Quests.OnChange -= OnQuestChanged;
+    }
 
-        [Header("Notifications")]
-        [SerializeField] private GameObject notificationPanel;
-        [SerializeField] private TMP_Text notificationText;
-        [SerializeField] private float notifyTime = 3f;
+    // =========================================================
+    // PLAYER BIND
+    // =========================================================
 
-        private QuestService service;
+    private void OnPlayerBound(GameObject player)
+    {
+        if (player == null)
+            return;
 
-        private readonly Dictionary<QuestId, GameObject> hudEntries = new();
-        private readonly Dictionary<QuestId, GameObject> journalEntries = new();
+        Debug.Log("[QuestUIRuntime] Player bound");
 
-        private enum QuestFilter { All, Active, Completed }
-        private QuestFilter currentFilter = QuestFilter.All;
+        if (questComponent != null)
+            questComponent.Quests.OnChange -= OnQuestChanged;
 
-        // ============================================================
-        // LIFECYCLE
-        // ============================================================
+        questComponent = player.GetComponent<PlayerQuestComponent>();
 
-        private void Awake()
+        if (questComponent == null)
         {
-            notificationPanel?.SetActive(false);
-
-            btnAll.onClick.AddListener(() => SetFilter(QuestFilter.All));
-            btnActive.onClick.AddListener(() => SetFilter(QuestFilter.Active));
-            btnCompleted.onClick.AddListener(() => SetFilter(QuestFilter.Completed));
+            Debug.LogError("[QuestUIRuntime] PlayerQuestComponent missing on player");
+            return;
         }
 
-        private void Start()
+        questComponent.Quests.OnChange += OnQuestChanged;
+
+        RestoreExisting();
+    }
+
+    // =========================================================
+    // RESTORE EXISTING QUESTS
+    // =========================================================
+
+    private void RestoreExisting()
+    {
+        foreach (var q in questComponent.Quests.Values)
+            AddQuestUI(q);
+    }
+
+    // =========================================================
+    // NETWORK EVENTS
+    // =========================================================
+
+    private void OnQuestChanged(
+        SyncDictionaryOperation op,
+        string key,
+        QuestNetState value,
+        bool asServer)
+    {
+        if (asServer)
+            return;
+
+        switch (op)
         {
-            StartCoroutine(ConnectWhenReady());
+            case SyncDictionaryOperation.Add:
+                AddQuestUI(value);
+                break;
+
+            case SyncDictionaryOperation.Set:
+                UpdateQuestUI(value);
+                break;
+
+            case SyncDictionaryOperation.Remove:
+                RemoveQuestUI(key);
+                break;
+        }
+    }
+
+    // =========================================================
+    // UI CREATION
+    // =========================================================
+
+    private void AddQuestUI(QuestNetState state)
+    {
+        var def = questDatabase.GetDefinition(state.questId);
+
+        if (def == null)
+        {
+            Debug.LogWarning($"Quest definition not found: {state.questId}");
+            return;
         }
 
-        // ============================================================
-        // QUEST SERVICE
-        // ============================================================
-
-        private IEnumerator ConnectWhenReady()
+        if (!hudEntries.ContainsKey(state.questId))
         {
-            while (true)
-            {
-                var local = LocalPlayerController.I;
+            var go = Instantiate(hudEntryTemplate, hudContainer);
 
-                if (local != null && local.BoundPlayer != null)
-                {
-                    var questComponent =
-                        local.BoundPlayer.GetComponent<PlayerQuestComponent>();
+            var text = go.GetComponentInChildren<TMP_Text>();
+            if (state.completed)
+    text.text = $"{def.Name} ✓";
+else
+    text.text = $"{def.Name} ({state.progress}/{state.target})";
 
-                    if (questComponent != null)
-                    {
-                        service = questComponent.Service;
-                        break;
-                    }
-                }
-
-                yield return null;
-            }
-
-            service.OnQuestAdded += OnQuestAdded;
-            service.OnQuestUpdated += OnQuestUpdated;
-            service.OnQuestRemoved += OnQuestRemoved;
-
-            foreach (var quest in service.ActiveQuests)
-                RestoreExistingQuest(quest);
-
-            foreach (var quest in service.CompletedQuests)
-                RestoreExistingQuest(quest);
+            hudEntries[state.questId] = go;
         }
 
-        // ============================================================
-        // FILTERING
-        // ============================================================
-
-        private void SetFilter(QuestFilter filter)
+        if (!journalEntries.ContainsKey(state.questId))
         {
-            currentFilter = filter;
-            RefreshFilter();
+            var go = Instantiate(journalEntryTemplate, listParent);
+
+            var text = go.GetComponentInChildren<TMP_Text>();
+            if (state.completed)
+    text.text = $"{def.Name} ✓";
+else
+    text.text = $"{def.Name} ({state.progress}/{state.target})";
+
+            journalEntries[state.questId] = go;
+        }
+    }
+
+    private void UpdateQuestUI(QuestNetState state)
+    {
+        var def = questDatabase.GetDefinition(state.questId);
+
+        if (def == null)
+            return;
+
+        if (hudEntries.TryGetValue(state.questId, out var hud))
+        {
+            var text = hud.GetComponentInChildren<TMP_Text>();
+            if (state.completed)
+    text.text = $"{def.Name} ✓";
+else
+    text.text = $"{def.Name} ({state.progress}/{state.target})";
+
+            if (state.completed)
+                text.color = Color.green;
         }
 
-        private void RefreshFilter()
+        if (journalEntries.TryGetValue(state.questId, out var journal))
         {
-            if (service == null)
-                return;
+            var text = journal.GetComponentInChildren<TMP_Text>();
+            if (state.completed)
+    text.text = $"{def.Name} ✓";
+else
+    text.text = $"{def.Name} ({state.progress}/{state.target})";
 
-            foreach (var entry in journalEntries)
-            {
-                var quest =
-                    service.ActiveQuests.FirstOrDefault(q => q.Definition.Id.Equals(entry.Key)) ??
-                    service.CompletedQuests.FirstOrDefault(q => q.Definition.Id.Equals(entry.Key));
+            if (state.completed)
+                text.color = Color.green;
+        }
+    }
 
-                if (quest == null)
-                    continue;
-
-                entry.Value.SetActive(FilterMatch(quest));
-            }
+    private void RemoveQuestUI(string id)
+    {
+        if (hudEntries.TryGetValue(id, out var hud))
+        {
+            Destroy(hud);
+            hudEntries.Remove(id);
         }
 
-        private bool FilterMatch(QuestRuntime q)
+        if (journalEntries.TryGetValue(id, out var journal))
         {
-            return currentFilter switch
-            {
-                QuestFilter.All => true,
-                QuestFilter.Active => q.State != QuestState.Completed,
-                QuestFilter.Completed => q.State == QuestState.Completed,
-                _ => true
-            };
+            Destroy(journal);
+            journalEntries.Remove(id);
         }
+    }
 
-        // ============================================================
-        // RESTORE / EVENTS
-        // ============================================================
+    // =========================================================
+    // JOURNAL
+    // =========================================================
 
-        private void RestoreExistingQuest(QuestRuntime quest)
-        {
-            if (quest.State != QuestState.Completed && hudEntries.Count < maxHudQuests)
-            {
-                var go = Instantiate(hudEntryTemplate, hudContainer);
-                hudEntries[quest.Definition.Id] = go;
-                UpdateEntry(go, quest);
-            }
+    public void OpenJournal()
+    {
+        Debug.Log("QuestUIRuntime.OpenJournal CALLED");
 
-            var entry = Instantiate(journalEntryTemplate, listParent);
-            journalEntries[quest.Definition.Id] = entry;
-            UpdateEntry(entry, quest);
-        }
-
-        private void OnQuestAdded(QuestRuntime quest)
-        {
-            if (hudEntries.Count < maxHudQuests)
-            {
-                var go = Instantiate(hudEntryTemplate, hudContainer);
-                hudEntries[quest.Definition.Id] = go;
-                UpdateEntry(go, quest);
-            }
-
-            var j = Instantiate(journalEntryTemplate, listParent);
-            journalEntries[quest.Definition.Id] = j;
-            UpdateEntry(j, quest);
-
-            RefreshFilter();
-            ShowNotification($"Добавлен квест: {quest.Definition.Name}");
-        }
-
-        private void OnQuestUpdated(QuestRuntime quest)
-        {
-            if (hudEntries.TryGetValue(quest.Definition.Id, out var hud))
-                UpdateEntry(hud, quest);
-
-            if (journalEntries.TryGetValue(quest.Definition.Id, out var j))
-                UpdateEntry(j, quest);
-
-            RefreshFilter();
-        }
-
-        private void OnQuestRemoved(QuestRuntime quest)
-        {
-            if (hudEntries.TryGetValue(quest.Definition.Id, out var hud))
-                Destroy(hud);
-
-            if (journalEntries.TryGetValue(quest.Definition.Id, out var j))
-                Destroy(j);
-
-            RefreshFilter();
-        }
-
-        // ============================================================
-        // UI ENTRY
-        // ============================================================
-
-        private void UpdateEntry(GameObject entry, QuestRuntime quest)
-        {
-            var text = entry.GetComponentInChildren<TMP_Text>();
-            var slider = entry.GetComponentInChildren<Slider>();
-
-            var conditions = quest.Definition.Conditions;
-
-            int totalTarget = 0;
-            int totalProgress = 0;
-
-            foreach (var cond in conditions)
-            {
-                int target = quest.GetTarget(cond);
-                int progress = quest.GetProgress(cond);
-
-                totalTarget += target;
-                totalProgress += progress;
-            }
-
-            text.text = $"{quest.Definition.Name} ({totalProgress}/{totalTarget})";
-            text.color = quest.State == QuestState.Completed ? Color.green : Color.white;
-
-            if (slider != null && totalTarget > 0)
-                slider.value = (float)totalProgress / totalTarget;
-        }
-
-        // ============================================================
-        // JOURNAL OPEN
-        // ============================================================
-
-        public void OpenJournal()
-        {
-            Debug.Log("QuestUIRuntime.OpenJournal CALLED");
+        if (journalScreen != null)
             journalScreen.Open();
-        }
-
-        // ============================================================
-        // NOTIFICATIONS
-        // ============================================================
-
-        private void ShowNotification(string message)
-        {
-            notificationText.text = message;
-            notificationPanel.SetActive(true);
-
-            CancelInvoke(nameof(HideNotification));
-            Invoke(nameof(HideNotification), notifyTime);
-        }
-
-        private void HideNotification()
-        {
-            notificationPanel.SetActive(false);
-        }
     }
 }

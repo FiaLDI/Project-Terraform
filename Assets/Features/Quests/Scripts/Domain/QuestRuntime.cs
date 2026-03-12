@@ -113,5 +113,25 @@ namespace Features.Quests.Domain
         {
             OnUpdated?.Invoke(this);
         }
+
+        public int GetTotalProgress()
+        {
+            int total = 0;
+
+            foreach (var cond in Definition.Conditions)
+                total += GetProgress(cond);
+
+            return total;
+        }
+
+        public int GetTotalTarget()
+        {
+            int total = 0;
+
+            foreach (var cond in Definition.Conditions)
+                total += GetTarget(cond);
+
+            return total;
+        }
     }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Features.Stats.Domain;
 using Features.Enemy.Data;
+using Features.Quests.Application;
 
 namespace Features.Stats.UnityIntegration
 {
@@ -10,6 +11,7 @@ namespace Features.Stats.UnityIntegration
     {
         [Header("Config")]
         [SerializeField] private EnemyConfigSO config;
+        private bool isDead;
 
         // =========================
         // SERVER
@@ -76,6 +78,32 @@ namespace Features.Stats.UnityIntegration
                     magazineSize: 30
                 );
             }
+        }
+
+        private void Update()
+        {
+            CheckDeath();
+        }
+
+        private void CheckDeath()
+        {
+            if (isDead)
+                return;
+
+            if (Facade.Health == null)
+                return;
+
+            if (Facade.Health.CurrentHp > 0)
+                return;
+
+            isDead = true;
+
+            Debug.Log("[Enemy] Died");
+
+            QuestEventBus.Publish(
+                gameObject,
+                new EnemyKilledEvent(config.enemyId)
+            );
         }
     }
 }

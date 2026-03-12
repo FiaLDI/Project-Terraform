@@ -12,6 +12,7 @@ public class WorldProvider : NetworkBehaviour
         base.OnStartServer();
 
         int seed = ServerWorldSession.PendingSeed;
+        Debug.Log("SERVER SESSION QUESTS: " + ServerWorldSession.PendingQuestIds.Count);
 
         Debug.Log("INITIALIZE SEED: " + seed);
 

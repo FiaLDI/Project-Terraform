@@ -43,8 +43,14 @@ namespace Features.Player.UI
 
         private void OnLocalPlayerReady(PlayerRegistry reg)
         {
-            if (BoundPlayer == null && reg.LocalPlayer != null)
+            if (reg.LocalPlayer == null)
+                return;
+
+            if (BoundPlayer != reg.LocalPlayer)
+            {
+                Unbind();
                 Bind(reg.LocalPlayer);
+            }
         }
 
         /// <summary>
@@ -52,6 +58,9 @@ namespace Features.Player.UI
         /// </summary>
         public void Bind(GameObject player)
         {
+            if (BoundPlayer == player)
+                return;
+
             Debug.Log($"[PlayerUIRoot] Bind called with player={player?.name}");
 
             BoundPlayer = player;
