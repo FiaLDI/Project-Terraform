@@ -3,6 +3,9 @@ using TMPro;
 using Features.Input;
 using Features.UI;
 using FishNet.Object;
+using System.Collections.Generic;
+using System.Linq;
+using Features.Quests.Data;
 
 namespace Features.World.UI
 {
@@ -10,6 +13,13 @@ namespace Features.World.UI
     {
         [SerializeField] private GameObject root;
         [SerializeField] private TMP_InputField seedInput;
+
+        [Header("Available quests")]
+        [SerializeField] private QuestAsset[] availableQuests;
+
+        [Header("Available chains")]
+        [SerializeField] private QuestChainAsset[] availableChains;
+
         private GameObject boundPlayer;
 
         public InputMode Mode => InputMode.Dialog;
@@ -29,16 +39,6 @@ namespace Features.World.UI
 
         protected override void OnPlayerBound(GameObject player)
         {
-            if (player == null)
-            {
-                Debug.Log("[StatsUIRoot] OnPlayerBound: NULL (Unbind)", this);
-
-                boundPlayer = null;
-                return;
-            }
-
-            Debug.Log($"[StatsUIRoot] OnPlayerBound: {player.name}", this);
-
             boundPlayer = player;
             root.SetActive(false);
         }
@@ -71,8 +71,19 @@ namespace Features.World.UI
             if (!int.TryParse(seedInput.text, out int seed))
                 return;
 
+            var questIds = availableQuests
+                .Where(q => q != null)
+                .Select(q => q.questId)
+                .ToList();
+
+            var chainIds = availableChains
+                .Where(c => c != null)
+                .Select(c => c.chainId)
+                .ToList();
+
             var net = boundPlayer.GetComponent<PlayerNetworkController>();
-            net.RequestWorldServerRpc(seed);
+
+            net.RequestWorldServerRpc(seed, questIds, chainIds);
 
             UIStackManager.I?.Clear();
         }

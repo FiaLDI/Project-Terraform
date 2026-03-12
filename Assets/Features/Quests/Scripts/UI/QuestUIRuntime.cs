@@ -62,13 +62,24 @@ namespace Features.Quests.UnityIntegration
 
         private IEnumerator ConnectWhenReady()
         {
-            while (QuestManagerMB.Instance == null)
-                yield return null;
+            while (true)
+            {
+                var local = LocalPlayerController.I;
 
-            while (QuestManagerMB.Instance.Service == null)
-                yield return null;
+                if (local != null && local.BoundPlayer != null)
+                {
+                    var questComponent =
+                        local.BoundPlayer.GetComponent<PlayerQuestComponent>();
 
-            service = QuestManagerMB.Instance.Service;
+                    if (questComponent != null)
+                    {
+                        service = questComponent.Service;
+                        break;
+                    }
+                }
+
+                yield return null;
+            }
 
             service.OnQuestAdded += OnQuestAdded;
             service.OnQuestUpdated += OnQuestUpdated;
@@ -79,8 +90,6 @@ namespace Features.Quests.UnityIntegration
 
             foreach (var quest in service.CompletedQuests)
                 RestoreExistingQuest(quest);
-
-            RefreshFilter();
         }
 
         // ============================================================
@@ -188,15 +197,25 @@ namespace Features.Quests.UnityIntegration
             var text = entry.GetComponentInChildren<TMP_Text>();
             var slider = entry.GetComponentInChildren<Slider>();
 
-            text.text = $"{quest.Definition.Name} ({quest.CurrentProgress}/{quest.TargetProgress})";
+            var conditions = quest.Definition.Conditions;
+
+            int totalTarget = 0;
+            int totalProgress = 0;
+
+            foreach (var cond in conditions)
+            {
+                int target = quest.GetTarget(cond);
+                int progress = quest.GetProgress(cond);
+
+                totalTarget += target;
+                totalProgress += progress;
+            }
+
+            text.text = $"{quest.Definition.Name} ({totalProgress}/{totalTarget})";
             text.color = quest.State == QuestState.Completed ? Color.green : Color.white;
 
-            if (slider != null)
-            {
-                slider.value = quest.TargetProgress > 0
-                    ? (float)quest.CurrentProgress / quest.TargetProgress
-                    : 0f;
-            }
+            if (slider != null && totalTarget > 0)
+                slider.value = (float)totalProgress / totalTarget;
         }
 
         // ============================================================

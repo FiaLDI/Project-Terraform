@@ -52,60 +52,7 @@ namespace Features.Quests.Editor
 
             EditorGUILayout.Space(10);
 
-            // --------------------------
-            // CUSTOM UI FOR KillEnemies
-            // --------------------------
-            if (quest.behaviourType == QuestBehaviourType.KillEnemies)
-            {
-                DrawKillEnemiesSection(quest);
-            }
-
             serializedObject.ApplyModifiedProperties();
-        }
-
-        private void DrawKillEnemiesSection(QuestAsset quest)
-        {
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Kill Enemies Parameters", EditorStyles.boldLabel);
-
-            // Database selector
-            quest.enemyDatabase = (EnemyDatabaseSO)EditorGUILayout.ObjectField(
-                "Enemy Database", quest.enemyDatabase,
-                typeof(EnemyDatabaseSO), false
-            );
-
-            if (quest.enemyDatabase == null)
-            {
-                EditorGUILayout.HelpBox("Assign EnemyDatabaseSO to choose enemy types.", MessageType.Info);
-                return;
-            }
-
-            var ids = quest.enemyDatabase.GetAllIds();
-            if (ids == null || ids.Length == 0)
-            {
-                EditorGUILayout.HelpBox("EnemyDatabase is empty.", MessageType.Warning);
-                return;
-            }
-
-            // Auto-generate enemyId if empty
-            if (string.IsNullOrWhiteSpace(quest.enemyId))
-            {
-                Undo.RecordObject(quest, "Auto-generate EnemyId");
-                quest.enemyId = ids[0];      // первое значение из базы
-                EditorUtility.SetDirty(quest);
-            }
-
-            int currentIndex = Mathf.Max(0, System.Array.IndexOf(ids, quest.enemyId));
-            int newIndex = EditorGUILayout.Popup("Enemy ID", currentIndex, ids);
-
-            if (newIndex != currentIndex && newIndex >= 0 && newIndex < ids.Length)
-            {
-                Undo.RecordObject(quest, "Select EnemyID");
-                quest.enemyId = ids[newIndex];
-                EditorUtility.SetDirty(quest);
-            }
-
-            quest.requiredKills = EditorGUILayout.IntField("Required Kills", quest.requiredKills);
         }
 
 

@@ -14963,7 +14963,6 @@ GameObject:
   - component: {fileID: 7533210044431477078}
   - component: {fileID: 610957244457721957}
   - component: {fileID: 5392847591442373338}
-  - component: {fileID: 2703440073952305680}
   - component: {fileID: 8792811943764300779}
   m_Layer: 0
   m_Name: Hub UI
@@ -15080,20 +15079,6 @@ MonoBehaviour:
   popupFadeDuration: 1
   glowThreshold: 0.7
   glowIntensity: 0.5
---- !u!114 &2703440073952305680
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8532635294624535066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 89df61c7bfe581b4e9e9092d2fd06b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AmmoCounterUI
-  root: {fileID: 3809207614031808909}
-  ammoText: {fileID: 8131394080081947312}
 --- !u!114 &8792811943764300779
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15108,6 +15093,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UI.WorldGeneratorUI
   root: {fileID: 4084203816528016652}
   seedInput: {fileID: 2517805503380208478}
+  availableQuests:
+  - {fileID: 11400000, guid: f764e69a9b22cf94d95eee67e3c3e0e6, type: 2}
+  availableChains: []
 --- !u!1 &8626191399318619395
 GameObject:
   m_ObjectHideFlags: 0

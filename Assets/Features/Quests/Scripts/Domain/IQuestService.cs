@@ -3,12 +3,6 @@ using System.Collections.Generic;
 
 namespace Features.Quests.Domain
 {
-    public interface IQuestBehaviour
-    {
-        void OnStart(QuestRuntime quest);
-        void OnEvent(QuestRuntime quest, IQuestEvent e);
-        void OnReset(QuestRuntime quest);
-    }
 
     public interface IQuestService
     {

@@ -348,12 +348,10 @@ GameObject:
   - component: {fileID: 2127444393313974676}
   - component: {fileID: 5136383045370552025}
   - component: {fileID: 3249233337102116910}
-  - component: {fileID: 5031338854518875698}
   - component: {fileID: 7022724963732028029}
   - component: {fileID: 283238272492682892}
   - component: {fileID: 5530530445021933545}
   - component: {fileID: 217312396618154767}
-  - component: {fileID: 7104529458777332987}
   - component: {fileID: 2751139509848182196}
   - component: {fileID: 2364264481245977081}
   - component: {fileID: 4130661444078387841}
@@ -384,6 +382,7 @@ GameObject:
   - component: {fileID: -3112033191411523419}
   - component: {fileID: 3778525526496260052}
   - component: {fileID: 3302508318773783486}
+  - component: {fileID: 3586989162742316649}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -535,23 +534,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac22a0b8f258de744ba2ee29dbf5eba1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Combat.UnityIntegration.PlayerDamageReceiver
---- !u!114 &5031338854518875698
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3646f66d39964e44a9c04ea42d203060, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerQuestController
-  databaseAsset: {fileID: 11400000, guid: 4fb6bb3609cb58842a9469b94900b3b0, type: 2}
-  startChains:
-  - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}
-  startQuests:
-  - {fileID: 11400000, guid: f88681f73985baf4ca33f4f09a6e055f, type: 2}
 --- !u!114 &7022724963732028029
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -615,19 +597,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UnityIntegration.InventoryManager
   bagSize: 12
---- !u!114 &7104529458777332987
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0a86cdc58a1d54048886339d4d91a82a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.UnityIntegration.Adapters.InventoryQuestEventsAdapter
-  questManager: {fileID: 0}
 --- !u!114 &2751139509848182196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1149,3 +1118,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ac87626e41348844bd1334159d45404, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.StatsFacadeAdapter
+--- !u!114 &3586989162742316649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c5188a2321be87478798aed7aa3d0f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerQuestComponent
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+  questDatabase: {fileID: 11400000, guid: 4fb6bb3609cb58842a9469b94900b3b0, type: 2}
+  chainDatabase: {fileID: 11400000, guid: 77add117847d4984987cf4ec0233a111, type: 2}

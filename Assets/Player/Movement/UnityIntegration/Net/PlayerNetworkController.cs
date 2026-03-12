@@ -197,9 +197,15 @@ public class PlayerNetworkController : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void RequestWorldServerRpc(int seed)
+    public void RequestWorldServerRpc(
+        int seed,
+        List<string> questIds,
+        List<string> chainIds)
     {
         ServerWorldSession.PendingSeed = seed;
+
+        ServerWorldSession.PendingQuestIds = questIds;
+        ServerWorldSession.PendingChainIds = chainIds;
 
         SceneTransitionService.LoadWorldScene();
     }

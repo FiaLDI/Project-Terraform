@@ -15,11 +15,8 @@ MonoBehaviour:
   questId: quest_quest_800043
   questName: bobob
   description: bobob
-  behaviourType: 0
-  enemyDatabase: {fileID: 11400000, guid: e1cb7efbca71fe14fbb7abf6331e4b42, type: 2}
-  enemyId: enemy_3ee078
-  requiredKills: 5
-  itemRequirements: []
-  pointId: 
-  requiredStayTime: 2
+  scope: 0
+  killEnemies: []
+  collectItems: []
+  reachPointId: 
   rewards: []

@@ -369,7 +369,6 @@ Transform:
   - {fileID: 4099837800702546648}
   - {fileID: 6750722651760462583}
   - {fileID: 8754341535470764656}
-  - {fileID: 5021592665727248186}
   - {fileID: 6709290924768137100}
   - {fileID: 7698683896044044358}
   - {fileID: 6922316635188452502}
@@ -796,50 +795,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afe300ee593c21c43ac16454e0eeda7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Passives.UnityIntegration.PassiveExecutor
---- !u!1 &3116432733070209370
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5021592665727248186}
-  - component: {fileID: 5968363975905447435}
-  m_Layer: 0
-  m_Name: QuestManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5021592665727248186
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3116432733070209370}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 16.554913, y: 0, z: 47.527554}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1511663097971046456}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5968363975905447435
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3116432733070209370}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ed187f46350c114b9c7ef9ba9f09c84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &3461471717270564279
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,70 +2,96 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Features.Quests.Domain;
-using Features.Quests.Domain.Behaviours;
-using Features.Enemy.Data;
 
 namespace Features.Quests.Data
 {
     [CreateAssetMenu(menuName = "Quests/QuestAsset")]
     public class QuestAsset : ScriptableObject
     {
-        [Header("ID и тексты")]
+        [Header("ID")]
         public string questId;
+
         public string questName;
-        [TextArea] public string description;
 
-        [Header("Тип поведения")]
-        public QuestBehaviourType behaviourType;
+        [TextArea]
+        public string description;
 
-        [Header("Enemy Database")]
-        public EnemyDatabaseSO enemyDatabase;
-        public string enemyId;
-        public int requiredKills = 5;
+        [Header("Scope")]
+        public QuestScope scope = QuestScope.Personal;
 
-        [Header("Параметры CollectItems")]
-        public ItemRequirementConfig[] itemRequirements;
+        [Header("Conditions")]
 
-        [Header("Параметры Point/Interact/StandOnPoint")]
-        public string pointId;
-        public float requiredStayTime = 2f;
+        public EnemyKillConditionConfig[] killEnemies;
 
-        [Header("Награды")]
+        public ItemCollectConditionConfig[] collectItems;
+
+        public string reachPointId;
+
+        [Header("Rewards")]
+
         public RewardItemConfig[] rewards;
 
         public QuestDefinition ToDefinition()
         {
-            IQuestBehaviour behaviour = behaviourType switch
+            var conditions = new List<IQuestCondition>();
+
+            // Kill enemies
+            if (killEnemies != null)
             {
-                QuestBehaviourType.KillEnemies =>
-                    new KillEnemiesQuestBehaviour(enemyId, requiredKills),
+                foreach (var c in killEnemies)
+                {
+                    if (string.IsNullOrEmpty(c.enemyId))
+                        continue;
 
-                QuestBehaviourType.CollectItems =>
-                    new CollectItemsQuestBehaviour(
-                        BuildRequirementsForDomain()
-                    ),
+                    conditions.Add(
+                        new KillEnemyCondition(
+                            c.enemyId,
+                            c.requiredKills
+                        )
+                    );
+                }
+            }
 
-                QuestBehaviourType.ReachPoint =>
-                    new ReachPointQuestBehaviour(pointId),
+            // Collect items
+            if (collectItems != null)
+            {
+                foreach (var c in collectItems)
+                {
+                    if (string.IsNullOrEmpty(c.itemId))
+                        continue;
 
-                QuestBehaviourType.InteractPoint =>
-                    new InteractPointQuestBehaviour(pointId),
+                    conditions.Add(
+                        new CollectItemCondition(
+                            c.itemId,
+                            c.requiredAmount
+                        )
+                    );
+                }
+            }
 
-                QuestBehaviourType.StandOnPoint =>
-                    new StandOnPointQuestBehaviour(pointId, requiredStayTime),
-
-                _ => throw new ArgumentOutOfRangeException()
-            };
+            // Reach point
+            if (!string.IsNullOrEmpty(reachPointId))
+            {
+                conditions.Add(
+                    new ReachPointCondition(reachPointId)
+                );
+            }
 
             var rewardsDomain = new List<QuestReward>();
+
             if (rewards != null)
             {
                 foreach (var r in rewards)
                 {
-                    if (string.IsNullOrEmpty(r.itemId) || r.amount <= 0)
+                    if (string.IsNullOrEmpty(r.itemId))
                         continue;
 
-                    rewardsDomain.Add(new QuestReward(r.itemId, r.amount));
+                    if (r.amount <= 0)
+                        continue;
+
+                    rewardsDomain.Add(
+                        new QuestReward(r.itemId, r.amount)
+                    );
                 }
             }
 
@@ -73,50 +99,31 @@ namespace Features.Quests.Data
                 new QuestId(questId),
                 questName,
                 description,
-                behaviour,
+                scope,
+                conditions,
                 rewardsDomain
             );
         }
-
-        private IEnumerable<CollectItemsQuestBehaviour.Requirement> BuildRequirementsForDomain()
-        {
-            if (itemRequirements == null)
-                yield break;
-
-            foreach (var req in itemRequirements)
-            {
-                if (string.IsNullOrEmpty(req.itemId) || req.amountRequired <= 0)
-                    continue;
-
-                yield return new CollectItemsQuestBehaviour.Requirement(
-                    req.itemId,
-                    req.amountRequired
-                );
-            }
-        }
     }
 
-    public enum QuestBehaviourType
+    [Serializable]
+    public class EnemyKillConditionConfig
     {
-        KillEnemies,
-        CollectItems,
-        ReachPoint,
-        InteractPoint,
-        StandOnPoint,
-        ProceduralPoints
+        public string enemyId;
+        public int requiredKills;
+    }
+
+    [Serializable]
+    public class ItemCollectConditionConfig
+    {
+        public string itemId;
+        public int requiredAmount;
     }
 
     [Serializable]
     public class RewardItemConfig
     {
-        public string itemId;     // вместо прямого Item
-        public int amount;
-    }
-
-    [Serializable]
-    public class ItemRequirementConfig
-    {
         public string itemId;
-        public int amountRequired;
+        public int amount;
     }
 }
