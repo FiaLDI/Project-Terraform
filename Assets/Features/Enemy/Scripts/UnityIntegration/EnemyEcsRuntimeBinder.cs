@@ -23,17 +23,20 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
     [SerializeField] private float aggroRadius = 8f;
     [SerializeField] private float loseAggroRadius = 12f;
 
+    [Header("Attack")]
+    [SerializeField] private float attackRange = 2f;
+    [SerializeField] private float attackCooldown = 1.5f;
+
     private EntityManager em;
 
     public override void OnStartServer()
     {
         base.OnStartServer();
 
+        Debug.Log($"[ECS] CREATE entity for {name} | pos={transform.position}", this);
+
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-        // =========================
-        // CREATE ECS ENTITY (SERVER ONLY)
-        // =========================
         entity = em.CreateEntity(
             typeof(LocalTransform),
             typeof(EnemyTag),
@@ -42,25 +45,30 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             typeof(EnemyTargetPosition),
             typeof(EnemyPatrolState),
             typeof(EnemyPatrolSettings),
-            typeof(EnemyBlocked)
+            typeof(EnemyBlocked),
+
+            // NEW
+            typeof(EnemyAggroState),
+            typeof(EnemyLastKnownPosition),
+            typeof(EnemyAttackState)
         );
 
-        // =========================
-        // BASE TRANSFORM
-        // =========================
+        Debug.Log($"[ECS] ENTITY CREATED: {entity.Index}", this);
+
+        // ================= TRANSFORM =================
         em.SetComponentData(
             entity,
             LocalTransform.FromPosition(transform.position)
         );
 
-        // =========================
-        // AI CONFIG
-        // =========================
+        // ================= AI =================
         em.SetComponentData(entity, new EnemyAI
         {
             MoveSpeed = moveSpeed,
             AggroRadius = aggroRadius,
-            LoseAggroRadius = loseAggroRadius
+            LoseAggroRadius = loseAggroRadius,
+            AttackRange = attackRange,
+            AttackCooldown = attackCooldown
         });
 
         em.SetComponentData(entity, new EnemyState
@@ -68,17 +76,28 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             Value = EnemyAIState.Patrol
         });
 
-        // ❗❗ КРИТИЧЕСКИ ВАЖНО
-        // НЕ задаём цель "вперёд"
-        // Цель управляется ТОЛЬКО EnemyAISystem
         em.SetComponentData(entity, new EnemyTargetPosition
         {
             Value = transform.position
         });
 
-        // =========================
-        // PATROL STATE
-        // =========================
+        // ================= NEW STATES =================
+        em.SetComponentData(entity, new EnemyAggroState
+        {
+            Timer = 0f
+        });
+
+        em.SetComponentData(entity, new EnemyLastKnownPosition
+        {
+            Value = transform.position
+        });
+
+        em.SetComponentData(entity, new EnemyAttackState
+        {
+            Cooldown = 0f
+        });
+
+        // ================= PATROL =================
         em.SetComponentData(entity, new EnemyPatrolState
         {
             CurrentIndex = 0,
@@ -100,17 +119,14 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             Value = false
         });
 
-        // =========================
-        // PATROL POINTS BUFFER
-        // =========================
+        // ================= PATROL POINTS =================
         var buffer = em.AddBuffer<EnemyPatrolPoint>(entity);
 
         if (patrolPoints != null && patrolPoints.Length > 0)
         {
             foreach (var p in patrolPoints)
             {
-                if (p == null)
-                    continue;
+                if (p == null) continue;
 
                 buffer.Add(new EnemyPatrolPoint
                 {
@@ -121,14 +137,11 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
         else
         {
             Debug.LogWarning(
-                "[EnemyEcsRuntimeBinder] PatrolPoints array is EMPTY. Enemy will not patrol.",
+                "[EnemyEcsRuntimeBinder] PatrolPoints EMPTY",
                 this
             );
         }
 
-        //Debug.Log(
-        //    $"[EnemyEcsRuntimeBinder] ECS Entity CREATED | index={entity.Index} | patrolPoints={buffer.Length}",
-        //    this
-        //);
+        Debug.Log($"[ECS] Patrol points: {buffer.Length}", this);
     }
 }

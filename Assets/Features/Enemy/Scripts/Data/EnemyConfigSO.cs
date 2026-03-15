@@ -21,6 +21,11 @@ namespace Features.Enemy.Data
         [Header("Prefab Root (куда добавят компоненты)")]
         public GameObject prefab;
 
+        [Header("LOD Prefabs")]
+        public GameObject lod0Prefab; // с анимацией / полной моделью
+        public GameObject lod1Prefab; // упрощённый
+        public GameObject lod2Prefab;
+
         [Header("Canvas prefab (HP-bar)")]
         public GameObject worldCanvasPrefab;
 

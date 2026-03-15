@@ -140,7 +140,7 @@ public class Chunk
         // =========================
         var renderObj = new GameObject("Mesh_LOD");
         renderObj.transform.SetParent(rootObject.transform, false);
-        renderObj.layer = LayerMask.NameToLayer("Default");
+        renderObj.layer = LayerMask.NameToLayer("Ground");
 
         var mf = renderObj.AddComponent<MeshFilter>();
         var mr = renderObj.AddComponent<MeshRenderer>();
@@ -373,6 +373,14 @@ public class Chunk
             Object.Destroy(mesh);
         }
         _runtimeMeshes.Clear();
+
+        var enemies = rootObject.GetComponentsInChildren<EnemyInstanceTracker>();
+
+        foreach (var e in enemies)
+        {
+            if (e != null)
+                Object.Destroy(e.gameObject);
+        }
 
         // 4) уничтожаем корневой объект чанка (с MeshFilter, MeshRenderer, MeshCollider, ChunkMeshLOD и т.д.)
         Object.Destroy(rootObject);

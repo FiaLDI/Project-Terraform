@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Features.Biomes.Application;
-using Features.Pooling;
 
 namespace Features.Biomes.Application.Spawning
 {
@@ -49,15 +48,7 @@ namespace Features.Biomes.Application.Spawning
                 if (go == null)
                     continue;
 
-                // если объект из пула — возвращаем
-                if (go.TryGetComponent<PoolObject>(out var pooled))
-                {
-                    pooled.ReturnToPool();
-                }
-                else
-                {
-                    Object.Destroy(go);
-                }
+                Object.Destroy(go);
             }
 
             // удаляем запись

@@ -1,9 +1,10 @@
-using UnityEngine;
 using Features.Biomes.Domain;
-using Features.Enemy.Data;
-using Features.Pooling;
 using Features.Enemy;
+using Features.Enemy.Data;
 using Features.Enemy.UnityIntegration;
+using UnityEngine;
+using FishNet.Object;
+using FishNet;
 
 public class BiomeEnemySpawner : MonoBehaviour
 {
@@ -12,8 +13,12 @@ public class BiomeEnemySpawner : MonoBehaviour
 
     private float spawnTimer;
 
+
     void LateUpdate()
     {
+        if (!InstanceFinder.IsServer)
+            return;
+
         if (player == null || world == null)
             return;
 
@@ -95,42 +100,37 @@ public class BiomeEnemySpawner : MonoBehaviour
 
         Vector3 pos = GetSpawnPosition();
 
-        // --- ПУЛЛИНГ ---
-        PoolMeta meta = config.prefab.GetComponent<PoolMeta>();
-        GameObject enemyGO;
+        // ❗ ВАЖНО: только Instantiate (без пула)
+        GameObject enemyGO = Instantiate(config.prefab, pos, Quaternion.identity);
 
-        if (meta != null)
-        {
-            // Index must be set in editor or automatically assigned
-            PoolObject pooled = SmartPool.Instance.Get(meta.prefabIndex, config.prefab);
-            if (pooled == null) return;
-            
-            enemyGO = pooled.gameObject;
-
-            pooled.transform.position = pos;
-            pooled.transform.rotation = Quaternion.identity;
-        }
-        else
-        {
-            // Нет PoolMeta? — обычный Instantiate.
-            enemyGO = Instantiate(config.prefab, pos, Quaternion.identity);
-        }
-
-        // --- Настройка врага ---
+        // --- ДО Spawn: настраиваем критичные данные ---
         var tracker = enemyGO.GetComponent<EnemyInstanceTracker>();
         if (!tracker)
             tracker = enemyGO.AddComponent<EnemyInstanceTracker>();
+
         tracker.config = config;
 
-        // EnemyHealth также должен иметь ссылку на config
-        //var health = enemyGO.GetComponent<EnemyHealth>();
-        //if (health)
-        //    health.config = config;
-
-        // EnemyLODController тоже
         var lod = enemyGO.GetComponent<EnemyLODController>();
         if (lod)
             lod.config = config;
+
+        // --- FishNet Spawn ---
+        var nob = enemyGO.GetComponent<NetworkObject>();
+        if (nob == null)
+        {
+            Debug.LogError("No NetworkObject on enemy prefab!");
+            Destroy(enemyGO);
+            return;
+        }
+
+        InstanceFinder.ServerManager.Spawn(nob);
+
+        // --- ПОСЛЕ Spawn ---
+        var link = enemyGO.GetComponent<EnemyChunkLink>();
+        if (!link)
+            link = enemyGO.AddComponent<EnemyChunkLink>();
+
+        link.chunkCoord = world.WorldToChunk(pos);
 
         // --- Регистрация ---
         EnemyWorldManager.Instance.Register(tracker);

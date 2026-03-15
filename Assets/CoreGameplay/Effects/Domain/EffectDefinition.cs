@@ -57,6 +57,13 @@ namespace Features.Effects.Domain
         public bool onlySpecificBuff;
         public string buffId;
         public float heightOffset;
+
+        [Header("Cone Settings")]
+        public float coneAngle; // угол в градусах (например 90)
+        public float coneDistance; // дистанция (обычно = radius)
+
+        [Header("Target Selection")]
+        public bool selectClosest;
         
 
         [Header("Spawn")]

@@ -1,15 +1,15 @@
 using UnityEngine;
 using Unity.Mathematics;
-using Features.Pooling;
 using Features.Biomes.Domain;
 using Features.Biomes.Application.Spawning;
 using Features.Biomes.Application;
+using FishNet;
+using FishNet.Object;
 
 namespace Features.Biomes.UnityIntegration
 {
     /// <summary>
     /// Спавн обычных GameObject (ресурсы, враги, квесты) по данным SpawnInstance.
-    /// Работает через SmartPool + ChunkedGameObjectStorage.
     /// </summary>
     public static class RuntimeSpawnerSystem
     {
@@ -24,37 +24,15 @@ namespace Features.Biomes.UnityIntegration
         /// </summary>
         public static void SpawnObject(SpawnInstance inst, Vector2Int chunk, Transform parent)
         {
-            // ========== ЗАЩИТА ==========
-            if (!IsFinite(inst.position))
-            {
-                Debug.LogError(
-                    $"[RuntimeSpawner] NaN position for prefabIndex={inst.prefabIndex}, " +
-                    $"spawnType={(SpawnKind)inst.spawnType}, chunk={chunk}, pos={inst.position}");
+            if (!InstanceFinder.IsServer)
                 return;
-            }
 
-            if (!IsFinite(inst.normal) || math.lengthsq(inst.normal) < 0.0001f)
-                inst.normal = new float3(0, 1, 0);
+            if (!IsFinite(inst.position))
+                return;
 
-            if (!IsFinite(inst.scale) || inst.scale <= 0f)
-                inst.scale = 1f;
-
-            // ========== ПОЛЛИНГ ==========
             if (!InstanceRegistry.TryGetPrefab(inst.prefabIndex, out var prefab))
                 return;
 
-            var pooled = SmartPool.Instance.Get(inst.prefabIndex, prefab);
-
-            if (pooled.meta == null)
-                pooled.meta = pooled.gameObject.AddComponent<PoolMeta>();
-
-            pooled.meta.prefabIndex = inst.prefabIndex;
-
-            // 🔗 ВАЖНО: назначаем родителя чанка
-            if (parent != null)
-                pooled.transform.SetParent(parent, true); // worldPositionStays = true
-
-            // ========== ПОЗИЦИЯ / РОТАЦИЯ ==========
             Vector3 pos = new Vector3(inst.position.x, inst.position.y, inst.position.z);
             Vector3 normalVec = new Vector3(inst.normal.x, inst.normal.y, inst.normal.z);
 
@@ -63,16 +41,33 @@ namespace Features.Biomes.UnityIntegration
                 ? Quaternion.FromToRotation(Vector3.up, normalVec)
                 : Quaternion.identity;
 
-            pooled.transform.position   = pos;
-            pooled.transform.rotation   = rotation;
-            pooled.transform.localScale = Vector3.one * inst.scale;
+            GameObject go;
 
-            SnapToGroundIgnoringSelf(pooled.transform, ref pos, ref rotation);
-            pooled.transform.SetPositionAndRotation(pos, rotation);
+            var nobPrefab = prefab.GetComponent<NetworkObject>();
 
+            if (nobPrefab != null)
+            {
+                // 👉 сетевой объект
+                go = Object.Instantiate(prefab, pos, rotation);
 
-            // ========== РЕГИСТРАЦИЯ В ХРАНИЛИЩЕ ==========
-            ChunkedGameObjectStorage.Register(chunk, pooled.gameObject);
+                var nob = go.GetComponent<NetworkObject>();
+                InstanceFinder.ServerManager.Spawn(nob);
+            }
+            else
+            {
+                // 👉 обычный объект
+                go = Object.Instantiate(prefab, pos, rotation);
+            }
+
+            if (parent != null)
+                go.transform.SetParent(parent, true);
+
+            go.transform.localScale = Vector3.one * inst.scale;
+
+            SnapToGroundIgnoringSelf(go.transform, ref pos, ref rotation);
+            go.transform.SetPositionAndRotation(pos, rotation);
+
+            ChunkedGameObjectStorage.Register(chunk, go);
         }
 
         /// <summary>

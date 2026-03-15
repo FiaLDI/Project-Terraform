@@ -46,9 +46,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4008fceb980953b428ca2378aafae0c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldReadyRuntime
-  _componentIndexCache: 255
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 6123895787757850465}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 6123895787757850465}
 --- !u!114 &4662146942660001228
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61,9 +61,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d879b9e85fb419d4a99d5a4c00ad3592, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldProvider
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 6123895787757850465}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 6123895787757850465}
 --- !u!114 &6123895787757850465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,7 +82,9 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 1812490518892083355}
+  - {fileID: 4662146942660001228}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -93,7 +95,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584267458430362879
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -108,12 +110,12 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 7
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 8837533314963739320
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Position: {x: -13.72547, y: 0, z: -2.69427}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1

@@ -109,6 +109,14 @@ namespace Features.Biomes.Domain
             return list.ToArray();
         }
 
+        public Vector2Int WorldToChunk(Vector3 pos)
+        {
+            return new Vector2Int(
+                Mathf.FloorToInt(pos.x / chunkSize),
+                Mathf.FloorToInt(pos.z / chunkSize)
+            );
+        }
+
         public BiomeBlendResult GetBiomeBlend(float2 worldXZ)
         {
             Vector3 wp = new Vector3(worldXZ.x, 0, worldXZ.y);

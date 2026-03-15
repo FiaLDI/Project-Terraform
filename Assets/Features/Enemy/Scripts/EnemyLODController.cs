@@ -1,17 +1,14 @@
 using UnityEngine;
-using Features.Biomes.UnityIntegration;
-using Features.Enemies;
 using Features.Enemy.Data;
-using Features.Enemy;
 using Features.Player.UnityIntegration;
+using Features.Enemy.UnityIntegration;
 
 public class EnemyLODController : MonoBehaviour
 {
     public EnemyConfigSO config;
 
-    private Renderer lod0;
-    private Renderer lod1;
-    private Renderer lod2;
+    private Transform anchor;
+    private GameObject currentLodGO;
 
     private Canvas worldCanvas;
 
@@ -20,20 +17,25 @@ public class EnemyLODController : MonoBehaviour
 
     private bool instancingMode = false;
 
-    // throttling LOD updates
-    private int currentLod = -1;              // -1 = none / instancing
-    private float nextUpdateTime;             // когда в следующий раз пересчитывать LOD
-    private const float UpdateInterval = 0.08f; // ~12 раз/сек
+    private int currentLod = -1;
+    private float nextUpdateTime;
+    private const float UpdateInterval = 0.08f;
 
     private void Awake()
     {
-        anim = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
 
-        AutoAssignLODRenderers();
+        // Anchor для моделей
+        anchor = transform.Find("Anchor");
+        if (!anchor)
+        {
+            anchor = new GameObject("Anchor").transform;
+            anchor.SetParent(transform);
+            anchor.localPosition = Vector3.zero;
+        }
+
         AutoAssignCanvas();
 
-        // разброс апдейтов по времени, чтобы не всё в один кадр
         nextUpdateTime = Time.time + Random.Range(0f, UpdateInterval);
     }
 
@@ -42,7 +44,6 @@ public class EnemyLODController : MonoBehaviour
         if (config == null)
             return;
 
-        // throttling
         if (Time.time < nextUpdateTime)
             return;
 
@@ -53,10 +54,9 @@ public class EnemyLODController : MonoBehaviour
             return;
 
         Transform playerTf = registry.LocalPlayer.transform;
-
         float dist = Vector3.Distance(playerTf.position, transform.position);
 
-        // ------------ CANVAS ------------
+        // ---------------- CANVAS ----------------
         if (worldCanvas != null)
         {
             bool shouldShow = dist < config.canvasHideDistance;
@@ -64,7 +64,7 @@ public class EnemyLODController : MonoBehaviour
                 worldCanvas.enabled = shouldShow;
         }
 
-        // ------------ INSTANCING ------------
+        // ---------------- INSTANCING ----------------
         bool useInstancing =
             config.useGPUInstancing &&
             dist > config.instancingDistance;
@@ -86,13 +86,9 @@ public class EnemyLODController : MonoBehaviour
             SwitchToNormal();
         }
 
-        // ------------ NORMAL LOD ------------
-        float lodScale = EnemyPerformanceManager.Instance != null
-            ? EnemyPerformanceManager.Instance.LodScale
-            : 1f;
-
-        float d0 = config.lod0Distance * lodScale;
-        float d1 = config.lod1Distance * lodScale;
+        // ---------------- LOD ----------------
+        float d0 = config.lod0Distance;
+        float d1 = config.lod1Distance;
 
         int newLod;
         if (dist <= d0) newLod = 0;
@@ -104,36 +100,66 @@ public class EnemyLODController : MonoBehaviour
 
         currentLod = newLod;
 
-        if (lod0) lod0.enabled = (newLod == 0);
-        if (lod1) lod1.enabled = (newLod == 1);
-        if (lod2) lod2.enabled = (newLod == 2);
+        SetLOD(newLod);
+        HandleLogicByLOD(newLod);
     }
 
     // -----------------------------------------------------------
-    // AUTO–DISCOVERY
+    // LOD SWITCH
     // -----------------------------------------------------------
 
-    private void AutoAssignLODRenderers()
+    private void SetLOD(int lod)
     {
-        Transform root = transform.Find("Model");
-        if (!root)
+        if (currentLodGO != null)
+            Destroy(currentLodGO);
+
+        GameObject prefab = lod switch
         {
-            Debug.LogError("[EnemyLODController] No 'Model' root found!", this);
+            0 => config.lod0Prefab,
+            1 => config.lod1Prefab,
+            _ => config.lod2Prefab
+        };
+
+        if (prefab == null)
             return;
+
+        currentLodGO = Instantiate(prefab, anchor);
+        currentLodGO.transform.localPosition = Vector3.zero;
+        currentLodGO.transform.localRotation = Quaternion.identity;
+
+        anim = currentLodGO.GetComponentInChildren<Animator>();
+    }
+
+    // -----------------------------------------------------------
+    // ЛОГИКА ПО LOD (оптимизация)
+    // -----------------------------------------------------------
+
+    private void HandleLogicByLOD(int lod)
+    {
+        var actor = GetComponent<EnemyActor>();
+
+        if (actor != null)
+        {
+            if (lod == 2)
+                actor.enabled = false; // далеко → отключаем AI
+            else
+                actor.enabled = true;
         }
 
-        lod0 = FindRenderer(root, "Model_LOD0");
-        lod1 = FindRenderer(root, "Model_LOD1");
-        lod2 = FindRenderer(root, "Model_LOD2");
+        if (anim != null)
+        {
+            anim.enabled = (lod == 0); // только на близком LOD
+        }
+
+        if (rb != null && config.makeRigidbodyKinematicInInstancing)
+        {
+            rb.isKinematic = (lod == 2);
+        }
     }
 
-    private Renderer FindRenderer(Transform root, string childName)
-    {
-        var child = root.Find(childName);
-        if (!child) return null;
-
-        return child.GetComponentInChildren<Renderer>();
-    }
+    // -----------------------------------------------------------
+    // CANVAS
+    // -----------------------------------------------------------
 
     private void AutoAssignCanvas()
     {
@@ -141,18 +167,6 @@ public class EnemyLODController : MonoBehaviour
         {
             GameObject canvasObj = Instantiate(config.worldCanvasPrefab, transform);
             worldCanvas = canvasObj.GetComponent<Canvas>();
-
-            var bar = canvasObj.GetComponent<EnemyHealthBarUI>();
-            if (bar != null)
-            {
-                //var health = GetComponent<EnemyHealth>();
-                //bar.Target = health;
-
-                //Transform anchor = transform.Find("Anchor");
-                //if (anchor != null)
-                //    bar.HeadAnchor = anchor;
-            }
-
             return;
         }
 
@@ -162,21 +176,20 @@ public class EnemyLODController : MonoBehaviour
     }
 
     // -----------------------------------------------------------
-    // INSTANCING MODE
+    // INSTANCING
     // -----------------------------------------------------------
 
     private void SwitchToInstancing()
     {
         instancingMode = true;
 
-        if (lod0) lod0.enabled = false;
-        if (lod1) lod1.enabled = false;
-        if (lod2) lod2.enabled = false;
+        if (currentLodGO != null)
+            currentLodGO.SetActive(false);
 
-        if (config.disableAnimatorInInstancing && anim)
+        if (anim)
             anim.enabled = false;
 
-        if (config.makeRigidbodyKinematicInInstancing && rb)
+        if (rb && config.makeRigidbodyKinematicInInstancing)
             rb.isKinematic = true;
     }
 
@@ -184,19 +197,22 @@ public class EnemyLODController : MonoBehaviour
     {
         instancingMode = false;
 
-        if (config.disableAnimatorInInstancing && anim)
+        if (currentLodGO != null)
+            currentLodGO.SetActive(true);
+
+        if (anim)
             anim.enabled = true;
 
-        if (config.makeRigidbodyKinematicInInstancing && rb)
+        if (rb && config.makeRigidbodyKinematicInInstancing)
             rb.isKinematic = false;
     }
 
     private void SubmitInstancingDraw()
     {
-        if (EnemyGPUInstancer.Instance == null)
+        if (EnemyGPUInstancer.Instance == null || currentLodGO == null)
             return;
 
-        Renderer r = lod2 ?? lod1 ?? lod0;
+        var r = currentLodGO.GetComponentInChildren<Renderer>();
         if (!r) return;
 
         var mf = r.GetComponent<MeshFilter>();
