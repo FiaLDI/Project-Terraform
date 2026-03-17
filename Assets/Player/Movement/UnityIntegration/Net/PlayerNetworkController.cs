@@ -250,4 +250,40 @@ public class PlayerNetworkController : NetworkBehaviour
         SendStateObserversRpc(state);
         SendStateTargetRpc(Owner, state);
     }
+
+    [ServerRpc]
+    public void GiveQuestsServerRpc(List<string> questIds)
+    {
+        GetComponent<PlayerQuestComponent>()?.GiveQuests(questIds);
+    }
+
+    [ServerRpc]
+    public void GiveChainsServerRpc(List<string> chainIds)
+    {
+        GetComponent<PlayerQuestComponent>()?.GiveChains(chainIds);
+    }
+
+    [ServerRpc]
+    public void ClearQuestsServerRpc()
+    {
+        GetComponent<PlayerQuestComponent>()?.ClearAll();
+    }
+
+    [ServerRpc]
+    public void DebugCompleteQuestServerRpc(string questId)
+    {
+        GetComponent<PlayerQuestComponent>()?.DebugCompleteQuest(questId);
+    }
+
+    [ServerRpc]
+    public void DebugFailQuestServerRpc(string questId)
+    {
+        GetComponent<PlayerQuestComponent>()?.DebugFailQuest(questId);
+    }
+
+    [ServerRpc]
+    public void DebugAdvanceQuestServerRpc(string questId)
+    {
+        GetComponent<PlayerQuestComponent>()?.DebugAdvance(questId);
+    }
 }

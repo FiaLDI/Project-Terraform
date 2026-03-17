@@ -127,5 +127,22 @@ namespace Features.Quests.Domain
         {
             OnQuestUpdated?.Invoke(quest);
         }
+
+        public bool TryGetQuest(QuestId id, out QuestRuntime quest)
+        {
+            return _active.TryGetValue(id, out quest);
+        }
+
+        public void FailQuest(QuestId id)
+        {
+            if (!_active.TryGetValue(id, out var quest))
+                return;
+
+            quest.SetState(QuestState.Failed);
+
+            Debug.Log($"[QuestService] Quest failed: {id}");
+
+            OnQuestUpdated?.Invoke(quest);
+        }
     }
 }

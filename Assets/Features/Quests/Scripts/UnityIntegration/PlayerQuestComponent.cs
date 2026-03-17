@@ -1,11 +1,12 @@
+using System.Collections.Generic;
+using System.Linq;
+using Features.Player.UI;
+using Features.Quests.Application;
+using Features.Quests.Data;
+using Features.Quests.Domain;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
-using System.Collections.Generic;
-using Features.Quests.Domain;
-using Features.Quests.Data;
-using Features.Quests.Application;
-using Features.Player.UI;
 
 public class PlayerQuestComponent : NetworkBehaviour
 {
@@ -158,5 +159,64 @@ public class PlayerQuestComponent : NetworkBehaviour
             if (chain != null)
                 chainService.StartChain(chain);
         }
+    }
+
+    [Server]
+    public void GiveQuests(List<string> questIds)
+    {
+        foreach (var id in questIds)
+        {
+            var def = questDatabase.GetDefinition(id);
+            if (def != null)
+                service.StartQuest(def);
+        }
+    }
+
+    [Server]
+    public void GiveChains(List<string> chainIds)
+    {
+        foreach (var id in chainIds)
+        {
+            var def = chainDatabase.GetDefinition(id);
+            if (def != null)
+                chainService.StartChain(def);
+        }
+    }
+
+    [Server]
+    public void ClearAll()
+    {
+        var active = service.ActiveQuests.ToList();
+
+        foreach (var quest in active)
+        {
+            service.ResetQuest(quest.Definition.Id);
+        }
+    }
+
+    [Server]
+    public void DebugCompleteQuest(string questId)
+    {
+        service?.CompleteQuest(new QuestId(questId));
+    }
+
+    [Server]
+    public void DebugFailQuest(string questId)
+    {
+        service?.FailQuest(new QuestId(questId));
+    }
+
+    [Server]
+    public void DebugAdvance(string questId, int amount = 1)
+    {
+        var id = new QuestId(questId);
+
+        if (!service.TryGetQuest(id, out var quest))
+            return;
+
+        QuestEventBus.Publish(
+            gameObject,
+            new DebugProgressEvent(id, amount)
+        );
     }
 }
