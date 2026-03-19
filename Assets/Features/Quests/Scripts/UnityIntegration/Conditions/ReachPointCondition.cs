@@ -9,6 +9,11 @@ public sealed class ReachPointCondition : IQuestCondition
         this.pointId = pointId;
     }
 
+    public string GetDescription()
+    {
+        return $"Reach {pointId}";
+    }
+
     public void OnStart(QuestRuntime quest)
     {
         quest.SetTarget(this, 1);

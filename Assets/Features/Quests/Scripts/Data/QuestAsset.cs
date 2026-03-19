@@ -25,6 +25,9 @@ namespace Features.Quests.Data
 
         public ItemCollectConditionConfig[] collectItems;
 
+        [Header("Have Items (Inventory State)")]
+        public ItemHaveConditionConfig[] haveItems;
+
         public string reachPointId;
 
         [Header("Rewards")]
@@ -95,6 +98,22 @@ namespace Features.Quests.Data
                 }
             }
 
+            if (haveItems != null)
+            {
+                foreach (var c in haveItems)
+                {
+                    if (string.IsNullOrEmpty(c.itemId))
+                        continue;
+
+                    conditions.Add(
+                        new HaveItemCondition(
+                            c.itemId,
+                            c.requiredAmount
+                        )
+                    );
+                }
+            }
+
             return new QuestDefinition(
                 new QuestId(questId),
                 questName,
@@ -125,5 +144,12 @@ namespace Features.Quests.Data
     {
         public string itemId;
         public int amount;
+    }
+
+    [Serializable]
+    public class ItemHaveConditionConfig
+    {
+        public string itemId;
+        public int requiredAmount;
     }
 }

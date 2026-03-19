@@ -4,6 +4,8 @@ using Features.Equipment.UnityIntegration;
 using Features.Inventory.Domain;
 using Features.Items.Data;
 using Features.Items.Domain;
+using Features.Quests.Application;
+using Features.Quests.Domain;
 using FishNet.Object;
 using UnityEngine;
 
@@ -43,6 +45,7 @@ namespace Features.Inventory.UnityIntegration
 
             IsReady = true;
             OnReady?.Invoke();
+            Service.OnItemAdded += HandleItemAdded;
             
             Debug.Log("[InventoryManager] Ready");
         }
@@ -256,6 +259,17 @@ namespace Features.Inventory.UnityIntegration
 
             // есть ли ещё уровни выше текущего
             return inst.level < upgrades.Length;
+        }
+
+        private void HandleItemAdded(ItemInstance inst)
+        {
+            QuestEventBus.Publish(
+                gameObject,
+                new ItemAddedEvent(
+                    inst.itemDefinition.id,
+                    inst.quantity
+                )
+            );
         }
     }
 }

@@ -10,6 +10,13 @@ namespace Features.Quests.Domain
         private readonly Dictionary<QuestId, QuestRuntime> _active = new();
         private readonly HashSet<QuestRuntime> _completed = new();
 
+        private readonly GameObject owner;
+
+        public QuestService(GameObject owner)
+        {
+            this.owner = owner;
+        }
+
         // ----------------------------------------------------------
         // COLLECTIONS
         // ----------------------------------------------------------
@@ -37,7 +44,7 @@ namespace Features.Quests.Domain
             if (_active.TryGetValue(def.Id, out var existing))
                 return existing;
 
-            var runtime = new QuestRuntime(def);
+            var runtime = new QuestRuntime(def, owner);
 
             runtime.OnUpdated += HandleQuestUpdated;
 

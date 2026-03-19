@@ -11,6 +11,11 @@ public sealed class KillEnemyCondition : IQuestCondition
         this.required = required;
     }
 
+    public string GetDescription()
+    {
+        return $"Kill {required} {enemyId}";
+    }
+
     public void OnStart(QuestRuntime quest)
     {
         quest.SetTarget(this, required);

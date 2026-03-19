@@ -3,6 +3,8 @@ using System.Linq;
 using Features.Inventory.Application;
 using Features.Items.Data;
 using Features.Items.Domain;
+using Features.Quests.Application;
+using Features.Quests.Domain;
 
 
 namespace Features.Inventory.Domain
@@ -119,6 +121,10 @@ namespace Features.Inventory.Domain
                 if (left <= 0)
                 {
                     OnChanged?.Invoke();
+                    QuestEventBus.Publish(
+                        null, // или player GO если хочешь фильтр
+                        new ItemRemovedEvent(def.id, count)
+                    );
                     return true;
                 }
             }

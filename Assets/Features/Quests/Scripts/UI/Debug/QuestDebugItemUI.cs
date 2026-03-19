@@ -1,3 +1,5 @@
+using Features.Quests.Data;
+using Features.Quests.Domain;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +13,8 @@ public class QuestDebugItemUI : MonoBehaviour
     [SerializeField] private Button completeBtn;
     [SerializeField] private Button failBtn;
 
+    [SerializeField] private QuestDatabaseAsset questDatabase;
+
     private string questId;
     private PlayerNetworkController net;
 
@@ -19,11 +23,24 @@ public class QuestDebugItemUI : MonoBehaviour
         questId = id;
         net = controller;
 
-        title.text = id;
+        var def = questDatabase.GetDefinition(id);
 
-        progress.text = $"{state.progress} / {state.target}" +
-                        (state.completed ? " ✅" : "");
+        // =========================
+        // TITLE
+        // =========================
+        title.text = def != null ? def.Name : id;
 
+        // =========================
+        // PROGRESS (MULTI-CONDITION)
+        // =========================
+        progress.text = BuildProgressText(state, def);
+
+        if (state.completed)
+            progress.text += " ✅";
+
+        // =========================
+        // BUTTONS
+        // =========================
         advanceBtn.onClick.RemoveAllListeners();
         completeBtn.onClick.RemoveAllListeners();
         failBtn.onClick.RemoveAllListeners();
@@ -36,5 +53,34 @@ public class QuestDebugItemUI : MonoBehaviour
 
         failBtn.onClick.AddListener(() =>
             net.DebugFailQuestServerRpc(questId));
+    }
+
+    // =========================================================
+    // BUILD TEXT
+    // =========================================================
+
+    private string BuildProgressText(QuestNetState state, QuestDefinition def)
+    {
+        if (state.conditions == null || state.conditions.Length == 0)
+            return "No conditions";
+
+        var lines = new System.Text.StringBuilder();
+
+        for (int i = 0; i < state.conditions.Length; i++)
+        {
+            var c = state.conditions[i];
+
+            string desc = $"Condition {i + 1}";
+
+            // если есть дефиниция — берем описание
+            if (def != null && i < def.Conditions.Count)
+            {
+                desc = def.Conditions[i].GetDescription();
+            }
+
+            lines.AppendLine($"{desc}: {c.progress}/{c.target}");
+        }
+
+        return lines.ToString();
     }
 }

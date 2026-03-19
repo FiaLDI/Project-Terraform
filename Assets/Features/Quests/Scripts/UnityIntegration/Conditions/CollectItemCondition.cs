@@ -11,6 +11,11 @@ public sealed class CollectItemCondition : IQuestCondition
         this.required = required;
     }
 
+    public string GetDescription()
+    {
+        return $"Collect {required} {itemId}";
+    }
+
     public void OnStart(QuestRuntime quest)
     {
         quest.SetTarget(this, required);

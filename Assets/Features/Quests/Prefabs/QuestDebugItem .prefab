@@ -1019,6 +1019,7 @@ MonoBehaviour:
   advanceBtn: {fileID: 5820571040853080553}
   completeBtn: {fileID: 2548838793116056615}
   failBtn: {fileID: 9043526042199382443}
+  questDatabase: {fileID: 11400000, guid: 4fb6bb3609cb58842a9469b94900b3b0, type: 2}
 --- !u!114 &2747687477832575988
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -7,4 +7,6 @@ public interface IQuestCondition
     void OnEvent(QuestRuntime runtime, IQuestEvent e);
 
     bool IsCompleted(QuestRuntime runtime);
+
+    string GetDescription();
 }

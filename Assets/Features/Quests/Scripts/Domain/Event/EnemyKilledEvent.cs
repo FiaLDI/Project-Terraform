@@ -1,11 +1,17 @@
-using Features.Quests.Domain;
+using Features.Buffs.Domain;
+using UnityEngine;
 
-public struct EnemyKilledEvent : IQuestEvent
+namespace Features.Quests.Domain
 {
-    public string EnemyId;
-
-    public EnemyKilledEvent(string enemyId)
+    public struct EnemyKilledEvent : IQuestEvent
     {
-        EnemyId = enemyId;
+        public string EnemyId;
+        public IBuffSource Killer;
+
+        public EnemyKilledEvent(string enemyId, IBuffSource killer)
+        {
+            EnemyId = enemyId;
+            Killer = killer;
+        }
     }
 }

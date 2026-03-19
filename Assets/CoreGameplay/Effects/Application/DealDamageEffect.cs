@@ -1,5 +1,6 @@
 using Features.Effects.Domain;
 using Features.Stats.Domain;
+using Features.Stats.UnityIntegration;
 using UnityEngine;
 
 namespace Features.Effects.Application
@@ -33,6 +34,13 @@ namespace Features.Effects.Application
 
                 var stats = statsOwner.Facade;
                 stats?.Health?.Damage(_value);
+
+                var enemy = t.BuffSystem.GetComponentInParent<EnemyStats>();
+
+                if (enemy != null && context.Source != null)
+                {
+                    enemy.RegisterAttacker(context.Source);
+                }
             }
         }
     }

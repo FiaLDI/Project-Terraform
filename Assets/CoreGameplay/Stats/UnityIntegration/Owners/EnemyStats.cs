@@ -1,7 +1,10 @@
-using UnityEngine;
-using Features.Stats.Domain;
+using Features.Buffs.Domain;
 using Features.Enemy.Data;
 using Features.Quests.Application;
+using Features.Quests.Domain;
+using FishNet;
+using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Stats.UnityIntegration
 {
@@ -11,6 +14,7 @@ namespace Features.Stats.UnityIntegration
     {
         [Header("Config")]
         [SerializeField] private EnemyConfigSO config;
+        private IBuffSource lastAttacker;
         private bool isDead;
 
         // =========================
@@ -80,6 +84,11 @@ namespace Features.Stats.UnityIntegration
             }
         }
 
+        public void RegisterAttacker(IBuffSource attacker)
+        {
+            lastAttacker = attacker;
+        }
+
         private void Update()
         {
             CheckDeath();
@@ -101,9 +110,22 @@ namespace Features.Stats.UnityIntegration
             Debug.Log("[Enemy] Died");
 
             QuestEventBus.Publish(
-                gameObject,
-                new EnemyKilledEvent(config.enemyId)
+                lastAttacker, 
+                new EnemyKilledEvent(config.enemyId, lastAttacker)
             );
+
+            if (InstanceFinder.IsServer)
+            {
+                var netObj = GetComponent<NetworkObject>();
+                if (netObj != null)
+                {
+                    InstanceFinder.ServerManager.Despawn(netObj);
+                }
+                else
+                {
+                    Destroy(gameObject); // fallback
+                }
+            }
         }
     }
 }

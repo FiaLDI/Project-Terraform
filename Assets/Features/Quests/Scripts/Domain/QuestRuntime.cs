@@ -8,6 +8,7 @@ namespace Features.Quests.Domain
         public QuestDefinition Definition { get; }
 
         public QuestState State { get; private set; }
+        public object Context { get; }
 
         private readonly Dictionary<IQuestCondition, int> progress = new();
 
@@ -15,9 +16,11 @@ namespace Features.Quests.Domain
 
         public event Action<QuestRuntime> OnUpdated;
 
-        public QuestRuntime(QuestDefinition definition)
+        public QuestRuntime(QuestDefinition definition, object context)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            Context = context;
+
             State = QuestState.Active;
         }
 
@@ -132,6 +135,14 @@ namespace Features.Quests.Domain
                 total += GetTarget(cond);
 
             return total;
+        }
+
+        public void SetProgress(IQuestCondition condition, int value)
+        {
+            progress[condition] = Math.Max(0, value);
+
+            EvaluateCompletion();
+            NotifyUpdated();
         }
     }
 }

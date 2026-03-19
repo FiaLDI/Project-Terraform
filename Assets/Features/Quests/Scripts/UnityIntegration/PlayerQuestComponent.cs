@@ -25,7 +25,7 @@ public class PlayerQuestComponent : NetworkBehaviour
 
     public override void OnStartServer()
     {
-        service = new QuestService();
+        service = new QuestService(gameObject);
         chainService = new QuestChainService(service);
 
         service.OnQuestAdded += OnQuestAdded;
@@ -75,9 +75,8 @@ public class PlayerQuestComponent : NetworkBehaviour
 
         var state = new QuestNetState(
             id,
-            quest.GetTotalProgress(),
-            quest.GetTotalTarget(),
-            false
+            BuildConditions(quest),
+            quest.State == QuestState.Completed
         );
 
         pendingUpdates.Add(state);
@@ -89,8 +88,7 @@ public class PlayerQuestComponent : NetworkBehaviour
 
         var state = new QuestNetState(
             id,
-            quest.GetTotalProgress(),
-            quest.GetTotalTarget(),
+            BuildConditions(quest),
             quest.State == QuestState.Completed
         );
 
@@ -127,10 +125,22 @@ public class PlayerQuestComponent : NetworkBehaviour
     private void HandleEvent<T>(object source, T e)
         where T : IQuestEvent
     {
-        if (source != gameObject)
-            return;
-
         service.HandleEvent(e);
+    }
+
+    private QuestConditionNetState[] BuildConditions(QuestRuntime quest)
+    {
+        var list = new List<QuestConditionNetState>();
+
+        foreach (var cond in quest.Definition.Conditions)
+        {
+            list.Add(new QuestConditionNetState(
+                quest.GetProgress(cond),
+                quest.GetTarget(cond)
+            ));
+        }
+
+        return list.ToArray();
     }
 
     private PlayerUIRoot GetLocalPlayer()

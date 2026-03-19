@@ -6,6 +6,7 @@ using Features.Quests.Data;
 using FishNet.Object.Synchronizing;
 using Features.Player.UI;
 using Features.Quests.UnityIntegration;
+using Features.Quests.Domain;
 
 public class QuestUIRuntime : MonoBehaviour
 {
@@ -111,6 +112,22 @@ public class QuestUIRuntime : MonoBehaviour
         }
     }
 
+    private string BuildConditionsText(QuestNetState state, QuestDefinition def)
+    {
+        var lines = new List<string>();
+
+        for (int i = 0; i < state.conditions.Length; i++)
+        {
+            var cond = def.Conditions[i];
+            var net = state.conditions[i];
+
+            string line = $"{cond.GetDescription()}: {net.progress}/{net.target}";
+            lines.Add(line);
+        }
+
+        return string.Join("\n", lines);
+    }
+
     // =========================================================
     // UI CREATION
     // =========================================================
@@ -118,22 +135,21 @@ public class QuestUIRuntime : MonoBehaviour
     private void AddQuestUI(QuestNetState state)
     {
         var def = questDatabase.GetDefinition(state.questId);
-
         if (def == null)
-        {
-            Debug.LogWarning($"Quest definition not found: {state.questId}");
             return;
-        }
+
+        string textValue;
+
+        if (state.completed)
+            textValue = $"{def.Name} ✓";
+        else
+            textValue = $"{def.Name}\n{BuildConditionsText(state, def)}";
 
         if (!hudEntries.ContainsKey(state.questId))
         {
             var go = Instantiate(hudEntryTemplate, hudContainer);
-
             var text = go.GetComponentInChildren<TMP_Text>();
-            if (state.completed)
-    text.text = $"{def.Name} ✓";
-else
-    text.text = $"{def.Name} ({state.progress}/{state.target})";
+            text.text = textValue;
 
             hudEntries[state.questId] = go;
         }
@@ -141,12 +157,8 @@ else
         if (!journalEntries.ContainsKey(state.questId))
         {
             var go = Instantiate(journalEntryTemplate, listParent);
-
             var text = go.GetComponentInChildren<TMP_Text>();
-            if (state.completed)
-    text.text = $"{def.Name} ✓";
-else
-    text.text = $"{def.Name} ({state.progress}/{state.target})";
+            text.text = textValue;
 
             journalEntries[state.questId] = go;
         }
@@ -155,17 +167,20 @@ else
     private void UpdateQuestUI(QuestNetState state)
     {
         var def = questDatabase.GetDefinition(state.questId);
-
         if (def == null)
             return;
+
+        string textValue;
+
+        if (state.completed)
+            textValue = $"{def.Name} ✓";
+        else
+            textValue = $"{def.Name}\n{BuildConditionsText(state, def)}";
 
         if (hudEntries.TryGetValue(state.questId, out var hud))
         {
             var text = hud.GetComponentInChildren<TMP_Text>();
-            if (state.completed)
-    text.text = $"{def.Name} ✓";
-else
-    text.text = $"{def.Name} ({state.progress}/{state.target})";
+            text.text = textValue;
 
             if (state.completed)
                 text.color = Color.green;
@@ -174,10 +189,7 @@ else
         if (journalEntries.TryGetValue(state.questId, out var journal))
         {
             var text = journal.GetComponentInChildren<TMP_Text>();
-            if (state.completed)
-    text.text = $"{def.Name} ✓";
-else
-    text.text = $"{def.Name} ({state.progress}/{state.target})";
+            text.text = textValue;
 
             if (state.completed)
                 text.color = Color.green;
