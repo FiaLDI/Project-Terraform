@@ -49,5 +49,18 @@ namespace Features.Enemy.Data
         public float instancingDistance = 120f;
         public bool disableAnimatorInInstancing = true;
         public bool makeRigidbodyKinematicInInstancing = true;
+
+        [Header("Attack Tuning")]
+        public float attackEnterOffset = 0.5f;
+        public float attackExitOffset = 1.0f;
+        public float stopDistanceMultiplier = 0.9f;
+
+        [Header("Vision")]
+        [Range(10,180)] public float visionAngle = 120f;
+        public float visionRange = 12f;
+        public bool requireLineOfSight = true;
+
+        [Header("Physics")]
+        public LayerMask obstacleMask;
     }
 }

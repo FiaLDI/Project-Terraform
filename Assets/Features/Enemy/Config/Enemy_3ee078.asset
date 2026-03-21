@@ -29,11 +29,20 @@ MonoBehaviour:
   - type: 0
     damageMultiplier: 4
   statsPreset: {fileID: 11400000, guid: fb982eeac80451f48ae636e404ba6c9e, type: 2}
-  lod0Distance: 2
-  lod1Distance: 5
-  lod2Distance: 9
+  lod0Distance: 5
+  lod1Distance: 9
+  lod2Distance: 15
   canvasHideDistance: 30
   useGPUInstancing: 1
   instancingDistance: 120
   disableAnimatorInInstancing: 1
   makeRigidbodyKinematicInInstancing: 1
+  attackEnterOffset: 0.5
+  attackExitOffset: 1
+  stopDistanceMultiplier: 0.9
+  visionAngle: 120
+  visionRange: 12
+  requireLineOfSight: 1
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 8

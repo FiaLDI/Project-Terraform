@@ -3,11 +3,15 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using FishNet.Object;
+using Features.Enemy.Data;
 
 public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 {
     private Entity entity;
     public Entity Entity => entity;
+
+    [Header("Config")]
+    [SerializeField] private EnemyConfigSO config;
 
     [Header("Patrol Points (scene transforms)")]
     [SerializeField] private Transform[] patrolPoints;
@@ -18,22 +22,17 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
     [SerializeField] private float maxWait = 3f;
     [SerializeField] private bool randomPatrol = true;
 
-    [Header("AI")]
-    [SerializeField] private float moveSpeed = 3f;
-    [SerializeField] private float aggroRadius = 8f;
-    [SerializeField] private float loseAggroRadius = 12f;
-
-    [Header("Attack")]
-    [SerializeField] private float attackRange = 2f;
-    [SerializeField] private float attackCooldown = 1.5f;
-
     private EntityManager em;
 
     public override void OnStartServer()
     {
         base.OnStartServer();
 
-        Debug.Log($"[ECS] CREATE entity for {name} | pos={transform.position}", this);
+        if (config == null)
+        {
+            Debug.LogError("EnemyConfigSO is missing!", this);
+            return;
+        }
 
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
@@ -47,30 +46,45 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             typeof(EnemyPatrolSettings),
             typeof(EnemyBlocked),
 
-            // NEW
             typeof(EnemyAggroState),
             typeof(EnemyLastKnownPosition),
-            typeof(EnemyAttackState)
+            typeof(EnemyAttackState),
+            typeof(EnemyHasLineOfSight)
         );
 
-        Debug.Log($"[ECS] ENTITY CREATED: {entity.Index}", this);
+        em.SetComponentData(entity, new EnemyHasLineOfSight
+        {
+            Value = true
+        });
 
         // ================= TRANSFORM =================
-        em.SetComponentData(
-            entity,
-            LocalTransform.FromPosition(transform.position)
-        );
+        em.SetComponentData(entity,
+            LocalTransform.FromPosition(transform.position));
 
         // ================= AI =================
         em.SetComponentData(entity, new EnemyAI
         {
-            MoveSpeed = moveSpeed,
-            AggroRadius = aggroRadius,
-            LoseAggroRadius = loseAggroRadius,
-            AttackRange = attackRange,
-            AttackCooldown = attackCooldown
+            // todo: stats
+            MoveSpeed = 3f,
+
+            AggroRadius = config.aggroRadius,
+            LoseAggroRadius = config.aggroRadius * 1.5f,
+
+            AttackRange = config.attackRange,
+            AttackCooldown = config.attackCooldown,
+
+            AttackEnterOffset = config.attackEnterOffset,
+            AttackExitOffset = config.attackExitOffset,
+            StopDistanceMultiplier = config.stopDistanceMultiplier,
+
+            VisionAngle = config.visionAngle,
+            VisionRange = config.visionRange,
+            RequireLOS = config.requireLineOfSight,
+
+            ObstacleMask = config.obstacleMask.value
         });
 
+        // ================= STATE =================
         em.SetComponentData(entity, new EnemyState
         {
             Value = EnemyAIState.Patrol
@@ -81,7 +95,7 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             Value = transform.position
         });
 
-        // ================= NEW STATES =================
+        // ================= STATES =================
         em.SetComponentData(entity, new EnemyAggroState
         {
             Timer = 0f
@@ -94,7 +108,8 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 
         em.SetComponentData(entity, new EnemyAttackState
         {
-            Cooldown = 0f
+            Cooldown = 0f,
+            DoAttack = false
         });
 
         // ================= PATROL =================
@@ -134,14 +149,12 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
                 });
             }
         }
-        else
-        {
-            Debug.LogWarning(
-                "[EnemyEcsRuntimeBinder] PatrolPoints EMPTY",
-                this
-            );
-        }
 
-        Debug.Log($"[ECS] Patrol points: {buffer.Length}", this);
+        Debug.Log($"[ECS] Enemy initialized: {entity.Index}", this);
+    }
+
+    public void SetConfig(EnemyConfigSO cfg)
+    {
+        config = cfg;
     }
 }

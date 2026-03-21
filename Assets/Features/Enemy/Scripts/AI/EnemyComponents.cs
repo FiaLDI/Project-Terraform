@@ -13,6 +13,21 @@ public struct EnemyAI : IComponentData
 
     public float AttackRange;
     public float AttackCooldown;
+
+    public float AttackEnterOffset;
+    public float AttackExitOffset;
+    public float StopDistanceMultiplier;
+
+    public float VisionAngle;
+    public float VisionRange;
+    public bool RequireLOS;
+
+    public int ObstacleMask;
+}
+
+public struct EnemyHasLineOfSight : IComponentData
+{
+    public bool Value;
 }
 
 public struct EnemyState : IComponentData
@@ -55,6 +70,7 @@ public struct EnemyAggroState : IComponentData
 public struct EnemyAttackState : IComponentData
 {
     public bool DoAttack;
+    public bool IsAttacking;
 
     public float Cooldown;
     public float Timer;
@@ -80,6 +96,8 @@ public struct EnemyPatrolState : IComponentData
     public bool IsWaiting;
 }
 
+public struct EnemyInactive : IComponentData {}
+
 public struct EnemyPatrolSettings : IComponentData
 {
     public float ReachDistance;
@@ -98,6 +116,7 @@ public struct EnemyAttackSettings : IComponentData
     public float MeleeCooldown;
     public float RangedCooldown;
 }
+
 
 public class EnemyChunkLink : MonoBehaviour
 {

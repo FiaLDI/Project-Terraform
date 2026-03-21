@@ -14,7 +14,6 @@ public sealed class EnemyVisualController : MonoBehaviour
     [Header("Rotation")]
     [SerializeField] private Transform modelRoot;
     [SerializeField] private float rotationSpeed = 8f;
-    [SerializeField] private float minTurnDistance = 0.01f;
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
@@ -24,7 +23,7 @@ public sealed class EnemyVisualController : MonoBehaviour
     private Entity entity;
     private EntityManager em;
 
-    private EnemyAIState lastState;
+    private EnemyAttackHandler attackHandler;
 
     private void Awake()
     {
@@ -36,6 +35,8 @@ public sealed class EnemyVisualController : MonoBehaviour
 
         if (modelRoot == null && animator != null)
             modelRoot = animator.transform;
+
+        attackHandler = GetComponent<EnemyAttackHandler>();
 
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
     }
@@ -77,20 +78,21 @@ public sealed class EnemyVisualController : MonoBehaviour
 
         Vector3 targetPos = targetData.Value;
 
-        Vector3 lookDir = targetPos - transform.position;
-        lookDir.y = 0f;
 
-        if (lookDir.sqrMagnitude > 0.001f)
+        // ================= ATTACK =================
+        var attackState = em.GetComponentData<EnemyAttackState>(entity);
+
+        if (attackState.DoAttack)
         {
-            Quaternion targetRot = Quaternion.LookRotation(lookDir);
+            animator.SetFloat(SpeedHash, 0.1f); // гарантируем выход из idle
+            animator.SetTrigger(AttackHash);
 
-            modelRoot.rotation = Quaternion.Slerp(
-                modelRoot.rotation,
-                targetRot,
-                rotationSpeed * Time.deltaTime
-            );
+            attackHandler?.TriggerAttack();
+
+            attackState.DoAttack = false;
+            em.SetComponentData(entity, attackState);
         }
-        
+
         lastPosition = currentPosition;
     }
 }

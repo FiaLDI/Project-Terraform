@@ -196,14 +196,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3066295441487001269}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2526760408442954474}
   m_Father: {fileID: 2271843924293331533}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &5739330300266458567
 GameObject:
   m_ObjectHideFlags: 0
@@ -401,6 +401,7 @@ MonoBehaviour:
   _componentIndexCache: 2
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
+  config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
   patrolPoints:
   - {fileID: 276696072031083721}
   - {fileID: 2193609484933478631}
@@ -410,11 +411,6 @@ MonoBehaviour:
   minWait: 1
   maxWait: 3
   randomPatrol: 1
-  moveSpeed: 3
-  aggroRadius: 8
-  loseAggroRadius: 12
-  attackRange: 2
-  attackCooldown: 1.5
 --- !u!114 &2477525584403044842
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -528,7 +524,6 @@ MonoBehaviour:
   dampTime: 0.1
   modelRoot: {fileID: 44806263007014780}
   rotationSpeed: 8
-  minTurnDistance: 0.2
 --- !u!114 &-6394603796330078313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -638,7 +633,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da32942358ec5fe4daf69db5b510df3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackHandler
-  animator: {fileID: 9043510921884413813}
   attackDelay: 0.3
   effect:
     type: 0

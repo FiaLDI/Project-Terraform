@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Entities;
 using Features.Enemy.Data;
 using Features.Player.UnityIntegration;
 using Features.Enemy.UnityIntegration;
@@ -8,24 +9,29 @@ public class EnemyLODController : MonoBehaviour
     public EnemyConfigSO config;
 
     private Transform anchor;
-    private GameObject currentLodGO;
+
+    private GameObject[] lodObjects = new GameObject[3];
+    private int currentLod = -1;
 
     private Canvas worldCanvas;
-
     private Animator anim;
-    private Rigidbody rb;
+
+    private EnemyEcsMoveBridge bridge;
+    private EnemyAttackHandler attack;
+
+    private Entity entity;
+    private EntityManager em;
 
     private bool instancingMode = false;
 
-    private int currentLod = -1;
+    private Mesh instancingMesh;
+    private Material instancingMat;
+
     private float nextUpdateTime;
     private const float UpdateInterval = 0.08f;
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody>();
-
-        // Anchor для моделей
         anchor = transform.Find("Anchor");
         if (!anchor)
         {
@@ -34,18 +40,29 @@ public class EnemyLODController : MonoBehaviour
             anchor.localPosition = Vector3.zero;
         }
 
+        bridge = GetComponent<EnemyEcsMoveBridge>();
+        attack = GetComponent<EnemyAttackHandler>();
+
         AutoAssignCanvas();
+
+        InitLODs();
 
         nextUpdateTime = Time.time + Random.Range(0f, UpdateInterval);
     }
 
+    private void Start()
+    {
+        em = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        var binder = GetComponent<EnemyEcsRuntimeBinder>();
+        if (binder != null)
+            entity = binder.Entity;
+    }
+
     private void Update()
     {
-        if (config == null)
-            return;
-
-        if (Time.time < nextUpdateTime)
-            return;
+        if (config == null) return;
+        if (Time.time < nextUpdateTime) return;
 
         nextUpdateTime = Time.time + UpdateInterval;
 
@@ -53,16 +70,14 @@ public class EnemyLODController : MonoBehaviour
         if (registry == null || registry.LocalPlayer == null)
             return;
 
-        Transform playerTf = registry.LocalPlayer.transform;
-        float dist = Vector3.Distance(playerTf.position, transform.position);
+        float dist = Vector3.Distance(
+            registry.LocalPlayer.transform.position,
+            transform.position
+        );
 
         // ---------------- CANVAS ----------------
         if (worldCanvas != null)
-        {
-            bool shouldShow = dist < config.canvasHideDistance;
-            if (worldCanvas.enabled != shouldShow)
-                worldCanvas.enabled = shouldShow;
-        }
+            worldCanvas.enabled = dist < config.canvasHideDistance;
 
         // ---------------- INSTANCING ----------------
         bool useInstancing =
@@ -72,172 +87,157 @@ public class EnemyLODController : MonoBehaviour
         if (useInstancing)
         {
             if (!instancingMode)
-            {
-                SwitchToInstancing();
-                currentLod = -1;
-            }
+                EnterInstancing();
 
-            SubmitInstancingDraw();
+            SubmitInstancing();
             return;
         }
 
         if (instancingMode)
-        {
-            SwitchToNormal();
-        }
+            ExitInstancing();
 
         // ---------------- LOD ----------------
-        float d0 = config.lod0Distance;
-        float d1 = config.lod1Distance;
-
-        int newLod;
-        if (dist <= d0) newLod = 0;
-        else if (dist <= d1) newLod = 1;
-        else newLod = 2;
+        int newLod =
+            dist <= config.lod0Distance ? 0 :
+            dist <= config.lod1Distance ? 1 : 2;
 
         if (newLod == currentLod)
             return;
 
         currentLod = newLod;
 
-        SetLOD(newLod);
-        HandleLogicByLOD(newLod);
+        ApplyLOD(newLod);
+        ApplyLogic(newLod);
     }
 
-    // -----------------------------------------------------------
-    // LOD SWITCH
-    // -----------------------------------------------------------
+    // =========================================================
+    // INIT
+    // =========================================================
 
-    private void SetLOD(int lod)
+    private void InitLODs()
     {
-        if (currentLodGO != null)
-            Destroy(currentLodGO);
+        lodObjects[0] = Instantiate(config.lod0Prefab, anchor);
+        lodObjects[1] = Instantiate(config.lod1Prefab, anchor);
+        lodObjects[2] = Instantiate(config.lod2Prefab, anchor);
 
-        GameObject prefab = lod switch
+        for (int i = 0; i < lodObjects.Length; i++)
         {
-            0 => config.lod0Prefab,
-            1 => config.lod1Prefab,
-            _ => config.lod2Prefab
-        };
-
-        if (prefab == null)
-            return;
-
-        currentLodGO = Instantiate(prefab, anchor);
-        currentLodGO.transform.localPosition = Vector3.zero;
-        currentLodGO.transform.localRotation = Quaternion.identity;
-
-        anim = currentLodGO.GetComponentInChildren<Animator>();
-    }
-
-    // -----------------------------------------------------------
-    // ЛОГИКА ПО LOD (оптимизация)
-    // -----------------------------------------------------------
-
-    private void HandleLogicByLOD(int lod)
-    {
-        var actor = GetComponent<EnemyActor>();
-
-        if (actor != null)
-        {
-            if (lod == 2)
-                actor.enabled = false; // далеко → отключаем AI
-            else
-                actor.enabled = true;
-        }
-
-        if (anim != null)
-        {
-            anim.enabled = (lod == 0); // только на близком LOD
-        }
-
-        if (rb != null && config.makeRigidbodyKinematicInInstancing)
-        {
-            rb.isKinematic = (lod == 2);
+            lodObjects[i].transform.localPosition = Vector3.zero;
+            lodObjects[i].transform.localRotation = Quaternion.identity;
+            lodObjects[i].SetActive(false);
         }
     }
-
-    // -----------------------------------------------------------
-    // CANVAS
-    // -----------------------------------------------------------
 
     private void AutoAssignCanvas()
     {
-        if (config != null && config.worldCanvasPrefab != null)
+        if (config.worldCanvasPrefab != null)
         {
-            GameObject canvasObj = Instantiate(config.worldCanvasPrefab, transform);
-            worldCanvas = canvasObj.GetComponent<Canvas>();
+            var obj = Instantiate(config.worldCanvasPrefab, transform);
+            worldCanvas = obj.GetComponent<Canvas>();
             return;
         }
 
-        var canvasTransform = transform.Find("Canvas");
-        if (canvasTransform != null)
-            worldCanvas = canvasTransform.GetComponent<Canvas>();
+        var c = transform.Find("Canvas");
+        if (c) worldCanvas = c.GetComponent<Canvas>();
     }
 
-    // -----------------------------------------------------------
-    // INSTANCING
-    // -----------------------------------------------------------
+    // =========================================================
+    // LOD
+    // =========================================================
 
-    private void SwitchToInstancing()
+    private void ApplyLOD(int lod)
+    {
+        for (int i = 0; i < lodObjects.Length; i++)
+            lodObjects[i].SetActive(i == lod);
+
+        anim = lodObjects[lod].GetComponentInChildren<Animator>();
+
+        // кеш для instancing
+        if (lod == 2)
+        {
+            var r = lodObjects[2].GetComponentInChildren<Renderer>();
+            if (r != null)
+            {
+                var mf = r.GetComponent<MeshFilter>();
+                if (mf != null)
+                {
+                    instancingMesh = mf.sharedMesh;
+                    instancingMat = r.sharedMaterial;
+                }
+            }
+        }
+    }
+
+    private void ApplyLogic(int lod)
+    {
+        // ECS active/inactive
+        if (em.Exists(entity))
+        {
+            if (lod >= 2)
+            {
+                if (!em.HasComponent<EnemyInactive>(entity))
+                    em.AddComponent<EnemyInactive>(entity);
+            }
+            else
+            {
+                if (em.HasComponent<EnemyInactive>(entity))
+                    em.RemoveComponent<EnemyInactive>(entity);
+            }
+        }
+
+        // movement
+        if (bridge != null)
+            bridge.enabled = (lod < 2);
+
+        // attack
+        if (attack != null)
+            attack.enabled = true;
+
+        // animation
+        if (anim != null)
+            anim.enabled = (lod == 0);
+    }
+
+    // =========================================================
+    // INSTANCING
+    // =========================================================
+
+    private void EnterInstancing()
     {
         instancingMode = true;
 
-        if (currentLodGO != null)
-            currentLodGO.SetActive(false);
+        for (int i = 0; i < lodObjects.Length; i++)
+            lodObjects[i].SetActive(false);
 
-        if (anim)
-            anim.enabled = false;
-
-        if (rb && config.makeRigidbodyKinematicInInstancing)
-            rb.isKinematic = true;
+        if (bridge) bridge.enabled = false;
+        if (attack) attack.enabled = false;
     }
 
-    private void SwitchToNormal()
+    private void ExitInstancing()
     {
         instancingMode = false;
 
-        if (currentLodGO != null)
-            currentLodGO.SetActive(true);
-
-        if (anim)
-            anim.enabled = true;
-
-        if (rb && config.makeRigidbodyKinematicInInstancing)
-            rb.isKinematic = false;
+        ApplyLOD(currentLod);
+        ApplyLogic(currentLod);
     }
 
-    private void SubmitInstancingDraw()
+    private void SubmitInstancing()
     {
-        if (EnemyGPUInstancer.Instance == null || currentLodGO == null)
-            return;
-
-        var r = currentLodGO.GetComponentInChildren<Renderer>();
-        if (!r) return;
-
-        var mf = r.GetComponent<MeshFilter>();
-        if (!mf) return;
-
-        Mesh mesh = mf.sharedMesh;
-        Material mat = r.sharedMaterial;
-
-        if (!mesh || !mat || !mat.enableInstancing)
-            return;
-
-        EnemyInstance inst = new EnemyInstance
-        {
-            position = transform.position,
-            rotation = transform.rotation,
-            scale = transform.lossyScale.x,
-            color = Color.white
-        };
+        if (EnemyGPUInstancer.Instance == null) return;
+        if (instancingMesh == null || instancingMat == null) return;
 
         EnemyGPUInstancer.Instance.AddInstance(
-            mesh,
-            mat,
-            inst,
-            r.shadowCastingMode,
-            r.receiveShadows,
+            instancingMesh,
+            instancingMat,
+            new EnemyInstance
+            {
+                position = transform.position,
+                rotation = transform.rotation,
+                scale = transform.lossyScale.x,
+                color = Color.white
+            },
+            UnityEngine.Rendering.ShadowCastingMode.On,
+            true,
             gameObject.layer
         );
     }

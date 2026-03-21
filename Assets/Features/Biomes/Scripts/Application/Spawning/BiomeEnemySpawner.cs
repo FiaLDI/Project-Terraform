@@ -113,6 +113,10 @@ public class BiomeEnemySpawner : MonoBehaviour
         var lod = enemyGO.GetComponent<EnemyLODController>();
         if (lod)
             lod.config = config;
+        
+        var binder = enemyGO.GetComponent<EnemyEcsRuntimeBinder>();
+        if (binder != null)
+            binder.SetConfig(config);
 
         // --- FishNet Spawn ---
         var nob = enemyGO.GetComponent<NetworkObject>();

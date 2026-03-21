@@ -40,15 +40,8 @@ makeRigidbodyKinematicInInstancing	Делать Rigidbody kinematic
 ПРЕФАБ ДОЛЖЕН БЫТЬ СТРОГО ТАКИМ:
 
 Enemy_Zombie (root)
- ├─ Model
- │    ├─ Model_LOD0
- │    ├─ Model_LOD1
- │    └─ Model_LOD2
  ├─ Anchor               ← необязательно (точка для HP-бара)
- └─ (автоматически добавляемые компоненты:)
-      EnemyLODController
-      EnemyHealth
-      EnemyInstanceTracker
+ └─ 
 
 Требования
 

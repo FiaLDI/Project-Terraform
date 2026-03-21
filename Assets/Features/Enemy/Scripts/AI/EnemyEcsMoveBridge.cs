@@ -65,98 +65,132 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         initialized = true;
     }
 
-    private void EnsureRigidbody()
-    {
-        if (rb == null) return;
-
-        if (rb.isKinematic)
-        {
-            Debug.LogWarning("[Bridge] Rigidbody was kinematic → FIXED", this);
-            rb.isKinematic = false;
-        }
-    }
-
     private void FixedUpdate()
     {
         if (!IsServer) return;
 
-        //EnsureRigidbody();
-
         TryInitialize();
+        if (!initialized || !em.Exists(entity)) return;
 
-        if (!initialized) return;
-        if (!em.Exists(entity)) return;
-
-        var targetData = em.GetComponentData<EnemyTargetPosition>(entity);
-
-        Vector3 target = new Vector3(
-            targetData.Value.x,
-            targetData.Value.y,
-            targetData.Value.z
-        );
-
-        CurrentTarget = target;
-
-        Vector3 pos = rb.position;
-        Vector3 dir = target - pos;
-        dir.y = 0f;
-
-
-        Debug.Log($"[MOVE] pos={pos} target={target} dist={(target - pos).magnitude}", this);
-
-        float sqr = dir.sqrMagnitude;
-
-        if (sqr < 0.01f)
+        // ================= INACTIVE =================
+        if (em.HasComponent<EnemyInactive>(entity))
         {
-            CurrentSpeed = 0f;
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
             return;
         }
 
-        Vector3 forward = dir.normalized;
+        var targetData = em.GetComponentData<EnemyTargetPosition>(entity);
 
-        // obstacle detection
-        if (Physics.Raycast(
-            rb.position + Vector3.up * 0.5f,
-            forward,
-            0.6f,
-            obstacleMask))
+        Vector3 pos = rb.position;
+        Vector3 target = targetData.Value;
+
+        // ================= DIRECTION =================
+        Vector3 toTarget = target - pos;
+
+        // 👉 работаем в XZ для дистанции
+        Vector3 flatDir = toTarget;
+        flatDir.y = 0;
+
+        float dist = flatDir.magnitude;
+
+        if (dist < 0.3f)
         {
-            if (em.HasComponent<EnemyBlocked>(entity))
-            {
-                var blocked = em.GetComponentData<EnemyBlocked>(entity);
-                blocked.Value = true;
-                em.SetComponentData(entity, blocked);
-            }
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+            return;
         }
 
-        Vector3 next =
-            pos + forward * moveSpeed * Time.fixedDeltaTime;
+        // ================= GROUND NORMAL =================
+        Vector3 groundNormal = Vector3.up;
 
-        // 🔥 фиксируем Y ТОЛЬКО по земле
         if (Physics.Raycast(
-            next + Vector3.up * 1.5f,
+            pos + Vector3.up * 0.5f,
             Vector3.down,
             out RaycastHit hit,
-            3f,
+            2f,
             groundMask,
             QueryTriggerInteraction.Ignore))
         {
-            // маленький offset чтобы не залипать
-            next.y = hit.point.y + 0.05f;
+            groundNormal = hit.normal;
         }
-        else
+
+        // 👉 движение вдоль поверхности
+        Vector3 moveDir = Vector3.ProjectOnPlane(flatDir, groundNormal).normalized;
+
+        // ================= STEP CHECK =================
+        Vector3 forward = moveDir;
+
+        bool blockedLow = Physics.Raycast(
+            pos + Vector3.up * 0.1f,
+            forward,
+            0.5f,
+            obstacleMask);
+
+        bool freeHigh = !Physics.Raycast(
+            pos + Vector3.up * 0.6f,
+            forward,
+            0.5f,
+            obstacleMask);
+
+        if (blockedLow && freeHigh)
         {
-            // если не нашли землю — не меняем высоту
-            next.y = pos.y;
+            // 👉 мягкий "шаг"
+            rb.AddForce(Vector3.up * 3f, ForceMode.VelocityChange);
         }
 
-        rb.MovePosition(next);
+        // ================= AVOIDANCE =================
+        Collider[] neighbors = Physics.OverlapSphere(pos, 0.8f);
 
-        Vector3 realPos = rb.position;
+        Vector3 separation = Vector3.zero;
 
-        em.SetComponentData(
-            entity,
-            LocalTransform.FromPosition(realPos)
+        foreach (var col in neighbors)
+        {
+            if (col.attachedRigidbody == rb) continue;
+            if (!col.CompareTag("Enemy")) continue;
+
+            Vector3 away = pos - col.transform.position;
+            away.y = 0;
+
+            float d = away.magnitude;
+
+            if (d > 0.001f)
+                separation += away.normalized / d;
+        }
+
+        moveDir += separation * 0.3f;
+        moveDir.Normalize();
+
+        // ================= SPEED =================
+        float speed = moveSpeed;
+
+        if (dist < 1.5f)
+            speed *= dist / 1.5f;
+
+        Vector3 vel = moveDir * speed;
+
+        rb.linearVelocity = new Vector3(
+            vel.x,
+            rb.linearVelocity.y,
+            vel.z
         );
+
+        // ================= ROTATION =================
+        Vector3 lookDir = moveDir;
+        lookDir.y = 0;
+
+        if (lookDir.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(lookDir);
+
+            rb.MoveRotation(Quaternion.Slerp(
+                rb.rotation,
+                targetRot,
+                10f * Time.fixedDeltaTime
+            ));
+        }
+
+        // ================= SYNC ECS =================
+        var transformData = em.GetComponentData<LocalTransform>(entity);
+        transformData.Position = rb.position;
+        em.SetComponentData(entity, transformData);
     }
 }
