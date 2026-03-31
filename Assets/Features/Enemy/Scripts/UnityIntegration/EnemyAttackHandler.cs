@@ -3,6 +3,7 @@ using System.Collections;
 using Features.Effects.Domain;
 using Features.Effects.Application;
 using Features.Buffs.Domain;
+using Features.Player.UnityIntegration;
 
 public sealed class EnemyAttackHandler : MonoBehaviour
 {
@@ -35,22 +36,28 @@ public sealed class EnemyAttackHandler : MonoBehaviour
 
     private void DealDamage()
     {
-        Vector3 forward = transform.forward;
+        var registry = PlayerRegistry.Instance;
+        if (registry == null || registry.LocalPlayer == null)
+            return;
 
-        var visual = GetComponent<EnemyVisualController>();
-        if (visual != null)
-        {
-            var root = visual.GetComponentInChildren<Animator>()?.transform;
-            if (root != null)
-                forward = root.forward;
-        }
+        Vector3 targetPos = registry.LocalPlayer.transform.position;
 
-        Vector3 origin = transform.position + forward * 1.2f;
+        Vector3 dir = targetPos - transform.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.001f)
+            return;
+
+        dir.Normalize();
+
+        Vector3 origin = transform.position;
+        origin.y = targetPos.y;
+
+        origin += dir * 1.2f;
 
         IBuffSource source = null;
 
-        var monos = GetComponentsInParent<MonoBehaviour>();
-        foreach (var m in monos)
+        foreach (var m in GetComponentsInParent<MonoBehaviour>())
         {
             if (m is IBuffSource s)
             {
@@ -63,7 +70,7 @@ public sealed class EnemyAttackHandler : MonoBehaviour
             source,
             null,
             origin,
-            forward
+            dir
         );
 
         var targets = TargetResolver.Resolve(effect, ctx);

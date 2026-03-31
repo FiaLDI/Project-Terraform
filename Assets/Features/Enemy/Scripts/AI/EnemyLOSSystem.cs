@@ -1,3 +1,5 @@
+using FishNet;
+using FishNet.Managing.Scened;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
@@ -24,9 +26,30 @@ public class EnemyLOSSystem : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        InstanceFinder.SceneManager.OnLoadEnd += OnSceneLoaded;
+        RefreshWorld();
+    }
+
+    private void OnDisable()
+    {
+        if (InstanceFinder.SceneManager != null)
+            InstanceFinder.SceneManager.OnLoadEnd -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(SceneLoadEndEventArgs args)
+    {
+        Debug.Log("[EnemyLOSSystem] Scene loaded → refresh ECS");
+        RefreshWorld();
+    }
+
+    private void RefreshWorld()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null) return;
+
+        em = world.EntityManager;
 
         query = em.CreateEntityQuery(
             typeof(EnemyTag),
@@ -38,6 +61,23 @@ public class EnemyLOSSystem : MonoBehaviour
 
     private void Update()
     {
+        var world = World.DefaultGameObjectInjectionWorld;
+
+        if (world == null || !world.IsCreated)
+            return;
+
+        if (em != world.EntityManager)
+        {
+            em = world.EntityManager;
+
+            query = em.CreateEntityQuery(
+                typeof(EnemyTag),
+                typeof(LocalTransform),
+                typeof(EnemyHasLineOfSight),
+                typeof(EnemyAI)
+            );
+        }
+
         var registry = PlayerRegistry.Instance;
 
         if (registry == null || registry.LocalPlayer == null)

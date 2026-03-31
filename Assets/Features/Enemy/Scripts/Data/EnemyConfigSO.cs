@@ -53,7 +53,7 @@ namespace Features.Enemy.Data
         [Header("Attack Tuning")]
         public float attackEnterOffset = 0.5f;
         public float attackExitOffset = 1.0f;
-        public float stopDistanceMultiplier = 0.9f;
+        public float stopDistanceMultiplier = 0.7f;
 
         [Header("Vision")]
         [Range(10,180)] public float visionAngle = 120f;

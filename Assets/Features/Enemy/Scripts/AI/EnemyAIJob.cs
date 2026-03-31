@@ -139,7 +139,7 @@ public partial struct EnemyAIJob : IJobEntity
             float3 playerXZ = PlayerPosition;
             playerXZ.y = 0;
 
-            float dist = math.distance(posXZ, playerXZ);
+            float dist = math.distance(pos, PlayerPosition);
 
             lastKnown.Value = PlayerPosition;
 
@@ -176,7 +176,7 @@ public partial struct EnemyAIJob : IJobEntity
             float3 playerXZ = PlayerPosition;
             playerXZ.y = 0;
 
-            float dist = math.distance(posXZ, playerXZ);
+            float dist = math.distance(pos, PlayerPosition);
 
             float exitAttack = ai.AttackRange + ai.AttackExitOffset;
 
