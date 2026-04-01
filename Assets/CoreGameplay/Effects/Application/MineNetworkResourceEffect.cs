@@ -27,12 +27,6 @@ namespace Features.Effects.Application
             if (!InstanceFinder.IsServer)
                 return;
 
-            Debug.Log("=== MINE TICK ===");
-            Debug.Log($"Origin: {context.Origin}");
-            Debug.Log($"Direction: {context.Direction}");
-            Debug.Log($"Range: {_range}");
-            Debug.Log($"Mask value: {_mask.value}");
-
             Debug.DrawRay(
                 context.Origin,
                 context.Direction * _range,
@@ -47,26 +41,18 @@ namespace Features.Effects.Application
                 _range,
                 _mask);
 
-            Debug.Log($"Raycast result: {hitSomething}");
-
             if (!hitSomething)
             {
-                Debug.Log("SERVER RAY MISS");
                 return;
             }
 
-            Debug.Log($"Hit object: {hit.collider.name}");
-            Debug.Log($"Hit layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
-            Debug.Log($"Hit distance: {hit.distance}");
-
             if (hit.collider.TryGetComponent<ResourceNodeNetwork>(out var node))
             {
-                Debug.Log("RESOURCE NODE FOUND → Mining");
                 node.Mine_Server(_value, 1f);
             }
             else
             {
-                Debug.Log("Hit but no ResourceNodeNetwork component");
+
             }
         }
     }

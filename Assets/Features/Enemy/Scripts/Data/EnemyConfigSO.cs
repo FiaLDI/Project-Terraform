@@ -1,5 +1,4 @@
 using Features.Enemy.Domain;
-using UnityEditor.Animations;
 using UnityEngine;
 
 namespace Features.Enemy.Data
@@ -62,7 +61,7 @@ namespace Features.Enemy.Data
         public bool requireLineOfSight = true;
 
         [Header("Animation")]
-        public AnimatorController animatorController;
+        public RuntimeAnimatorController animatorController;
 
         [Header("Physics")]
         public LayerMask obstacleMask;

@@ -19,21 +19,16 @@ namespace Features.Effects.Application
                 _ => System.Array.Empty<IBuffTarget>()
             };
 
-            Debug.Log("RAW: " + raw.Length);
-
             raw = ApplyOwnershipFilter(raw, def, ctx);
-            Debug.Log("After Ownership: " + raw.Length);
 
             if (def.coneAngle > 0f)
             {
                 raw = ApplyConeFilter(raw, def, ctx);
-                Debug.Log("After Cone: " + raw.Length);
             }
 
             if (def.selectClosest)
             {
                 raw = SelectClosest(raw, ctx);
-                Debug.Log("After SelectClosest: " + raw.Length);
             }
 
             return raw;
@@ -100,7 +95,7 @@ namespace Features.Effects.Application
             Vector3 origin = ctx.Origin;
             Vector3 forward = ctx.Direction.normalized;
 
-            float halfAngle = def.coneAngle * 0.5f + 25f; // 🔥 буфер
+            float halfAngle = def.coneAngle * 0.5f + 25f;
 
             foreach (var t in targets)
             {
@@ -110,7 +105,6 @@ namespace Features.Effects.Application
                 Vector3 toTarget = t.Transform.position - origin;
                 float dist = toTarget.magnitude;
 
-                // 🔥 близко → всегда попадает
                 if (dist < 2.0f)
                 {
                     results.Add(t);
@@ -171,13 +165,10 @@ namespace Features.Effects.Application
             Collider col,
             List<IBuffTarget> results)
         {
-            // 🔥 ищем конкретный компонент
             var target = col.GetComponentInParent<StatsBuffTarget>();
 
             if (target != null)
             {
-                Debug.Log("FOUND TARGET: " + target.name);
-
                 if (!results.Contains(target))
                     results.Add(target);
 

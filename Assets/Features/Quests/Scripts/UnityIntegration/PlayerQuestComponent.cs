@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Features.Inventory.Domain;
 using Features.Player.UI;
 using Features.Quests.Application;
 using Features.Quests.Data;
@@ -11,6 +12,7 @@ using UnityEngine;
 public class PlayerQuestComponent : NetworkBehaviour
 {
     public readonly SyncDictionary<string, QuestNetState> Quests = new();
+    private readonly HashSet<string> rewarded = new();
 
     private QuestService service;
     private QuestChainService chainService;
@@ -93,6 +95,8 @@ public class PlayerQuestComponent : NetworkBehaviour
         );
 
         pendingUpdates.Add(state);
+
+        TryGiveRewards(quest);
     }
 
     private void OnQuestRemoved(QuestRuntime quest)
@@ -168,6 +172,39 @@ public class PlayerQuestComponent : NetworkBehaviour
 
             if (chain != null)
                 chainService.StartChain(chain);
+        }
+    }
+
+    private void TryGiveRewards(QuestRuntime quest)
+    {
+        if (quest.State != QuestState.Completed)
+            return;
+
+        var id = quest.Definition.Id.Value;
+
+        if (rewarded.Contains(id))
+            return;
+
+        rewarded.Add(id);
+
+        GiveRewards(quest);
+    }
+
+    private void GiveRewards(QuestRuntime quest)
+    {
+        var net = GetComponent<InventoryStateNetwork>();
+        if (net == null)
+            return;
+
+        foreach (var reward in quest.Definition.Rewards)
+        {
+            net.ExecuteCommandServer(new InventoryCommandData
+            {
+                Command = InventoryCommand.GiveReward,
+                RewardItemId = reward.ItemId,
+                RewardAmount = reward.Amount,
+                RewardLevel = 0
+            });
         }
     }
 

@@ -117,7 +117,10 @@ public sealed class WorldItemNetwork : NetworkBehaviour
         }
 
         quantity.Value = 0;
-        Despawn();
+        if (NetworkObject != null && NetworkObject.IsSpawned)
+        {
+            NetworkObject.Despawn();
+        }
     }
 
 }

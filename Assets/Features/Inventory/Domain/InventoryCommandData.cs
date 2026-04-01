@@ -27,5 +27,9 @@ namespace Features.Inventory.Domain
         public string ItemId;
         public int PickupQuantity;
         public int PickupLevel; 
+
+        public string RewardItemId;
+        public int RewardAmount;
+        public int RewardLevel;
     }
 }

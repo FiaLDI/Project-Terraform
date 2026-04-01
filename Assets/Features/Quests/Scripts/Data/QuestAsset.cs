@@ -24,8 +24,6 @@ namespace Features.Quests.Data
         public EnemyKillConditionConfig[] killEnemies;
 
         public ItemCollectConditionConfig[] collectItems;
-
-        [Header("Have Items (Inventory State)")]
         public ItemHaveConditionConfig[] haveItems;
 
         public string reachPointId;
@@ -38,7 +36,6 @@ namespace Features.Quests.Data
         {
             var conditions = new List<IQuestCondition>();
 
-            // Kill enemies
             if (killEnemies != null)
             {
                 foreach (var c in killEnemies)
@@ -55,7 +52,6 @@ namespace Features.Quests.Data
                 }
             }
 
-            // Collect items
             if (collectItems != null)
             {
                 foreach (var c in collectItems)
@@ -72,7 +68,6 @@ namespace Features.Quests.Data
                 }
             }
 
-            // Reach point
             if (!string.IsNullOrEmpty(reachPointId))
             {
                 conditions.Add(

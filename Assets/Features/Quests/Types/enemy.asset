@@ -18,7 +18,10 @@ MonoBehaviour:
   scope: 1
   killEnemies:
   - enemyId: enemy_3ee078
-    requiredKills: 5
+    requiredKills: 1
   collectItems: []
+  haveItems: []
   reachPointId: 
-  rewards: []
+  rewards:
+  - itemId: 4
+    amount: 6

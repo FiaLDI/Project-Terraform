@@ -4,21 +4,14 @@ namespace Features.Inventory.Domain
     {
         None = 0,
         PickupWorldItem,
-
-        // move / swap
         MoveItem,
-
-        // drop
         DropFromSlot,
-
-        // equip
         EquipRightHand,
         EquipLeftHand,
         UnequipRightHand,
         UnequipLeftHand,
-
-        // crafting / upgrade
         CraftRecipe,
-        UpgradeItem
+        UpgradeItem,
+        GiveReward
     }
 }
