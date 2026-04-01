@@ -1,8 +1,9 @@
-using UnityEngine;
-using Unity.Entities;
+using System;
 using Features.Enemy.Data;
-using Features.Player.UnityIntegration;
 using Features.Enemy.UnityIntegration;
+using Features.Player.UnityIntegration;
+using Unity.Entities;
+using UnityEngine;
 
 public class EnemyLODController : MonoBehaviour
 {
@@ -30,6 +31,8 @@ public class EnemyLODController : MonoBehaviour
     private float nextUpdateTime;
     private const float UpdateInterval = 0.08f;
 
+    public event Action<GameObject> OnModelChanged;
+
     private void Awake()
     {
         anchor = transform.Find("Anchor");
@@ -47,7 +50,7 @@ public class EnemyLODController : MonoBehaviour
 
         InitLODs();
 
-        nextUpdateTime = Time.time + Random.Range(0f, UpdateInterval);
+        nextUpdateTime = Time.time + UnityEngine.Random.Range(0f, UpdateInterval);
     }
 
     private void Start()
@@ -152,7 +155,20 @@ public class EnemyLODController : MonoBehaviour
 
         anim = lodObjects[lod].GetComponentInChildren<Animator>();
 
-        // кеш для instancing
+        if (anim == null)
+        {
+            Debug.LogError("[LOD] Animator NOT FOUND in model", this);
+        }
+        else
+        {
+            if (config.animatorController != null)
+            {
+                anim.runtimeAnimatorController = config.animatorController;
+            }
+        }
+
+        OnModelChanged?.Invoke(lodObjects[lod]);
+
         if (lod == 2)
         {
             var r = lodObjects[2].GetComponentInChildren<Renderer>();
@@ -170,7 +186,6 @@ public class EnemyLODController : MonoBehaviour
 
     private void ApplyLogic(int lod)
     {
-        // ECS active/inactive
         if (em.Exists(entity))
         {
             if (lod >= 2)
@@ -185,15 +200,12 @@ public class EnemyLODController : MonoBehaviour
             }
         }
 
-        // movement
         if (bridge != null)
             bridge.enabled = (lod < 2);
 
-        // attack
         if (attack != null)
             attack.enabled = true;
 
-        // animation
         if (anim != null)
             anim.enabled = (lod == 0);
     }

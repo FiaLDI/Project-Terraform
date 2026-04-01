@@ -21,9 +21,9 @@ MonoBehaviour:
   attackDamage: 10
   attackCooldown: 1.2
   prefab: {fileID: 604374280082702520, guid: be6e72fcfdb963e4ca65277fbd550c07, type: 3}
-  lod0Prefab: {fileID: 919132149155446097, guid: f8df7a4afba90e341847c19ea80d2455, type: 3}
-  lod1Prefab: {fileID: 919132149155446097, guid: f8df7a4afba90e341847c19ea80d2455, type: 3}
-  lod2Prefab: {fileID: 919132149155446097, guid: f8df7a4afba90e341847c19ea80d2455, type: 3}
+  lod0Prefab: {fileID: 6802237692358657452, guid: 2d806f86cbd48ef4aaac1fc459b2e0b7, type: 3}
+  lod1Prefab: {fileID: 6802237692358657452, guid: 2d806f86cbd48ef4aaac1fc459b2e0b7, type: 3}
+  lod2Prefab: {fileID: 6802237692358657452, guid: 2d806f86cbd48ef4aaac1fc459b2e0b7, type: 3}
   worldCanvasPrefab: {fileID: 786559596788043606, guid: 96933ac920e73034a96f96e7debd3c8f, type: 3}
   hitboxes:
   - type: 0
@@ -39,10 +39,11 @@ MonoBehaviour:
   makeRigidbodyKinematicInInstancing: 1
   attackEnterOffset: 0.5
   attackExitOffset: 1
-  stopDistanceMultiplier: 0.9
+  stopDistanceMultiplier: 0.5
   visionAngle: 120
   visionRange: 12
   requireLineOfSight: 1
+  animatorController: {fileID: 9100000, guid: 17d88a246140d7c439423367a199d771, type: 2}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8

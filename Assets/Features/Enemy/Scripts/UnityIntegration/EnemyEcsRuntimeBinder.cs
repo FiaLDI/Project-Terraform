@@ -149,8 +149,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
                 });
             }
         }
-
-        Debug.Log($"[ECS] Enemy initialized: {entity.Index}", this);
     }
 
     public void SetConfig(EnemyConfigSO cfg)

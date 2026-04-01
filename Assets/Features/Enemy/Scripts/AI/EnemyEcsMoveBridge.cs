@@ -95,8 +95,12 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
 
         if (dist < 0.3f)
         {
-            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
-            return;
+            rb.linearVelocity = new Vector3(
+                rb.linearVelocity.x * 0.2f,
+                rb.linearVelocity.y,
+                rb.linearVelocity.z * 0.2f
+            );
+
         }
 
         // ================= GROUND NORMAL =================

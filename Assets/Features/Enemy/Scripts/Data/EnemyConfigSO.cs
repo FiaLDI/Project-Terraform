@@ -1,4 +1,5 @@
 using Features.Enemy.Domain;
+using UnityEditor.Animations;
 using UnityEngine;
 
 namespace Features.Enemy.Data
@@ -59,6 +60,9 @@ namespace Features.Enemy.Data
         [Range(10,180)] public float visionAngle = 120f;
         public float visionRange = 12f;
         public bool requireLineOfSight = true;
+
+        [Header("Animation")]
+        public AnimatorController animatorController;
 
         [Header("Physics")]
         public LayerMask obstacleMask;

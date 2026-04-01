@@ -40,7 +40,6 @@ public class EnemyLOSSystem : MonoBehaviour
 
     private void OnSceneLoaded(SceneLoadEndEventArgs args)
     {
-        Debug.Log("[EnemyLOSSystem] Scene loaded → refresh ECS");
         RefreshWorld();
     }
 
@@ -66,17 +65,7 @@ public class EnemyLOSSystem : MonoBehaviour
         if (world == null || !world.IsCreated)
             return;
 
-        if (em != world.EntityManager)
-        {
-            em = world.EntityManager;
-
-            query = em.CreateEntityQuery(
-                typeof(EnemyTag),
-                typeof(LocalTransform),
-                typeof(EnemyHasLineOfSight),
-                typeof(EnemyAI)
-            );
-        }
+        em = world.EntityManager;
 
         var registry = PlayerRegistry.Instance;
 
@@ -84,6 +73,13 @@ public class EnemyLOSSystem : MonoBehaviour
             return;
 
         Vector3 playerPos = registry.LocalPlayer.transform.position;
+
+        var query = em.CreateEntityQuery(
+            typeof(EnemyTag),
+            typeof(LocalTransform),
+            typeof(EnemyHasLineOfSight),
+            typeof(EnemyAI)
+        );
 
         var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
 
@@ -96,7 +92,10 @@ public class EnemyLOSSystem : MonoBehaviour
 
             Vector3 enemyPos = transform.Position;
 
-            Vector3 dir = playerPos - enemyPos;
+            Vector3 origin = enemyPos + Vector3.up * 1.5f;
+            Vector3 target = playerPos + Vector3.up * 1.0f;
+
+            Vector3 dir = target - origin;
             float dist = dir.magnitude;
 
             if (dist < 0.001f)
@@ -109,10 +108,11 @@ public class EnemyLOSSystem : MonoBehaviour
             if (ai.RequireLOS)
             {
                 blocked = Physics.Raycast(
-                    enemyPos + Vector3.up * 1f,
+                    origin,
                     dir,
                     dist,
-                    obstacleMask
+                    obstacleMask,
+                    QueryTriggerInteraction.Ignore
                 );
             }
 

@@ -25,6 +25,8 @@ public sealed class EnemyVisualController : MonoBehaviour
 
     private EnemyAttackHandler attackHandler;
 
+    private float debugTimer;
+
     private void Awake()
     {
         if (animator == null)
@@ -37,23 +39,53 @@ public sealed class EnemyVisualController : MonoBehaviour
             modelRoot = animator.transform;
 
         attackHandler = GetComponent<EnemyAttackHandler>();
+        
+        var lod = GetComponent<EnemyLODController>();
+        if (lod != null)
+        {
+            lod.OnModelChanged += OnModelChanged;
+        }
 
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
+    }
+
+    void OnModelChanged(GameObject model)
+    {
+        animator = model.GetComponentInChildren<Animator>();
     }
 
     private void Start()
     {
         lastPosition = transform.position;
-
-        var binder = GetComponent<EnemyEcsRuntimeBinder>();
-        if (binder != null)
-            entity = binder.Entity;
     }
 
     private void LateUpdate()
     {
-        if (animator == null || !em.Exists(entity))
+        if (entity == Entity.Null || !em.Exists(entity))
+        {
+            var binder = GetComponent<EnemyEcsRuntimeBinder>();
+
+            if (binder != null)
+            {
+                var newEntity = binder.Entity;
+
+                if (newEntity != Entity.Null && em.Exists(newEntity))
+                {
+                    entity = newEntity;
+                    Debug.Log($"[Visual] Entity bind OK: {entity.Index}", this);
+                }
+            }
+        }
+
+        if (animator == null)
             return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+            return;
+
+        debugTimer += Time.deltaTime;
+
+        var attackState = em.GetComponentData<EnemyAttackState>(entity);
 
         // ================= SPEED =================
         Vector3 currentPosition = transform.position;
@@ -73,22 +105,12 @@ public sealed class EnemyVisualController : MonoBehaviour
             Time.deltaTime
         );
 
-        // ================= ROTATION =================
-        var targetData = em.GetComponentData<EnemyTargetPosition>(entity);
-
-        Vector3 targetPos = targetData.Value;
-
-
         // ================= ATTACK =================
-        var attackState = em.GetComponentData<EnemyAttackState>(entity);
-
         if (attackState.DoAttack)
         {
-            animator.SetFloat(SpeedHash, 0.1f); // гарантируем выход из idle
+            animator.SetFloat(SpeedHash, 0.1f);
             animator.SetTrigger(AttackHash);
-
             attackHandler?.TriggerAttack();
-
             attackState.DoAttack = false;
             em.SetComponentData(entity, attackState);
         }

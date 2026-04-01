@@ -32,6 +32,12 @@ public partial struct EnemyAIJob : IJobEntity
         float3 posXZ = pos;
         posXZ.y = 0;
 
+        float3 playerXZ = PlayerPosition;
+        playerXZ.y = 0;
+
+        float3 flatToPlayer = playerXZ - posXZ;
+        float distToPlayer = math.length(flatToPlayer);
+
         // ================= COOLDOWN =================
         if (attackState.Cooldown > 0f)
             attackState.Cooldown -= DeltaTime;
@@ -41,20 +47,19 @@ public partial struct EnemyAIJob : IJobEntity
         {
             if (HasPlayer)
             {
-                float3 toPlayer = PlayerPosition - pos;
-                float dist = math.length(toPlayer);
-
-                if (dist <= ai.VisionRange)
+                if (distToPlayer <= ai.VisionRange)
                 {
                     float3 forward = math.forward(transform.Rotation);
-                    float3 dir = math.normalizesafe(toPlayer);
+                    forward.y = 0;
+                    forward = math.normalizesafe(forward);
+
+                    float3 dir = math.normalizesafe(flatToPlayer);
 
                     float dot = math.dot(forward, dir);
                     float cosHalf = math.cos(math.radians(ai.VisionAngle * 0.5f));
 
                     if (dot >= cosHalf)
                     {
-                        // 🔥 ВОТ СЮДА
                         if (!ai.RequireLOS || los.Value)
                         {
                             aggro.Timer += DeltaTime;
@@ -62,20 +67,11 @@ public partial struct EnemyAIJob : IJobEntity
                             if (aggro.Timer > 0.3f)
                                 aiState.Value = EnemyAIState.Chase;
                         }
-                        else
-                        {
-                            aggro.Timer = 0f;
-                        }
+                        else aggro.Timer = 0f;
                     }
-                    else
-                    {
-                        aggro.Timer = 0f;
-                    }
+                    else aggro.Timer = 0f;
                 }
-                else
-                {
-                    aggro.Timer = 0f;
-                }
+                else aggro.Timer = 0f;
             }
 
             // ---------- PATROL ----------
@@ -83,7 +79,6 @@ public partial struct EnemyAIJob : IJobEntity
             {
                 int index = patrolState.CurrentIndex;
                 float3 patrolPoint = patrolPoints[index].Position;
-
                 patrolPoint.y = pos.y;
 
                 float3 patrolXZ = patrolPoint;
@@ -91,7 +86,6 @@ public partial struct EnemyAIJob : IJobEntity
 
                 float dist = math.distance(posXZ, patrolXZ);
 
-                // 👉 если ждём
                 if (patrolState.IsWaiting)
                 {
                     patrolState.WaitTimer += DeltaTime;
@@ -105,14 +99,11 @@ public partial struct EnemyAIJob : IJobEntity
                             (index + 1) % patrolPoints.Length;
                     }
 
-                    // ❗ важно — НЕ обновляем target пока ждём
                     return;
                 }
 
-                // 👉 двигаемся к точке
                 target.Value = patrolPoint;
 
-                // 👉 дошли
                 if (dist <= settings.ReachDistance)
                 {
                     patrolState.IsWaiting = true;
@@ -136,14 +127,9 @@ public partial struct EnemyAIJob : IJobEntity
                 return;
             }
 
-            float3 playerXZ = PlayerPosition;
-            playerXZ.y = 0;
-
-            float dist = math.distance(pos, PlayerPosition);
-
             lastKnown.Value = PlayerPosition;
 
-            float3 dir = math.normalizesafe(PlayerPosition - pos);
+            float3 dir = math.normalizesafe(flatToPlayer);
 
             float stopDistance = ai.AttackRange * ai.StopDistanceMultiplier;
 
@@ -152,13 +138,13 @@ public partial struct EnemyAIJob : IJobEntity
 
             target.Value = desiredPos;
 
-            float enterAttack = ai.AttackRange + ai.AttackEnterOffset;
+            float enterAttack = ai.AttackRange + ai.AttackEnterOffset + 3f;
 
-            if (dist <= enterAttack)
+            if (distToPlayer <= enterAttack)
             {
                 aiState.Value = EnemyAIState.Attack;
             }
-            else if (dist > ai.LoseAggroRadius)
+            else if (distToPlayer > ai.LoseAggroRadius)
             {
                 aiState.Value = EnemyAIState.Return;
             }
@@ -173,14 +159,9 @@ public partial struct EnemyAIJob : IJobEntity
                 return;
             }
 
-            float3 playerXZ = PlayerPosition;
-            playerXZ.y = 0;
-
-            float dist = math.distance(pos, PlayerPosition);
-
             float exitAttack = ai.AttackRange + ai.AttackExitOffset;
 
-            if (dist > exitAttack)
+            if (distToPlayer > exitAttack + 2f)
             {
                 aiState.Value = EnemyAIState.Chase;
                 return;
