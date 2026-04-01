@@ -6,35 +6,23 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct EnemyAISystem : ISystem
 {
-    private EntityQuery playerQuery;
+    private ComponentLookup<LocalTransform> transformLookup;
 
     public void OnCreate(ref SystemState state)
     {
-        playerQuery = state.GetEntityQuery(
-            ComponentType.ReadOnly<PlayerTag>(),
-            ComponentType.ReadOnly<LocalTransform>()
-        );
+        transformLookup = state.GetComponentLookup<LocalTransform>(true);
     }
 
     public void OnUpdate(ref SystemState state)
     {
         float dt = SystemAPI.Time.DeltaTime;
 
-        bool hasPlayer = false;
-        float3 playerPos = default;
-
-        if (!playerQuery.IsEmptyIgnoreFilter)
-        {
-            var players = playerQuery.ToComponentDataArray<LocalTransform>(state.WorldUpdateAllocator);
-            playerPos = players[0].Position;
-            hasPlayer = true;
-        }
+        transformLookup.Update(ref state);
 
         new EnemyAIJob
         {
             DeltaTime = dt,
-            HasPlayer = hasPlayer,
-            PlayerPosition = playerPos
+            TransformLookup = transformLookup
         }.ScheduleParallel();
     }
 }

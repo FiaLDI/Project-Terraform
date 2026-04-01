@@ -1,7 +1,8 @@
 using UnityEngine;
 using Unity.Entities;
+using FishNet.Object;
 
-public sealed class EnemyVisualController : MonoBehaviour
+public sealed class EnemyVisualController : NetworkBehaviour
 {
     [Header("Animator")]
     [SerializeField] private Animator animator;
@@ -10,10 +11,6 @@ public sealed class EnemyVisualController : MonoBehaviour
     [Header("Speed Settings")]
     [SerializeField] private float runSpeed = 3f;
     [SerializeField] private float dampTime = 0.1f;
-
-    [Header("Rotation")]
-    [SerializeField] private Transform modelRoot;
-    [SerializeField] private float rotationSpeed = 8f;
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
@@ -25,8 +22,6 @@ public sealed class EnemyVisualController : MonoBehaviour
 
     private EnemyAttackHandler attackHandler;
 
-    private float debugTimer;
-
     private void Awake()
     {
         if (animator == null)
@@ -35,23 +30,9 @@ public sealed class EnemyVisualController : MonoBehaviour
         if (animatorController != null && animator != null)
             animator.runtimeAnimatorController = animatorController;
 
-        if (modelRoot == null && animator != null)
-            modelRoot = animator.transform;
-
         attackHandler = GetComponent<EnemyAttackHandler>();
-        
-        var lod = GetComponent<EnemyLODController>();
-        if (lod != null)
-        {
-            lod.OnModelChanged += OnModelChanged;
-        }
 
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
-    }
-
-    void OnModelChanged(GameObject model)
-    {
-        animator = model.GetComponentInChildren<Animator>();
     }
 
     private void Start()
@@ -59,7 +40,7 @@ public sealed class EnemyVisualController : MonoBehaviour
         lastPosition = transform.position;
     }
 
-    private void LateUpdate()
+    private void Update() // ❗ НЕ LateUpdate
     {
         if (entity == Entity.Null || !em.Exists(entity))
         {
@@ -70,19 +51,12 @@ public sealed class EnemyVisualController : MonoBehaviour
                 var newEntity = binder.Entity;
 
                 if (newEntity != Entity.Null && em.Exists(newEntity))
-                {
                     entity = newEntity;
-                }
             }
         }
 
-        if (animator == null)
+        if (animator == null || entity == Entity.Null || !em.Exists(entity))
             return;
-
-        if (entity == Entity.Null || !em.Exists(entity))
-            return;
-
-        debugTimer += Time.deltaTime;
 
         var attackState = em.GetComponentData<EnemyAttackState>(entity);
 
@@ -92,28 +66,30 @@ public sealed class EnemyVisualController : MonoBehaviour
         Vector3 delta = currentPosition - lastPosition;
         delta.y = 0f;
 
-        float rawSpeed =
-            delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
-
+        float rawSpeed = delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
         float animSpeed = Mathf.Clamp01(rawSpeed / runSpeed);
 
-        animator.SetFloat(
-            SpeedHash,
-            animSpeed,
-            dampTime,
-            Time.deltaTime
-        );
+        animator.SetFloat(SpeedHash, animSpeed, dampTime, Time.deltaTime);
 
         // ================= ATTACK =================
         if (attackState.DoAttack)
         {
-            animator.SetFloat(SpeedHash, 0.1f);
-            animator.SetTrigger(AttackHash);
-            attackHandler?.TriggerAttack();
             attackState.DoAttack = false;
             em.SetComponentData(entity, attackState);
+
+            PlayAttackClientRpc(); // 👈 анимация всем
+
+            if (IsServer)
+                attackHandler?.TriggerAttack(); // 👈 урон только сервер
         }
 
         lastPosition = currentPosition;
+    }
+
+    [ObserversRpc]
+    private void PlayAttackClientRpc()
+    {
+        if (animator != null)
+            animator.SetTrigger(AttackHash);
     }
 }

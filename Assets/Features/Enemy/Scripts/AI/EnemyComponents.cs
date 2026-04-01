@@ -25,6 +25,29 @@ public struct EnemyAI : IComponentData
     public int ObstacleMask;
 }
 
+public struct EnemyTarget : IComponentData
+{
+    public Entity Value;
+}
+
+public struct EnemyAggroSettings : IComponentData
+{
+    public float SwitchDistance;
+    public float LoseDistance; 
+}
+
+public struct EnemyAggroElement : IBufferElementData
+{
+    public Entity Target;
+    public float Value;
+}
+
+public struct DamageEvent : IBufferElementData
+{
+    public Entity Source;
+    public float Value;
+}
+
 public struct EnemyHasLineOfSight : IComponentData
 {
     public bool Value;

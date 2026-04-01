@@ -3,7 +3,9 @@ using System.Collections;
 using Features.Effects.Domain;
 using Features.Effects.Application;
 using Features.Buffs.Domain;
-using Features.Player.UnityIntegration;
+using Unity.Entities;
+using Unity.Transforms;
+using Unity.Mathematics;
 
 public sealed class EnemyAttackHandler : MonoBehaviour
 {
@@ -14,6 +16,18 @@ public sealed class EnemyAttackHandler : MonoBehaviour
     [SerializeField] private EffectDefinition effect;
 
     private bool isAttacking;
+
+    private EntityManager em;
+    private EnemyEcsRuntimeBinder binder;
+
+    private void Awake()
+    {
+        binder = GetComponent<EnemyEcsRuntimeBinder>();
+
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null)
+            em = world.EntityManager;
+    }
 
     public void TriggerAttack()
     {
@@ -36,11 +50,27 @@ public sealed class EnemyAttackHandler : MonoBehaviour
 
     private void DealDamage()
     {
-        var registry = PlayerRegistry.Instance;
-        if (registry == null || registry.LocalPlayer == null)
+        if (binder == null || binder.Entity == Entity.Null)
             return;
 
-        Vector3 targetPos = registry.LocalPlayer.transform.position;
+        if (!em.Exists(binder.Entity))
+            return;
+
+        if (!em.HasComponent<EnemyTarget>(binder.Entity))
+            return;
+
+        var enemyTarget = em.GetComponentData<EnemyTarget>(binder.Entity);
+
+        if (enemyTarget.Value == Entity.Null)
+            return;
+
+        if (!em.HasComponent<LocalTransform>(enemyTarget.Value))
+            return;
+
+        float3 targetPos3 =
+            em.GetComponentData<LocalTransform>(enemyTarget.Value).Position;
+
+        Vector3 targetPos = targetPos3;
 
         Vector3 dir = targetPos - transform.position;
         dir.y = 0f;
@@ -50,21 +80,9 @@ public sealed class EnemyAttackHandler : MonoBehaviour
 
         dir.Normalize();
 
-        Vector3 origin = transform.position;
-        origin.y = targetPos.y;
+        Vector3 origin = transform.position + dir * 1.2f;
 
-        origin += dir * 1.2f;
-
-        IBuffSource source = null;
-
-        foreach (var m in GetComponentsInParent<MonoBehaviour>())
-        {
-            if (m is IBuffSource s)
-            {
-                source = s;
-                break;
-            }
-        }
+        IBuffSource source = GetComponentInParent<IBuffSource>(); // 👈 проще
 
         var ctx = new EffectContext(
             source,

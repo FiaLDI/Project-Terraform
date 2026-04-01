@@ -42,7 +42,7 @@ MonoBehaviour:
   stopDistanceMultiplier: 0.5
   visionAngle: 120
   visionRange: 12
-  requireLineOfSight: 1
+  requireLineOfSight: 0
   animatorController: {fileID: 9100000, guid: 17d88a246140d7c439423367a199d771, type: 2}
   obstacleMask:
     serializedVersion: 2

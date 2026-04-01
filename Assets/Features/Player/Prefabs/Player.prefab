@@ -383,6 +383,7 @@ GameObject:
   - component: {fileID: 3778525526496260052}
   - component: {fileID: 3302508318773783486}
   - component: {fileID: 3586989162742316649}
+  - component: {fileID: 4166305711899109263}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -798,6 +799,10 @@ MonoBehaviour:
   tpsMask:
     serializedVersion: 2
     m_Bits: 4095
+  maxTpsDistance: 5
+  adsFov: 65
+  adsDistance: 2
+  adsSpeed: 10
 --- !u!114 &5907872678837714149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1143,3 +1148,18 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 6311823513652316802}
   questDatabase: {fileID: 11400000, guid: 4fb6bb3609cb58842a9469b94900b3b0, type: 2}
   chainDatabase: {fileID: 11400000, guid: 77add117847d4984987cf4ec0233a111, type: 2}
+--- !u!114 &4166305711899109263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 036888c1d225a944b9c3d1102cb17e30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerEcsBinder
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
