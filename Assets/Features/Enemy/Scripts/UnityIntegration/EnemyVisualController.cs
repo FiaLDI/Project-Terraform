@@ -72,7 +72,6 @@ public sealed class EnemyVisualController : MonoBehaviour
                 if (newEntity != Entity.Null && em.Exists(newEntity))
                 {
                     entity = newEntity;
-                    Debug.Log($"[Visual] Entity bind OK: {entity.Index}", this);
                 }
             }
         }

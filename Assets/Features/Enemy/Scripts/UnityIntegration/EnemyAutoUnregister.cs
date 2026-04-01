@@ -1,5 +1,7 @@
 using UnityEngine;
-using Features.Biomes.Domain;
+using Biomes.Data;
+using Biomes.Application;
+using Biomes.UnityIntegration;
 
 public class EnemyAutoUnregister : MonoBehaviour
 {
@@ -25,10 +27,8 @@ public class EnemyAutoUnregister : MonoBehaviour
 
         _unregistered = true;
 
-        // Убираем из глобального учёта
         EnemyWorldManager.Instance?.Unregister(tracker);
 
-        // Убираем из биома
         if (biome != null)
             EnemyBiomeCounter.Unregister(biome, tracker);
     }

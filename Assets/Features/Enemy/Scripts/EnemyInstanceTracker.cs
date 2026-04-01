@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Features.Enemy.Data;
+using Biomes.UnityIntegration;
 
 public class EnemyInstanceTracker : MonoBehaviour
 {

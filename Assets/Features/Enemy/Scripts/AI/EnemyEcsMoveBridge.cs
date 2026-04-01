@@ -1,6 +1,5 @@
 ﻿using FishNet.Object;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -37,8 +36,6 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
     {
         base.OnStartServer();
 
-        Debug.Log("[Bridge] OnStartServer CALLED", this);
-
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
         rb = GetComponent<Rigidbody>();
 
@@ -59,8 +56,6 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         if (!em.Exists(binder.Entity)) return;
 
         entity = binder.Entity;
-
-        Debug.Log($"[Bridge] INIT SUCCESS entity={entity.Index}", this);
 
         initialized = true;
     }

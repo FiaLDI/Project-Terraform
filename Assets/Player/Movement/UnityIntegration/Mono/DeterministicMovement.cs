@@ -7,6 +7,7 @@ public class DeterministicMovement : NetworkBehaviour
 {    
     public float CurrentMaxSpeed { get; private set; }
     public bool JumpedThisTick { get; private set; }
+    public bool IsFrozen { get; set; }
 
     public float Gravity = -40f;
     public float JumpForce = 7f;
@@ -41,6 +42,13 @@ public class DeterministicMovement : NetworkBehaviour
 
     public void Simulate(MoveCommand cmd)
     {
+        if (IsFrozen)
+        {
+            Velocity = Vector3.zero;
+            verticalVelocity = 0f;
+            return;
+        }
+        
         TryResolveStats();
         float dt = NetworkTickSystem.TickDelta;
 
