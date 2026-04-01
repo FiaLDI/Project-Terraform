@@ -18,20 +18,19 @@ namespace Features.Enemy.Data
         public float attackDamage = 10f;
         public float attackCooldown = 1.2f;
 
-        [Header("Prefab Root (куда добавят компоненты)")]
+        [Header("Prefab Root")]
         public GameObject prefab;
 
         [Header("LOD Prefabs")]
-        public GameObject lod0Prefab; // с анимацией / полной моделью
-        public GameObject lod1Prefab; // упрощённый
+        public GameObject lod0Prefab;
+        public GameObject lod1Prefab;
         public GameObject lod2Prefab;
 
-        [Header("Canvas prefab (HP-bar)")]
+        [Header("Canvas prefab")]
         public GameObject worldCanvasPrefab;
 
         [Header("Hitbox Multipliers")]
         public HitboxProfile[] hitboxes;
-
 
         [Header("Stats Preset")]
         public EnemyStatsPresetSO statsPreset;
@@ -65,5 +64,29 @@ namespace Features.Enemy.Data
 
         [Header("Physics")]
         public LayerMask obstacleMask;
+
+        // =========================================================
+        // 🔥 NEW: STEERING SETTINGS
+        // =========================================================
+
+        [Header("Steering Weights")]
+        public float seekWeight = 1.0f;
+        public float avoidWeight = 2.2f;
+        public float separationWeight = 1.5f;
+        public float orbitWeight = 0.8f;
+
+        [Header("Steering Distances")]
+        public float avoidDistance = 1.5f;
+        public float sideAvoidDistance = 1.2f;
+        public float separationRadius = 2.0f;
+
+        [Header("Movement Feel")]
+        public float rotationSpeed = 8f;
+        public float orbitStrength = 0.6f;
+
+        [Header("Behavior")]
+        public bool enableSeparation = true;
+        public bool enableAvoidance = true;
+        public bool enableOrbit = true;
     }
 }

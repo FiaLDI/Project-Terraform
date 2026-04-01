@@ -4,90 +4,73 @@ using FishNet.Object;
 
 public sealed class EnemyVisualController : NetworkBehaviour
 {
-    [Header("Animator")]
     [SerializeField] private Animator animator;
-    [SerializeField] private RuntimeAnimatorController animatorController;
-
-    [Header("Speed Settings")]
-    [SerializeField] private float runSpeed = 3f;
-    [SerializeField] private float dampTime = 0.1f;
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
-
-    private Vector3 lastPosition;
 
     private Entity entity;
     private EntityManager em;
 
     private EnemyAttackHandler attackHandler;
+    private Vector3 lastPos;
 
     private void Awake()
     {
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
-        if (animatorController != null && animator != null)
-            animator.runtimeAnimatorController = animatorController;
-
         attackHandler = GetComponent<EnemyAttackHandler>();
-
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
     }
 
-    private void Start()
+    private void Update()
     {
-        lastPosition = transform.position;
-    }
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+            if (animator == null) return;
+        }
 
-    private void Update() // ❗ НЕ LateUpdate
-    {
         if (entity == Entity.Null || !em.Exists(entity))
         {
             var binder = GetComponent<EnemyEcsRuntimeBinder>();
 
-            if (binder != null)
-            {
-                var newEntity = binder.Entity;
+            if (binder != null && binder.Entity != Entity.Null)
+                entity = binder.Entity;
 
-                if (newEntity != Entity.Null && em.Exists(newEntity))
-                    entity = newEntity;
-            }
-        }
-
-        if (animator == null || entity == Entity.Null || !em.Exists(entity))
             return;
+        }
 
         var attackState = em.GetComponentData<EnemyAttackState>(entity);
 
-        // ================= SPEED =================
-        Vector3 currentPosition = transform.position;
+        // speed
+        float speed = (transform.position - lastPos).magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+        animator.SetFloat(SpeedHash, speed);
 
-        Vector3 delta = currentPosition - lastPosition;
-        delta.y = 0f;
-
-        float rawSpeed = delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
-        float animSpeed = Mathf.Clamp01(rawSpeed / runSpeed);
-
-        animator.SetFloat(SpeedHash, animSpeed, dampTime, Time.deltaTime);
-
-        // ================= ATTACK =================
+        // attack
         if (attackState.DoAttack)
         {
             attackState.DoAttack = false;
             em.SetComponentData(entity, attackState);
 
-            PlayAttackClientRpc(); // 👈 анимация всем
+            PlayAttackRpc();
 
             if (IsServer)
-                attackHandler?.TriggerAttack(); // 👈 урон только сервер
+                attackHandler?.TriggerAttack();
         }
 
-        lastPosition = currentPosition;
+        lastPos = transform.position;
+
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            transform.rotation,
+            Time.deltaTime * 10f
+        );
     }
 
     [ObserversRpc]
-    private void PlayAttackClientRpc()
+    private void PlayAttackRpc()
     {
         if (animator != null)
             animator.SetTrigger(AttackHash);

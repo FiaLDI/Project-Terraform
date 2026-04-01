@@ -1,5 +1,6 @@
 ﻿using FishNet.Object;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -7,21 +8,22 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 3f;
+    public float rotationSpeed = 8f;
 
-    [Header("Obstacle Detection")]
+    [Header("Steering")]
+    public float orbitStrength = 0.6f;
+    public float avoidDistance = 1.5f;
+    public float sideAvoidDistance = 1.2f;
+    public float separationRadius = 1.5f;
+
+    [Header("Layers")]
     [SerializeField] private LayerMask obstacleMask;
     [SerializeField] private LayerMask groundMask;
-
-    public Vector3 CurrentTarget { get; private set; }
-    public float CurrentSpeed { get; private set; }
 
     private Entity entity;
     private EntityManager em;
     private Rigidbody rb;
     private bool initialized;
-
-    // 👉 анти-спам логов
-    private float logTimer;
 
     private void Awake()
     {
@@ -42,203 +44,120 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         var world = World.DefaultGameObjectInjectionWorld;
         if (world != null)
             em = world.EntityManager;
-
-        rb = GetComponent<Rigidbody>();
-
-        if (rb == null)
-        {
-            Debug.LogError("[ECS-TEST] Rigidbody NOT FOUND", this);
-        }
-        else
-        {
-            Debug.Log("[ECS-TEST] Rigidbody OK", this);
-        }
     }
 
-    private void TryInitialize()
+    private void TryInit()
     {
         if (initialized) return;
 
-        if (em == null)
-        {
-            var world = World.DefaultGameObjectInjectionWorld;
-            if (world == null) return;
-
-            em = world.EntityManager;
-        }
-
         var binder = GetComponent<EnemyEcsRuntimeBinder>();
-        if (binder == null)
-        {
-            Debug.LogWarning("[ECS-TEST] Binder missing", this);
-            return;
-        }
+        if (binder == null || binder.Entity == Entity.Null) return;
 
-        if (binder.Entity == Entity.Null)
-            return;
-
-        if (!em.Exists(binder.Entity))
-            return;
+        if (!em.Exists(binder.Entity)) return;
 
         entity = binder.Entity;
         initialized = true;
-
-        Debug.Log("[ECS-TEST] Bridge initialized → Entity: " + entity.Index, this);
     }
 
     private void FixedUpdate()
     {
         if (!IsServer) return;
 
-        TryInitialize();
-        if (!initialized || !em.Exists(entity)) return;
-
-        logTimer += Time.fixedDeltaTime;
-
-        // ================= INACTIVE =================
-        if (em.HasComponent<EnemyInactive>(entity))
-        {
-            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
-
-            if (logTimer > 2f)
-            {
-                Debug.Log("[ECS-TEST] Enemy INACTIVE", this);
-                logTimer = 0f;
-            }
-
-            return;
-        }
+        TryInit();
+        if (!initialized) return;
 
         var targetData = em.GetComponentData<EnemyTargetPosition>(entity);
+        var ai = em.GetComponentData<EnemyAI>(entity);
 
         Vector3 pos = rb.position;
         Vector3 target = targetData.Value;
 
-        CurrentTarget = target;
+        // ================= FLAT =================
+        Vector3 flatTarget = new Vector3(target.x, pos.y, target.z);
+        Vector3 toTarget = flatTarget - pos;
 
-        // ================= DEBUG TARGET =================
-        if (logTimer > 2f)
+        float dist = toTarget.magnitude;
+
+        if (dist < 0.1f)
         {
-            Debug.Log($"[ECS-TEST] TargetPos: {target} | Pos: {pos}", this);
-        }
-
-        // ================= DIRECTION =================
-        Vector3 toTarget = target - pos;
-
-        Vector3 flatDir = toTarget;
-        flatDir.y = 0;
-
-        float dist = flatDir.magnitude;
-
-        if (logTimer > 2f)
-        {
-            Debug.Log($"[ECS-TEST] Dist: {dist}", this);
-        }
-
-        if (dist < 0.3f)
-        {
-            rb.linearVelocity = new Vector3(
-                rb.linearVelocity.x * 0.2f,
-                rb.linearVelocity.y,
-                rb.linearVelocity.z * 0.2f
-            );
-
-            if (logTimer > 2f)
-            {
-                Debug.Log("[ECS-TEST] Close to target → slowing", this);
-                logTimer = 0f;
-            }
-
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
             return;
         }
 
-        // ================= GROUND =================
-        Vector3 groundNormal = Vector3.up;
-        bool grounded = false;
+        Vector3 forward = toTarget.normalized;
 
-        if (Physics.Raycast(
-            pos + Vector3.up * 0.5f,
-            Vector3.down,
-            out RaycastHit hit,
-            2f,
-            groundMask,
-            QueryTriggerInteraction.Ignore))
+        // ================= ORBIT =================
+        Vector3 orbit = Vector3.zero;
+
+        if (dist < ai.AttackRange * 1.2f)
         {
-            groundNormal = hit.normal;
-            grounded = true;
+            Vector3 right = new Vector3(-forward.z, 0, forward.x);
+            orbit = right * orbitStrength;
         }
 
-        if (!grounded)
-        {
-            rb.AddForce(Vector3.down * 20f, ForceMode.Acceleration);
+        // ================= AVOID (3 rays) =================
+        Vector3 avoid = Vector3.zero;
 
-            if (logTimer > 2f)
-            {
-                Debug.LogWarning("[ECS-TEST] NOT GROUNDED!", this);
-            }
-        }
+        Vector3 origin = pos + Vector3.up * 0.5f;
 
-        // ================= MOVE =================
-        Vector3 moveDir = Vector3.ProjectOnPlane(flatDir, groundNormal).normalized;
+        Vector3 left = Quaternion.Euler(0, -30, 0) * forward;
+        Vector3 rightDir = Quaternion.Euler(0, 30, 0) * forward;
 
-        // ================= STEP =================
-        // ================= STEP / OBSTACLE =================
-        Vector3 forward = moveDir;
+        if (Physics.Raycast(origin, forward, out RaycastHit hitF, avoidDistance, obstacleMask))
+            avoid += hitF.normal;
 
-        bool blocked = Physics.Raycast(
-            pos + Vector3.up * 0.2f,
-            forward,
-            0.6f,
-            obstacleMask);
+        if (Physics.Raycast(origin, left, out RaycastHit hitL, sideAvoidDistance, obstacleMask))
+            avoid += hitL.normal;
 
-        bool spaceAbove = !Physics.Raycast(
-            pos + Vector3.up * 1.0f,
-            forward,
-            0.6f,
-            obstacleMask);
+        if (Physics.Raycast(origin, rightDir, out RaycastHit hitR, sideAvoidDistance, obstacleMask))
+            avoid += hitR.normal;
 
-        if (blocked && spaceAbove)
-        {
-            // вверх
-            rb.AddForce(Vector3.up * 5f, ForceMode.VelocityChange);
-
-            // вперёд (ВАЖНО!)
-            rb.AddForce(forward * 2f, ForceMode.VelocityChange);
-
-            Debug.Log("[ECS-TEST] JUMP OVER OBSTACLE");
-        }
-
-        // ================= AVOIDANCE =================
-        Collider[] neighbors = Physics.OverlapSphere(pos, 0.8f);
-
+        // ================= SEPARATION =================
         Vector3 separation = Vector3.zero;
+
+        Collider[] neighbors = Physics.OverlapSphere(pos, separationRadius);
 
         foreach (var col in neighbors)
         {
             if (col.attachedRigidbody == rb) continue;
             if (!col.CompareTag("Enemy")) continue;
 
-            Vector3 away = pos - col.transform.position;
-            away.y = 0;
+            Vector3 diff = pos - col.transform.position;
+            diff.y = 0;
 
-            float d = away.magnitude;
+            float d = diff.magnitude;
 
             if (d > 0.001f)
-                separation += away.normalized / d;
+                separation += diff.normalized / d;
         }
 
-        moveDir += separation * 0.3f;
-        moveDir.Normalize();
+        // ================= FINAL DIR =================
+        Vector3 finalDir =
+            forward * 1.0f +
+            orbit * 0.8f +
+            avoid * 2.0f +
+            separation * 1.5f;
 
-        // ================= SPEED =================
+        finalDir.y = 0;
+        finalDir.Normalize();
+
+        // ================= GROUND =================
+        Vector3 groundNormal = Vector3.up;
+
+        if (Physics.Raycast(pos + Vector3.up * 0.5f, Vector3.down, out RaycastHit groundHit, 2f, groundMask))
+        {
+            groundNormal = groundHit.normal;
+        }
+
+        finalDir = Vector3.ProjectOnPlane(finalDir, groundNormal).normalized;
+
+        // ================= MOVE =================
         float speed = moveSpeed;
 
         if (dist < 1.5f)
             speed *= dist / 1.5f;
 
-        CurrentSpeed = speed;
-
-        Vector3 vel = moveDir * speed;
+        Vector3 vel = finalDir * speed;
 
         rb.linearVelocity = new Vector3(
             vel.x,
@@ -247,29 +166,20 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         );
 
         // ================= ROTATION =================
-        Vector3 lookDir = moveDir;
-        lookDir.y = 0;
-
-        if (lookDir.sqrMagnitude > 0.001f)
+        if (finalDir.sqrMagnitude > 0.001f)
         {
-            Quaternion targetRot = Quaternion.LookRotation(lookDir);
+            Quaternion targetRot = Quaternion.LookRotation(finalDir);
 
             rb.MoveRotation(Quaternion.Slerp(
                 rb.rotation,
                 targetRot,
-                10f * Time.fixedDeltaTime
+                rotationSpeed * Time.fixedDeltaTime
             ));
         }
 
         // ================= SYNC ECS =================
-        var transformData = em.GetComponentData<LocalTransform>(entity);
-        transformData.Position = rb.position;
-        em.SetComponentData(entity, transformData);
-
-        if (logTimer > 2f)
-        {
-            Debug.Log($"[ECS-TEST] Velocity: {rb.linearVelocity}", this);
-            logTimer = 0f;
-        }
+        var t = em.GetComponentData<LocalTransform>(entity);
+        t.Position = rb.position;
+        em.SetComponentData(entity, t);
     }
 }

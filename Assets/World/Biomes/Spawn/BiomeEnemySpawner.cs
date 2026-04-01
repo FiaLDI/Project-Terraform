@@ -1,66 +1,146 @@
 using Features.Enemy.Data;
 using UnityEngine;
-using FishNet.Object;
 using FishNet;
-using Biomes.Application;
+using FishNet.Object;
 using Biomes.Data;
+using Biomes.Application;
 
 namespace Biomes.UnityIntegration
-{    public class BiomeEnemySpawner : MonoBehaviour
+{
+    public class BiomeEnemySpawner : MonoBehaviour
     {
         public Transform player;
         public WorldConfig world;
-        private float spawnTimer;
 
-        void LateUpdate()
+        [Header("Spawn Settings")]
+        [SerializeField] private float spawnInterval = 0.4f;
+        [SerializeField] private float spawnRadiusMin = 15f;
+        [SerializeField] private float spawnRadiusMax = 35f;
+        [SerializeField] private int maxEnemies = 40;
+
+        private float nextSpawnTime;
+
+        // =========================================================
+        private void Update()
         {
             if (!InstanceFinder.IsServer)
+                return;
+
+            if (Time.time < nextSpawnTime)
                 return;
 
             if (player == null || world == null)
                 return;
 
-            BiomeConfig biome = GetDominantBiome();
+            var biome = GetDominantBiome();
             if (biome == null)
                 return;
 
-            var table = biome.enemyTable;
-            if (table == null || table.Length == 0)
+            if (!CanSpawn(biome))
                 return;
 
-            if (EnemyWorldManager.Instance == null)
-                return;
-
-            int currentCount = 0;
-            try
-            {
-                currentCount = EnemyBiomeCounter.GetCount(biome);
-            }
-            catch
-            {
-                return;
-            }
-
-            if (currentCount >= table.Length * 12)
-                return;
-
-            if (!EnemyWorldManager.Instance.CanSpawn())
-                return;
-
-            spawnTimer += Time.deltaTime;
-            if (spawnTimer < 0.3f)
-                return;
-
-            spawnTimer = 0f;
+            nextSpawnTime = Time.time + spawnInterval;
 
             SpawnEnemy(biome);
         }
 
+        // =========================================================
+        private bool CanSpawn(BiomeConfig biome)
+        {
+            if (EnemyWorldManager.Instance == null)
+                return false;
+
+            int count = EnemyBiomeCounter.GetCount(biome);
+
+            if (count >= maxEnemies)
+                return false;
+
+            return EnemyWorldManager.Instance.CanSpawn();
+        }
+
+        // =========================================================
+        private void SpawnEnemy(BiomeConfig biome)
+        {
+            var entry = biome.enemyTable[Random.Range(0, biome.enemyTable.Length)];
+            var config = entry.config;
+
+            if (!config || !config.prefab)
+                return;
+
+            if (!TryGetSpawnPosition(out Vector3 pos))
+                return;
+
+            GameObject enemyGO = Instantiate(config.prefab, pos, Quaternion.identity);
+
+            // 🔥 СНАЧАЛА ECS
+            var binder = enemyGO.GetComponent<EnemyEcsRuntimeBinder>();
+            if (binder != null)
+            {
+                binder.SetConfig(config);
+                binder.ForceInit();
+            }
+
+            // 🔥 ПОТОМ СЕТЬ
+            var nob = enemyGO.GetComponent<NetworkObject>();
+            if (!nob)
+            {
+                Debug.LogError("Enemy prefab has no NetworkObject!");
+                Destroy(enemyGO);
+                return;
+            }
+
+            InstanceFinder.ServerManager.Spawn(nob);
+
+            Register(enemyGO, biome, config, pos);
+        }
+
+        // =========================================================
+        private void Register(GameObject enemyGO, BiomeConfig biome, EnemyConfigSO config, Vector3 pos)
+        {
+            var tracker = enemyGO.GetComponent<EnemyInstanceTracker>() 
+                          ?? enemyGO.AddComponent<EnemyInstanceTracker>();
+
+            tracker.config = config;
+
+            var link = enemyGO.GetComponent<EnemyChunkLink>() 
+                       ?? enemyGO.AddComponent<EnemyChunkLink>();
+
+            link.chunkCoord = world.WorldToChunk(pos);
+
+            EnemyWorldManager.Instance.Register(tracker);
+            EnemyBiomeCounter.Register(biome, tracker);
+
+            var unreg = enemyGO.GetComponent<EnemyAutoUnregister>() 
+                        ?? enemyGO.AddComponent<EnemyAutoUnregister>();
+
+            unreg.biome = biome;
+            unreg.tracker = tracker;
+        }
+
+        // =========================================================
+        private bool TryGetSpawnPosition(out Vector3 result)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                float r = Random.Range(spawnRadiusMin, spawnRadiusMax);
+                Vector2 circle = Random.insideUnitCircle.normalized * r;
+
+                Vector3 pos = player.position + new Vector3(circle.x, 0, circle.y);
+
+                if (Vector3.Distance(player.position, pos) < spawnRadiusMin)
+                    continue;
+
+                result = pos;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        // =========================================================
         private BiomeConfig GetDominantBiome()
         {
-            if (world == null || player == null)
-                return null;
-
             var blend = world.GetBiomeBlend(player.position);
             if (blend == null || blend.Length == 0)
                 return null;
@@ -81,66 +161,5 @@ namespace Biomes.UnityIntegration
 
             return best;
         }
-
-        private void SpawnEnemy(BiomeConfig biome)
-        {
-            var entry = biome.enemyTable[Random.Range(0, biome.enemyTable.Length)];
-
-            EnemyConfigSO config = entry.config;
-            if (!config || !config.prefab)
-                return;
-
-            Vector3 pos = GetSpawnPosition();
-
-            GameObject enemyGO = Instantiate(config.prefab, pos, Quaternion.identity);
-
-            var tracker = enemyGO.GetComponent<EnemyInstanceTracker>();
-            if (!tracker)
-                tracker = enemyGO.AddComponent<EnemyInstanceTracker>();
-
-            tracker.config = config;
-
-            var lod = enemyGO.GetComponent<EnemyLODController>();
-            if (lod)
-                lod.config = config;
-
-            var binder = enemyGO.GetComponent<EnemyEcsRuntimeBinder>();
-            if (binder != null)
-                binder.SetConfig(config);
-
-            var nob = enemyGO.GetComponent<NetworkObject>();
-            if (nob == null)
-            {
-                Debug.LogError("No NetworkObject on enemy prefab!");
-                Destroy(enemyGO);
-                return;
-            }
-
-            InstanceFinder.ServerManager.Spawn(nob);
-
-            var link = enemyGO.GetComponent<EnemyChunkLink>();
-            if (!link)
-                link = enemyGO.AddComponent<EnemyChunkLink>();
-
-            link.chunkCoord = world.WorldToChunk(pos);
-
-            EnemyWorldManager.Instance.Register(tracker);
-            EnemyBiomeCounter.Register(biome, tracker);
-
-            var unreg = enemyGO.GetComponent<EnemyAutoUnregister>();
-            if (!unreg)
-                unreg = enemyGO.AddComponent<EnemyAutoUnregister>();
-
-            unreg.biome = biome;
-            unreg.tracker = tracker;
-        }
-
-        private Vector3 GetSpawnPosition()
-        {
-            float r = Random.Range(12f, 40f);
-            Vector2 circle = Random.insideUnitCircle.normalized * r;
-            return player.position + new Vector3(circle.x, 0, circle.y);
-        }
     }
-
 }

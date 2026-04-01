@@ -304,10 +304,11 @@ MonoBehaviour:
   - {fileID: 5953923645941207714}
   - {fileID: 1301065148069508600}
   - {fileID: 2477525584403044842}
-  - {fileID: 0}
+  - {fileID: 984756496871841194}
   - {fileID: 6798121071620844925}
   - {fileID: -6394603796330078313}
   - {fileID: -3025476531782380607}
+  - {fileID: -3691733958049959891}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -318,7 +319,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584265348894459436
+  _initializedTimestamp: -8584265299689435127
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -409,12 +410,8 @@ MonoBehaviour:
   patrolPoints:
   - {fileID: 276696072031083721}
   - {fileID: 2193609484933478631}
-  - {fileID: 6347864798002571670}
   - {fileID: 2324523982947549952}
-  reachDistance: 0.6
-  minWait: 1
-  maxWait: 3
-  randomPatrol: 1
+  - {fileID: 6347864798002571670}
 --- !u!114 &2477525584403044842
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -431,6 +428,11 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
   moveSpeed: 3
+  rotationSpeed: 8
+  orbitStrength: 0.6
+  avoidDistance: 1.5
+  sideAvoidDistance: 1.2
+  separationRadius: 1.5
   obstacleMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -461,9 +463,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Interpolate: 1
+  m_Constraints: 48
+  m_CollisionDetection: 1
 --- !u!114 &984756496871841194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -476,13 +478,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b537345655c7bb7489b9ac7f3d8cbd75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyVisualController
-  _componentIndexCache: 255
+  _componentIndexCache: 5
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 5928809208972985904}
   animator: {fileID: 9043510921884413813}
-  animatorController: {fileID: 9100000, guid: 17d88a246140d7c439423367a199d771, type: 2}
-  runSpeed: 2.5
-  dampTime: 0.1
 --- !u!114 &6798121071620844925
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -630,9 +629,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
-  _componentIndexCache: 255
+  _componentIndexCache: 9
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 5928809208972985904}
   _componentConfiguration: 0
   _synchronizeParent: 0
   _packing:

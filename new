@@ -1,0 +1,603 @@
+diff --git a/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyEcsRuntimeBinder.cs b/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyEcsRuntimeBinder.cs
+index 5a882e7..48feb78 100644
+--- a/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyEcsRuntimeBinder.cs
++++ b/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyEcsRuntimeBinder.cs
+@@ -1,54 +1,48 @@
+ using UnityEngine;
+ using Unity.Entities;
+ using Unity.Transforms;
+-using Unity.Mathematics;
+ using FishNet.Object;
+ using Features.Enemy.Data;
+-using System.Collections;
+ 
+ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
+ {
+     private Entity entity;
+     public Entity Entity => entity;
+ 
+-    [Header("Config")]
+     [SerializeField] private EnemyConfigSO config;
+ 
+-    [Header("Patrol Points")]
+-    [SerializeField] private Transform[] patrolPoints;
+-
+-    [Header("Patrol Settings")]
+-    [SerializeField] private float reachDistance = 0.6f;
+-    [SerializeField] private float minWait = 1f;
+-    [SerializeField] private float maxWait = 3f;
+-    [SerializeField] private bool randomPatrol = true;
++    private EntityManager GetEM()
++    {
++        var world = World.DefaultGameObjectInjectionWorld;
++        return world != null ? world.EntityManager : default;
++    }
+ 
+     // =========================================================
+     public override void OnStartServer()
+     {
+         base.OnStartServer();
+-        StartCoroutine(InitNextFrame());
++        Init();
+     }
+ 
+-    private IEnumerator InitNextFrame()
++    public void SetConfig(EnemyConfigSO cfg)
+     {
+-        yield return null; // 👈 ждём ECS world
+-
+-        CreateEntity();
+-        FillPatrolBuffer();
++        config = cfg;
+     }
+ 
+-    // =========================================================
+-    private EntityManager GetEM()
++    public void ForceInit()
+     {
+-        var world = World.DefaultGameObjectInjectionWorld;
+-        return world != null ? world.EntityManager : default;
++        if (!IsServer) return;
++        Init();
+     }
+ 
+-    private void CreateEntity()
++    private void Init()
+     {
+         var em = GetEM();
+-        if (em == default) return;
++        if (em == default || config == null)
++            return;
++
++        if (entity != Entity.Null && em.Exists(entity))
++            return;
+ 
+         entity = em.CreateEntity(
+             typeof(LocalTransform),
+@@ -56,34 +50,46 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
+             typeof(EnemyAI),
+             typeof(EnemyState),
+             typeof(EnemyTargetPosition),
+-            typeof(EnemyPatrolState),
+-            typeof(EnemyPatrolSettings),
+-            typeof(EnemyBlocked),
+-            typeof(EnemyTarget),
+-            typeof(EnemyAggroState),
+-            typeof(EnemyLastKnownPosition),
+             typeof(EnemyAttackState),
++            typeof(EnemyTarget),
+             typeof(EnemyHasLineOfSight)
+         );
+ 
+-        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
++        em.SetComponentData(entity,
++            LocalTransform.FromPosition(transform.position));
+ 
+-        em.SetComponentData(entity, new EnemyTarget { Value = Entity.Null });
++        em.SetComponentData(entity, new EnemyTarget
++        {
++            Value = Entity.Null
++        });
+ 
+-        em.SetComponentData(entity, new EnemyHasLineOfSight { Value = true });
++        em.SetComponentData(entity, new EnemyHasLineOfSight
++        {
++            Value = true
++        });
+ 
+         ApplyConfig(em);
++    }
+ 
+-        em.SetComponentData(entity, new EnemyState { Value = EnemyAIState.Patrol });
+-
+-        em.SetComponentData(entity, new EnemyTargetPosition
++    private void ApplyConfig(EntityManager em)
++    {
++        em.SetComponentData(entity, new EnemyAI
+         {
+-            Value = transform.position
++            MoveSpeed = 3f,
++            AggroRadius = config.aggroRadius,
++            LoseAggroRadius = config.aggroRadius * 1.5f,
++            AttackRange = config.attackRange,
++            AttackCooldown = config.attackCooldown,
++            StopDistanceMultiplier = config.stopDistanceMultiplier,
++            VisionRange = config.visionRange
+         });
+ 
+-        em.SetComponentData(entity, new EnemyAggroState { Timer = 0f });
++        em.SetComponentData(entity, new EnemyState
++        {
++            Value = EnemyAIState.Patrol
++        });
+ 
+-        em.SetComponentData(entity, new EnemyLastKnownPosition
++        em.SetComponentData(entity, new EnemyTargetPosition
+         {
+             Value = transform.position
+         });
+@@ -93,48 +99,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
+             Cooldown = 0f,
+             DoAttack = false
+         });
+-
+-        em.SetComponentData(entity, new EnemyBlocked { Value = false });
+-
+-        em.SetComponentData(entity, new EnemyPatrolState
+-        {
+-            CurrentIndex = 0,
+-            IsWaiting = false,
+-            WaitTimer = 0f,
+-            CurrentWaitDuration = 0f
+-        });
+-
+-        em.SetComponentData(entity, new EnemyPatrolSettings
+-        {
+-            ReachDistance = reachDistance,
+-            MinWaitTime = minWait,
+-            MaxWaitTime = maxWait,
+-            RandomPatrol = randomPatrol
+-        });
+-
+-        em.AddBuffer<EnemyPatrolPoint>(entity);
+-        em.AddBuffer<EnemyAggroElement>(entity);
+-        em.AddBuffer<DamageEvent>(entity);
+-    }
+-
+-    private void FillPatrolBuffer()
+-    {
+-        var em = GetEM();
+-        if (em == default || !em.Exists(entity)) return;
+-
+-        var buffer = em.GetBuffer<EnemyPatrolPoint>(entity);
+-
+-        if (patrolPoints == null) return;
+-
+-        foreach (var p in patrolPoints)
+-        {
+-            if (p == null) continue;
+-
+-            buffer.Add(new EnemyPatrolPoint
+-            {
+-                Position = p.position
+-            });
+-        }
+     }
+ 
+     // =========================================================
+@@ -145,52 +109,14 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
+         var em = GetEM();
+         if (em == default) return;
+ 
+-        // 🔥 если entity умерла (смена сцены)
+         if (entity == Entity.Null || !em.Exists(entity))
+         {
+-            CreateEntity();
+-            FillPatrolBuffer();
+-            return;
+-        }
+-
+-        // 🔥 sync ECS → GameObject
+-        var transformData = em.GetComponentData<LocalTransform>(entity);
+-        transform.position = transformData.Position;
+-    }
+-    public void SetConfig(EnemyConfigSO cfg)
+-    {
+-        config = cfg;
+-
+-        if (!IsServer)
+-            return;
+-
+-        var em = GetEM();
+-        if (em == default)
++            Init();
+             return;
+-
+-        if (entity != Entity.Null && em.Exists(entity))
+-        {
+-            ApplyConfig(em);
+         }
+-    }
+ 
+-    private void ApplyConfig(EntityManager em)
+-    {
+-        em.SetComponentData(entity, new EnemyAI
+-        {
+-            MoveSpeed = 3f,
+-            AggroRadius = config.aggroRadius,
+-            LoseAggroRadius = config.aggroRadius * 1.5f,
+-            AttackRange = config.attackRange,
+-            AttackCooldown = config.attackCooldown,
+-            AttackEnterOffset = config.attackEnterOffset,
+-            AttackExitOffset = config.attackExitOffset,
+-            StopDistanceMultiplier = config.stopDistanceMultiplier,
+-            VisionAngle = config.visionAngle,
+-            VisionRange = config.visionRange,
+-            RequireLOS = config.requireLineOfSight,
+-            ObstacleMask = config.obstacleMask.value
+-        });
++        var t = em.GetComponentData<LocalTransform>(entity);
++        transform.position = t.Position;
+     }
+ 
+     private void OnDestroy()
+diff --git a/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyVisualController.cs b/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyVisualController.cs
+index 44039fa..f0a230e 100644
+--- a/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyVisualController.cs
++++ b/Assets/Features/Enemy/Scripts/UnityIntegration/EnemyVisualController.cs
+@@ -4,90 +4,67 @@ using FishNet.Object;
+ 
+ public sealed class EnemyVisualController : NetworkBehaviour
+ {
+-    [Header("Animator")]
+     [SerializeField] private Animator animator;
+-    [SerializeField] private RuntimeAnimatorController animatorController;
+-
+-    [Header("Speed Settings")]
+-    [SerializeField] private float runSpeed = 3f;
+-    [SerializeField] private float dampTime = 0.1f;
+ 
+     private static readonly int SpeedHash = Animator.StringToHash("Speed");
+     private static readonly int AttackHash = Animator.StringToHash("Attack");
+ 
+-    private Vector3 lastPosition;
+-
+     private Entity entity;
+     private EntityManager em;
+ 
+     private EnemyAttackHandler attackHandler;
++    private Vector3 lastPos;
+ 
+     private void Awake()
+     {
+         if (animator == null)
+             animator = GetComponentInChildren<Animator>();
+ 
+-        if (animatorController != null && animator != null)
+-            animator.runtimeAnimatorController = animatorController;
+-
+         attackHandler = GetComponent<EnemyAttackHandler>();
+-
+         em = World.DefaultGameObjectInjectionWorld.EntityManager;
+     }
+ 
+-    private void Start()
++    private void Update()
+     {
+-        lastPosition = transform.position;
+-    }
++        if (animator == null)
++        {
++            animator = GetComponentInChildren<Animator>();
++            if (animator == null) return;
++        }
+ 
+-    private void Update() // ❗ НЕ LateUpdate
+-    {
+         if (entity == Entity.Null || !em.Exists(entity))
+         {
+             var binder = GetComponent<EnemyEcsRuntimeBinder>();
+ 
+-            if (binder != null)
+-            {
+-                var newEntity = binder.Entity;
+-
+-                if (newEntity != Entity.Null && em.Exists(newEntity))
+-                    entity = newEntity;
+-            }
+-        }
++            if (binder != null && binder.Entity != Entity.Null)
++                entity = binder.Entity;
+ 
+-        if (animator == null || entity == Entity.Null || !em.Exists(entity))
+             return;
++        }
+ 
+         var attackState = em.GetComponentData<EnemyAttackState>(entity);
+ 
+-        // ================= SPEED =================
+-        Vector3 currentPosition = transform.position;
+-
+-        Vector3 delta = currentPosition - lastPosition;
+-        delta.y = 0f;
+-
+-        float rawSpeed = delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+-        float animSpeed = Mathf.Clamp01(rawSpeed / runSpeed);
+-
+-        animator.SetFloat(SpeedHash, animSpeed, dampTime, Time.deltaTime);
++        // speed
++        float speed = (transform.position - lastPos).magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
++        animator.SetFloat(SpeedHash, speed);
+ 
+-        // ================= ATTACK =================
++        // attack
+         if (attackState.DoAttack)
+         {
+             attackState.DoAttack = false;
+             em.SetComponentData(entity, attackState);
+ 
+-            PlayAttackClientRpc(); // 👈 анимация всем
++            PlayAttackRpc();
+ 
+             if (IsServer)
+-                attackHandler?.TriggerAttack(); // 👈 урон только сервер
++                attackHandler?.TriggerAttack();
+         }
+ 
+-        lastPosition = currentPosition;
++        lastPos = transform.position;
+     }
+ 
+     [ObserversRpc]
+-    private void PlayAttackClientRpc()
++    private void PlayAttackRpc()
+     {
+         if (animator != null)
+             animator.SetTrigger(AttackHash);
+diff --git a/Assets/World/Biomes/Spawn/BiomeEnemySpawner.cs b/Assets/World/Biomes/Spawn/BiomeEnemySpawner.cs
+index 7d308bd..602c827 100644
+--- a/Assets/World/Biomes/Spawn/BiomeEnemySpawner.cs
++++ b/Assets/World/Biomes/Spawn/BiomeEnemySpawner.cs
+@@ -1,146 +1,165 @@
+ using Features.Enemy.Data;
+ using UnityEngine;
+-using FishNet.Object;
+ using FishNet;
+-using Biomes.Application;
++using FishNet.Object;
+ using Biomes.Data;
++using Biomes.Application;
+ 
+ namespace Biomes.UnityIntegration
+-{    public class BiomeEnemySpawner : MonoBehaviour
++{
++    public class BiomeEnemySpawner : MonoBehaviour
+     {
+         public Transform player;
+         public WorldConfig world;
+-        private float spawnTimer;
+-
+-        void LateUpdate()
+-        {
+-            if (!InstanceFinder.IsServer)
+-                return;
+-
+-            if (player == null || world == null)
+-                return;
+ 
+-            BiomeConfig biome = GetDominantBiome();
+-            if (biome == null)
+-                return;
++        [Header("Spawn Settings")]
++        [SerializeField] private float spawnInterval = 0.4f;
++        [SerializeField] private float spawnRadiusMin = 15f;
++        [SerializeField] private float spawnRadiusMax = 35f;
++        [SerializeField] private int maxEnemies = 40;
+ 
+-            var table = biome.enemyTable;
+-            if (table == null || table.Length == 0)
+-                return;
++        private float nextSpawnTime;
+ 
+-            if (EnemyWorldManager.Instance == null)
++        // =========================================================
++        private void Update()
++        {
++            if (!InstanceFinder.IsServer)
+                 return;
+ 
+-            int currentCount = 0;
+-            try
+-            {
+-                currentCount = EnemyBiomeCounter.GetCount(biome);
+-            }
+-            catch
+-            {
++            if (Time.time < nextSpawnTime)
+                 return;
+-            }
+ 
+-            if (currentCount >= table.Length * 12)
++            if (player == null || world == null)
+                 return;
+ 
+-            if (!EnemyWorldManager.Instance.CanSpawn())
++            var biome = GetDominantBiome();
++            if (biome == null)
+                 return;
+ 
+-            spawnTimer += Time.deltaTime;
+-            if (spawnTimer < 0.3f)
++            if (!CanSpawn(biome))
+                 return;
+ 
+-            spawnTimer = 0f;
++            nextSpawnTime = Time.time + spawnInterval;
+ 
+             SpawnEnemy(biome);
+         }
+ 
+-        private BiomeConfig GetDominantBiome()
++        // =========================================================
++        private bool CanSpawn(BiomeConfig biome)
+         {
+-            if (world == null || player == null)
+-                return null;
++            if (EnemyWorldManager.Instance == null)
++                return false;
+ 
+-            var blend = world.GetBiomeBlend(player.position);
+-            if (blend == null || blend.Length == 0)
+-                return null;
++            int count = EnemyBiomeCounter.GetCount(biome);
+ 
+-            BiomeConfig best = null;
+-            float bestWeight = 0f;
++            if (count >= maxEnemies)
++                return false;
+ 
+-            foreach (var b in blend)
+-            {
+-                if (b.biome == null) continue;
+-
+-                if (b.weight > bestWeight)
+-                {
+-                    best = b.biome;
+-                    bestWeight = b.weight;
+-                }
+-            }
+-
+-            return best;
++            return EnemyWorldManager.Instance.CanSpawn();
+         }
+ 
++        // =========================================================
+         private void SpawnEnemy(BiomeConfig biome)
+         {
+             var entry = biome.enemyTable[Random.Range(0, biome.enemyTable.Length)];
++            var config = entry.config;
+ 
+-            EnemyConfigSO config = entry.config;
+             if (!config || !config.prefab)
+                 return;
+ 
+-            Vector3 pos = GetSpawnPosition();
++            if (!TryGetSpawnPosition(out Vector3 pos))
++                return;
+ 
+             GameObject enemyGO = Instantiate(config.prefab, pos, Quaternion.identity);
+ 
+-            var tracker = enemyGO.GetComponent<EnemyInstanceTracker>();
+-            if (!tracker)
+-                tracker = enemyGO.AddComponent<EnemyInstanceTracker>();
+-
+-            tracker.config = config;
+-
+-            var lod = enemyGO.GetComponent<EnemyLODController>();
+-            if (lod)
+-                lod.config = config;
+-
++            // 🔥 СНАЧАЛА ECS
+             var binder = enemyGO.GetComponent<EnemyEcsRuntimeBinder>();
+             if (binder != null)
++            {
+                 binder.SetConfig(config);
++                binder.ForceInit();
++            }
+ 
++            // 🔥 ПОТОМ СЕТЬ
+             var nob = enemyGO.GetComponent<NetworkObject>();
+-            if (nob == null)
++            if (!nob)
+             {
+-                Debug.LogError("No NetworkObject on enemy prefab!");
++                Debug.LogError("Enemy prefab has no NetworkObject!");
+                 Destroy(enemyGO);
+                 return;
+             }
+ 
+             InstanceFinder.ServerManager.Spawn(nob);
+ 
+-            var link = enemyGO.GetComponent<EnemyChunkLink>();
+-            if (!link)
+-                link = enemyGO.AddComponent<EnemyChunkLink>();
++            Register(enemyGO, biome, config, pos);
++        }
++
++        // =========================================================
++        private void Register(GameObject enemyGO, BiomeConfig biome, EnemyConfigSO config, Vector3 pos)
++        {
++            var tracker = enemyGO.GetComponent<EnemyInstanceTracker>() 
++                          ?? enemyGO.AddComponent<EnemyInstanceTracker>();
++
++            tracker.config = config;
++
++            var link = enemyGO.GetComponent<EnemyChunkLink>() 
++                       ?? enemyGO.AddComponent<EnemyChunkLink>();
+ 
+             link.chunkCoord = world.WorldToChunk(pos);
+ 
+             EnemyWorldManager.Instance.Register(tracker);
+             EnemyBiomeCounter.Register(biome, tracker);
+ 
+-            var unreg = enemyGO.GetComponent<EnemyAutoUnregister>();
+-            if (!unreg)
+-                unreg = enemyGO.AddComponent<EnemyAutoUnregister>();
++            var unreg = enemyGO.GetComponent<EnemyAutoUnregister>() 
++                        ?? enemyGO.AddComponent<EnemyAutoUnregister>();
+ 
+             unreg.biome = biome;
+             unreg.tracker = tracker;
+         }
+ 
+-        private Vector3 GetSpawnPosition()
++        // =========================================================
++        private bool TryGetSpawnPosition(out Vector3 result)
+         {
+-            float r = Random.Range(12f, 40f);
+-            Vector2 circle = Random.insideUnitCircle.normalized * r;
+-            return player.position + new Vector3(circle.x, 0, circle.y);
++            for (int i = 0; i < 10; i++)
++            {
++                float r = Random.Range(spawnRadiusMin, spawnRadiusMax);
++                Vector2 circle = Random.insideUnitCircle.normalized * r;
++
++                Vector3 pos = player.position + new Vector3(circle.x, 0, circle.y);
++
++                if (Vector3.Distance(player.position, pos) < spawnRadiusMin)
++                    continue;
++
++                result = pos;
++                return true;
++            }
++
++            result = default;
++            return false;
+         }
+-    }
+ 
++        // =========================================================
++        private BiomeConfig GetDominantBiome()
++        {
++            var blend = world.GetBiomeBlend(player.position);
++            if (blend == null || blend.Length == 0)
++                return null;
++
++            BiomeConfig best = null;
++            float bestWeight = 0f;
++
++            foreach (var b in blend)
++            {
++                if (b.biome == null) continue;
++
++                if (b.weight > bestWeight)
++                {
++                    best = b.biome;
++                    bestWeight = b.weight;
++                }
++            }
++
++            return best;
++        }
++    }
+ }

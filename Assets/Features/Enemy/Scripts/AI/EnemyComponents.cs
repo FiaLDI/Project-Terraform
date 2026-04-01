@@ -161,5 +161,29 @@ public struct EnemyBlocked : IComponentData
     public bool Value;
 }
 
+public struct EnemyRadius : IComponentData
+{
+    public float Value;
+}
+
+public struct EnemySteeringData : IComponentData
+{
+    public float seekWeight;
+    public float avoidWeight;
+    public float separationWeight;
+    public float orbitWeight;
+
+    public float avoidDistance;
+    public float sideAvoidDistance;
+    public float separationRadius;
+
+    public float rotationSpeed;
+    public float orbitStrength;
+
+    public bool enableSeparation;
+    public bool enableAvoidance;
+    public bool enableOrbit;
+}
+
 public struct EnemyTag : IComponentData { }
 public struct PlayerTag : IComponentData { }

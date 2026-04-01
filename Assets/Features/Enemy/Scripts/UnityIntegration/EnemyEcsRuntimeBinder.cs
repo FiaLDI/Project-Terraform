@@ -1,54 +1,49 @@
 using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
-using Unity.Mathematics;
 using FishNet.Object;
 using Features.Enemy.Data;
-using System.Collections;
 
 public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 {
     private Entity entity;
     public Entity Entity => entity;
 
-    [Header("Config")]
     [SerializeField] private EnemyConfigSO config;
-
-    [Header("Patrol Points")]
     [SerializeField] private Transform[] patrolPoints;
 
-    [Header("Patrol Settings")]
-    [SerializeField] private float reachDistance = 0.6f;
-    [SerializeField] private float minWait = 1f;
-    [SerializeField] private float maxWait = 3f;
-    [SerializeField] private bool randomPatrol = true;
-
-    // =========================================================
-    public override void OnStartServer()
-    {
-        base.OnStartServer();
-        StartCoroutine(InitNextFrame());
-    }
-
-    private IEnumerator InitNextFrame()
-    {
-        yield return null; // 👈 ждём ECS world
-
-        CreateEntity();
-        FillPatrolBuffer();
-    }
-
-    // =========================================================
     private EntityManager GetEM()
     {
         var world = World.DefaultGameObjectInjectionWorld;
         return world != null ? world.EntityManager : default;
     }
 
-    private void CreateEntity()
+    // =========================================================
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        Init();
+    }
+
+    public void SetConfig(EnemyConfigSO cfg)
+    {
+        config = cfg;
+    }
+
+    public void ForceInit()
+    {
+        if (!IsServer) return;
+        Init();
+    }
+
+    private void Init()
     {
         var em = GetEM();
-        if (em == default) return;
+        if (em == default || config == null)
+            return;
+
+        if (entity != Entity.Null && em.Exists(entity))
+            return;
 
         entity = em.CreateEntity(
             typeof(LocalTransform),
@@ -56,75 +51,90 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             typeof(EnemyAI),
             typeof(EnemyState),
             typeof(EnemyTargetPosition),
+            typeof(EnemyAttackState),
+            typeof(EnemyTarget),
+            typeof(EnemyHasLineOfSight),
+            typeof(EnemyRadius),
+            typeof(EnemySteeringData),
+
             typeof(EnemyPatrolState),
             typeof(EnemyPatrolSettings),
-            typeof(EnemyBlocked),
-            typeof(EnemyTarget),
             typeof(EnemyAggroState),
-            typeof(EnemyLastKnownPosition),
-            typeof(EnemyAttackState),
-            typeof(EnemyHasLineOfSight)
+            typeof(EnemyLastKnownPosition)
         );
-
-        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
-
-        em.SetComponentData(entity, new EnemyTarget { Value = Entity.Null });
-
-        em.SetComponentData(entity, new EnemyHasLineOfSight { Value = true });
-
-        ApplyConfig(em);
-
-        em.SetComponentData(entity, new EnemyState { Value = EnemyAIState.Patrol });
-
-        em.SetComponentData(entity, new EnemyTargetPosition
-        {
-            Value = transform.position
-        });
-
-        em.SetComponentData(entity, new EnemyAggroState { Timer = 0f });
 
         em.SetComponentData(entity, new EnemyLastKnownPosition
         {
             Value = transform.position
         });
 
-        em.SetComponentData(entity, new EnemyAttackState
+        em.AddComponentData(entity, new EnemySteeringData
         {
-            Cooldown = 0f,
-            DoAttack = false
-        });
+            seekWeight = config.seekWeight,
+            avoidWeight = config.avoidWeight,
+            separationWeight = config.separationWeight,
+            orbitWeight = config.orbitWeight,
 
-        em.SetComponentData(entity, new EnemyBlocked { Value = false });
+            avoidDistance = config.avoidDistance,
+            sideAvoidDistance = config.sideAvoidDistance,
+            separationRadius = config.separationRadius,
+
+            rotationSpeed = config.rotationSpeed,
+            orbitStrength = config.orbitStrength,
+
+            enableSeparation = config.enableSeparation,
+            enableAvoidance = config.enableAvoidance,
+            enableOrbit = config.enableOrbit
+        });
 
         em.SetComponentData(entity, new EnemyPatrolState
         {
             CurrentIndex = 0,
             IsWaiting = false,
-            WaitTimer = 0f,
-            CurrentWaitDuration = 0f
+            WaitTimer = 0f
         });
 
         em.SetComponentData(entity, new EnemyPatrolSettings
         {
-            ReachDistance = reachDistance,
-            MinWaitTime = minWait,
-            MaxWaitTime = maxWait,
-            RandomPatrol = randomPatrol
+            ReachDistance = 0.5f,
+            MinWaitTime = 1f,
+            MaxWaitTime = 2f,
+            RandomPatrol = true
         });
 
-        em.AddBuffer<EnemyPatrolPoint>(entity);
+        em.SetComponentData(entity, new EnemyAggroState
+        {
+            Timer = 0f
+        });
+
+        em.SetComponentData(entity,
+            LocalTransform.FromPositionRotation(
+                transform.position,
+                transform.rotation
+            ));
+
+        em.SetComponentData(entity,
+            LocalTransform.FromPosition(transform.position));
+
+        em.SetComponentData(entity, new EnemyTarget
+        {
+            Value = Entity.Null
+        });
+
+        em.SetComponentData(entity, new EnemyHasLineOfSight
+        {
+            Value = true
+        });
+
+        
+        em.SetComponentData(entity, new EnemyRadius
+        {
+            Value = 0.6f
+        });
+
         em.AddBuffer<EnemyAggroElement>(entity);
-        em.AddBuffer<DamageEvent>(entity);
-    }
 
-    private void FillPatrolBuffer()
-    {
-        var em = GetEM();
-        if (em == default || !em.Exists(entity)) return;
-
-        var buffer = em.GetBuffer<EnemyPatrolPoint>(entity);
-
-        if (patrolPoints == null) return;
+        var buffer = em.AddBuffer<EnemyPatrolPoint>(entity);
 
         foreach (var p in patrolPoints)
         {
@@ -135,43 +145,8 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
                 Position = p.position
             });
         }
-    }
 
-    // =========================================================
-    private void Update()
-    {
-        if (!IsServer) return;
-
-        var em = GetEM();
-        if (em == default) return;
-
-        // 🔥 если entity умерла (смена сцены)
-        if (entity == Entity.Null || !em.Exists(entity))
-        {
-            CreateEntity();
-            FillPatrolBuffer();
-            return;
-        }
-
-        // 🔥 sync ECS → GameObject
-        var transformData = em.GetComponentData<LocalTransform>(entity);
-        transform.position = transformData.Position;
-    }
-    public void SetConfig(EnemyConfigSO cfg)
-    {
-        config = cfg;
-
-        if (!IsServer)
-            return;
-
-        var em = GetEM();
-        if (em == default)
-            return;
-
-        if (entity != Entity.Null && em.Exists(entity))
-        {
-            ApplyConfig(em);
-        }
+        ApplyConfig(em);
     }
 
     private void ApplyConfig(EntityManager em)
@@ -183,14 +158,46 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             LoseAggroRadius = config.aggroRadius * 1.5f,
             AttackRange = config.attackRange,
             AttackCooldown = config.attackCooldown,
-            AttackEnterOffset = config.attackEnterOffset,
-            AttackExitOffset = config.attackExitOffset,
             StopDistanceMultiplier = config.stopDistanceMultiplier,
-            VisionAngle = config.visionAngle,
-            VisionRange = config.visionRange,
-            RequireLOS = config.requireLineOfSight,
-            ObstacleMask = config.obstacleMask.value
+            VisionRange = config.visionRange
         });
+
+        em.SetComponentData(entity, new EnemyState
+        {
+            Value = EnemyAIState.Patrol
+        });
+
+        em.SetComponentData(entity, new EnemyTargetPosition
+        {
+            Value = transform.position
+        });
+
+
+        em.SetComponentData(entity, new EnemyAttackState
+        {
+            Cooldown = 0f,
+            DoAttack = false
+        });
+    }
+
+    // =========================================================
+    private void Update()
+    {
+        if (!IsServer) return;
+
+        var em = GetEM();
+        if (em == default) return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+        {
+            Init();
+            return;
+        }
+
+        var t = em.GetComponentData<LocalTransform>(entity);
+
+        var pos = transform.position;
+
     }
 
     private void OnDestroy()

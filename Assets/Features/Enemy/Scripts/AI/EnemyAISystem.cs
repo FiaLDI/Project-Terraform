@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-[BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct EnemyAISystem : ISystem
 {
     private ComponentLookup<LocalTransform> transformLookup;

@@ -3,7 +3,8 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-[BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateBefore(typeof(EnemyAISystem))]
 public partial struct EnemyTargetingSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
