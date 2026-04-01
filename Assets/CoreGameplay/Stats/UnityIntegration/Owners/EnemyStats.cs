@@ -91,6 +91,9 @@ namespace Features.Stats.UnityIntegration
 
         private void Update()
         {
+            if (!IsServer)
+                return;
+
             CheckDeath();
         }
 

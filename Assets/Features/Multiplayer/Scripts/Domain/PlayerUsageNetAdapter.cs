@@ -205,4 +205,9 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         // rightHand = equip.GetRightHandUsable();
         // leftHand = equip.GetLeftHandUsable();
     }
+
+    public bool HasWeapon()
+    {
+        return rightHandInstance != null && !rightHandInstance.IsEmpty;
+    }
 }

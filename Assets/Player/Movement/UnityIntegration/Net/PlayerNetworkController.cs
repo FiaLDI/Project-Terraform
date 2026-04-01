@@ -15,12 +15,10 @@ public class PlayerNetworkController : NetworkBehaviour
 
     private const float IgnoreErrorThreshold = 0.05f;
     private const float HardSnapThreshold = 2f;
-
-    // 🔥 INPUT DELAY
     private const int InputDelayTicks = 2;
 
-    // 🔥 SMOOTH CORRECTION
-    private Vector3 pendingCorrection;
+    // 🔥 ВАЖНО: визуальная коррекция вместо физической
+    private Vector3 visualOffset;
 
     private bool isTeleporting;
 
@@ -41,6 +39,33 @@ public class PlayerNetworkController : NetworkBehaviour
 
         float yaw = inputHandler.CurrentState.Yaw;
         transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+
+        // ================= VISUAL SMOOTHING =================
+        if (!IsServer)
+        {
+            if (visualOffset.sqrMagnitude > 0.0001f)
+            {
+                float smoothSpeed = 8f;
+
+                Vector3 step = Vector3.Lerp(
+                    Vector3.zero,
+                    visualOffset,
+                    1f - Mathf.Exp(-smoothSpeed * Time.deltaTime)
+                );
+
+                // 🔥 фикс дрожания
+                if (step.magnitude > visualOffset.magnitude)
+                {
+                    step = visualOffset;
+                }
+
+                transform.position += step;
+                visualOffset -= step;
+
+                if (visualOffset.magnitude < 0.01f)
+                    visualOffset = Vector3.zero;
+            }
+        }
     }
 
     public override void OnStartNetwork()
@@ -56,7 +81,7 @@ public class PlayerNetworkController : NetworkBehaviour
 
         inputBuffer.Clear();
         stateBuffer.Clear();
-        pendingCorrection = Vector3.zero;
+        visualOffset = Vector3.zero;
     }
 
     private void OnTick()
@@ -142,24 +167,7 @@ public class PlayerNetworkController : NetworkBehaviour
             SendStateObserversRpc(state);
             SendStateTargetRpc(Owner, state);
 
-            int cleanupTick = simulationTick - 100;
-            inputBuffer.Remove(cleanupTick);
-        }
-
-        // ================= SMOOTH CORRECTION =================
-        if (!IsServer && IsOwner)
-        {
-            if (pendingCorrection.sqrMagnitude > 0.0001f)
-            {
-                Vector3 step = pendingCorrection * 0.15f;
-
-                movement.AddExternalVelocity(step);
-
-                pendingCorrection -= step;
-
-                if (pendingCorrection.magnitude < 0.01f)
-                    pendingCorrection = Vector3.zero;
-            }
+            inputBuffer.Remove(simulationTick - 100);
         }
     }
 
@@ -182,64 +190,53 @@ public class PlayerNetworkController : NetworkBehaviour
     [TargetRpc]
     private void SendStateTargetRpc(NetworkConnection conn, PlayerState serverState)
     {
-        // 🔥 хост не корректим
         if (IsServer)
             return;
 
-        // 🔥 teleport режим
+        // TELEPORT MODE
         if (isTeleporting)
         {
-            movement.Teleport(
-                serverState.Position,
-                serverState.Yaw,
-                serverState.Velocity.y
-            );
+            Vector3 pos = serverState.Position;
+            pos.y = transform.position.y;
+
+            movement.Teleport(pos, serverState.Yaw, serverState.Velocity.y);
 
             inputBuffer.Clear();
             stateBuffer.Clear();
-            pendingCorrection = Vector3.zero;
+            visualOffset = Vector3.zero;
 
             isTeleporting = false;
             return;
         }
 
-        float error = Vector3.Distance(transform.position, serverState.Position);
+        Vector3 flatError = serverState.Position - transform.position;
+        flatError.y = 0f;
 
-        // 🔥 HARD SNAP
+        float error = flatError.magnitude;
+
+        // HARD SNAP
         if (error > HardSnapThreshold)
         {
-            movement.Teleport(
-                serverState.Position,
-                serverState.Yaw,
-                serverState.Velocity.y
-            );
+            Vector3 pos = serverState.Position;
+            pos.y = transform.position.y;
+
+            movement.Teleport(pos, serverState.Yaw, serverState.Velocity.y);
 
             inputBuffer.Clear();
             stateBuffer.Clear();
-            pendingCorrection = Vector3.zero;
+            visualOffset = Vector3.zero;
             return;
         }
 
-        // 🔥 МЯГКАЯ КОРРЕКЦИЯ
-        if (error > IgnoreErrorThreshold)
-        {
-            Vector3 correction = serverState.Position - transform.position;
+        if (error < IgnoreErrorThreshold)
+            return;
 
-            // защита от скачков
-            if (correction.magnitude > 3f)
-            {
-                movement.Teleport(
-                    serverState.Position,
-                    serverState.Yaw,
-                    serverState.Velocity.y
-                );
+        Vector3 correction = serverState.Position - transform.position;
+        correction.y = 0f;
 
-                pendingCorrection = Vector3.zero;
-                return;
-            }
+        visualOffset += correction;
 
-            pendingCorrection += correction;
-        }
+        visualOffset = Vector3.ClampMagnitude(visualOffset, 1.5f);
     }
 
     // ================= TELEPORT =================
@@ -281,7 +278,7 @@ public class PlayerNetworkController : NetworkBehaviour
         SendStateTargetRpc(Owner, state);
     }
 
-    // ================= QUEST RPC =================
+    // ================= QUEST / WORLD RPC =================
 
     [ServerRpc]
     public void RequestReturnToHubServerRpc()
@@ -289,15 +286,10 @@ public class PlayerNetworkController : NetworkBehaviour
         SceneTransitionService.LoadHubScene();
     }
 
-    // ================= WORLD / QUEST RPC =================
     [ServerRpc]
-    public void RequestWorldServerRpc(
-        int seed,
-        List<string> questIds,
-        List<string> chainIds)
+    public void RequestWorldServerRpc(int seed, List<string> questIds, List<string> chainIds)
     {
         ServerWorldSession.PendingSeed = seed;
-
         ServerWorldSession.PendingQuestIds = questIds;
         ServerWorldSession.PendingChainIds = chainIds;
 

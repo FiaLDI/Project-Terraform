@@ -383,7 +383,6 @@ GameObject:
   - component: {fileID: 3778525526496260052}
   - component: {fileID: 3302508318773783486}
   - component: {fileID: 3586989162742316649}
-  - component: {fileID: 55325584892561636}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -784,16 +783,21 @@ MonoBehaviour:
   cameraPivot: {fileID: 2683651113482784269}
   fpsPoint: {fileID: 5175878013477234654}
   headTransform: {fileID: 0}
-  headYawBone: {fileID: 0}
-  headYawLimit: 40
-  bodyTurnSpeed: 360
-  tpsSmoothSpeed: 7
   collisionMask:
     serializedVersion: 2
     m_Bits: 1791
   collisionRadius: 0.3
   minCameraDistance: 0.5
   shoulderOffset: {x: 0.5, y: 0, z: 0}
+  baseFov: 75
+  sprintFov: 90
+  fovSpeed: 8
+  fpsMask:
+    serializedVersion: 2
+    m_Bits: 6143
+  tpsMask:
+    serializedVersion: 2
+    m_Bits: 4095
 --- !u!114 &5907872678837714149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1139,15 +1143,3 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 6311823513652316802}
   questDatabase: {fileID: 11400000, guid: 4fb6bb3609cb58842a9469b94900b3b0, type: 2}
   chainDatabase: {fileID: 11400000, guid: 77add117847d4984987cf4ec0233a111, type: 2}
---- !u!114 &55325584892561636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4319c04272ec99f4ebe39570c114bd81, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerEcsBinder

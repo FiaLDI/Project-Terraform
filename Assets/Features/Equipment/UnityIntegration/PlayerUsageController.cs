@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Features.Player;
 using Features.Game;
+using Features.Player.UnityIntegration;
 
 namespace Features.Equipment.UnityIntegration
 {
@@ -29,6 +30,18 @@ namespace Features.Equipment.UnityIntegration
 
                 return player != null
                     ? player.GetComponent<PlayerUsageNetAdapter>()
+                    : null;
+            }
+        }
+
+        private PlayerCameraController PlayerCamera
+        {
+            get
+            {
+                var player = BootstrapRoot.I?.LocalPlayer;
+
+                return player != null
+                    ? player.GetComponent<PlayerCameraController>()
                     : null;
             }
         }
@@ -144,6 +157,12 @@ namespace Features.Equipment.UnityIntegration
             usingSecondary = true;
 
             var net = Net;
+            var camera = PlayerCamera;
+
+            if (camera != null && net != null && net.HasWeapon())
+            {
+                camera.SetAiming(true);
+            }
 
             if (net != null)
                 net.ActionStart(ItemActionType.Secondary);
@@ -154,6 +173,12 @@ namespace Features.Equipment.UnityIntegration
             usingSecondary = false;
 
             var net = Net;
+            var camera = PlayerCamera;
+
+            if (camera != null)
+            {
+                camera.SetAiming(false);
+            }
 
             if (net != null)
                 net.ActionStop(ItemActionType.Secondary);

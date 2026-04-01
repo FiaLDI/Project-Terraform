@@ -5,13 +5,14 @@ using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using Features.Buffs.Domain;
 using Features.Buffs.Application;
+using FishNet.Object;
 
 namespace Features.Enemy.UnityIntegration
 {
     [RequireComponent(typeof(EnemyStats))]
     [RequireComponent(typeof(BuffSystem))]
     public sealed class EnemyActor :
-        MonoBehaviour,
+        NetworkBehaviour,
         IBuffTarget
     {
         private EnemyStats enemyStats;
@@ -31,13 +32,15 @@ namespace Features.Enemy.UnityIntegration
 
         private void Start()
         {
-            if (enemyStats != null && enemyStats.IsReady)
+            if (IsServer)
             {
-                OnReady?.Invoke();
+                if (enemyStats != null && enemyStats.IsReady)
+                    OnReady?.Invoke();
             }
             else
             {
-                Debug.LogError("[EnemyActor] Stats not ready", this);
+                // клиент сразу готов (ждёт снапшот)
+                OnReady?.Invoke();
             }
         }
 
@@ -56,7 +59,10 @@ namespace Features.Enemy.UnityIntegration
 
         public Transform Transform => transform;
 
-        public bool IsReady => enemyStats != null && enemyStats.IsReady;
+        public bool IsReady =>
+            IsServer
+                ? (enemyStats != null && enemyStats.IsReady)
+                : true;
 
         public IBuffSource OwnerSource => null; // у врага нет владельца
     }

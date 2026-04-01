@@ -2,7 +2,6 @@ using UnityEngine;
 using Features.Camera.Application;
 using Features.Camera.Domain;
 using Features.Camera.UnityIntegration;
-using System.Collections;
 
 namespace Features.Player.UnityIntegration
 {
@@ -12,100 +11,68 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Transform fpsPoint;
         [SerializeField] private Transform headTransform;
-        [SerializeField] private Transform headYawBone;
-        [SerializeField] private float headYawLimit = 40f;
-        [SerializeField] private float bodyTurnSpeed = 360f;
 
-        [SerializeField] private float tpsSmoothSpeed = 7f;
-
-        [Header("TPS Collision")]
+        [Header("TPS")]
         [SerializeField] private LayerMask collisionMask;
         [SerializeField] private float collisionRadius = 0.3f;
         [SerializeField] private float minCameraDistance = 0.5f;
-        private float currentSensitivity;
-
         [SerializeField] private Vector3 shoulderOffset = new Vector3(0.5f, 0f, 0f);
+
+        [Header("FOV")]
+        [SerializeField] private float baseFov = 75f;
+        [SerializeField] private float sprintFov = 90f;
+        [SerializeField] private float fovSpeed = 8f;
+        [SerializeField] private LayerMask fpsMask;
+        [SerializeField] private LayerMask tpsMask;
+        [SerializeField] private float maxTpsDistance = 5f;
 
         private UnityEngine.Camera unityCamera;
         private Transform cameraTransform;
         private ICameraControlService control;
 
         private float currentTpsDistance = 5f;
+        
         private bool isLocal;
+
+        private float smoothYaw;
+        private float smoothPitch;
+        private float yawVelocity;
+        private float pitchVelocity;
+
+        private const float BASE_MULTIPLIER = 100f;
+        [SerializeField] private float adsFov = 65f;
+        [SerializeField] private float adsDistance = 2f;
+        [SerializeField] private float adsSpeed = 10f;
+
+        private bool isAiming;
 
         private ICameraControlService Control => CameraServiceProvider.Control;
 
-        private const float BASE_MULTIPLIER = 100f;
-        private float bodyYaw;
-private float headYawOffset;
-
-        private void Start()
-        {
-            currentSensitivity = SettingsStorage.Sensitivity * BASE_MULTIPLIER;
-        }
-
-        public void RefreshSensitivity()
-        {
-            currentSensitivity = SettingsStorage.Sensitivity * BASE_MULTIPLIER;
-        }
-
         private void Awake()
         {
-            Debug.Log($"[camera-fix] {name} Awake | Control NULL? {CameraServiceProvider.Control == null}");
-
             enabled = false;
             control = CameraServiceProvider.Control;
         }
 
-        private void OnDestroy()
+        public void SetLocal(bool value)
         {
-            Debug.Log($"[camera-fix] {name} DESTROYED | isLocal={isLocal}");
+            isLocal = value;
+            enabled = value;
+
+            if (value)
+                ResolveCamera();
         }
 
-        public void SetLookInput(Vector2 input)
-        {
-            if (!isLocal || control == null)
-                return;
-
-            float sens = SettingsStorage.Sensitivity * BASE_MULTIPLIER;
-            control.SetLookInput(input, sens, Time.deltaTime);
-
-            float yaw = control.State.Yaw;
-            float pitch = control.State.Pitch;
-
-            var handler = FindObjectOfType<MovementInputHandler>();
-            handler?.SetYaw(yaw);
-            handler?.SetPitch(pitch);
-        }
-
-        public void SwitchView()
-        {
-            if (!isLocal || control == null)
-                return;
-
-            control.SwitchView();
+        public void SetAiming(bool value)
+        {   
+            isAiming = value;
         }
 
         private void LateUpdate()
         {
-            if (!isLocal)
-            {
-                Debug.Log($"[camera-fix] {name} LateUpdate SKIP not local");
+            if (!isLocal || Control == null)
                 return;
-            }
-
-            if (Control == null)
-            {
-                Debug.Log($"[camera-fix] {name} LateUpdate SKIP Control NULL");
-                return;
-            }
-
-            if (cameraTransform == null)
-            {
-                Debug.Log($"[camera-fix] {name} LateUpdate cameraTransform NULL");
-                return;
-            }
-
+            
             if (cameraTransform == null && !ResolveCamera())
                 return;
 
@@ -113,34 +80,73 @@ private float headYawOffset;
 
             var state = control.State;
 
-            if (state.Blend < 0.5f)
-                UpdateFPS(state);
-            else
-                UpdateTPS(state);
-            
-            bool isFPS = control.State.Blend < 0.5f;
+            bool isFPS = state.Blend < 0.5f;
 
-            CameraRegistry.Instance?.SetFPSVisible(isFPS);
+            if (unityCamera != null)
+            {
+                unityCamera.cullingMask = isFPS ? fpsMask : tpsMask;
+            }
+
+            float smoothTime = 0.035f;
+
+            smoothYaw = Mathf.SmoothDampAngle(
+                smoothYaw,
+                state.Yaw,
+                ref yawVelocity,
+                smoothTime
+            );
+
+            smoothPitch = Mathf.SmoothDamp(
+                smoothPitch,
+                state.Pitch,
+                ref pitchVelocity,
+                smoothTime
+            );
+
+            if (state.Blend < 0.5f)
+                UpdateFPS();
+            else
+                UpdateTPS();
+
+            UpdateFOV();
+
+            CameraRegistry.Instance?.SetFPSVisible(state.Blend < 0.5f);
         }
 
-        private void UpdateFPS(PlayerCameraState state)
+        // ======================================================
+        // FPS
+        // ======================================================
+
+        private void UpdateFPS()
         {
-            cameraTransform.position = fpsPoint.position;
-            cameraTransform.rotation =
-                Quaternion.Euler(state.Pitch, state.Yaw, 0f);
+            cameraTransform.position = Vector3.Lerp(
+                cameraTransform.position,
+                fpsPoint.position,
+                1f - Mathf.Exp(-20f * Time.deltaTime)
+            );
+
+            cameraTransform.rotation = Quaternion.Slerp(
+                cameraTransform.rotation,
+                Quaternion.Euler(smoothPitch, smoothYaw, 0f),
+                1f - Mathf.Exp(-20f * Time.deltaTime)
+            );
 
             if (headTransform != null)
-                headTransform.localRotation =
-                    Quaternion.Euler(state.Pitch, 0f, 0f);
+            {
+                headTransform.localRotation = Quaternion.Euler(smoothPitch, 0f, 0f);
+            }
         }
 
-        private void UpdateTPS(PlayerCameraState state)
+        // ======================================================
+        // TPS
+        // ======================================================
+
+        private void UpdateTPS()
         {
-            cameraPivot.localRotation =
-                Quaternion.Euler(state.Pitch, 0f, 0f);
+            cameraPivot.localRotation = Quaternion.Euler(smoothPitch, 0f, 0f);
 
             Vector3 desired =
-                cameraPivot.position - cameraPivot.forward * currentTpsDistance;
+                cameraPivot.position - cameraPivot.forward * maxTpsDistance;
 
             float targetDistance = control.ComputeTpsDistance(
                 cameraPivot.position,
@@ -150,7 +156,18 @@ private float headYawOffset;
                 minCameraDistance
             );
 
-            currentTpsDistance = targetDistance;
+            if (isAiming)
+            {
+                targetDistance = Mathf.Min(targetDistance, adsDistance);
+            }
+
+            float speed = targetDistance > currentTpsDistance ? 4f : 15f;
+
+            currentTpsDistance = Mathf.Lerp(
+                currentTpsDistance,
+                targetDistance,
+                1f - Mathf.Exp(-speed * Time.deltaTime)
+            );
 
             Vector3 shoulderWorld =
                 cameraPivot.TransformPoint(shoulderOffset);
@@ -158,10 +175,54 @@ private float headYawOffset;
             Vector3 targetPos =
                 shoulderWorld - cameraPivot.forward * currentTpsDistance;
 
-            cameraTransform.position = targetPos;
-            cameraTransform.rotation =
-            Quaternion.Euler(state.Pitch, state.Yaw, 0f);
+            cameraTransform.position = Vector3.Lerp(
+                cameraTransform.position,
+                targetPos,
+                1f - Mathf.Exp(-15f * Time.deltaTime)
+            );
+
+            cameraTransform.rotation = Quaternion.Slerp(
+                cameraTransform.rotation,
+                Quaternion.Euler(smoothPitch, smoothYaw, 0f),
+                1f - Mathf.Exp(-15f * Time.deltaTime)
+            );
         }
+
+        // ======================================================
+        // DYNAMIC FOV
+        // ======================================================
+
+        private void UpdateFOV()
+        {
+            if (unityCamera == null)
+                return;
+
+            var movement = GetComponent<DeterministicMovement>();
+
+            bool isSprinting =
+                movement != null &&
+                movement.CurrentMaxSpeed > 6f &&
+                movement.Velocity.magnitude > 0.1f;
+
+            float targetFov;
+
+            if (isAiming)
+                targetFov = adsFov;
+            else if (isSprinting)
+                targetFov = sprintFov;
+            else
+                targetFov = baseFov;
+
+            unityCamera.fieldOfView = Mathf.Lerp(
+                unityCamera.fieldOfView,
+                targetFov,
+                1f - Mathf.Exp(-fovSpeed * Time.deltaTime)
+            );
+        }
+
+        // ======================================================
+        // CAMERA RESOLVE
+        // ======================================================
 
         private bool ResolveCamera()
         {
@@ -175,19 +236,45 @@ private float headYawOffset;
             unityCamera = cam;
             cameraTransform = cam.transform;
 
-            Debug.Log($"[Camera] Attached to {name}");
-
             return true;
         }
 
-        public void SetLocal(bool value)
-        {
-            isLocal = value;
-            enabled = value;
+        // ================= INPUT =================
 
-            if (value)
-                ResolveCamera();
+        public void SetLookInput(Vector2 input)
+        {
+            if (!isLocal || control == null)
+                return;
+
+            float sens = SettingsStorage.Sensitivity * BASE_MULTIPLIER;
+
+            control.SetLookInput(input, sens, Time.deltaTime);
+
+            var handler = FindObjectOfType<MovementInputHandler>();
+            if (handler != null)
+            {
+                handler.SetYaw(control.State.Yaw);
+                handler.SetPitch(control.State.Pitch);
+            }
         }
+
+        public void SwitchView()
+        {
+            if (!isLocal || control == null)
+                return;
+
+            control.SwitchView();
+        }
+
+        // ================= SETTINGS =================
+
+        public void RefreshSensitivity()
+        {
+            // ничего сложного — просто оставляем совместимость
+            // (можно позже расширить)
+        }
+
+        // ================= SYSTEM =================
 
         public void ForceReattachCamera()
         {
