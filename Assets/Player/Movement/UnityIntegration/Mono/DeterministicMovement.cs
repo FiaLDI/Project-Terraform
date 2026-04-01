@@ -40,6 +40,11 @@ public class DeterministicMovement : NetworkBehaviour
         currentYaw = transform.eulerAngles.y;
     }
 
+    public void AddExternalVelocity(Vector3 delta)
+    {
+        Velocity += delta;
+    }
+
     public void Simulate(MoveCommand cmd)
     {
         if (IsFrozen)

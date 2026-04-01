@@ -35,9 +35,10 @@ public class RemoteInterpolation : MonoBehaviour
         {
             Time = time,
             Position = state.Position,
+            Velocity = state.Velocity,
             Yaw = state.Yaw,
             Pitch = state.Pitch,
-            Jump   = state.Jump,
+            Jump = state.Jump,
             Crouch = state.Crouch,
             Sprint = state.Sprint,
             Grounded = state.Grounded
