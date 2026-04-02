@@ -181,12 +181,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5151272602035875914}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.446, y: 2.439, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.4460001, y: 3.54, z: 0.02}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8282239097301865665}
+  m_Father: {fileID: 5017748270277261448}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6202741382508557473
 GameObject:
@@ -229,7 +229,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8282239097301865665}
   m_Layer: 8
-  m_Name: CameraController
+  m_Name: CameraEntity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -252,7 +252,6 @@ Transform:
   - {fileID: 6661307558894028265}
   - {fileID: 5376905879590580319}
   - {fileID: 1158711919289892428}
-  - {fileID: 2683651113482784269}
   m_Father: {fileID: 5017748270277261448}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7012883752185838559
@@ -285,6 +284,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2683651113482784269}
   - {fileID: 8282239097301865665}
   m_Father: {fileID: 8962433313233342359}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -464,6 +464,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BiomeEnemySpawner
   player: {fileID: 5017748270277261448}
   world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+  spawnInterval: 0.4
+  spawnRadiusMin: 15
+  spawnRadiusMax: 35
+  maxEnemies: 40
 --- !u!114 &2556438216558507215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -663,6 +667,7 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
   playerController: {fileID: 7022724963732028029}
+  visual: {fileID: 0}
 --- !u!114 &6311823513652316802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -800,6 +805,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4095
   maxTpsDistance: 5
+  visualRoot: {fileID: 5017748270277261448}
   adsFov: 65
   adsDistance: 2
   adsSpeed: 10
@@ -854,6 +860,9 @@ MonoBehaviour:
   normalHeight: 3
   rotationSharpness: 20
   jumpHeight: 1.2
+  bodyFollowSpeedMoving: 18
+  bodyFollowSpeed: 8
+  bodyFollowThreshold: 50
 --- !u!114 &3277316184608179795
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -976,6 +985,7 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
   aimSendRate: 20
+  viewModelRoot: {fileID: 0}
 --- !u!114 &5527670935517867940
 MonoBehaviour:
   m_ObjectHideFlags: 0

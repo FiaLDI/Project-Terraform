@@ -19,7 +19,7 @@ public class RemoteInterpolation : MonoBehaviour
     }
 
     private readonly List<Snapshot> snapshots = new();
-    private const float InterpDelay = 0.2f;
+    private const float InterpDelay = 0.5f;
     private PlayerAnimationController anim;
 
     public void Awake()
@@ -38,9 +38,7 @@ public class RemoteInterpolation : MonoBehaviour
             Velocity = state.Velocity,
             Yaw = state.Yaw,
             Pitch = state.Pitch,
-            Jump = state.Jump,
             Crouch = state.Crouch,
-            Sprint = state.Sprint,
             Grounded = state.Grounded
         });
 

@@ -13,59 +13,32 @@ public class PlayerNetworkController : NetworkBehaviour
     private readonly Dictionary<int, MoveCommand> inputBuffer = new();
     private readonly Dictionary<int, PlayerState> stateBuffer = new();
 
-    private const float IgnoreErrorThreshold = 0.05f;
-    private const float HardSnapThreshold = 2f;
-    private const int InputDelayTicks = 2;
-
-    // 🔥 ВАЖНО: визуальная коррекция вместо физической
-    private Vector3 visualOffset;
-
-    private bool isTeleporting;
+    private const int InputDelayTicks = 1;
+    private Vector3 visualPosition;
 
     private void Awake()
     {
         movement = GetComponent<DeterministicMovement>();
+        visualPosition = transform.position;
+    }
+
+    private void Update()
+    {
+        if (IsOwner && !IsServer)
+        {
+            visualPosition = Vector3.Lerp(
+                visualPosition,
+                transform.position,
+                1f - Mathf.Exp(-15f * Time.deltaTime)
+            );
+
+            transform.position = visualPosition;
+        }
     }
 
     public void InjectInput(MovementInputHandler handler)
     {
         inputHandler = handler;
-    }
-
-    private void Update()
-    {
-        if (!IsOwner || inputHandler == null)
-            return;
-
-        float yaw = inputHandler.CurrentState.Yaw;
-        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-
-        // ================= VISUAL SMOOTHING =================
-        if (!IsServer)
-        {
-            if (visualOffset.sqrMagnitude > 0.0001f)
-            {
-                float smoothSpeed = 8f;
-
-                Vector3 step = Vector3.Lerp(
-                    Vector3.zero,
-                    visualOffset,
-                    1f - Mathf.Exp(-smoothSpeed * Time.deltaTime)
-                );
-
-                // 🔥 фикс дрожания
-                if (step.magnitude > visualOffset.magnitude)
-                {
-                    step = visualOffset;
-                }
-
-                transform.position += step;
-                visualOffset -= step;
-
-                if (visualOffset.magnitude < 0.01f)
-                    visualOffset = Vector3.zero;
-            }
-        }
     }
 
     public override void OnStartNetwork()
@@ -81,7 +54,6 @@ public class PlayerNetworkController : NetworkBehaviour
 
         inputBuffer.Clear();
         stateBuffer.Clear();
-        visualOffset = Vector3.zero;
     }
 
     private void OnTick()
@@ -99,11 +71,11 @@ public class PlayerNetworkController : NetworkBehaviour
 
             var input = inputHandler.CurrentState;
 
-            int delayedTick = currentTick + InputDelayTicks;
+            int tick = currentTick + InputDelayTicks;
 
             MoveCommand cmd = new MoveCommand
             {
-                Tick   = delayedTick,
+                Tick   = tick,
                 Move   = input.Move,
                 Yaw    = input.Yaw,
                 Pitch  = input.Pitch,
@@ -112,24 +84,31 @@ public class PlayerNetworkController : NetworkBehaviour
                 Sprint = input.Sprint
             };
 
-            inputBuffer[delayedTick] = cmd;
+            inputBuffer[tick] = cmd;
 
-            // prediction
+            // 🔥 CLIENT PREDICTION
             if (!IsServer)
             {
                 movement.Simulate(cmd);
 
-                stateBuffer[delayedTick] = new PlayerState
+                stateBuffer[tick] = new PlayerState
                 {
-                    Tick     = delayedTick,
+                    Tick     = tick,
                     Position = transform.position,
                     Velocity = movement.Velocity,
-                    Yaw      = transform.eulerAngles.y
+
+                    Yaw      = movement.CurrentYawInternal,
+                    Pitch    = input.Pitch,
+
+                    VerticalVelocity = movement.VerticalVelocityInternal,
+                    InternalYaw      = movement.CurrentYawInternal,
+
+                    Grounded = movement.Grounded,
+                    Crouch   = movement.IsCrouching
                 };
             }
 
             SendInputServerRpc(cmd);
-            inputHandler.ClearOneShotFlags();
         }
 
         // ================= SERVER =================
@@ -157,11 +136,15 @@ public class PlayerNetworkController : NetworkBehaviour
                 Tick     = simulationTick,
                 Position = transform.position,
                 Velocity = movement.Velocity,
-                Yaw      = transform.eulerAngles.y,
+
+                Yaw      = movement.CurrentYawInternal,
                 Pitch    = cmd.Pitch,
+
+                VerticalVelocity = movement.VerticalVelocityInternal,
+                InternalYaw      = movement.CurrentYawInternal,
+
                 Grounded = movement.Grounded,
-                Crouch   = movement.IsCrouching,
-                Jump     = movement.JumpedThisTick
+                Crouch   = movement.IsCrouching
             };
 
             SendStateObserversRpc(state);
@@ -171,11 +154,15 @@ public class PlayerNetworkController : NetworkBehaviour
         }
     }
 
+    // ================= INPUT =================
+
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
         inputBuffer[cmd.Tick] = cmd;
     }
+
+    // ================= REMOTE =================
 
     [ObserversRpc(BufferLast = true)]
     private void SendStateObserversRpc(PlayerState state)
@@ -187,56 +174,67 @@ public class PlayerNetworkController : NetworkBehaviour
             ?.ReceiveState(state);
     }
 
+    // ================= RECONCILIATION =================
+
     [TargetRpc]
     private void SendStateTargetRpc(NetworkConnection conn, PlayerState serverState)
     {
         if (IsServer)
             return;
 
-        // TELEPORT MODE
-        if (isTeleporting)
+        // если нет состояния — просто применяем
+        if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
         {
-            Vector3 pos = serverState.Position;
-            pos.y = transform.position.y;
-
-            movement.Teleport(pos, serverState.Yaw, serverState.Velocity.y);
-
-            inputBuffer.Clear();
-            stateBuffer.Clear();
-            visualOffset = Vector3.zero;
-
-            isTeleporting = false;
+            movement.ApplyState(serverState);
             return;
         }
 
-        Vector3 flatError = serverState.Position - transform.position;
-        flatError.y = 0f;
+        const float MinCorrectionError = 0.05f;
 
-        float error = flatError.magnitude;
+        float error = Vector3.Distance(predicted.Position, serverState.Position);
 
-        // HARD SNAP
+        if (error < MinCorrectionError)
+            return;
+
+        const float HardSnapThreshold = 1.5f;
+
         if (error > HardSnapThreshold)
         {
-            Vector3 pos = serverState.Position;
-            pos.y = transform.position.y;
+            movement.ApplyState(serverState);
+        }
+        else
+        {
+            Vector3 correction = serverState.Position - transform.position;
 
-            movement.Teleport(pos, serverState.Yaw, serverState.Velocity.y);
-
-            inputBuffer.Clear();
-            stateBuffer.Clear();
-            visualOffset = Vector3.zero;
+            movement.ApplyCorrection(correction * 0.5f);
             return;
         }
 
-        if (error < IgnoreErrorThreshold)
-            return;
+        int currentTick = NetworkTickSystem.I.CurrentTick;
 
-        Vector3 correction = serverState.Position - transform.position;
-        correction.y = 0f;
+        for (int tick = serverState.Tick + 1; tick <= currentTick; tick++)
+        {
+            if (inputBuffer.TryGetValue(tick, out var cmd))
+            {
+                movement.Simulate(cmd);
 
-        visualOffset += correction;
+                stateBuffer[tick] = new PlayerState
+                {
+                    Tick     = tick,
+                    Position = transform.position,
+                    Velocity = movement.Velocity,
 
-        visualOffset = Vector3.ClampMagnitude(visualOffset, 1.5f);
+                    Yaw      = movement.CurrentYawInternal,
+                    Pitch    = cmd.Pitch,
+
+                    VerticalVelocity = movement.VerticalVelocityInternal,
+                    InternalYaw      = movement.CurrentYawInternal,
+
+                    Grounded = movement.Grounded,
+                    Crouch   = movement.IsCrouching
+                };
+            }
+        }
     }
 
     // ================= TELEPORT =================
@@ -256,23 +254,34 @@ public class PlayerNetworkController : NetworkBehaviour
         inputBuffer.Clear();
         stateBuffer.Clear();
 
-        movement.Teleport(position, rotation.eulerAngles.y, 0f);
-
-        int tick = NetworkTickSystem.I.CurrentTick;
+        movement.ApplyState(new PlayerState
+        {
+            Tick = NetworkTickSystem.I.CurrentTick,
+            Position = position,
+            Velocity = Vector3.zero,
+            Yaw = rotation.eulerAngles.y,
+            Pitch = 0f,
+            VerticalVelocity = 0f,
+            InternalYaw = rotation.eulerAngles.y,
+            Grounded = true,
+            Crouch = false
+        });
 
         PlayerState state = new PlayerState
         {
-            Tick     = tick,
+            Tick     = NetworkTickSystem.I.CurrentTick,
             Position = transform.position,
             Velocity = movement.Velocity,
-            Yaw      = transform.eulerAngles.y,
-            Pitch    = 0f,
-            Grounded = movement.Grounded,
-            Crouch   = movement.IsCrouching,
-            Jump     = false
-        };
 
-        isTeleporting = true;
+            Yaw      = movement.CurrentYawInternal,
+            Pitch    = 0f,
+
+            VerticalVelocity = movement.VerticalVelocityInternal,
+            InternalYaw      = movement.CurrentYawInternal,
+
+            Grounded = movement.Grounded,
+            Crouch   = movement.IsCrouching
+        };
 
         SendStateObserversRpc(state);
         SendStateTargetRpc(Owner, state);

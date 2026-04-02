@@ -11,12 +11,14 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private Transform fpsPoint;
         [SerializeField] private Transform headTransform;
+        [SerializeField] private Transform visualRoot;
 
         [Header("TPS")]
         [SerializeField] private LayerMask collisionMask;
         [SerializeField] private float collisionRadius = 0.3f;
         [SerializeField] private float minCameraDistance = 0.5f;
         [SerializeField] private Vector3 shoulderOffset = new Vector3(0.5f, 0f, 0f);
+        [SerializeField] private float maxTpsDistance = 5f;
 
         [Header("FOV")]
         [SerializeField] private float baseFov = 75f;
@@ -24,15 +26,20 @@ namespace Features.Player.UnityIntegration
         [SerializeField] private float fovSpeed = 8f;
         [SerializeField] private LayerMask fpsMask;
         [SerializeField] private LayerMask tpsMask;
-        [SerializeField] private float maxTpsDistance = 5f;
+
+        [Header("ADS")]
+        [SerializeField] private float adsFov = 65f;
+        [SerializeField] private float adsDistance = 2f;
 
         private UnityEngine.Camera unityCamera;
         private Transform cameraTransform;
         private ICameraControlService control;
+        private ICameraControlService Control => CameraServiceProvider.Control;
 
         private float currentTpsDistance = 5f;
-        
+
         private bool isLocal;
+        private bool isAiming;
 
         private float smoothYaw;
         private float smoothPitch;
@@ -40,13 +47,6 @@ namespace Features.Player.UnityIntegration
         private float pitchVelocity;
 
         private const float BASE_MULTIPLIER = 100f;
-        [SerializeField] private float adsFov = 65f;
-        [SerializeField] private float adsDistance = 2f;
-        [SerializeField] private float adsSpeed = 10f;
-
-        private bool isAiming;
-
-        private ICameraControlService Control => CameraServiceProvider.Control;
 
         private void Awake()
         {
@@ -64,7 +64,7 @@ namespace Features.Player.UnityIntegration
         }
 
         public void SetAiming(bool value)
-        {   
+        {
             isAiming = value;
         }
 
@@ -77,7 +77,7 @@ namespace Features.Player.UnityIntegration
         {
             if (!isLocal || Control == null)
                 return;
-            
+
             if (cameraTransform == null && !ResolveCamera())
                 return;
 
@@ -88,18 +88,11 @@ namespace Features.Player.UnityIntegration
             bool isFPS = state.Blend < 0.5f;
 
             if (unityCamera != null)
-            {
                 unityCamera.cullingMask = isFPS ? fpsMask : tpsMask;
-            }
 
             float smoothTime = 0.035f;
 
-            smoothYaw = Mathf.SmoothDampAngle(
-                smoothYaw,
-                state.Yaw,
-                ref yawVelocity,
-                smoothTime
-            );
+            smoothYaw = state.Yaw;
 
             smoothPitch = Mathf.SmoothDamp(
                 smoothPitch,
@@ -108,19 +101,15 @@ namespace Features.Player.UnityIntegration
                 smoothTime
             );
 
-            if (state.Blend < 0.5f)
+            if (isFPS)
                 UpdateFPS();
             else
                 UpdateTPS();
 
             UpdateFOV();
-
-            CameraRegistry.Instance?.SetFPSVisible(state.Blend < 0.5f);
         }
 
-        // ======================================================
-        // FPS
-        // ======================================================
+        // ================= FPS =================
 
         private void UpdateFPS()
         {
@@ -135,38 +124,23 @@ namespace Features.Player.UnityIntegration
                 Quaternion.Euler(smoothPitch, smoothYaw, 0f),
                 1f - Mathf.Exp(-20f * Time.deltaTime)
             );
-
-            if (headTransform != null)
-            {
-                float headYawOffset = Mathf.DeltaAngle(
-                    transform.eulerAngles.y,
-                    smoothYaw
-                );
-
-                // ограничение (чтобы не ломалась шея)
-                headYawOffset = Mathf.Clamp(headYawOffset, -80f, 80f);
-
-                headTransform.localRotation = Quaternion.Euler(
-                    smoothPitch,
-                    headYawOffset,
-                    0f
-                );
-            }
         }
 
-        // ======================================================
-        // TPS
-        // ======================================================
+        // ================= TPS =================
 
         private void UpdateTPS()
         {
             cameraPivot.localRotation = Quaternion.Euler(smoothPitch, 0f, 0f);
 
-            Vector3 desired =
-                cameraPivot.position - cameraPivot.forward * maxTpsDistance;
+            Vector3 pivotPos = cameraPivot.position;
+
+            // 🔥 движение назад ТОЛЬКО по yaw (фикс "камера у пола")
+            Vector3 yawForward = Quaternion.Euler(0f, smoothYaw, 0f) * Vector3.forward;
+
+            Vector3 desired = pivotPos - yawForward * maxTpsDistance;
 
             float targetDistance = control.ComputeTpsDistance(
-                cameraPivot.position,
+                pivotPos,
                 desired,
                 collisionMask,
                 collisionRadius,
@@ -174,23 +148,19 @@ namespace Features.Player.UnityIntegration
             );
 
             if (isAiming)
-            {
                 targetDistance = Mathf.Min(targetDistance, adsDistance);
-            }
-
-            float speed = targetDistance > currentTpsDistance ? 4f : 15f;
 
             currentTpsDistance = Mathf.Lerp(
                 currentTpsDistance,
                 targetDistance,
-                1f - Mathf.Exp(-speed * Time.deltaTime)
+                1f - Mathf.Exp(-10f * Time.deltaTime)
             );
 
             Vector3 shoulderWorld =
-                cameraPivot.TransformPoint(shoulderOffset);
+                pivotPos + cameraPivot.rotation * shoulderOffset;
 
             Vector3 targetPos =
-                shoulderWorld - cameraPivot.forward * currentTpsDistance;
+                shoulderWorld - yawForward * currentTpsDistance;
 
             cameraTransform.position = Vector3.Lerp(
                 cameraTransform.position,
@@ -203,31 +173,9 @@ namespace Features.Player.UnityIntegration
                 Quaternion.Euler(smoothPitch, smoothYaw, 0f),
                 1f - Mathf.Exp(-15f * Time.deltaTime)
             );
-
-            if (headTransform != null)
-            {
-                float rawOffset = Mathf.DeltaAngle(
-                    transform.eulerAngles.y,
-                    smoothYaw
-                );
-
-                float headYawOffset = rawOffset * 1.6f;
-
-                headYawOffset = Mathf.Clamp(headYawOffset, -80f, 80f);
-
-                float pitch = smoothPitch * 0.5f;
-
-                headTransform.localRotation = Quaternion.Euler(
-                    pitch,
-                    headYawOffset,
-                    0f
-                );
-            }
         }
 
-        // ======================================================
-        // DYNAMIC FOV
-        // ======================================================
+        // ================= FOV =================
 
         private void UpdateFOV()
         {
@@ -241,14 +189,11 @@ namespace Features.Player.UnityIntegration
                 movement.CurrentMaxSpeed > 6f &&
                 movement.Velocity.magnitude > 0.1f;
 
-            float targetFov;
-
-            if (isAiming)
-                targetFov = adsFov;
-            else if (isSprinting)
-                targetFov = sprintFov;
-            else
-                targetFov = baseFov;
+            float targetFov = isAiming
+                ? adsFov
+                : isSprinting
+                    ? sprintFov
+                    : baseFov;
 
             unityCamera.fieldOfView = Mathf.Lerp(
                 unityCamera.fieldOfView,
@@ -257,9 +202,7 @@ namespace Features.Player.UnityIntegration
             );
         }
 
-        // ======================================================
-        // CAMERA RESOLVE
-        // ======================================================
+        // ================= CAMERA =================
 
         private bool ResolveCamera()
         {
