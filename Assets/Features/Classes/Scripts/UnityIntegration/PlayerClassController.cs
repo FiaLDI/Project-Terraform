@@ -31,6 +31,7 @@ public sealed class PlayerClassController : MonoBehaviour
 
     private PlayerClassService classService;
     private PlayerClassConfigSO currentClass;
+    public PlayerClassConfigSO currentClassOut => currentClass;
 
     public event System.Action OnClassApplied;
 

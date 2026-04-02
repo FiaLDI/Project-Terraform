@@ -46,7 +46,10 @@ namespace Features.Enemy.UnityIntegration
 
         public IStatsFacade GetServerStats()
         {
-            throw new NotImplementedException();
+            if (enemyStats == null || !enemyStats.IsReady)
+                return null;
+
+            return enemyStats.Facade;
         }
 
         // =====================================================

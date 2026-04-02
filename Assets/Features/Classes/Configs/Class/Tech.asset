@@ -25,3 +25,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9f25a008bd763d545acb2fbc496a20b4, type: 2}
   - {fileID: 11400000, guid: eae8961d2454e974c812d4f8dde3c4ed, type: 2}
   - {fileID: 11400000, guid: 666fffec4936baa4fa05506260cf0716, type: 2}
+  progression: {fileID: 11400000, guid: ab0fc71a616ac9040a3c249d376f43d2, type: 2}

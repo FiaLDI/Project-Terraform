@@ -23,5 +23,8 @@ namespace Features.Classes.Data
         [Header("Content")]
         public List<PassiveSO> passives;
         public List<AbilitySO> abilities;
+
+        [Header("Progression")]
+        public ClassProgressionSO progression;
     }
 }

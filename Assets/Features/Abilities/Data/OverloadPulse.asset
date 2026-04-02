@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Abilities.Domain.AbilitySO
   id: overload
   displayName: OverloadPulse
+  tags: 8
   icon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
   description: 
   energyCost: 5
@@ -32,6 +33,10 @@ MonoBehaviour:
     buff: {fileID: 0}
     onlySpecificBuff: 0
     buffId: 
+    heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
     prefabId: overload-ability
     lifetime: 10
     useSourcePosition: 0
@@ -52,6 +57,10 @@ MonoBehaviour:
     buff: {fileID: 11400000, guid: 29adad0be147ef14faf118faf729e575, type: 2}
     onlySpecificBuff: 0
     buffId: 
+    heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
     prefabId: overload-ability
     lifetime: 10
     useSourcePosition: 0
@@ -72,6 +81,10 @@ MonoBehaviour:
     buff: {fileID: 11400000, guid: 29adad0be147ef14faf118faf729e575, type: 2}
     onlySpecificBuff: 0
     buffId: 
+    heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
     prefabId: overload-ability
     lifetime: 10
     useSourcePosition: 0
@@ -92,6 +105,10 @@ MonoBehaviour:
     buff: {fileID: 11400000, guid: 5314777b6e907bd44887d1b44066e1df, type: 2}
     onlySpecificBuff: 0
     buffId: 
+    heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
     prefabId: 
     lifetime: 0
     useSourcePosition: 0
