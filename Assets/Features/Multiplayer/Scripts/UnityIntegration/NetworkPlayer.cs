@@ -11,6 +11,7 @@ namespace Features.Player.UnityIntegration
     public sealed class NetworkPlayer : NetworkBehaviour
     {
         [SerializeField] private PlayerController playerController;
+        [SerializeField] private PlayerVisualController visual;
         public PlayerController Controller => playerController;
 
         public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
@@ -19,6 +20,8 @@ namespace Features.Player.UnityIntegration
         {
             if (playerController == null)
                 playerController = GetComponent<PlayerController>();
+            
+            visual = GetComponent<PlayerVisualController>();
         }
 
         // =====================================================
@@ -40,6 +43,8 @@ namespace Features.Player.UnityIntegration
         public override void OnStartClient()
         {
             base.OnStartClient();
+
+            visual?.SetLocal(IsOwner);
 
            Debug.Log(
                 $"[fix-net] OnStartClient -> name={name}, " +
@@ -75,6 +80,8 @@ namespace Features.Player.UnityIntegration
         public override void OnOwnershipClient(NetworkConnection prevOwner)
         {
             base.OnOwnershipClient(prevOwner);
+
+            visual?.SetLocal(IsOwner);
 
             int localId = InstanceFinder.ClientManager.Connection.ClientId;
 

@@ -19,6 +19,8 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
     [Header("Layers")]
     [SerializeField] private LayerMask obstacleMask;
     [SerializeField] private LayerMask groundMask;
+    private Vector3 smoothDir;
+    private float jumpCooldown;
 
     private Entity entity;
     private EntityManager em;
@@ -132,14 +134,33 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         }
 
         // ================= FINAL DIR =================
-        Vector3 finalDir =
+        Vector3 desiredDir =
             forward * 1.0f +
             orbit * 0.8f +
             avoid * 2.0f +
             separation * 1.5f;
 
+        desiredDir.y = 0;
+
+        if (desiredDir.sqrMagnitude > 0.001f)
+            desiredDir.Normalize();
+        else
+            desiredDir = Vector3.zero;
+
+        // 🔥 сглаживание
+        smoothDir = Vector3.Lerp(
+            smoothDir,
+            desiredDir,
+            8f * Time.fixedDeltaTime
+        );
+
+        Vector3 finalDir = smoothDir;
+
         finalDir.y = 0;
-        finalDir.Normalize();
+        if (finalDir.sqrMagnitude > 0.001f)
+            finalDir.Normalize();
+        else
+            finalDir = Vector3.zero;
 
         // ================= GROUND =================
         Vector3 groundNormal = Vector3.up;
@@ -159,11 +180,33 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
 
         Vector3 vel = finalDir * speed;
 
-        rb.linearVelocity = new Vector3(
+        Vector3 currentVel = rb.linearVelocity;
+
+        Vector3 targetVel = new Vector3(
             vel.x,
-            rb.linearVelocity.y,
+            currentVel.y,
             vel.z
         );
+
+        rb.linearVelocity = Vector3.Lerp(
+            currentVel,
+            targetVel,
+            10f * Time.fixedDeltaTime
+        );
+
+        bool obstacleAhead =
+            Physics.Raycast(origin, forward, out RaycastHit jumpHit, 0.8f, obstacleMask);
+
+        bool grounded =
+            Physics.Raycast(pos + Vector3.up * 0.2f, Vector3.down, 0.4f, groundMask);
+
+        jumpCooldown -= Time.fixedDeltaTime;
+
+        if (obstacleAhead && grounded && jumpCooldown <= 0f)
+        {
+            rb.AddForce(Vector3.up * 5f, ForceMode.VelocityChange);
+            jumpCooldown = 0.5f; // 🔥 задержка между прыжками
+        }
 
         // ================= ROTATION =================
         if (finalDir.sqrMagnitude > 0.001f)
