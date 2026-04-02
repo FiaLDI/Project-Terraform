@@ -8,6 +8,8 @@ namespace Features.Items.UnityIntegration
     {
         public ItemInstance Instance { get; private set; }
         public ItemRuntimeSource Source { get; private set; }
+        [SerializeField] private Transform muzzle;
+        public Transform Muzzle => muzzle;
 
         public void SetInstance(ItemInstance inst, IBuffSource owner)
         {
@@ -17,7 +19,7 @@ namespace Features.Items.UnityIntegration
                 GetComponent<ItemRuntimeSource>() ??
                 gameObject.AddComponent<ItemRuntimeSource>();
 
-            Source.Init(inst, owner);
+            Source.Init(inst, owner, muzzle);
         }
     }
 }

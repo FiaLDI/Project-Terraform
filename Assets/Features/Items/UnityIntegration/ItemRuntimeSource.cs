@@ -12,11 +12,13 @@ namespace Features.Items.UnityIntegration
         public ItemInstance Instance { get; private set; }
 
         private IBuffSource owner;
+        public Transform Muzzle { get; private set; }
 
-        public void Init(ItemInstance inst, IBuffSource ownerSource)
+        public void Init(ItemInstance inst, IBuffSource ownerSource, Transform muzzle)
         {
             Instance = inst;
             owner = ownerSource;
+            this.Muzzle = muzzle;
         }
 
         public GameObject GameObject => gameObject;

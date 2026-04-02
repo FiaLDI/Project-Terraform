@@ -1553,6 +1553,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcd804cce9b45e7488e0fa4b95db57d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Items.UnityIntegration.ItemRuntimeHolder
+  muzzle: {fileID: 651736044580964339}
 --- !u!1 &7699587253072160869
 GameObject:
   m_ObjectHideFlags: 0

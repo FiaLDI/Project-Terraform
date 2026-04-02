@@ -20,6 +20,6 @@ MonoBehaviour:
   damageType: 0
   hitMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   destroyOnHit: 1
   hitEffect: {fileID: 0}

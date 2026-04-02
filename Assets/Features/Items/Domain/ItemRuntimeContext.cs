@@ -7,9 +7,13 @@ public class ItemRuntimeContext : IItemTickable
 {
     private readonly IBuffSource source;
     private readonly ItemActionDefinition action;
+    private readonly Transform muzzle; // может быть null
 
     private Vector3 origin;
-    private Vector3 direction;
+    private Vector3 targetPoint;
+    private Vector3 fallbackDirection;
+
+    private bool hasTargetPoint;
 
     private ItemActionState state = ItemActionState.Idle;
 
@@ -18,22 +22,26 @@ public class ItemRuntimeContext : IItemTickable
 
     private int burstRemaining;
 
+    public System.Action<Vector3, Vector3> OnFire;
+
     public ItemRuntimeContext(
         IBuffSource source,
-        ItemActionDefinition action)
+        ItemActionDefinition action,
+        Transform muzzle)
     {
         this.source = source;
         this.action = action;
+        this.muzzle = muzzle;
     }
 
     // ======================================================
     // START
     // ======================================================
 
-    public void StartUse(Vector3 origin, Vector3 direction)
+    public void StartUse(Vector3 hitPoint)
     {
-        this.origin = origin;
-        this.direction = direction;
+        targetPoint = hitPoint;
+        hasTargetPoint = true;
 
         if (action.windupTime > 0)
         {
@@ -46,8 +54,7 @@ public class ItemRuntimeContext : IItemTickable
         }
 
         burstRemaining = action.burstCount;
-
-        tickTimer = 0;
+        tickTimer = 0f;
 
         ItemTickSystem.Register(this);
     }
@@ -57,16 +64,27 @@ public class ItemRuntimeContext : IItemTickable
     public void StopUse()
     {
         state = ItemActionState.Idle;
-
         ItemTickSystem.Unregister(this);
     }
 
     // ======================================================
+    // AIM UPDATE (универсальный)
+    // ======================================================
 
-    public void UpdateAim(Vector3 origin, Vector3 direction)
+    public void UpdateAim(Vector3 origin, Vector3 directionOrHitPoint, bool isHitPoint)
     {
         this.origin = origin;
-        this.direction = direction;
+
+        if (isHitPoint)
+        {
+            targetPoint = directionOrHitPoint;
+            hasTargetPoint = true;
+        }
+        else
+        {
+            fallbackDirection = directionOrHitPoint.normalized;
+            hasTargetPoint = false;
+        }
     }
 
     // ======================================================
@@ -97,10 +115,8 @@ public class ItemRuntimeContext : IItemTickable
     {
         timer -= dt;
 
-        if (timer <= 0)
-        {
+        if (timer <= 0f)
             state = ItemActionState.Active;
-        }
     }
 
     // ======================================================
@@ -109,7 +125,7 @@ public class ItemRuntimeContext : IItemTickable
     {
         tickTimer -= dt;
 
-        if (tickTimer > 0)
+        if (tickTimer > 0f)
             return;
 
         ExecuteEffects();
@@ -136,7 +152,7 @@ public class ItemRuntimeContext : IItemTickable
 
     private void StartCooldown()
     {
-        if (action.cooldown <= 0)
+        if (action.cooldown <= 0f)
             return;
 
         state = ItemActionState.Cooldown;
@@ -147,7 +163,7 @@ public class ItemRuntimeContext : IItemTickable
     {
         timer -= dt;
 
-        if (timer <= 0)
+        if (timer <= 0f)
         {
             state = ItemActionState.Idle;
             ItemTickSystem.Unregister(this);
@@ -155,20 +171,45 @@ public class ItemRuntimeContext : IItemTickable
     }
 
     // ======================================================
+    // CORE (универсальный расчёт направления)
+    // ======================================================
 
     private void ExecuteEffects()
     {
         if (action.effects == null)
             return;
 
+        Vector3 fireOrigin = muzzle != null ? muzzle.position : origin;
+
+        Vector3 dir;
+
+        if (hasTargetPoint)
+        {
+            dir = (targetPoint - fireOrigin).normalized;
+
+            // защита от стрельбы в стену перед muzzle
+            if (Physics.Raycast(fireOrigin, dir, out var hit, 1.0f))
+            {
+                dir = (hit.point - fireOrigin).normalized;
+            }
+        }
+        else
+        {
+            dir = fallbackDirection;
+        }
+
         var ctx = new EffectContext(
             source,
             null,
-            origin,
-            direction
+            fireOrigin,
+            dir
         );
 
         foreach (var def in action.effects)
             EffectExecutor.Instance.Execute(def, ctx);
+
+        Debug.DrawRay(fireOrigin, dir * 3f, Color.red, 0.3f);
+
+        OnFire?.Invoke(fireOrigin, dir);
     }
 }

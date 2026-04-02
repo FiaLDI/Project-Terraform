@@ -16,6 +16,7 @@ namespace Features.Effects.Application
                 TargetMode.Self => ResolveSelf(ctx),
                 TargetMode.Area => ResolveArea(def, ctx),
                 TargetMode.Directional => ResolveDirectional(def, ctx),
+                TargetMode.Explicit => ctx.Targets ?? System.Array.Empty<IBuffTarget>(),
                 _ => System.Array.Empty<IBuffTarget>()
             };
 

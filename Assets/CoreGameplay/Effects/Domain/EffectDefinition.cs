@@ -33,7 +33,8 @@ namespace Features.Effects.Domain
     {
         Self,
         Area,
-        Directional
+        Directional,
+        Explicit
     }
 
     [System.Serializable]

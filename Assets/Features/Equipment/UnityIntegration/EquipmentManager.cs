@@ -127,8 +127,8 @@ namespace Features.Equipment.UnityIntegration
                 twoHanded
             );
 
-            if (IsOwner && !IsServerInitialized)
-                usageNet.SyncHands_Server();
+            //if (IsOwner && !IsServerInitialized)
+            //    usageNet.SyncHands_Server();
         }
 
         // ======================================================

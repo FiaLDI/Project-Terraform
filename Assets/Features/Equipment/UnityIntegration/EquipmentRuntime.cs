@@ -4,6 +4,7 @@ using Features.Items.Domain;
 using Features.Items.Data;
 using Features.Effects.Domain;
 using Features.Buffs.Domain;
+using Features.Items.UnityIntegration;
 
 public sealed class EquipmentRuntime
 {
@@ -23,7 +24,8 @@ public sealed class EquipmentRuntime
 
     public ItemRuntimeContext GetRuntime(
         ItemInstance instance,
-        ItemActionType actionType)
+        ItemActionType actionType,
+        ItemRuntimeHolder holder)
     {
         var item = instance.itemDefinition;
 
@@ -36,7 +38,8 @@ public sealed class EquipmentRuntime
             {
                 return new ItemRuntimeContext(
                     source,
-                    action
+                    action,
+                    holder.Muzzle
                 );
             }
         }
