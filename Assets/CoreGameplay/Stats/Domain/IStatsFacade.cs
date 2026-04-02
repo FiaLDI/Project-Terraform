@@ -7,6 +7,7 @@ namespace Features.Stats.Domain
         ICombatStats Combat { get; }
         IMovementStats Movement { get; }
         IMiningStats Mining { get; }
+        IProtectStats Protect { get; }
 
         bool TryAdd(StatKey key, float value);
         bool TryMultiply(StatKey key, float multiplier);

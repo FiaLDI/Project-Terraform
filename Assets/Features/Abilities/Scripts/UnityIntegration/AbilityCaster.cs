@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using Features.Abilities.Domain;
 using Features.Abilities.UnityIntegration;
 using Features.Buffs.Domain;
+using Features.Effects.Application;
+using Features.Effects.Domain;
+using Features.Passives.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using FishNet.Object;
@@ -126,6 +129,45 @@ namespace Features.Abilities.Application
             }
         }
 
+        private void ExecuteWithModifiers(AbilitySO ability, AbilityContext ctx)
+        {
+            var runtimeEffects = new List<EffectDefinition>(ability.effects.Length);
+
+            for (int i = 0; i < ability.effects.Length; i++)
+            {
+                runtimeEffects.Add(ability.effects[i].Build());
+            }
+
+            var passiveSystem = GetComponent<PassiveSystem>();
+
+            if (passiveSystem != null)
+            {
+                var modifiers = passiveSystem.GetCachedModifiers();
+
+                for (int i = 0; i < modifiers.Count; i++)
+                {
+                    var mod = modifiers[i];
+
+                    if (!mod.Matches(ability.id, ability.Tags))
+                        continue;
+
+                    mod.Apply(runtimeEffects);
+                }
+            }
+
+            var effectContext = new EffectContext(
+                source: ctx.Owner,
+                targets: null,
+                origin: ctx.TargetPoint,
+                direction: ctx.Direction
+            );
+
+            for (int i = 0; i < runtimeEffects.Count; i++)
+            {
+                EffectExecutor.Instance.Execute(runtimeEffects[i], effectContext);
+            }
+        }
+
         private void OnCooldownSync(SyncListOperation op, int index, float oldValue, float newValue, bool asServer)
         {
             if (asServer)
@@ -174,6 +216,8 @@ namespace Features.Abilities.Application
             Cooldowns.Clear();
             for (int i = 0; i < abilities.Length; i++)
                 Cooldowns.Add(0f);
+            
+            service.OnChannelFinished += OnChannelFinished;
 
             OnAbilitiesChanged?.Invoke();
             phase.Reach(GamePhase.AbilitiesReady);
@@ -199,14 +243,27 @@ namespace Features.Abilities.Application
             bool ok = service.TryCast(ability, index);
             if (!ok)
                 return false;
-            
+
             OnAbilityCast?.Invoke(ability);
 
             ctx = ability.castType == AbilityCastType.Instant
                 ? service.LastInstantContext
                 : service.LastChannelContext;
 
+            ExecuteWithModifiers(ability, ctx);
+
             return true;
+        }
+
+        private void OnDestroy()
+        {
+            if (service != null)
+                service.OnChannelFinished -= OnChannelFinished;
+        }
+
+        private void OnChannelFinished(AbilitySO ability, AbilityContext ctx)
+        {
+            ExecuteWithModifiers(ability, ctx);
         }
 
         private void OnChannelStateChanged(bool prev, bool next, bool asServer)

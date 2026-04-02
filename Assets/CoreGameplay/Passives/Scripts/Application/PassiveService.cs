@@ -20,6 +20,9 @@ namespace Features.Passives.Application
 
         // Runtime-источники (1 passive = 1 source)
         private readonly Dictionary<PassiveSO, PassiveSource> sources = new();
+        
+        private readonly List<AbilityModifierSO> cachedModifiers = new();
+        public IReadOnlyList<AbilityModifierSO> CachedModifiers => cachedModifiers;
 
         public IReadOnlyList<PassiveSO> Active => active;
 
@@ -41,6 +44,8 @@ namespace Features.Passives.Application
 
             foreach (var p in passives)
                 Activate(p);
+            
+            RebuildModifierCache();
         }
 
         // =====================================================
@@ -61,6 +66,14 @@ namespace Features.Passives.Application
             {
                 var data = effect.Build();
                 PassiveExecutor.Instance.Apply(data, target, source);
+            }
+
+            if (so.abilityModifiers != null)
+            {
+                for (int i = 0; i < so.abilityModifiers.Count; i++)
+                {
+                    cachedModifiers.Add(so.abilityModifiers[i]);
+                }
             }
         }
 
@@ -90,6 +103,25 @@ namespace Features.Passives.Application
 
             sources.Clear();
             active.Clear();
+            cachedModifiers.Clear();
+        }
+
+        private void RebuildModifierCache()
+        {
+            cachedModifiers.Clear();
+
+            for (int i = 0; i < active.Count; i++)
+            {
+                var p = active[i];
+
+                if (p.abilityModifiers == null)
+                    continue;
+
+                for (int j = 0; j < p.abilityModifiers.Count; j++)
+                {
+                    cachedModifiers.Add(p.abilityModifiers[j]);
+                }
+            }
         }
     }
 }

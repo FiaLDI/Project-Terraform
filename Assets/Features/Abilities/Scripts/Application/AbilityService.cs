@@ -33,6 +33,7 @@ namespace Features.Abilities.Application
         public event Action<AbilitySO, float, float> OnChannelProgress;
         public event Action<AbilitySO> OnChannelCompleted;
         public event Action<AbilitySO> OnChannelInterrupted;
+        public event Action<AbilitySO, AbilityContext> OnChannelFinished;
 
         private bool _isChanneling;
         private AbilitySO _channelAbility;
@@ -130,7 +131,6 @@ namespace Features.Abilities.Application
                 LastInstantContext = ctx;
 
                 OnAbilityCast?.Invoke(ability);
-                _executor.Execute(ability, ctx);
                 _cooldowns[ability] = ability.cooldown;
                 return true;
             }
@@ -167,8 +167,8 @@ namespace Features.Abilities.Application
 
             _isChanneling = false;
             _channelAbility = null;
-
-            _executor.Execute(ab, ctx);
+            
+            OnChannelFinished?.Invoke(ab, ctx);
             OnChannelCompleted?.Invoke(ab);
             _cooldowns[ab] = ab.cooldown;
         }

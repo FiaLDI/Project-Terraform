@@ -53,6 +53,10 @@ namespace Features.Stats.UnityIntegration
             IMiningStats mining = statsProfile.hasMining
                 ? new MiningStats()
                 : null;
+            
+            IProtectStats protect = statsProfile.hasProtected
+                ? new ProtectStats()
+                : null;
 
             // =========================
             // CREATE FACADE
@@ -63,7 +67,8 @@ namespace Features.Stats.UnityIntegration
                 energy,
                 combat,
                 movement,
-                mining
+                mining,
+                protect
             );
 
             Facade.ResetAll();

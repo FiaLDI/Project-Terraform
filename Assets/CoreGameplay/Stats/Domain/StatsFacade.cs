@@ -7,6 +7,7 @@ namespace Features.Stats.Domain
         public ICombatStats Combat { get; }
         public IMovementStats Movement { get; }
         public IMiningStats Mining { get; }
+        public IProtectStats Protect { get; private set; }
 
         private readonly IStatModifierTarget[] _targets;
 
@@ -15,13 +16,15 @@ namespace Features.Stats.Domain
             IEnergyStats energy,
             ICombatStats combat,
             IMovementStats movement,
-            IMiningStats mining)
+            IMiningStats mining,
+            IProtectStats protect)
         {
             Health = health;
             Energy = energy;
             Combat = combat;
             Movement = movement;
             Mining = mining;
+            Protect = protect;
 
             _targets = new IStatModifierTarget[]
             {
@@ -29,7 +32,8 @@ namespace Features.Stats.Domain
                 energy as IStatModifierTarget,
                 combat as IStatModifierTarget,
                 movement as IStatModifierTarget,
-                mining as IStatModifierTarget
+                mining as IStatModifierTarget,
+                protect as IStatModifierTarget,
             };
         }
 
@@ -58,6 +62,7 @@ namespace Features.Stats.Domain
             Combat?.Reset();
             Movement?.Reset();
             Mining?.Reset();
+            Protect?.Reset();
         }
     }
 }

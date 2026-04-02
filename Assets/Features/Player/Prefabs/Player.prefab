@@ -384,6 +384,7 @@ GameObject:
   - component: {fileID: 3302508318773783486}
   - component: {fileID: 3586989162742316649}
   - component: {fileID: 4166305711899109263}
+  - component: {fileID: 1832092996173635038}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -789,12 +790,14 @@ MonoBehaviour:
   cameraPivot: {fileID: 2683651113482784269}
   fpsPoint: {fileID: 5175878013477234654}
   headTransform: {fileID: 0}
+  visualRoot: {fileID: 5017748270277261448}
   collisionMask:
     serializedVersion: 2
     m_Bits: 1791
   collisionRadius: 0.3
   minCameraDistance: 0.5
   shoulderOffset: {x: 0.5, y: 0, z: 0}
+  maxTpsDistance: 5
   baseFov: 75
   sprintFov: 90
   fovSpeed: 8
@@ -804,11 +807,8 @@ MonoBehaviour:
   tpsMask:
     serializedVersion: 2
     m_Bits: 4095
-  maxTpsDistance: 5
-  visualRoot: {fileID: 5017748270277261448}
   adsFov: 65
   adsDistance: 2
-  adsSpeed: 10
 --- !u!114 &5907872678837714149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -855,14 +855,9 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
   Gravity: -20
-  JumpForce: 7
+  jumpHeight: 1.2
   crouchHeight: 2
   normalHeight: 3
-  rotationSharpness: 20
-  jumpHeight: 1.2
-  bodyFollowSpeedMoving: 18
-  bodyFollowSpeed: 8
-  bodyFollowThreshold: 50
 --- !u!114 &3277316184608179795
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1173,3 +1168,15 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
+--- !u!114 &1832092996173635038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8e9ef44d2be45e48b099623309733cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.ProtectStatsAdapter

@@ -28,7 +28,7 @@ namespace Features.Stats.Application
         public class HealthBlock
         {
             public float baseHp = 100f;
-            public float baseRegen = 1f;   // <-- ДОБАВЛЕНО
+            public float baseRegen = 1f;
         }
 
         [System.Serializable]
@@ -49,6 +49,21 @@ namespace Features.Stats.Application
             public float baseMining = 1f;
         }
 
+        [System.Serializable]
+        public class ProtectBlock
+        {
+            [Range(0f, 1f)] public float generic = 0f;
+            [Range(0f, 1f)] public float explosion = 0f;
+            [Range(0f, 1f)] public float energy = 0f;
+            [Range(0f, 1f)] public float mining = 0f;
+            [Range(0f, 1f)] public float melee = 0f;
+            [Range(0f, 1f)] public float fire = 0f;
+            [Range(0f, 1f)] public float electric = 0f;
+            [Range(0f, 1f)] public float poison = 0f;
+            [Range(0f, 1f)] public float frost = 0f;
+            [Range(0f, 1f)] public float acid = 0f;
+        }
+
         [Header("Combat")]
         public CombatBlock combat = new CombatBlock();
 
@@ -63,5 +78,8 @@ namespace Features.Stats.Application
 
         [Header("Mining")]
         public MiningBlock mining = new MiningBlock();
+
+        [Header("Protection")]
+        public ProtectBlock protect = new ProtectBlock();
     }
 }

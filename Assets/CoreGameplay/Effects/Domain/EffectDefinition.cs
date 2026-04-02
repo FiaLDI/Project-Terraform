@@ -82,6 +82,12 @@ namespace Features.Effects.Domain
 
         public ProjectileConfig projectileConfig;
         public EffectDefinition[] childEffects;
+        
+        public EffectDefinition Build()
+        {
+            var copy = this;
 
+            return copy;
+        }
     }
 }

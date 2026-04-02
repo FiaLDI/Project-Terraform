@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.Passives.Domain
@@ -8,5 +9,6 @@ namespace Features.Passives.Domain
     {
         public string id;
         public PassiveEffectSO[] effects;
+        public List<AbilityModifierSO> abilityModifiers;
     }
 }

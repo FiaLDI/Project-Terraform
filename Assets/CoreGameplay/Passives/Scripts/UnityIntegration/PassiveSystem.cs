@@ -10,6 +10,11 @@ namespace Features.Passives.UnityIntegration
     {
         private PassiveService service;
 
+        public IReadOnlyList<AbilityModifierSO> GetCachedModifiers()
+        {
+            return service.CachedModifiers;
+        }
+
         public override void OnStartServer()
         {
             service = new PassiveService(GetComponent<StatsBuffTarget>());

@@ -57,7 +57,10 @@ namespace Features.Stats.UnityIntegration
                     aimSpread: 0.5f,
                     recoil: 1f,
                     range: 100f,
-                    magazineSize: 30
+                    magazineSize: 30,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
                 );
             }
         }
@@ -79,7 +82,10 @@ namespace Features.Stats.UnityIntegration
                     aimSpread: 0.5f,
                     recoil: 1f,
                     range: 100f,
-                    magazineSize: 30
+                    magazineSize: 30,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
                 );
             }
         }

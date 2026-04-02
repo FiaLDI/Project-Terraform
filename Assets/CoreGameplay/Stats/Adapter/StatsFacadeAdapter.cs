@@ -14,6 +14,7 @@ namespace Features.Stats.Adapter
         public HealthStatsAdapter HealthStats { get; private set; }
         public MovementStatsAdapter MovementStats { get; private set; }
         public MiningStatsAdapter MiningStats { get; private set; }
+        public ProtectStatsAdapter ProtectStats { get; private set; }
 
         private void Awake()
         {
@@ -22,6 +23,7 @@ namespace Features.Stats.Adapter
             HealthStats   = GetComponent<HealthStatsAdapter>();
             MovementStats = GetComponent<MovementStatsAdapter>();
             MiningStats   = GetComponent<MiningStatsAdapter>();
+            ProtectStats   = GetComponent<ProtectStatsAdapter>();
 
             Debug.Assert(EnergyStats != null, "EnergyStatsAdapter MISSING");
             Debug.Assert(HealthStats != null, "HealthStatsAdapter MISSING");
