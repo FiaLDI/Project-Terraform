@@ -207,7 +207,7 @@ namespace Features.Player.UnityIntegration
             if (headTransform != null)
             {
                 float rawOffset = Mathf.DeltaAngle(
-                    transform.eulerAngles.y,
+                    transform.eulerAngles.y,    
                     smoothYaw
                 );
 
