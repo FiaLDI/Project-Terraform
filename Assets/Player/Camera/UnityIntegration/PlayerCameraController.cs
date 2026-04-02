@@ -68,6 +68,11 @@ namespace Features.Player.UnityIntegration
             isAiming = value;
         }
 
+        public void SetHead(Transform head)
+        {
+            headTransform = head;
+        }
+
         private void LateUpdate()
         {
             if (!isLocal || Control == null)
@@ -133,7 +138,19 @@ namespace Features.Player.UnityIntegration
 
             if (headTransform != null)
             {
-                headTransform.localRotation = Quaternion.Euler(smoothPitch, 0f, 0f);
+                float headYawOffset = Mathf.DeltaAngle(
+                    transform.eulerAngles.y,
+                    smoothYaw
+                );
+
+                // ограничение (чтобы не ломалась шея)
+                headYawOffset = Mathf.Clamp(headYawOffset, -80f, 80f);
+
+                headTransform.localRotation = Quaternion.Euler(
+                    smoothPitch,
+                    headYawOffset,
+                    0f
+                );
             }
         }
 
@@ -186,6 +203,26 @@ namespace Features.Player.UnityIntegration
                 Quaternion.Euler(smoothPitch, smoothYaw, 0f),
                 1f - Mathf.Exp(-15f * Time.deltaTime)
             );
+
+            if (headTransform != null)
+            {
+                float rawOffset = Mathf.DeltaAngle(
+                    transform.eulerAngles.y,
+                    smoothYaw
+                );
+
+                float headYawOffset = rawOffset * 1.6f;
+
+                headYawOffset = Mathf.Clamp(headYawOffset, -80f, 80f);
+
+                float pitch = smoothPitch * 0.5f;
+
+                headTransform.localRotation = Quaternion.Euler(
+                    pitch,
+                    headYawOffset,
+                    0f
+                );
+            }
         }
 
         // ======================================================

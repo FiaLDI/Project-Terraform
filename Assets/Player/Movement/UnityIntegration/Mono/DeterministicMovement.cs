@@ -18,6 +18,10 @@ public class DeterministicMovement : NetworkBehaviour
     [SerializeField] private float rotationSharpness = 20f;
     [SerializeField] private float jumpHeight = 1.2f;
 
+    [SerializeField] private float bodyFollowSpeedMoving = 18f;
+    [SerializeField] private float bodyFollowSpeed = 8f;
+    [SerializeField] private float bodyFollowThreshold = 50f;
+
     private CharacterController controller;
     private bool isCrouching;
     private float verticalVelocity;
@@ -57,7 +61,28 @@ public class DeterministicMovement : NetworkBehaviour
         TryResolveStats();
         float dt = NetworkTickSystem.TickDelta;
 
-        currentYaw = cmd.Yaw;
+        float targetYaw = cmd.Yaw;
+        float delta = Mathf.DeltaAngle(currentYaw, targetYaw);
+
+        bool isMoving = cmd.Move.sqrMagnitude > 0.01f;
+
+        // выбираем скорость
+        float followSpeed = isMoving ? bodyFollowSpeedMoving : bodyFollowSpeed;
+
+        if (Mathf.Abs(delta) > bodyFollowThreshold)
+        {
+            float step = followSpeed * dt * Mathf.Sign(delta);
+            currentYaw += step;
+        }
+        else
+        {
+            currentYaw = Mathf.LerpAngle(
+                currentYaw,
+                targetYaw,
+                dt * followSpeed * 0.5f
+            );
+        }
+
         transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         // ================= SPEED =================
@@ -85,9 +110,14 @@ public class DeterministicMovement : NetworkBehaviour
         }
 
         // ================= HORIZONTAL =================
+        Quaternion lookRot = Quaternion.Euler(0f, cmd.Yaw, 0f);
+
+        Vector3 forward = lookRot * Vector3.forward;
+        Vector3 right   = lookRot * Vector3.right;
+
         Vector3 moveDir =
-            transform.forward * cmd.Move.y +
-            transform.right * cmd.Move.x;
+            forward * cmd.Move.y +
+            right   * cmd.Move.x;
 
         moveDir = moveDir.normalized * speed;
 

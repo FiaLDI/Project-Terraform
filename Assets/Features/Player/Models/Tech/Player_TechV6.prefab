@@ -4621,6 +4621,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSockets
   rightHandSocket: {fileID: 8804693289410550711}
   leftHandSocket: {fileID: 17947004019775298}
+  head: {fileID: 4941984357491167317}
 --- !u!1 &4982205087321207693
 GameObject:
   m_ObjectHideFlags: 0

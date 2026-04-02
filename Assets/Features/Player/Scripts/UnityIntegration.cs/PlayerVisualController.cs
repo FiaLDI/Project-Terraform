@@ -69,6 +69,7 @@ public class PlayerVisualController : MonoBehaviour
 
         GetComponent<PlayerAnimationController>()?.SetAnimator(_animator);
         GetComponent<EquipmentManager>()?.ApplySockets(Sockets);
+        GetComponent<PlayerCameraController>().SetHead(Sockets.head);
 
         ApplyLayer(_spawnedModel);
         
