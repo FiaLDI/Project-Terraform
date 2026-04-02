@@ -61,6 +61,11 @@ namespace Biomes.UnityIntegration
         // =========================================================
         private void SpawnEnemy(BiomeConfig biome)
         {
+            if (biome.enemyTable == null || biome.enemyTable.Length == 0)
+            {
+                return;
+            }
+
             var entry = biome.enemyTable[Random.Range(0, biome.enemyTable.Length)];
             var config = entry.config;
 

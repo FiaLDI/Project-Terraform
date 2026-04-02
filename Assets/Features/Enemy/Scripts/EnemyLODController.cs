@@ -119,6 +119,11 @@ public class EnemyLODController : MonoBehaviour
 
     private void InitLODs()
     {
+        if (!config.lod0Prefab || !config.lod1Prefab || !config.lod2Prefab)
+        {
+            Debug.LogError($"[LOD] Missing LOD prefabs in {name}", this);
+            return;
+        }
         lodObjects[0] = Instantiate(config.lod0Prefab, anchor);
         lodObjects[1] = Instantiate(config.lod1Prefab, anchor);
         lodObjects[2] = Instantiate(config.lod2Prefab, anchor);
@@ -228,6 +233,9 @@ public class EnemyLODController : MonoBehaviour
     private void ExitInstancing()
     {
         instancingMode = false;
+
+        if (currentLod < 0)
+            currentLod = 0;
 
         ApplyLOD(currentLod);
         ApplyLogic(currentLod);
