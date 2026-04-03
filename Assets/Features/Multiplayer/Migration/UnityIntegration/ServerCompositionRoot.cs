@@ -1,10 +1,12 @@
 using FishNet;
-using FishNet.Managing;
-using FishNet.Managing.Scened;
 using FishNet.Object;
 using Multiplayer.Application;
-using Multiplayer.Domain;
 using UnityEngine;
+public enum WorldType
+{
+    Static,
+    Dynamic
+}
 
 public sealed class ServerCompositionRoot : MonoBehaviour
 {
@@ -13,6 +15,7 @@ public sealed class ServerCompositionRoot : MonoBehaviour
     public SessionManager Sessions { get; private set; }
     public SpawnService Spawner { get; private set; }
     public ServerGameFlow Flow { get; private set; }
+    public WorldType CurrentWorldType { get; private set; } = WorldType.Static;
 
     [Header("References")]
     [SerializeField] private NetworkObject playerPrefab;
@@ -30,6 +33,13 @@ public sealed class ServerCompositionRoot : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         Initialize();
+    }
+
+    public void SetWorldType(WorldType type)
+    {
+        CurrentWorldType = type;
+
+        Debug.Log($"[World] Type set to: {type}");
     }
 
     private void Initialize()

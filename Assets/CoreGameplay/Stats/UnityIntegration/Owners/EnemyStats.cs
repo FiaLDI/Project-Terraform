@@ -36,9 +36,9 @@ namespace Features.Stats.UnityIntegration
 
         private void ApplyDefaultsFromConfig()
         {
-            if (config.statsPreset != null)
+            if (config.stats != null)
             {
-                ApplyPreset(config.statsPreset);
+                ApplyPreset(config.stats);
                 return;
             }
 
@@ -51,7 +51,7 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    config.statsPreset.combat.baseDamageMultiplier,
+                    config.stats.combat.baseDamageMultiplier,
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,
@@ -76,7 +76,7 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    config.statsPreset.combat.baseDamageMultiplier,
+                    config.stats.combat.baseDamageMultiplier,
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,

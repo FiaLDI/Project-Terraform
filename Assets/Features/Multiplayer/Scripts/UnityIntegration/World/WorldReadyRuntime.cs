@@ -46,6 +46,7 @@ public sealed class WorldReadyRuntime : NetworkBehaviour
 
         root.Flow.NotifySceneLoaded();
         root.Flow.NotifyWorldPrepared();
+        root.SetWorldType(WorldType.Dynamic);
 
         root.Spawner.RespawnAllOnline();
 

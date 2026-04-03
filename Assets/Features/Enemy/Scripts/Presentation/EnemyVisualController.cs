@@ -1,54 +1,78 @@
 using UnityEngine;
 using Unity.Entities;
 using FishNet.Object;
+using Features.Enemy.Presentation.LOD;
 
 public sealed class EnemyVisualController : NetworkBehaviour
 {
-    [SerializeField] private Animator animator;
-
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
+
+    public Animator animator;
 
     private Entity entity;
     private EntityManager em;
 
     private EnemyAttackHandler attackHandler;
+    private EnemyLODView lodView;
+
     private Vector3 lastPos;
 
     private void Awake()
     {
-        if (animator == null)
-            animator = GetComponentInChildren<Animator>();
-
         attackHandler = GetComponent<EnemyAttackHandler>();
+        lodView = GetComponent<EnemyLODView>();
+
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        if (lodView != null)
+            lodView.OnModelChanged += OnModelChanged;
     }
 
+    private void OnDestroy()
+    {
+        if (lodView != null)
+            lodView.OnModelChanged -= OnModelChanged;
+    }
+
+    // =========================================================
+    private void OnModelChanged(GameObject model)
+    {
+        if (model == null)
+            return;
+
+        animator = model.GetComponentInChildren<Animator>();
+
+        if (animator != null)
+            animator.applyRootMotion = false;
+    }
+
+    // =========================================================
     private void Update()
     {
         if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>();
-            if (animator == null) return;
-        }
+            return;
 
         if (entity == Entity.Null || !em.Exists(entity))
         {
             var binder = GetComponent<EnemyEcsRuntimeBinder>();
 
-            if (binder != null && binder.Entity != Entity.Null)
+            if (binder != null && binder.Entity != Entity.Null && em.Exists(binder.Entity))
                 entity = binder.Entity;
 
             return;
         }
 
+        if (!em.HasComponent<EnemyAttackState>(entity))
+            return;
+
         var attackState = em.GetComponentData<EnemyAttackState>(entity);
 
-        // speed
+        // ===== SPEED =====
         float speed = (transform.position - lastPos).magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
         animator.SetFloat(SpeedHash, speed);
 
-        // attack
+        // ===== ATTACK =====
         if (attackState.DoAttack)
         {
             attackState.DoAttack = false;
@@ -61,14 +85,9 @@ public sealed class EnemyVisualController : NetworkBehaviour
         }
 
         lastPos = transform.position;
-
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            transform.rotation,
-            Time.deltaTime * 10f
-        );
     }
 
+    // =========================================================
     [ObserversRpc]
     private void PlayAttackRpc()
     {

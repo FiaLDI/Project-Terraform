@@ -230,7 +230,7 @@ GameObject:
   - component: {fileID: 6325611359922830475}
   - component: {fileID: -3421877017634375112}
   - component: {fileID: 4545127908142641363}
-  - component: {fileID: -3691733958049959891}
+  - component: {fileID: -6083213034349871330}
   m_Layer: 7
   m_Name: DynoECS
   m_TagString: Enemy
@@ -308,7 +308,7 @@ MonoBehaviour:
   - {fileID: 6798121071620844925}
   - {fileID: -6394603796330078313}
   - {fileID: -3025476531782380607}
-  - {fileID: -3691733958049959891}
+  - {fileID: 0}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -319,7 +319,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584265299689435127
+  _initializedTimestamp: -8584263568032334999
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -617,7 +617,7 @@ MonoBehaviour:
     duration: 0
     projectileConfig: {fileID: 0}
     childEffects: []
---- !u!114 &-3691733958049959891
+--- !u!114 &-6083213034349871330
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -626,43 +626,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 5739330300266458567}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
+  m_Script: {fileID: 11500000, guid: 4fe657eeecaeb6b4584bd11793ec29a3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
-  _componentIndexCache: 9
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
+  _componentIndexCache: 255
   _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 5928809208972985904}
-  _componentConfiguration: 0
-  _synchronizeParent: 0
-  _packing:
-    Position: 1
-    Rotation: 1
-    Scale: 0
-  _useScaledTime: 1
-  _interpolation: 2
-  _extrapolation: 2
-  _enableTeleport: 0
-  _teleportThreshold: 1
-  _clientAuthoritative: 0
-  _sendToOwner: 1
-  _interval: 1
-  _synchronizePosition: 1
-  _positionSensitivity: 0.001
-  _positionSnapping:
-    X: 0
-    Y: 0
-    Z: 0
-  _synchronizeRotation: 1
-  _rotationSnapping:
-    X: 0
-    Y: 0
-    Z: 0
-  _synchronizeScale: 1
-  _scaleSensitivity: 0.001
-  _scaleSnapping:
-    X: 0
-    Y: 0
-    Z: 0
+  _networkObjectCache: {fileID: 0}
+  lerpRate: 15
 --- !u!1 &5882816248013448756
 GameObject:
   m_ObjectHideFlags: 0

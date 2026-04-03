@@ -11,10 +11,8 @@ GameObject:
   - component: {fileID: 3399780044020501898}
   - component: {fileID: 9180132629406829864}
   - component: {fileID: 3619196549790716486}
-  - component: {fileID: 9096633978065781642}
   - component: {fileID: 5753547122165339456}
   - component: {fileID: 3238053155987908212}
-  - component: {fileID: 8398044972433709676}
   - component: {fileID: 1051343711810094697}
   - component: {fileID: 3864893811294619987}
   - component: {fileID: 760934716557444705}
@@ -29,6 +27,12 @@ GameObject:
   - component: {fileID: 9215023719279128684}
   - component: {fileID: 1900998493129248272}
   - component: {fileID: 5815111598870989402}
+  - component: {fileID: 7859063946524322795}
+  - component: {fileID: 5388836709006846719}
+  - component: {fileID: 97571767528521597}
+  - component: {fileID: 7626525101563991224}
+  - component: {fileID: 7425200048692619748}
+  - component: {fileID: 8569907388489037013}
   m_Layer: 7
   m_Name: Enemy 1
   m_TagString: Enemy
@@ -103,19 +107,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &9096633978065781642
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 604374280082702520}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1d06dd24ab5a1f418aad8d5a420c749, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyLODController
-  config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
 --- !u!114 &5753547122165339456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -148,14 +139,16 @@ MonoBehaviour:
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
-  - {fileID: 8398044972433709676}
   - {fileID: 1051343711810094697}
   - {fileID: 3864893811294619987}
   - {fileID: 760934716557444705}
+  - {fileID: 8523425070704430778}
   - {fileID: 2995246043245216629}
   - {fileID: 1926485752432433062}
+  - {fileID: 1812578576095524838}
   - {fileID: 8352056275576124434}
   - {fileID: 6692272926936445375}
+  - {fileID: 8569907388489037013}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -166,7 +159,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584267408752376907
+  _initializedTimestamp: -8584263547674656985
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -175,9 +168,9 @@ MonoBehaviour:
   _enableStateForwarding: 1
   _networkTransform: {fileID: 0}
   _ownerInterpolation: 1
-  _ownerSmoothedProperties: 255
+  _ownerSmoothedProperties: 4294967295
   _adaptiveInterpolation: 3
-  _spectatorSmoothedProperties: 255
+  _spectatorSmoothedProperties: 4294967295
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
@@ -186,56 +179,10 @@ MonoBehaviour:
   <AssetPathHash>k__BackingField: 8267521181958873596
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 623.72986, y: -84.2547, z: -94.31728}
+    Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
---- !u!114 &8398044972433709676
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 604374280082702520}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
-  _componentIndexCache: 0
-  _addedNetworkObject: {fileID: 3238053155987908212}
-  _networkObjectCache: {fileID: 3238053155987908212}
-  _componentConfiguration: 0
-  _synchronizeParent: 0
-  _packing:
-    Position: 1
-    Rotation: 1
-    Scale: 0
-  _useScaledTime: 1
-  _interpolation: 1
-  _extrapolation: 2
-  _enableTeleport: 0
-  _teleportThreshold: 1
-  _clientAuthoritative: 0
-  _sendToOwner: 1
-  _interval: 1
-  _synchronizePosition: 1
-  _positionSensitivity: 0.001
-  _positionSnapping:
-    X: 0
-    Y: 0
-    Z: 0
-  _synchronizeRotation: 1
-  _rotationSnapping:
-    X: 0
-    Y: 0
-    Z: 0
-  _synchronizeScale: 1
-  _scaleSensitivity: 0.001
-  _scaleSnapping:
-    X: 0
-    Y: 0
-    Z: 0
 --- !u!114 &1051343711810094697
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,7 +195,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a598ae0d0a239844191a98d1694e1afb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Application.BuffSystem
-  _componentIndexCache: 1
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
   debugMode: 0
@@ -264,7 +211,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbd9dc0870482446b7a003922fa9602, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatsBuffTarget
-  _componentIndexCache: 2
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
 --- !u!114 &760934716557444705
@@ -279,7 +226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea6bfed9602ea5e42948ddbda8aa3f31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyStats
-  _componentIndexCache: 3
+  _componentIndexCache: 2
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
   statsProfile: {fileID: 11400000, guid: 6a97a0c61f628e749ac8bf5b61c54de3, type: 2}
@@ -296,6 +243,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 096cacec036283a439f24afd2613a083, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyActor
+  _componentIndexCache: 3
+  _addedNetworkObject: {fileID: 3238053155987908212}
+  _networkObjectCache: {fileID: 3238053155987908212}
 --- !u!114 &2995246043245216629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -312,6 +262,11 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
   moveSpeed: 3
+  rotationSpeed: 8
+  orbitStrength: 0.6
+  avoidDistance: 1.5
+  sideAvoidDistance: 1.2
+  separationRadius: 1.5
   obstacleMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -339,10 +294,6 @@ MonoBehaviour:
   - {fileID: 8493830333041242141}
   - {fileID: 5924634030405376384}
   - {fileID: 6732167346314672252}
-  reachDistance: 0.6
-  minWait: 1
-  maxWait: 3
-  randomPatrol: 1
 --- !u!114 &1812578576095524838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -355,12 +306,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b537345655c7bb7489b9ac7f3d8cbd75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyVisualController
-  animator: {fileID: 0}
-  animatorController: {fileID: 9100000, guid: 17d88a246140d7c439423367a199d771, type: 2}
-  runSpeed: 2.5
-  dampTime: 0.1
-  modelRoot: {fileID: 0}
-  rotationSpeed: 8
+  _componentIndexCache: 6
+  _addedNetworkObject: {fileID: 3238053155987908212}
+  _networkObjectCache: {fileID: 3238053155987908212}
 --- !u!114 &8352056275576124434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -373,7 +321,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.UnifiedStatsUpdateSystem
-  _componentIndexCache: 6
+  _componentIndexCache: 7
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
 --- !u!114 &6692272926936445375
@@ -388,7 +336,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca61dd7427f810b438512fb1cacdeab5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsNetSync
-  _componentIndexCache: 7
+  _componentIndexCache: 8
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
   netProfile: {fileID: 11400000, guid: b6881cd365e70224b9e68789e4549d92, type: 2}
@@ -481,6 +429,86 @@ MonoBehaviour:
     duration: 0
     projectileConfig: {fileID: 0}
     childEffects: []
+--- !u!114 &7859063946524322795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604374280082702520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72d84627b6d9cb64f9781d59f1b56f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Presentation.LOD.EnemyLODView
+  anchor: {fileID: 3951449083090482651}
+  lodPrefabs: []
+--- !u!114 &5388836709006846719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604374280082702520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11c8c149f7825164b8eefe62c705636b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Presentation.LOD.EnemyDistanceLODSystem
+  config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
+  OffLod: 1
+--- !u!114 &97571767528521597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604374280082702520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a8e8c14ce5e96242b3b60131f0ddbf6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Presentation.LOD.EnemyInstancingController
+--- !u!114 &7626525101563991224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604374280082702520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9be892b9443dd64cbda17736391c92f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Integration.LOD.EnemyLogicLODAdapter
+--- !u!114 &7425200048692619748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604374280082702520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d36e29c8504fc34fac7ee71ab2286b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDespawnBridge
+--- !u!114 &8569907388489037013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604374280082702520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fe657eeecaeb6b4584bd11793ec29a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
+  _componentIndexCache: 9
+  _addedNetworkObject: {fileID: 3238053155987908212}
+  _networkObjectCache: {fileID: 3238053155987908212}
+  lerpRate: 15
 --- !u!1 &2552993529211192160
 GameObject:
   m_ObjectHideFlags: 0

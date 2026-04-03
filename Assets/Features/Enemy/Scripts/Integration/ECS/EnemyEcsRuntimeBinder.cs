@@ -70,21 +70,26 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 
         em.AddComponentData(entity, new EnemySteeringData
         {
-            seekWeight = config.seekWeight,
-            avoidWeight = config.avoidWeight,
-            separationWeight = config.separationWeight,
-            orbitWeight = config.orbitWeight,
+            seekWeight = config.ai.seekWeight,
+            avoidWeight = config.ai.avoidWeight,
+            separationWeight = config.ai.separationWeight,
+            orbitWeight = config.ai.orbitWeight,
 
-            avoidDistance = config.avoidDistance,
-            sideAvoidDistance = config.sideAvoidDistance,
-            separationRadius = config.separationRadius,
+            avoidDistance = config.ai.avoidDistance,
+            sideAvoidDistance = config.ai.sideAvoidDistance,
+            separationRadius = config.ai.separationRadius,
 
-            rotationSpeed = config.rotationSpeed,
-            orbitStrength = config.orbitStrength,
+            rotationSpeed = config.ai.rotationSpeed,
+            orbitStrength = config.ai.orbitStrength,
 
-            enableSeparation = config.enableSeparation,
-            enableAvoidance = config.enableAvoidance,
-            enableOrbit = config.enableOrbit
+            enableSeparation = config.ai.enableSeparation,
+            enableAvoidance = config.ai.enableAvoidance,
+            enableOrbit = config.ai.enableOrbit
+        });
+
+        em.AddComponentData(entity, new EnemyDespawnDistance
+        {
+            Value = 80f // можно из config потом
         });
 
         em.SetComponentData(entity, new EnemyPatrolState
@@ -113,8 +118,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
                 transform.rotation
             ));
 
-        em.SetComponentData(entity,
-            LocalTransform.FromPosition(transform.position));
 
         em.SetComponentData(entity, new EnemyTarget
         {
@@ -154,12 +157,12 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
         em.SetComponentData(entity, new EnemyAI
         {
             MoveSpeed = 3f,
-            AggroRadius = config.aggroRadius,
-            LoseAggroRadius = config.aggroRadius * 1.5f,
-            AttackRange = config.attackRange,
-            AttackCooldown = config.attackCooldown,
-            StopDistanceMultiplier = config.stopDistanceMultiplier,
-            VisionRange = config.visionRange
+            AggroRadius = config.ai.aggroRadius,
+            LoseAggroRadius = config.ai.aggroRadius * 1.5f,
+            AttackRange = config.combat.attackRange,
+            AttackCooldown = config.combat.attackCooldown,
+            StopDistanceMultiplier = config.combat.stopDistanceMultiplier,
+            VisionRange = config.ai.visionRange
         });
 
         em.SetComponentData(entity, new EnemyState

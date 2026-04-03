@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29ed096e197e5814cba5858be4386b03, type: 3}
+  m_Name: Enemy_3ee078
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Data.EnemyConfigSO
+  enemyId: enemy_3ee078
+  displayName: Enemy 3ee078
+  prefab: {fileID: 604374280082702520, guid: be6e72fcfdb963e4ca65277fbd550c07, type: 3}
+  ai: {fileID: 11400000, guid: b86c0e36de8508743bd5ad5f21e84ef9, type: 2}
+  render: {fileID: 11400000, guid: 06d8f96de93cfeb4f962dd96dcc4ceb6, type: 2}
+  combat: {fileID: 11400000, guid: ce756d7c8a9d4654c8bb8d8a698f6dad, type: 2}
+  stats: {fileID: 11400000, guid: fb982eeac80451f48ae636e404ba6c9e, type: 2}

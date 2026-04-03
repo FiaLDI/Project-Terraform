@@ -37,6 +37,12 @@ namespace Biomes.UnityIntegration
             if (Time.time < _nextSpawnTime)
                 return;
 
+            if (ServerCompositionRoot.I != null &&
+                ServerCompositionRoot.I.CurrentWorldType == WorldType.Static)
+            {
+                return;
+            }
+
             _nextSpawnTime = Time.time + spawnInterval;
 
             var registry = PlayerRegistry.Instance;
@@ -74,10 +80,10 @@ namespace Biomes.UnityIntegration
                 _playerEnemies[id] = list;
             }
 
-            // чистка без GC
+            // чистка
             for (int i = list.Count - 1; i >= 0; i--)
             {
-                if (list[i] == null)
+                if (list[i] == null || !list[i].gameObject.activeInHierarchy)
                     list.RemoveAt(i);
             }
 
@@ -111,8 +117,27 @@ namespace Biomes.UnityIntegration
             if (!config || !config.prefab)
                 return;
 
+            // ===== Instantiate =====
             var go = Instantiate(config.prefab, pos, Quaternion.identity);
 
+            // ===== ВАЖНО: сначала config =====
+            var binder = go.GetComponent<EnemyEcsRuntimeBinder>();
+            if (binder != null)
+            {
+                binder.SetConfig(config);
+            }
+
+            // ===== Rigidbody reset (убираем мусор физики) =====
+            var rb = go.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.position = pos;
+                rb.rotation = Quaternion.identity;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+
+            // ===== Network spawn =====
             var nob = go.GetComponent<NetworkObject>();
             if (!nob)
             {
@@ -122,14 +147,15 @@ namespace Biomes.UnityIntegration
 
             InstanceFinder.ServerManager.Spawn(nob);
 
-            var binder = go.GetComponent<EnemyEcsRuntimeBinder>();
-            binder?.SetConfig(config);
-            binder?.ForceInit();
+            // ❗ НИКАКИХ ForceInit — OnStartServer сам вызовет Init
 
+            // ===== Tracker =====
             var tracker = go.GetComponent<EnemyInstanceTracker>() ?? go.AddComponent<EnemyInstanceTracker>();
             tracker.config = config;
-            
-            //var despawn = go.GetComponent<EnemyAutoDespawn>() ?? go.AddComponent<EnemyAutoDespawn>();
+
+            // ===== Despawn bridge =====
+            var despawnBridge = go.GetComponent<EnemyDespawnBridge>()
+                                 ?? go.AddComponent<EnemyDespawnBridge>();
 
             list.Add(tracker);
 
