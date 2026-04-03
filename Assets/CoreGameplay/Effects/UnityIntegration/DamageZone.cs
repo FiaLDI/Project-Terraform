@@ -4,7 +4,7 @@ using Features.Effects.Domain;
 using Features.Effects.Application;
 using Features.Buffs.Domain;
 
-namespace Features.Combat.Zones
+namespace CoreGameplay.Effects
 {
     [RequireComponent(typeof(Collider))]
     public sealed class DamageZone : MonoBehaviour
