@@ -292,10 +292,19 @@ namespace Features.Abilities.Application
             if (!IsClient)
                 return;
 
-            if (!NetIsChanneling.Value || NetChannelSlot.Value < 0)
+            if (!NetIsChanneling.Value)
                 return;
 
-            var ability = abilities[NetChannelSlot.Value];
+            int slot = NetChannelSlot.Value;
+
+            if (slot < 0 || slot >= abilities.Length)
+                return;
+
+            var ability = abilities[slot];
+
+            if (ability == null)
+                return; 
+
             float total = ability.castTime;
             float elapsed = total - next;
 

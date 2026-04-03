@@ -157,7 +157,8 @@ namespace Features.Class.Net
 
             var finalPassives = BuildPassives(cfg);
 
-            passiveSystem.SetPassives(finalPassives);
+            var net = GetComponent<PassiveNetAdapter>();
+            net.ServerSetPassives(finalPassives);
 
             // =====================================================
             // 3️⃣ КЛАСС (абилки + базовая логика)

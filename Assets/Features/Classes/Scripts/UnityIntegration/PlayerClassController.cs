@@ -111,11 +111,6 @@ public sealed class PlayerClassController : MonoBehaviour
     {
         phase.OnPhaseReached -= OnPhaseReached;
 
-        Debug.Log("[PASSIVES] Apply", this);
-
-        var net = GetComponent<PassiveNetAdapter>();
-        net.ServerSetPassives(currentClass.passives.ToArray());
-
         phase.Reach(GamePhase.PassivesApplied);
 
         OnClassApplied?.Invoke();
