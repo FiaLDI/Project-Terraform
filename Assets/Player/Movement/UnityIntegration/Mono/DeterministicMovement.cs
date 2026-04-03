@@ -190,7 +190,7 @@ public class DeterministicMovement : NetworkBehaviour
 
     public void ApplyCorrection(Vector3 correction)
     {
-        controller.Move(correction);
+        Velocity += correction * 5f;
     }
 
     private void TryResolveStats()

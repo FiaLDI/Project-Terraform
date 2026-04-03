@@ -347,7 +347,6 @@ GameObject:
   - component: {fileID: 1686559364612444093}
   - component: {fileID: 2127444393313974676}
   - component: {fileID: 5136383045370552025}
-  - component: {fileID: 3249233337102116910}
   - component: {fileID: 7022724963732028029}
   - component: {fileID: 283238272492682892}
   - component: {fileID: 5530530445021933545}
@@ -528,18 +527,6 @@ MonoBehaviour:
   _componentIndexCache: 4
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
---- !u!114 &3249233337102116910
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac22a0b8f258de744ba2ee29dbf5eba1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Combat.UnityIntegration.PlayerDamageReceiver
 --- !u!114 &7022724963732028029
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1084,6 +1071,7 @@ MonoBehaviour:
   _componentIndexCache: 20
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
+  visualRoot: {fileID: 5017748270277261448}
 --- !u!143 &-3112033191411523419
 CharacterController:
   m_ObjectHideFlags: 0

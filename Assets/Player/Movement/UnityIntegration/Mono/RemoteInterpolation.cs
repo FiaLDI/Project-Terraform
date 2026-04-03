@@ -12,17 +12,18 @@ public class RemoteInterpolation : MonoBehaviour
         public Vector3 Velocity;
         public float Yaw;
         public float Pitch;
-        public bool Jump;
         public bool Crouch;
-        public bool Sprint;
         public bool Grounded;
     }
 
     private readonly List<Snapshot> snapshots = new();
-    private const float InterpDelay = 0.5f;
+
+    private const float InterpDelay = 0.05f;
+    private const float TeleportThreshold = 5f;
+
     private PlayerAnimationController anim;
 
-    public void Awake()
+    private void Awake()
     {
         anim = GetComponentInParent<PlayerAnimationController>();
     }
@@ -30,6 +31,17 @@ public class RemoteInterpolation : MonoBehaviour
     public void ReceiveState(PlayerState state)
     {
         float time = Time.time;
+
+        // 🔥 защита от телепорта (очень важно)
+        if (snapshots.Count > 0)
+        {
+            var last = snapshots[snapshots.Count - 1];
+
+            if (Vector3.Distance(last.Position, state.Position) > TeleportThreshold)
+            {
+                snapshots.Clear();
+            }
+        }
 
         snapshots.Add(new Snapshot
         {
@@ -42,7 +54,7 @@ public class RemoteInterpolation : MonoBehaviour
             Grounded = state.Grounded
         });
 
-        if (snapshots.Count > 20)
+        if (snapshots.Count > 32)
             snapshots.RemoveAt(0);
     }
 
@@ -51,14 +63,15 @@ public class RemoteInterpolation : MonoBehaviour
         var netObj = GetComponentInParent<NetworkObject>();
         if (netObj != null && netObj.IsOwner)
             return;
-            
+
         if (snapshots.Count < 2)
             return;
 
-        float renderTime = Time.time - InterpDelay;
+        // 🔥 ВАЖНО: не Time.time, а относительно снапшотов
+        float renderTime = snapshots[snapshots.Count - 1].Time - InterpDelay;
 
-        while (snapshots.Count >= 2 &&
-               snapshots[1].Time <= renderTime)
+        // удаляем старые
+        while (snapshots.Count >= 2 && snapshots[1].Time <= renderTime)
         {
             snapshots.RemoveAt(0);
         }
@@ -70,30 +83,43 @@ public class RemoteInterpolation : MonoBehaviour
         var to   = snapshots[1];
 
         float t = Mathf.InverseLerp(from.Time, to.Time, renderTime);
+        t = Mathf.Clamp01(t);
 
-        transform.position = Vector3.Lerp(from.Position, to.Position, t);
-        transform.rotation = Quaternion.Euler(
-            0f,
-            Mathf.LerpAngle(from.Yaw, to.Yaw, t),
-            0f
-        );
-        float pitch = Mathf.Lerp(
-            from.Pitch,
-            to.Pitch,
-            t
-        );
+        // ================= POSITION =================
+
+        Vector3 pos = Vector3.Lerp(from.Position, to.Position, t);
+
+        // 🔥 защита от скачков
+        if ((pos - transform.position).sqrMagnitude > TeleportThreshold * TeleportThreshold)
+        {
+            transform.position = pos;
+        }
+        else
+        {
+            transform.position = pos;
+        }
+
+        // ================= ROTATION =================
+
+        float yaw = Mathf.LerpAngle(from.Yaw, to.Yaw, t);
+
+        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+
+        float pitch = Mathf.Lerp(from.Pitch, to.Pitch, t);
         var head = GetComponentInChildren<HeadPitchController>();
         head?.SetRemotePitch(pitch);
 
+        // ================= ANIMATION =================
+
         if (anim != null)
         {
-            float speed = new Vector2(to.Velocity.x, to.Velocity.z).magnitude;
+            Vector3 vel = Vector3.Lerp(from.Velocity, to.Velocity, t);
+
+            float speed = new Vector2(vel.x, vel.z).magnitude;
+
             anim.SetSpeed(speed);
             anim.SetGrounded(to.Grounded);
             anim.SetCrouch(to.Crouch);
-
-            if (to.Jump)
-                anim.TriggerJump();
         }
     }
 }

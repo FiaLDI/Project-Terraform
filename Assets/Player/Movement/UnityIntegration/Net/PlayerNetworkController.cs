@@ -16,24 +16,29 @@ public class PlayerNetworkController : NetworkBehaviour
     private const int InputDelayTicks = 1;
     private Vector3 visualPosition;
 
+    private Vector3 accumulatedError;
+    private Vector3 previousPosition;
+    private Quaternion previousRotation;
+    private Vector3 currentPosition;
+    private Quaternion currentRotation;
+
+    public Vector3 GetPreviousPosition() => previousPosition;
+    public Vector3 GetCurrentPosition() => currentPosition;
+
+    public Quaternion GetPreviousRotation() => previousRotation;
+    public Quaternion GetCurrentRotation() => currentRotation;
+
     private void Awake()
     {
         movement = GetComponent<DeterministicMovement>();
         visualPosition = transform.position;
-    }
 
-    private void Update()
-    {
-        if (IsOwner && !IsServer)
-        {
-            visualPosition = Vector3.Lerp(
-                visualPosition,
-                transform.position,
-                1f - Mathf.Exp(-15f * Time.deltaTime)
-            );
+        // 🔥 ВАЖНО
+        previousPosition = transform.position;
+        currentPosition  = transform.position;
 
-            transform.position = visualPosition;
-        }
+        previousRotation = transform.rotation;
+        currentRotation  = transform.rotation;
     }
 
     public void InjectInput(MovementInputHandler handler)
@@ -62,6 +67,12 @@ public class PlayerNetworkController : NetworkBehaviour
             return;
 
         int currentTick = NetworkTickSystem.I.CurrentTick;
+    
+        previousPosition = currentPosition;
+        previousRotation = currentRotation;
+
+        currentPosition = transform.position;
+        currentRotation = transform.rotation;
 
         // ================= CLIENT =================
         if (IsOwner)
@@ -189,14 +200,14 @@ public class PlayerNetworkController : NetworkBehaviour
             return;
         }
 
-        const float MinCorrectionError = 0.05f;
+        const float MinCorrectionError = 0.2f;
 
         float error = Vector3.Distance(predicted.Position, serverState.Position);
 
         if (error < MinCorrectionError)
             return;
 
-        const float HardSnapThreshold = 1.5f;
+        const float HardSnapThreshold = 3f;
 
         if (error > HardSnapThreshold)
         {
@@ -206,7 +217,16 @@ public class PlayerNetworkController : NetworkBehaviour
         {
             Vector3 correction = serverState.Position - transform.position;
 
-            movement.ApplyCorrection(correction * 0.5f);
+            accumulatedError += correction;
+
+            Vector3 step = accumulatedError * 0.1f;
+
+            // clamp чтобы не было рывков
+            step = Vector3.ClampMagnitude(step, 0.5f);
+
+            movement.ApplyCorrection(step);
+
+            accumulatedError -= step;
             return;
         }
 
