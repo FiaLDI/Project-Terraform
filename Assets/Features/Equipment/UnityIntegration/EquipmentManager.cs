@@ -248,8 +248,14 @@ namespace Features.Equipment.UnityIntegration
                 return;
             }
 
+            var control = CameraServiceProvider.Control;
+
             camReg.InitializeFPS();
-            camReg.SetFPSVisible(true);
+
+            // 🔥 показываем ТОЛЬКО если реально FPS
+            bool isFPS = control != null && control.State.Blend < 0.5f;
+
+            camReg.SetFPSVisible(isFPS);
 
             var socket = camReg.WeaponSocket;
 

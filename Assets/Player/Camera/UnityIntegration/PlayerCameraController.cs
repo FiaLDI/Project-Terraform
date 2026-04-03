@@ -107,6 +107,13 @@ namespace Features.Player.UnityIntegration
                 UpdateTPS();
 
             UpdateFOV();
+
+            var camReg = CameraRegistry.Instance;
+
+            if (camReg != null)
+            {
+                camReg.SetFPSVisible(isFPS);
+            }
         }
 
         // ================= FPS =================
