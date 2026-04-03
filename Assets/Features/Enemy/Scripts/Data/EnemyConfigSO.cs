@@ -1,4 +1,3 @@
-using Features.Enemy.Domain;
 using UnityEngine;
 
 namespace Features.Enemy.Data
@@ -28,9 +27,6 @@ namespace Features.Enemy.Data
 
         [Header("Canvas prefab")]
         public GameObject worldCanvasPrefab;
-
-        [Header("Hitbox Multipliers")]
-        public HitboxProfile[] hitboxes;
 
         [Header("Stats Preset")]
         public EnemyStatsPresetSO statsPreset;
