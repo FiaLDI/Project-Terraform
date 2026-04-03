@@ -971,8 +971,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8486828778593346845}
   m_HandleRect: {fileID: 6144941879829894001}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 1
+  m_Value: 0
+  m_Size: 0.9999999
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2172,7 +2172,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000060157156}
+  m_AnchoredPosition: {x: 0, y: 0.00018772976}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &6326962230719129569
@@ -16868,6 +16868,7 @@ MonoBehaviour:
   clearBtn: {fileID: 387968297212847659}
   quests:
   - {fileID: 11400000, guid: f764e69a9b22cf94d95eee67e3c3e0e6, type: 2}
+  - {fileID: 11400000, guid: fda4d22d481ccaf4b9e422a08ecdb472, type: 2}
   chains:
   - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}
 --- !u!114 &8983097391620109285

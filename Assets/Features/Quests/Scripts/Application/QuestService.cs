@@ -63,12 +63,44 @@ namespace Features.Quests.Domain
         // PROCESS EVENT
         // ----------------------------------------------------------
 
+        public void HandleEventFiltered(IQuestEvent e, bool isOwnerEvent)
+        {
+            foreach (var quest in _active.Values.ToList())
+            {
+                if (quest.State != QuestState.Active)
+                    continue;
+
+                if (quest.Definition.Scope == QuestScope.Personal && !isOwnerEvent)
+                    continue;
+
+                foreach (var condition in quest.Definition.Conditions)
+                {
+                    condition.OnEvent(quest, e);
+                }
+
+                if (quest.Definition.Conditions.All(c => c.IsCompleted(quest)))
+                {
+                    CompleteInternal(quest);
+                }
+            }
+        }
+
         public void HandleEvent(IQuestEvent e)
         {
             foreach (var quest in _active.Values.ToList())
             {
                 if (quest.State != QuestState.Active)
                     continue;
+
+                // ❗ ВАЖНО
+                if (quest.Definition.Scope == QuestScope.Personal)
+                {
+                    // только если событие от владельца
+                    if (e.Source != owner)
+                        continue;
+                }
+
+                // Shared — пропускаем ВСЕ события
 
                 foreach (var condition in quest.Definition.Conditions)
                 {

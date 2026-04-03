@@ -13,7 +13,7 @@ namespace Biomes.UnityIntegration
         public WorldConfig world;
 
         [Header("Spawn Settings")]
-        [SerializeField] private float spawnInterval = 0.4f;
+        [SerializeField] private float spawnInterval = 5f;
         [SerializeField] private float spawnRadiusMin = 15f;
         [SerializeField] private float spawnRadiusMax = 35f;
         [SerializeField] private int maxEnemies = 40;
@@ -77,7 +77,6 @@ namespace Biomes.UnityIntegration
 
             GameObject enemyGO = Instantiate(config.prefab, pos, Quaternion.identity);
 
-            // 🔥 СНАЧАЛА ECS
             var binder = enemyGO.GetComponent<EnemyEcsRuntimeBinder>();
             if (binder != null)
             {
@@ -85,7 +84,6 @@ namespace Biomes.UnityIntegration
                 binder.ForceInit();
             }
 
-            // 🔥 ПОТОМ СЕТЬ
             var nob = enemyGO.GetComponent<NetworkObject>();
             if (!nob)
             {

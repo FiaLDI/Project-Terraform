@@ -29,8 +29,10 @@ namespace Features.Quests.UnityIntegration
                 return;
 
             QuestEventBus.Publish(
-                other.gameObject,
-                new PointReachedEvent(pointId)
+                new PointReachedEvent(
+                    other.gameObject,
+                    pointId
+                )
             );
         }
 
@@ -45,8 +47,10 @@ namespace Features.Quests.UnityIntegration
                 return;
 
             QuestEventBus.Publish(
-                other.gameObject,
-                new PointLeftEvent(pointId)
+                new PointLeftEvent(
+                    other.gameObject,
+                    pointId
+                )
             );
         }
     }

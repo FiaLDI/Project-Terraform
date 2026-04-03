@@ -118,9 +118,20 @@ namespace Features.Stats.UnityIntegration
 
             Debug.Log("[Enemy] Died");
 
+            var attackerGO = (lastAttacker as Component)?.gameObject;
+
+            if (attackerGO == null)
+            {
+                Debug.LogWarning("[EnemyStats] Attacker has no GameObject");
+                return;
+            }
+
             QuestEventBus.Publish(
-                lastAttacker, 
-                new EnemyKilledEvent(config.enemyId, lastAttacker)
+                new EnemyKilledEvent(
+                    attackerGO,
+                    config.enemyId,
+                    lastAttacker
+                )
             );
 
             if (InstanceFinder.IsServer)

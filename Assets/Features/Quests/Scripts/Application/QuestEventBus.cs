@@ -34,7 +34,7 @@ namespace Features.Quests.Application
             list.RemoveAll(a => a.Method == handler.Method);
         }
 
-        public static void Publish(object source, IQuestEvent e)
+        public static void Publish(IQuestEvent e)
         {
             var type = e.GetType();
 
@@ -42,7 +42,7 @@ namespace Features.Quests.Application
                 return;
 
             foreach (var handler in list)
-                handler(source, e);
+                handler(e.Source, e);
         }
     }
 }

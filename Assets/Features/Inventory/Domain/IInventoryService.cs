@@ -6,7 +6,7 @@ namespace Features.Inventory.Application
     public interface IInventoryService
     {
         bool AddItem(ItemInstance item);
-        bool TryRemove(Item itemDefinition, int amount);
+        bool TryRemove(Item itemDefinition, int amount, object source);
         int GetItemCount(Item itemDefinition);
         bool HasIngredients(RecipeIngredient[] ingredients);
         bool ConsumeIngredients(RecipeIngredient[] ingredients);

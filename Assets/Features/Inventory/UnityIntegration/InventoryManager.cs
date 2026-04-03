@@ -264,8 +264,8 @@ namespace Features.Inventory.UnityIntegration
         private void HandleItemAdded(ItemInstance inst)
         {
             QuestEventBus.Publish(
-                gameObject,
                 new ItemAddedEvent(
+                    gameObject,
                     inst.itemDefinition.id,
                     inst.quantity
                 )

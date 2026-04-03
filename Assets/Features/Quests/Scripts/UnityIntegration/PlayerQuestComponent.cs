@@ -127,9 +127,14 @@ public class PlayerQuestComponent : NetworkBehaviour
     }
 
     private void HandleEvent<T>(object source, T e)
-        where T : IQuestEvent
+    where T : IQuestEvent
     {
-        service.HandleEvent(e);
+        if (!IsServer)
+            return;
+
+        bool isMine = e.Source == gameObject;
+
+        service.HandleEventFiltered(e, isMine);
     }
 
     private QuestConditionNetState[] BuildConditions(QuestRuntime quest)
@@ -262,8 +267,11 @@ public class PlayerQuestComponent : NetworkBehaviour
             return;
 
         QuestEventBus.Publish(
-            gameObject,
-            new DebugProgressEvent(id, amount)
+            new DebugProgressEvent(
+                gameObject,
+                id,
+                amount
+            )
         );
     }
 }
