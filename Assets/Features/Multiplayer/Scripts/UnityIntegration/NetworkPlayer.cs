@@ -34,6 +34,19 @@ namespace Features.Player.UnityIntegration
 
             if (playerController == null)
                 playerController = GetComponent<PlayerController>();
+            
+            var registry = PlayerRegistry.Instance;
+            if (registry != null)
+                registry.RegisterPlayer(gameObject);
+        }
+
+        public override void OnStopServer()
+        {
+            base.OnStopServer();
+
+            var registry = PlayerRegistry.Instance;
+            if (registry != null)
+                registry.UnregisterPlayer(gameObject);
         }
 
         // =====================================================
