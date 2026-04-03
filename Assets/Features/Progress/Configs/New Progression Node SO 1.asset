@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: New Progression Node SO 1
   m_EditorClassIdentifier: Assembly-CSharp::ProgressionNodeSO
   id: rwew
-  requiredLevel: 0
+  requiredLevel: 2
   passive: {fileID: 11400000, guid: 72a9f240d16ad604fa71bc0357ab8d8d, type: 2}
   position: {x: 0, y: 300}

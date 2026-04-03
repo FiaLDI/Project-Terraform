@@ -5,6 +5,7 @@ using Features.Player.UI;
 using Features.Quests.Application;
 using Features.Quests.Data;
 using Features.Quests.Domain;
+using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
@@ -193,6 +194,25 @@ public class PlayerQuestComponent : NetworkBehaviour
         rewarded.Add(id);
 
         GiveRewards(quest);
+        TargetLevelUp(Owner);
+    }
+
+    [TargetRpc]
+    private void TargetLevelUp(NetworkConnection conn)
+    {
+        var progress = PlayerProgressService.Instance;
+        if (progress == null)
+            return;
+
+        var character = progress.GetActiveCharacter();
+        if (character == null)
+            return;
+
+        character.level += 1;
+
+        Debug.Log($"[LEVEL] Level UP → {character.level}");
+
+        progress.Save();
     }
 
     private void GiveRewards(QuestRuntime quest)
