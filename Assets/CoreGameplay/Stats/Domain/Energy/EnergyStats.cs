@@ -102,5 +102,13 @@ namespace Features.Stats.Domain
             CurrentEnergy = 0f;
             Notify();
         }
+
+        public float Debug_BaseMax => _baseMax;
+        public float Debug_AddMax => _maxAdd;
+        public float Debug_MultMax => _maxMult;
+
+        public float Debug_BaseRegen => _baseRegen;
+        public float Debug_AddRegen => _regenAdd;
+        public float Debug_MultRegen => _regenMult;
     }
 }

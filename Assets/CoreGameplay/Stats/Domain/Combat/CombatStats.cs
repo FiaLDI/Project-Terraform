@@ -276,5 +276,25 @@ namespace Features.Stats.Domain
             _multCritMultiplier = 1f;
             _multPenetration = 1f;
         }
+
+        public float Debug_BaseDamage => _baseDamage;
+        public float Debug_AddDamage => _flatDamage;
+        public float Debug_MultDamage => _damageMultiplier;
+        public float Debug_BaseFireRate => _baseFireRate;
+        public float Debug_AddFireRate => _addFireRate;
+        public float Debug_MultFireRate => _multFireRate;
+        // CRIT
+        public float Debug_BaseCritChance => _baseCritChance;
+        public float Debug_AddCritChance => _addCritChance;
+        public float Debug_MultCritChance => _multCritChance;
+
+        public float Debug_BaseCritMultiplier => _baseCritMultiplier;
+        public float Debug_AddCritMultiplier => _addCritMultiplier;
+        public float Debug_MultCritMultiplier => _multCritMultiplier;
+
+        // PENETRATION
+        public float Debug_BasePenetration => _basePenetration;
+        public float Debug_AddPenetration => _addPenetration;
+        public float Debug_MultPenetration => _multPenetration;
     }
 }

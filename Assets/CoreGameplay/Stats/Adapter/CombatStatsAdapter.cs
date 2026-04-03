@@ -19,6 +19,11 @@ namespace Features.Stats.Adapter
         public float Recoil           => _stats != null ? _stats.Recoil : 0f;
         public int   MagazineSize     => _stats != null ? _stats.MagazineSize : 0;
 
+        public float FinalDamage => _stats != null ? _stats.FinalDamage : 0f;
+        public float CritChance => _stats != null ? _stats.CritChance : 0f;
+        public float CritMultiplier => _stats != null ? _stats.CritMultiplier : 0f;
+        public float Penetration => _stats != null ? _stats.Penetration : 0f;
+
         // =========================
         // INIT
         // =========================

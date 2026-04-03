@@ -384,6 +384,7 @@ GameObject:
   - component: {fileID: 3586989162742316649}
   - component: {fileID: 4166305711899109263}
   - component: {fileID: 1832092996173635038}
+  - component: {fileID: 3134310337331530782}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -462,12 +463,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b1749e82ca04c447b64f5c018b028f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BiomeEnemySpawner
-  player: {fileID: 5017748270277261448}
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
   world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
   spawnInterval: 0.4
   spawnRadiusMin: 15
   spawnRadiusMax: 35
-  maxEnemies: 40
+  maxPerPlayer: 12
+  maxGlobal: 120
 --- !u!114 &2556438216558507215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1168,3 +1172,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8e9ef44d2be45e48b099623309733cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.ProtectStatsAdapter
+--- !u!114 &3134310337331530782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e7252af4e8173845a3d92710be692d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatsDebugStreamer
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}

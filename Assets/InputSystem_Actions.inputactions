@@ -203,6 +203,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleStats",
+                    "type": "Button",
+                    "id": "9552fabb-dd6d-4e92-96d8-d17581958cad",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -744,6 +753,17 @@
                     "action": "Pause",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7b98e53f-4ad1-46b5-89b9-f60313b0d742",
+                    "path": "<Keyboard>/f3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "ToggleStats",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -756,6 +776,15 @@
                     "type": "PassThrough",
                     "id": "c95b2375-e6d9-4b88-9c4c-c5e76515df4b",
                     "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleStats",
+                    "type": "Button",
+                    "id": "1d76fdbc-8f7e-4510-a179-54ddd9f2baa8",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -1169,6 +1198,17 @@
                     "action": "Navigate",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "94541946-ad79-4913-a11a-92810238a750",
+                    "path": "<Keyboard>/f3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "ToggleStats",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 },
                 {
                     "name": "One Modifier",

@@ -134,5 +134,55 @@ namespace Features.Stats.Domain
             _multFrostResistance = 1f;
             _multAcidResistance = 1f;
         }
+
+        // GENERIC
+        public float Debug_BaseGeneric => _baseGenericResistance;
+        public float Debug_AddGeneric => _addGenericResistance;
+        public float Debug_MultGeneric => _multGenericResistance;
+
+        // EXPLOSION
+        public float Debug_BaseExplosion => _baseExplosionResistance;
+        public float Debug_AddExplosion => _addExplosionResistance;
+        public float Debug_MultExplosion => _multExplosionResistance;
+
+        // ENERGY
+        public float Debug_BaseEnergy => _baseEnergyResistance;
+        public float Debug_AddEnergy => _addEnergyResistance;
+        public float Debug_MultEnergy => _multEnergyResistance;
+
+        // MINING
+        public float Debug_BaseMining => _baseMiningResistance;
+        public float Debug_AddMining => _addMiningResistance;
+        public float Debug_MultMining => _multMiningResistance;
+
+        // MELEE
+        public float Debug_BaseMelee => _baseMeleeResistance;
+        public float Debug_AddMelee => _addMeleeResistance;
+        public float Debug_MultMelee => _multMeleeResistance;
+
+        // FIRE
+        public float Debug_BaseFire => _baseFireResistance;
+        public float Debug_AddFire => _addFireResistance;
+        public float Debug_MultFire => _multFireResistance;
+
+        // ELECTRIC
+        public float Debug_BaseElectric => _baseElectricResistance;
+        public float Debug_AddElectric => _addElectricResistance;
+        public float Debug_MultElectric => _multElectricResistance;
+
+        // POISON
+        public float Debug_BasePoison => _basePoisonResistance;
+        public float Debug_AddPoison => _addPoisonResistance;
+        public float Debug_MultPoison => _multPoisonResistance;
+
+        // FROST
+        public float Debug_BaseFrost => _baseFrostResistance;
+        public float Debug_AddFrost => _addFrostResistance;
+        public float Debug_MultFrost => _multFrostResistance;
+
+        // ACID
+        public float Debug_BaseAcid => _baseAcidResistance;
+        public float Debug_AddAcid => _addAcidResistance;
+        public float Debug_MultAcid => _multAcidResistance;
     }
 }
