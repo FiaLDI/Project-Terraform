@@ -25,7 +25,8 @@ public sealed class EquipmentRuntime
     public ItemRuntimeContext GetRuntime(
         ItemInstance instance,
         ItemActionType actionType,
-        ItemRuntimeHolder holder)
+        ItemRuntimeHolder holder,
+        Transform overrideMuzzle = null)
     {
         var item = instance.itemDefinition;
 
@@ -38,8 +39,7 @@ public sealed class EquipmentRuntime
             {
                 return new ItemRuntimeContext(
                     source,
-                    action,
-                    holder.Muzzle
+                    action
                 );
             }
         }

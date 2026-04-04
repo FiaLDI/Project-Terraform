@@ -7,7 +7,6 @@ public class ItemRuntimeContext : IItemTickable
 {
     private readonly IBuffSource source;
     private readonly ItemActionDefinition action;
-    private readonly Transform muzzle; // может быть null
 
     private Vector3 origin;
     private Vector3 targetPoint;
@@ -26,12 +25,10 @@ public class ItemRuntimeContext : IItemTickable
 
     public ItemRuntimeContext(
         IBuffSource source,
-        ItemActionDefinition action,
-        Transform muzzle)
+        ItemActionDefinition action)
     {
         this.source = source;
         this.action = action;
-        this.muzzle = muzzle;
     }
 
     // ======================================================
@@ -71,9 +68,9 @@ public class ItemRuntimeContext : IItemTickable
     // AIM UPDATE (универсальный)
     // ======================================================
 
-    public void UpdateAim(Vector3 origin, Vector3 directionOrHitPoint, bool isHitPoint)
+    public void UpdateAim(Vector3 fireOrigin, Vector3 directionOrHitPoint, bool isHitPoint)
     {
-        this.origin = origin;
+        this.origin = fireOrigin;
 
         if (isHitPoint)
         {
@@ -179,7 +176,7 @@ public class ItemRuntimeContext : IItemTickable
         if (action.effects == null)
             return;
 
-        Vector3 fireOrigin = muzzle != null ? muzzle.position : origin;
+        Vector3 fireOrigin = origin;
 
         Vector3 dir;
 
@@ -208,7 +205,9 @@ public class ItemRuntimeContext : IItemTickable
         foreach (var def in action.effects)
             EffectExecutor.Instance.Execute(def, ctx);
 
-        Debug.DrawRay(fireOrigin, dir * 3f, Color.red, 0.3f);
+        #if UNITY_EDITOR
+        Debug.DrawRay(fireOrigin, dir * 3f, Color.red, 0.1f);
+        #endif
 
         OnFire?.Invoke(fireOrigin, dir);
     }

@@ -14,11 +14,10 @@ namespace Features.Items.UnityIntegration
         private IBuffSource owner;
         public Transform Muzzle { get; private set; }
 
-        public void Init(ItemInstance inst, IBuffSource ownerSource, Transform muzzle)
+        public void Init(ItemInstance inst, IBuffSource ownerSource)
         {
             Instance = inst;
             owner = ownerSource;
-            this.Muzzle = muzzle;
         }
 
         public GameObject GameObject => gameObject;

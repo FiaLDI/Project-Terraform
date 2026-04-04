@@ -267,5 +267,10 @@ namespace Features.Player.UnityIntegration
         {
             ResolveCamera();
         }
+
+        public bool IsFPS()
+        {
+            return CameraServiceProvider.Control.State.Blend < 0.5f;
+        }
     }
 }

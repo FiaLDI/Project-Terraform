@@ -3,6 +3,7 @@ using UnityEngine;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Buffs.Domain;
+using Features.Player.UnityIntegration;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
@@ -24,10 +25,22 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private IBuffSource source;
 
+    private Transform worldMuzzle;
+    private Transform viewMuzzle;
+    private PlayerCameraController cam;
+
+    private bool isFPS;
+
     private void Awake()
     {
         source = GetComponent<IBuffSource>();
         equipmentRuntime = new EquipmentRuntime(source);
+        cam = GetComponent<PlayerCameraController>();
+    }
+    public void SetMuzzles(Transform world, Transform view)
+    {
+        worldMuzzle = world;
+        viewMuzzle = view;
     }
 
     // ======================================================
@@ -94,7 +107,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (!TryGetServerAim(out var ray))
             return;
 
-        // 🎯 hitPoint
         Vector3 hitPoint;
 
         if (Physics.Raycast(ray, out var hit, 1000f))
@@ -102,7 +114,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         else
             hitPoint = ray.origin + ray.direction * 1000f;
 
-        // 🔥 CLIENT PREDICTION
         if (IsOwner)
             PlayViewModelFx();
 
@@ -120,6 +131,23 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             if (IsServer)
                 RpcPlayWorldFx(pos, dir);
         };
+
+        bool isFPS = cam != null && cam.IsFPS();
+
+        Vector3 fireOrigin;
+
+        if (IsOwner && isFPS && viewMuzzle != null)
+        {
+            fireOrigin = viewMuzzle.position;
+        }
+        else
+        {
+            fireOrigin = worldMuzzle != null
+                ? worldMuzzle.position
+                : ray.origin;
+        }
+
+        activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
 
         activeRuntime.StartUse(hitPoint);
     }
@@ -139,21 +167,68 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private void Update()
     {
-        if (IsServerInitialized && activeRuntime != null)
+        if (activeRuntime != null)
         {
-            if (TryGetServerAim(out var ray))
+            // ================= SERVER (другие игроки / не владелец) =================
+            if (IsServerInitialized && !IsOwner && TryGetServerAim(out var serverRay))
             {
                 Vector3 hitPoint;
 
-                if (Physics.Raycast(ray, out var hit, 1000f))
+                if (Physics.Raycast(serverRay, out var hit, 1000f))
                     hitPoint = hit.point;
                 else
-                    hitPoint = ray.origin + ray.direction * 1000f;
+                    hitPoint = serverRay.origin + serverRay.direction * 1000f;
 
-                activeRuntime.UpdateAim(ray.origin, hitPoint, true);
+                Vector3 fireOrigin = worldMuzzle != null
+                    ? worldMuzzle.position
+                    : serverRay.origin;
+
+                activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
+            }
+
+            // ================= LOCAL PLAYER =================
+            else if (IsOwner)
+            {
+                var camMain = Camera.main;
+                if (camMain == null)
+                    return;
+
+                Ray camRay = camMain.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+
+                Vector3 hitPoint;
+
+                if (Physics.Raycast(camRay, out var hit, 1000f))
+                    hitPoint = hit.point;
+                else
+                    hitPoint = camRay.origin + camRay.direction * 1000f;
+
+                // 🔥 ОПРЕДЕЛЯЕМ FPS / TPS
+                bool isFPS = false;
+
+                var camController = GetComponent<PlayerCameraController>();
+                if (camController != null)
+                    isFPS = camController.IsFPS();
+
+                Vector3 fireOrigin;
+
+                if (isFPS && viewMuzzle != null)
+                {
+                    // FPS → из рук
+                    fireOrigin = viewMuzzle.position;
+                }
+                else
+                {
+                    // TPS → из world оружия
+                    fireOrigin = worldMuzzle != null
+                        ? worldMuzzle.position
+                        : camRay.origin;
+                }
+
+                activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
             }
         }
 
+        // ================= SEND AIM =================
         if (!IsOwner)
             return;
 
@@ -211,12 +286,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (viewModelRoot == null)
             return;
 
-        Debug.Log("VIEWMODEL FIRE");
-
-        // TODO:
-        // muzzle flash
-        // recoil
-        // animation
     }
 
     private void PlayWorldFx(Vector3 pos, Vector3 dir)

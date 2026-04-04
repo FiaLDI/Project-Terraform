@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Weapons.Domain.ProjectileConfig
   projectilePrefab: {fileID: 1788979334579304981, guid: c60a8f2ce1f159e449345186e7525e36, type: 3}
   speed: 30
-  lifetime: 5
+  lifetime: 1
   useGravity: 0
   damage: 10
   damageType: 0
