@@ -4,6 +4,8 @@ using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Buffs.Domain;
 using Features.Player.UnityIntegration;
+using Features.Equipment.UnityIntegration;
+using Features.Effects.Domain;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
@@ -16,27 +18,26 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private float nextAimSendTime;
 
     private EquipmentRuntime equipmentRuntime;
-
     private ItemInstance rightHandInstance;
     private ItemRuntimeContext activeRuntime;
-    private ItemRuntimeHolder rightHandHolder;
-
-    [SerializeField] private GameObject viewModelRoot;
 
     private IBuffSource source;
 
     private Transform worldMuzzle;
     private Transform viewMuzzle;
-    private PlayerCameraController cam;
 
-    private bool isFPS;
+    private Camera cachedCam;
+    private PlayerCameraController camController;
 
     private void Awake()
     {
         source = GetComponent<IBuffSource>();
         equipmentRuntime = new EquipmentRuntime(source);
-        cam = GetComponent<PlayerCameraController>();
+
+        cachedCam = Camera.main;
+        camController = GetComponent<PlayerCameraController>();
     }
+
     public void SetMuzzles(Transform world, Transform view)
     {
         worldMuzzle = world;
@@ -50,17 +51,12 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     public void OnHandsUpdated(GameObject left, GameObject right, bool twoHanded)
     {
         rightHandInstance = null;
-        rightHandHolder = null;
 
         if (right != null)
         {
             var holder = right.GetComponent<ItemRuntimeHolder>();
-
             if (holder != null)
-            {
                 rightHandInstance = holder.Instance;
-                rightHandHolder = holder;
-            }
         }
     }
 
@@ -94,14 +90,9 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         ExecuteAction(action);
     }
 
-    // ======================================================
-
     private void ExecuteAction(ItemActionType action)
     {
         if (rightHandInstance == null || rightHandInstance.IsEmpty)
-            return;
-
-        if (rightHandHolder == null)
             return;
 
         if (!TryGetServerAim(out var ray))
@@ -115,12 +106,12 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             hitPoint = ray.origin + ray.direction * 1000f;
 
         if (IsOwner)
-            PlayViewModelFx();
+            PlayViewModelFx(action);
 
         activeRuntime = equipmentRuntime.GetRuntime(
             rightHandInstance,
             action,
-            rightHandHolder
+            null
         );
 
         if (activeRuntime == null)
@@ -132,23 +123,9 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
                 RpcPlayWorldFx(pos, dir);
         };
 
-        bool isFPS = cam != null && cam.IsFPS();
-
-        Vector3 fireOrigin;
-
-        if (IsOwner && isFPS && viewMuzzle != null)
-        {
-            fireOrigin = viewMuzzle.position;
-        }
-        else
-        {
-            fireOrigin = worldMuzzle != null
-                ? worldMuzzle.position
-                : ray.origin;
-        }
+        Vector3 fireOrigin = GetFireOrigin(ray.origin);
 
         activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
-
         activeRuntime.StartUse(hitPoint);
     }
 
@@ -169,7 +146,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     {
         if (activeRuntime != null)
         {
-            // ================= SERVER (другие игроки / не владелец) =================
+            // SERVER (не владелец)
             if (IsServerInitialized && !IsOwner && TryGetServerAim(out var serverRay))
             {
                 Vector3 hitPoint;
@@ -185,15 +162,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
                 activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
             }
-
-            // ================= LOCAL PLAYER =================
-            else if (IsOwner)
+            // LOCAL PLAYER
+            else if (IsOwner && cachedCam != null)
             {
-                var camMain = Camera.main;
-                if (camMain == null)
-                    return;
-
-                Ray camRay = camMain.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+                Ray camRay = cachedCam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
 
                 Vector3 hitPoint;
 
@@ -202,37 +174,32 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
                 else
                     hitPoint = camRay.origin + camRay.direction * 1000f;
 
-                // 🔥 ОПРЕДЕЛЯЕМ FPS / TPS
-                bool isFPS = false;
-
-                var camController = GetComponent<PlayerCameraController>();
-                if (camController != null)
-                    isFPS = camController.IsFPS();
-
-                Vector3 fireOrigin;
-
-                if (isFPS && viewMuzzle != null)
-                {
-                    // FPS → из рук
-                    fireOrigin = viewMuzzle.position;
-                }
-                else
-                {
-                    // TPS → из world оружия
-                    fireOrigin = worldMuzzle != null
-                        ? worldMuzzle.position
-                        : camRay.origin;
-                }
+                Vector3 fireOrigin = GetFireOrigin(camRay.origin);
 
                 activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
             }
         }
 
-        // ================= SEND AIM =================
         if (!IsOwner)
             return;
 
         SendAimToServerThrottled();
+    }
+
+    // ======================================================
+    // FIRE ORIGIN (FPS / TPS)
+    // ======================================================
+
+    private Vector3 GetFireOrigin(Vector3 fallback)
+    {
+        bool isFPS = camController != null && camController.IsFPS();
+
+        if (IsOwner && isFPS && viewMuzzle != null)
+            return viewMuzzle.position;
+
+        return worldMuzzle != null
+            ? worldMuzzle.position
+            : fallback;
     }
 
     // ======================================================
@@ -246,11 +213,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
         nextAimSendTime = Time.time + (1f / Mathf.Max(1f, aimSendRate));
 
-        var cam = Camera.main;
-        if (cam == null)
+        if (cachedCam == null)
             return;
 
-        Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+        Ray ray = cachedCam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
 
         UpdateAim_Server(ray.origin, ray.direction);
     }
@@ -259,17 +225,64 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private void UpdateAim_Server(Vector3 origin, Vector3 forward)
     {
         serverAimOrigin = origin;
-
-        serverAimForward =
-            forward.sqrMagnitude > 0.0001f
-                ? forward.normalized
-                : Vector3.forward;
+        serverAimForward = forward.sqrMagnitude > 0.0001f
+            ? forward.normalized
+            : Vector3.forward;
 
         hasServerAim = true;
     }
 
     // ======================================================
-    // FX
+    // FX (LOCAL VIEW)
+    // ======================================================
+
+    private void PlayViewModelFx(ItemActionType actionType)
+    {
+        if (!IsOwner || viewMuzzle == null)
+            return;
+
+        var equip = GetComponent<EquipmentManager>();
+        var right = equip?.GetRightHandObject();
+
+        var holder = right != null ? right.GetComponent<ItemRuntimeHolder>() : null;
+        if (holder == null)
+            return;
+
+        var item = holder.Instance?.itemDefinition;
+        if (item?.actions == null)
+            return;
+
+        foreach (var action in item.actions)
+        {
+            if (action.actionType != actionType)
+                continue;
+
+            foreach (var effect in action.effects)
+            {
+                if (effect.type != EffectType.SpawnProjectile)
+                    continue;
+
+                var config = effect.projectileConfig;
+                if (config?.clientProjectilePrefab == null)
+                    return;
+
+                var go = Instantiate(
+                    config.clientProjectilePrefab,
+                    viewMuzzle.position,
+                    viewMuzzle.rotation
+                );
+
+                var proj = go.GetComponent<LocalProjectile>();
+                if (proj != null)
+                    proj.Init(viewMuzzle.forward, config.speed);
+
+                return;
+            }
+        }
+    }
+
+    // ======================================================
+    // FX (WORLD)
     // ======================================================
 
     [ObserversRpc]
@@ -278,25 +291,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (IsOwner)
             return;
 
-        PlayWorldFx(pos, dir);
+        Debug.DrawRay(pos, dir * 2f, Color.yellow, 0.2f);
     }
 
-    private void PlayViewModelFx()
-    {
-        if (viewModelRoot == null)
-            return;
-
-    }
-
-    private void PlayWorldFx(Vector3 pos, Vector3 dir)
-    {
-        Debug.DrawRay(pos, dir * 2f, Color.yellow, 0.5f);
-
-        // TODO:
-        // particle
-        // sound
-        // tracer
-    }
+    // ======================================================
 
     public void ActionStop(ItemActionType action)
     {
