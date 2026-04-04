@@ -19,6 +19,7 @@ namespace Features.Inventory.UnityIntegration
         public event Action OnInventoryChanged;
         public event Action<ItemInstance> OnItemAddedInstance;
         public event Action OnReady;
+        private bool receivedFirstSync;
 
         [SerializeField] private int bagSize = 12;
 
@@ -56,20 +57,6 @@ namespace Features.Inventory.UnityIntegration
             }
         }
 
-        private void Update()
-        {
-            if (!IsLocalClient())
-                return;
-
-            saveTimer += Time.deltaTime;
-
-            if (saveTimer >= 20f)
-            {
-                saveTimer = 0f;
-                SaveInventory();
-            }
-        }
-
         private void OnDestroy()
         {
             if (Service != null)
@@ -99,6 +86,12 @@ namespace Features.Inventory.UnityIntegration
         private void HandleInventoryChanged()
         {
             OnInventoryChanged?.Invoke();
+
+            if (IsLocalClient() && !isLoading)
+            {
+                SaveInventory();
+            }
+
         }
 
         // ======================================================
@@ -107,8 +100,12 @@ namespace Features.Inventory.UnityIntegration
 
         private void SaveInventory()
         {
+            if (!receivedFirstSync)
+                return;
+
             if (isLoading)
                 return;
+
             var progress = PlayerProgressService.Instance;
             if (progress == null) return;
 
@@ -171,11 +168,9 @@ namespace Features.Inventory.UnityIntegration
         {
             var data = new InventorySaveData();
 
-            foreach (var slot in Model.main)
+            for (int i = 0; i < Model.main.Count; i++)
             {
-                if (slot.item.IsEmpty)
-                    continue;
-
+                var slot = Model.main[i];
                 data.bag.Add(ToSave(slot.item));
             }
 
@@ -230,10 +225,15 @@ namespace Features.Inventory.UnityIntegration
             InventorySlotNet left,
             InventorySlotNet right)
         {
-            ApplySection(Model.main, bagNet);
+            isLoading = true;
 
+            ApplySection(Model.main, bagNet);
             ApplySlot(Model.leftHand, left);
             ApplySlot(Model.rightHand, right);
+
+            isLoading = false;
+
+            receivedFirstSync = true;
 
             OnInventoryChanged?.Invoke();
         }

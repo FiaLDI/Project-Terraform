@@ -13,18 +13,28 @@ public class InventoryNetwork : NetworkBehaviour
 
     public override void OnStartClient()
     {
+        base.OnStartClient();
+
         if (!IsOwner)
             return;
 
-        var data = inventory.BuildSaveData();
-        SendInventoryToServer(data);
+        var progress = PlayerProgressService.Instance;
+        var character = progress?.GetActiveCharacter();
+
+        if (character?.characterInventoryData != null)
+        {
+            SendInventoryToServer(character.characterInventoryData);
+        }
     }
 
     [ServerRpc]
     private void SendInventoryToServer(InventorySaveData data)
     {
+        if (inventory == null)
+            inventory = GetComponent<InventoryManager>();
+
         inventory.LoadFromSave(data);
 
-        Debug.Log("[SERVER] Inventory loaded from client");
+        GetComponent<InventoryStateNetwork>()?.ForceSync();
     }
 }

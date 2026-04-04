@@ -344,4 +344,10 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
 
         router.Execute(ctx);
     }
+
+    [Server]
+    public void ForceSync()
+    {
+        ServerOnInventoryChanged();
+    }
 }

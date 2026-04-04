@@ -385,6 +385,7 @@ GameObject:
   - component: {fileID: 4166305711899109263}
   - component: {fileID: 1832092996173635038}
   - component: {fileID: 3134310337331530782}
+  - component: {fileID: 1702706436012295652}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -971,7 +972,6 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
   aimSendRate: 20
-  viewModelRoot: {fileID: 0}
 --- !u!114 &5527670935517867940
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1184,6 +1184,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e7252af4e8173845a3d92710be692d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatsDebugStreamer
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 6311823513652316802}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &1702706436012295652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7813149641224511590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71cb66e8a65b6a2499bc47f3c17a084b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryNetwork
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 0}
