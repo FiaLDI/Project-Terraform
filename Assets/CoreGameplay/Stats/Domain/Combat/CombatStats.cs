@@ -1,4 +1,5 @@
 using UnityEngine;
+using static UnityEngine.Rendering.DebugUI;
 
 namespace Features.Stats.Domain
 {
@@ -15,6 +16,9 @@ namespace Features.Stats.Domain
         private float _baseRange;
         private float _baseRecoil;
         private int _baseMagazine;
+        private float _baseCritChance;
+        private float _baseCritMultiplier;
+        private float _basePenetration;
 
         // =========================
         // ADD (flat bonuses)
@@ -27,6 +31,9 @@ namespace Features.Stats.Domain
         private float _addRange;
         private float _addRecoil;
         private int _addMagazine;
+        private float _addCritChance;
+        private float _addCritMultiplier;
+        private float _addPenetration;
 
         // =========================
         // MULTIPLIERS
@@ -38,6 +45,9 @@ namespace Features.Stats.Domain
         private float _multAimSpread = 1f;
         private float _multRange = 1f;
         private float _multRecoil = 1f;
+        private float _multCritChance = 0.1f;
+        private float _multCritMultiplier = 1f;
+        private float _multPenetration = 1f;
 
         // =========================
         // PROPERTIES
@@ -67,6 +77,15 @@ namespace Features.Stats.Domain
         public int MagazineSize =>
             Mathf.Max(0, _baseMagazine + _addMagazine);
 
+        public float CritChance =>
+            (_baseCritChance + _addCritChance) * _multCritChance;
+
+        public float CritMultiplier =>
+            (_baseCritMultiplier + _addCritMultiplier) * _multCritMultiplier;
+
+        public float Penetration =>
+            (_basePenetration + _addPenetration) * _multPenetration;
+
         // =========================
         // APPLY BASE
         // =========================
@@ -78,7 +97,10 @@ namespace Features.Stats.Domain
             float aimSpread,
             float range,
             float recoil,
-            int magazineSize)
+            int magazineSize,
+            float critChance,
+            float critMultiplier,
+            float penetration)
         {
             _baseDamage = baseDamage;
             _baseFireRate = fireRate;
@@ -87,6 +109,9 @@ namespace Features.Stats.Domain
             _baseRange = range;
             _baseRecoil = recoil;
             _baseMagazine = magazineSize;
+            _baseCritChance = critChance;
+            _baseCritMultiplier = critMultiplier;
+            _basePenetration = penetration;
         }
 
         // =========================
@@ -137,6 +162,24 @@ namespace Features.Stats.Domain
                 return true;
             }
 
+            if (key.Id == StatKeys.CritChance.Id)
+            {
+                _addCritChance += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.CritMultiplier.Id)
+            {
+                _addCritMultiplier += value;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Penetration.Id)
+            {
+                _addPenetration += value;
+                return true;
+            }
+
             return false;
         }
 
@@ -178,6 +221,24 @@ namespace Features.Stats.Domain
                 return true;
             }
 
+            if (key.Id == StatKeys.CritChance.Id)
+            {
+                _multCritChance *= multiplier;
+                return true;
+            }
+
+            if (key.Id == StatKeys.CritMultiplier.Id)
+            {
+                _multCritMultiplier *= multiplier;
+                return true;
+            }
+
+            if (key.Id == StatKeys.Penetration.Id)
+            {
+                _multPenetration *= multiplier;
+                return true;
+            }
+
             return false;
         }
 
@@ -190,6 +251,9 @@ namespace Features.Stats.Domain
             _baseRange = 0f;
             _baseRecoil = 0f;
             _baseMagazine = 0;
+            _baseCritChance = 0f;
+            _baseCritMultiplier = 0f;
+            _basePenetration = 0f;
 
             _flatDamage = 0f;
             _addFireRate = 0f;
@@ -198,6 +262,9 @@ namespace Features.Stats.Domain
             _addRange = 0f;
             _addRecoil = 0f;
             _addMagazine = 0;
+            _addCritChance = 0;
+            _addCritMultiplier = 0;
+            _addPenetration = 0f;
 
             _damageMultiplier = 1f;
             _multFireRate = 1f;
@@ -205,6 +272,29 @@ namespace Features.Stats.Domain
             _multAimSpread = 1f;
             _multRange = 1f;
             _multRecoil = 1f;
+            _multCritChance = 1f;
+            _multCritMultiplier = 1f;
+            _multPenetration = 1f;
         }
+
+        public float Debug_BaseDamage => _baseDamage;
+        public float Debug_AddDamage => _flatDamage;
+        public float Debug_MultDamage => _damageMultiplier;
+        public float Debug_BaseFireRate => _baseFireRate;
+        public float Debug_AddFireRate => _addFireRate;
+        public float Debug_MultFireRate => _multFireRate;
+        // CRIT
+        public float Debug_BaseCritChance => _baseCritChance;
+        public float Debug_AddCritChance => _addCritChance;
+        public float Debug_MultCritChance => _multCritChance;
+
+        public float Debug_BaseCritMultiplier => _baseCritMultiplier;
+        public float Debug_AddCritMultiplier => _addCritMultiplier;
+        public float Debug_MultCritMultiplier => _multCritMultiplier;
+
+        // PENETRATION
+        public float Debug_BasePenetration => _basePenetration;
+        public float Debug_AddPenetration => _addPenetration;
+        public float Debug_MultPenetration => _multPenetration;
     }
 }

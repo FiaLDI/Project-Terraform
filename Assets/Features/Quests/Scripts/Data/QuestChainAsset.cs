@@ -22,11 +22,16 @@ namespace Features.Quests.Data
 
             foreach (var quest in quests)
             {
-                if (quest != null)
-                    defs.Add(quest.ToDefinition());
+                if (quest == null)
+                    continue;
+
+                defs.Add(quest.ToDefinition());
             }
 
-            return new QuestChainDefinition(new QuestId(chainId), defs);
+            return new QuestChainDefinition(
+                new QuestId(chainId),
+                defs
+            );
         }
     }
 }

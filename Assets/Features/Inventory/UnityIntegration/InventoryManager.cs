@@ -4,16 +4,13 @@ using Features.Equipment.UnityIntegration;
 using Features.Inventory.Domain;
 using Features.Items.Data;
 using Features.Items.Domain;
-using FishNet.Object;
+using Features.Quests.Application;
+using Features.Quests.Domain;
 using UnityEngine;
+using FishNet.Object;
 
 namespace Features.Inventory.UnityIntegration
 {
-    /// <summary>
-    /// Player-scoped Inventory.
-    /// Владелец модели и сервиса.
-    /// НЕ содержит сетевой логики.
-    /// </summary>
     public sealed class InventoryManager : MonoBehaviour, IInventoryContext
     {
         public InventoryModel Model { get; private set; }
@@ -22,42 +19,49 @@ namespace Features.Inventory.UnityIntegration
         public event Action OnInventoryChanged;
         public event Action<ItemInstance> OnItemAddedInstance;
         public event Action OnReady;
+        private bool receivedFirstSync;
 
-        [Header("Config")]
         [SerializeField] private int bagSize = 12;
 
         private EquipmentManager equipment;
 
+        private float saveTimer;
+
         public bool IsReady { get; private set; }
 
-        // ======================================================
-        // LIFECYCLE
-        // ======================================================
+        private bool isLoading;
 
         private void Awake()
         {
-            Debug.Log("[InventoryManager] Awake");
-             CreateModel();
+            CreateModel();
             CreateService();
             InitEquipment();
 
+            Service.OnItemAdded += HandleItemAdded;
+
             IsReady = true;
             OnReady?.Invoke();
-            
-            Debug.Log("[InventoryManager] Ready");
         }
 
+        private void Start()
+        {
+            if (!IsLocalClient())
+                return;
 
+            var progress = PlayerProgressService.Instance;
+            var character = progress?.GetActiveCharacter();
+
+            if (character?.characterInventoryData != null)
+            {
+                LoadFromSave(character.characterInventoryData);
+            }
+        }
 
         private void OnDestroy()
         {
             if (Service != null)
                 Service.OnChanged -= HandleInventoryChanged;
         }
-
-        // ======================================================
-        // INIT
-        // ======================================================
 
         private void CreateModel()
         {
@@ -76,67 +80,169 @@ namespace Features.Inventory.UnityIntegration
         private void InitEquipment()
         {
             equipment = GetComponent<EquipmentManager>();
-            if (equipment != null)
-                equipment.Init(this);
-            else
-                Debug.LogWarning("[InventoryManager] EquipmentManager not found");
+            equipment?.Init(this);
         }
-
-        // ======================================================
-        // EVENTS
-        // ======================================================
 
         private void HandleInventoryChanged()
         {
             OnInventoryChanged?.Invoke();
+
+            if (IsLocalClient() && !isLoading)
+            {
+                SaveInventory();
+            }
+
         }
 
         // ======================================================
-        // PUBLIC API (LOCAL ONLY)
+        // SAVE
         // ======================================================
 
-        public void AddItem(Item definition, int amount = 1)
+        private void SaveInventory()
         {
-            if (definition == null || amount <= 0)
+            if (!receivedFirstSync)
                 return;
 
-            var inst = new ItemInstance(definition, amount);
+            if (isLoading)
+                return;
+
+            var progress = PlayerProgressService.Instance;
+            if (progress == null) return;
+
+            var character = progress.GetActiveCharacter();
+            if (character == null) return;
+
+            character.characterInventoryData = BuildSaveData();
+            progress.Save();
+        }
+
+        // ======================================================
+        // LOAD
+        // ======================================================
+
+        public void LoadFromSave(InventorySaveData data)
+        {
+            isLoading = true;
+            Model.main.Clear();
+
+            // фиксированный размер
+            for (int i = 0; i < bagSize; i++)
+                Model.main.Add(new InventorySlot());
+
+            if (data?.bag != null)
+            {
+                for (int i = 0; i < data.bag.Count && i < bagSize; i++)
+                {
+                    var item = data.bag[i];
+                    var def = ItemRegistrySO.Instance.Get(item.itemId);
+
+                    if (def != null)
+                    {
+                        Model.main[i].item =
+                            new ItemInstance(def, item.quantity, item.level);
+                    }
+                }
+            }
+
+            Model.leftHand.item  = FromSave(data?.leftHand);
+            Model.rightHand.item = FromSave(data?.rightHand);
+
+            isLoading = false;
+
+            OnInventoryChanged?.Invoke();
+        }
+
+        private ItemInstance FromSave(ItemSaveData data)
+        {
+            if (data == null)
+                return ItemInstance.Empty;
+
+            var def = ItemRegistrySO.Instance.Get(data.itemId);
+            if (def == null)
+                return ItemInstance.Empty;
+
+            return new ItemInstance(def, data.quantity, data.level);
+        }
+
+        public InventorySaveData BuildSaveData()
+        {
+            var data = new InventorySaveData();
+
+            for (int i = 0; i < Model.main.Count; i++)
+            {
+                var slot = Model.main[i];
+                data.bag.Add(ToSave(slot.item));
+            }
+
+            data.leftHand  = ToSave(Model.leftHand.item);
+            data.rightHand = ToSave(Model.rightHand.item);
+
+            return data;
+        }
+
+        private ItemSaveData ToSave(ItemInstance inst)
+        {
+            if (inst == null || inst.IsEmpty)
+                return null;
+
+            return new ItemSaveData
+            {
+                itemId = inst.itemDefinition.id,
+                quantity = inst.quantity,
+                level = inst.level
+            };
+        }
+
+        // ======================================================
+        // API
+        // ======================================================
+
+        public void AddItem(Item def, int amount = 1)
+        {
+            if (def == null || amount <= 0)
+                return;
+
+            var inst = new ItemInstance(def, amount);
 
             if (!Service.AddItem(inst))
-            {
-                Debug.LogWarning(
-                    $"[InventoryManager] Failed to add item {definition.id}");
                 return;
-            }
 
             OnItemAddedInstance?.Invoke(inst);
         }
 
-        public bool RemoveItem(Item definition, int amount = 1)
+        public bool RemoveItem(Item def, int amount = 1)
         {
-            return Service.TryRemove(definition, amount);
+            return Service.TryRemove(def, amount);
         }
 
-        public int GetItemCount(Item definition)
+        public int GetItemCount(Item def)
         {
-            return Service.GetItemCount(definition);
+            return Service.GetItemCount(def);
         }
-
-        // ======================================================
-        // NETWORK STATE APPLY
-        // ======================================================
 
         public void ApplyNetState(
             IReadOnlyList<InventorySlotNet> bagNet,
             InventorySlotNet left,
             InventorySlotNet right)
         {
-            ApplySection(Model.main, bagNet);
+            isLoading = true;
 
+            ApplySection(Model.main, bagNet);
             ApplySlot(Model.leftHand, left);
             ApplySlot(Model.rightHand, right);
 
-            Debug.Log("[InventoryManager] ApplyNetState -> OnInventoryChanged");
+            isLoading = false;
+
+            receivedFirstSync = true;
+
+            OnInventoryChanged?.Invoke();
+        }
+
+        public void ApplyHandsNetState(InventorySlotNet left, InventorySlotNet right)
+        {
+            Model.leftHand.item = FromNet(left);
+            Model.rightHand.item = FromNet(right);
+
             OnInventoryChanged?.Invoke();
         }
 
@@ -145,6 +251,7 @@ namespace Features.Inventory.UnityIntegration
             IReadOnlyList<InventorySlotNet> net)
         {
             int count = Mathf.Min(slots.Count, net.Count);
+
             for (int i = 0; i < count; i++)
                 ApplySlot(slots[i], net[i]);
         }
@@ -165,11 +272,9 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
-            // NEW ITEM
             var def = ItemRegistrySO.Instance?.Get(net.itemId);
             if (def == null)
             {
-                Debug.LogError($"[Inventory] Item not found: {net.itemId}");
                 slot.item = ItemInstance.Empty;
                 return;
             }
@@ -177,12 +282,10 @@ namespace Features.Inventory.UnityIntegration
             slot.item = new ItemInstance(def, net.quantity, net.level);
         }
 
-
-        public void ApplyHandsNetState(InventorySlotNet left, InventorySlotNet right)
+        private bool IsLocalClient()
         {
-            Model.leftHand.item  = FromNet(left);
-            Model.rightHand.item = FromNet(right);
-            OnInventoryChanged?.Invoke();
+            var net = GetComponent<NetworkObject>();
+            return net != null && net.IsOwner;
         }
 
         private ItemInstance FromNet(InventorySlotNet net)
@@ -192,70 +295,24 @@ namespace Features.Inventory.UnityIntegration
 
             var def = ItemRegistrySO.Instance?.Get(net.itemId);
             if (def == null)
-            {
-                Debug.LogError($"[InventoryManager] Item not found: {net.itemId}");
                 return ItemInstance.Empty;
-            }
 
             return new ItemInstance(def, net.quantity, net.level);
         }
 
-        public List<InventorySlotRef> GetUpgradableSlots()
+        // ======================================================
+        // QUEST EVENTS
+        // ======================================================
+
+        private void HandleItemAdded(ItemInstance inst)
         {
-            var result = new List<InventorySlotRef>();
-
-            if (Model == null)
-                return result;
-
-            // ===== BAG =====
-            for (int i = 0; i < Model.main.Count; i++)
-            {
-                var slot = Model.main[i];
-                var inst = slot.item;
-                if (IsUpgradable(inst))
-                {
-                    result.Add(new InventorySlotRef(
-                        InventorySection.Bag,
-                        i,
-                        inst
-                    ));
-                }
-            }
-
-            // ===== LEFT HAND =====
-            if (IsUpgradable(Model.leftHand.item))
-            {
-                result.Add(new InventorySlotRef(
-                    InventorySection.LeftHand,
-                    0,
-                    Model.leftHand.item
-                ));
-            }
-
-            // ===== RIGHT HAND =====
-            if (IsUpgradable(Model.rightHand.item))
-            {
-                result.Add(new InventorySlotRef(
-                    InventorySection.RightHand,
-                    0,
-                    Model.rightHand.item
-                ));
-            }
-
-            return result;
-        }
-
-        private bool IsUpgradable(ItemInstance inst)
-        {
-            if (inst == null || inst.IsEmpty || inst.itemDefinition == null)
-                return false;
-
-            var upgrades = inst.itemDefinition.upgrades;
-            if (upgrades == null || upgrades.Length == 0)
-                return false;
-
-            // есть ли ещё уровни выше текущего
-            return inst.level < upgrades.Length;
+            QuestEventBus.Publish(
+                new ItemAddedEvent(
+                    gameObject,
+                    inst.itemDefinition.id,
+                    inst.quantity
+                )
+            );
         }
     }
 }

@@ -11,6 +11,7 @@ public class PlayerVisualController : MonoBehaviour
     private Animator _animator;
 
     public Animator Animator => _animator;
+    private bool isLocal;
     public CharacterSockets Sockets { get; private set; }
 
     private void Awake()
@@ -23,10 +24,13 @@ public class PlayerVisualController : MonoBehaviour
         Debug.Log("[PSN-PVC] Start (READY)", this);
     }
 
+    public void SetLocal(bool value)
+    {
+        isLocal = value;
+    }
+
     public void ApplyVisual(string presetId)
     {
-        Debug.Log($"[PSN-PlayerVisualController] ApplyVisual({presetId}), parent={gameObject.name}", this);
-        
         var preset = visualLibrary.Find(presetId);
         if (preset == null)
         {
@@ -65,12 +69,39 @@ public class PlayerVisualController : MonoBehaviour
 
         GetComponent<PlayerAnimationController>()?.SetAnimator(_animator);
         GetComponent<EquipmentManager>()?.ApplySockets(Sockets);
+        GetComponent<PlayerCameraController>().SetHead(Sockets.head);
 
-        Debug.Log($"[PlayerVisualController] ✅ Visual applied successfully: {presetId}", this);
+        ApplyLayer(_spawnedModel);
+        
+    }
+
+    private void ApplyLayer(GameObject _spawnedModel)
+    {
+        if (_spawnedModel == null)
+            return;
+
+        int layer = isLocal
+            ? LayerMask.NameToLayer("tps")
+            : LayerMask.NameToLayer("Player");
+
+        SetLayerRecursive(_spawnedModel, layer);
+    }
+
+    private void SetLayerRecursive(GameObject obj, int layer)
+    {
+        if (obj == null) return;
+
+        obj.layer = layer;
+
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursive(child.gameObject, layer);
+        }
     }
 
     public void SetLocalModelVisible(bool visible)
     {
+        if (!isLocal) return;
         if (_spawnedModel == null)
             return;
 

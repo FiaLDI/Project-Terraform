@@ -55,6 +55,7 @@ public sealed class ProjectileNetwork : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log($"[Projectile] Hit: {other.name}");
         if (!IsServerInitialized || cfg == null)
             return;
 
@@ -62,7 +63,13 @@ public sealed class ProjectileNetwork : NetworkBehaviour
             return;
 
         if (!other.TryGetComponent<IBuffTarget>(out var target))
-            return;
+        {
+            target = other.GetComponentInParent<IBuffTarget>();
+            if (target == null)
+                return;
+        }
+
+        Debug.Log($"[Projectile] none ERRORS");
 
         var ctx = new EffectContext(
             owner != null ? owner.GetComponent<IBuffSource>() : null,
@@ -75,7 +82,7 @@ public sealed class ProjectileNetwork : NetworkBehaviour
         {
             type = EffectType.DealDamage,
             value = cfg.damage,
-            targetMode = TargetMode.Self
+            targetMode = TargetMode.Explicit
         };
 
         EffectExecutor.Instance.Execute(def, ctx);

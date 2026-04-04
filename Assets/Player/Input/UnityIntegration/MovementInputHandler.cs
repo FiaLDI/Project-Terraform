@@ -29,6 +29,22 @@ namespace Features.Player.UnityIntegration
         /// </summary>
         public PlayerInputState CurrentState => inputState;
 
+        private float jumpBufferTimer;
+        private const float JumpBufferTime = 0.15f;
+
+        private void Update()
+        {
+            if (jumpBufferTimer > 0f)
+            {
+                jumpBufferTimer -= Time.deltaTime;
+                inputState.Jump = true;
+            }
+            else
+            {
+                inputState.Jump = false;
+            }
+        }
+
         // ======================================================
         // BIND
         // ======================================================
@@ -119,7 +135,7 @@ namespace Features.Player.UnityIntegration
 
         private void OnJump(InputAction.CallbackContext ctx)
         {
-            inputState.Jump = true; // one-shot
+            jumpBufferTimer = JumpBufferTime;
         }
 
         private void OnSprintStart(InputAction.CallbackContext ctx)
@@ -150,14 +166,6 @@ namespace Features.Player.UnityIntegration
         // ======================================================
         // ONE-SHOT RESET
         // ======================================================
-
-        /// <summary>
-        /// Вызывается после тика в PlayerNetworkController.
-        /// </summary>
-        public void ClearOneShotFlags()
-        {
-            inputState.Jump = false;
-        }
 
         // ======================================================
         // CAMERA INTEGRATION

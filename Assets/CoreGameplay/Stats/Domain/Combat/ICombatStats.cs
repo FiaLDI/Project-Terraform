@@ -13,6 +13,10 @@ namespace Features.Stats.Domain
         float Recoil { get; }
         int MagazineSize { get; }
 
+        float CritChance { get; }
+        float CritMultiplier { get; }
+        float Penetration { get; }
+
         void ApplyBase(
             float baseDamage,
             float fireRate,
@@ -20,7 +24,10 @@ namespace Features.Stats.Domain
             float aimSpread,
             float range,
             float recoil,
-            int magazineSize
+            int magazineSize,
+            float critChance,
+            float critMultiplier,
+            float penetration
         );
 
         void Reset();

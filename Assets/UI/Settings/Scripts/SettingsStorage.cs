@@ -13,7 +13,13 @@ public static class SettingsStorage
 
     private const string SENS       = "settings.mouseSensitivity";
 
-    // -------- PROPERTIES ----------
+    private const string SCREEN_MODE = "settings.screenMode";
+
+    public static int ScreenMode
+    {
+        get => PlayerPrefs.GetInt(SCREEN_MODE, 1);
+        set => PlayerPrefs.SetInt(SCREEN_MODE, value);
+    }
     public static float MasterVolume   { get => PlayerPrefs.GetFloat(MASTER_VOL, 1f); set => PlayerPrefs.SetFloat(MASTER_VOL, value); }
     public static float MusicVolume    { get => PlayerPrefs.GetFloat(MUSIC_VOL, 1f);  set => PlayerPrefs.SetFloat(MUSIC_VOL, value); }
     public static float SFXVolume      { get => PlayerPrefs.GetFloat(SFX_VOL, 1f);    set => PlayerPrefs.SetFloat(SFX_VOL, value); }
@@ -44,6 +50,7 @@ public static class SettingsStorage
         ResolutionIndex = 0;
 
         Sensitivity  = 1f;
+        ScreenMode = 1;
 
         Save();
     }

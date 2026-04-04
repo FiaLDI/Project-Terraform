@@ -1,5 +1,4 @@
 using UnityEngine;
-using Features.Combat.Domain;
 using Features.Effects.Domain;
 
 namespace Features.Weapons.Domain
@@ -7,8 +6,11 @@ namespace Features.Weapons.Domain
     [CreateAssetMenu(menuName = "Items/Configs/Projectile Config")]
     public class ProjectileConfig : ScriptableObject
     {
-        [Header("Prefab")]
+        [Header("Server")]
         public GameObject projectilePrefab;
+
+        [Header("Client (FPS local only)")]
+        public GameObject clientProjectilePrefab;
 
         [Header("Physics")]
         public float speed = 30f;

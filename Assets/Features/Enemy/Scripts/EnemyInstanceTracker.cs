@@ -1,7 +1,7 @@
-// EnemyInstanceTracker.cs
 using System.Collections.Generic;
 using UnityEngine;
 using Features.Enemy.Data;
+using Biomes.UnityIntegration;
 
 public class EnemyInstanceTracker : MonoBehaviour
 {
@@ -18,5 +18,8 @@ public class EnemyInstanceTracker : MonoBehaviour
     private void OnDisable()
     {
         All.Remove(this);
+
+        if (EnemyWorldManager.Instance != null)
+            EnemyWorldManager.Instance.Unregister(this);
     }
 }

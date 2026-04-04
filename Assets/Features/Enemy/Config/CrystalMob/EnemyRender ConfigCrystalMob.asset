@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd3e98ed5bda3f4b9bc120c9c205eed, type: 3}
+  m_Name: EnemyRender ConfigCrystalMob
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Data.EnemyRenderConfigSO
+  lod0Prefab: {fileID: 6802237692358657452, guid: 2d806f86cbd48ef4aaac1fc459b2e0b7, type: 3}
+  lod1Prefab: {fileID: 6802237692358657452, guid: 2d806f86cbd48ef4aaac1fc459b2e0b7, type: 3}
+  lod2Prefab: {fileID: 6802237692358657452, guid: 2d806f86cbd48ef4aaac1fc459b2e0b7, type: 3}
+  lod0Distance: 15
+  lod1Distance: 40
+  lod2Distance: 80
+  worldCanvasPrefab: {fileID: 786559596788043606, guid: 96933ac920e73034a96f96e7debd3c8f, type: 3}
+  canvasHideDistance: 30
+  useGPUInstancing: 1
+  instancingDistance: 120
+  animatorController: {fileID: 9100000, guid: 17d88a246140d7c439423367a199d771, type: 2}

@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 601b368a39f8bfb47a44cc3fc8cb8920, type: 3}
   m_Name: TurretFireRate
   m_EditorClassIdentifier: Assembly-CSharp::MultiplyStatEffectSO
-  statId: turret.fireRate
+  statId: combat.fireRate
   multiplier: 5

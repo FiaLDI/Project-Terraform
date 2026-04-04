@@ -50,7 +50,10 @@ namespace Features.Stats.UnityIntegration
                     aimSpread: 0.5f,
                     range: 100f,
                     recoil: 1f,
-                    magazineSize: 30
+                    magazineSize: 30,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
                 );
 
                 if (Facade.Combat is ITurretCombatStats tc)

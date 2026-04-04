@@ -19,5 +19,5 @@ MonoBehaviour:
   isDebuff: 0
   effects:
   - {fileID: 11400000, guid: fe7c06910b18650409f2afdd78821fa1, type: 2}
-  duration: 5
+  duration: 60
   isStackable: 0

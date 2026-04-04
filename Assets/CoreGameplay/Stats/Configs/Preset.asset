@@ -36,3 +36,14 @@ MonoBehaviour:
     jumpHeight: 1.2
   mining:
     baseMining: 1
+  protect:
+    generic: 0.5
+    explosion: 0
+    energy: 0
+    mining: 0
+    melee: 0
+    fire: 0
+    electric: 0
+    poison: 0
+    frost: 0
+    acid: 0

@@ -20,7 +20,7 @@ public class PlayerCharacterState
     public List<string> equippedModules = new List<string>();
     public List<string> unlockedModules = new List<string>();
 
-    public CharacterInventoryState characterInventory = new CharacterInventoryState();
+    public InventorySaveData characterInventoryData = new();
 
     public string visualPresetId = "default";
     public List<string> cosmeticItems = new List<string>();

@@ -4,4 +4,5 @@ public class CharacterSockets : MonoBehaviour
 {
     public Transform rightHandSocket;
     public Transform leftHandSocket;
+    public Transform head;
 }

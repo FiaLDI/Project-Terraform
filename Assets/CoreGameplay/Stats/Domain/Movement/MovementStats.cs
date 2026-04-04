@@ -146,5 +146,9 @@ namespace Features.Stats.Domain
             _speedAdd = _walkAdd = _sprintAdd = _crouchAdd = _rotationAdd = 0f;
             _speedMult = _walkMult = _sprintMult = _crouchMult = _rotationMult = 1f;
         }
+
+        public float Debug_BaseWalk => _baseWalk;
+        public float Debug_AddWalk => _walkAdd;
+        public float Debug_MultWalk => _walkMult;
     }
 }

@@ -1,7 +1,6 @@
 using UnityEngine;
 using Features.Effects.Domain;
 using Features.Buffs.Domain;
-using Features.Combat.Domain;
 
 namespace Features.Effects.Application
 {

@@ -31,6 +31,7 @@ public sealed class PlayerClassController : MonoBehaviour
 
     private PlayerClassService classService;
     private PlayerClassConfigSO currentClass;
+    public PlayerClassConfigSO currentClassOut => currentClass;
 
     public event System.Action OnClassApplied;
 
@@ -109,11 +110,6 @@ public sealed class PlayerClassController : MonoBehaviour
     private void ApplyPassives()
     {
         phase.OnPhaseReached -= OnPhaseReached;
-
-        Debug.Log("[PASSIVES] Apply", this);
-
-        var net = GetComponent<PassiveNetAdapter>();
-        net.ServerSetPassives(currentClass.passives.ToArray());
 
         phase.Reach(GamePhase.PassivesApplied);
 

@@ -33,7 +33,8 @@ namespace Features.Effects.Domain
     {
         Self,
         Area,
-        Directional
+        Directional,
+        Explicit
     }
 
     [System.Serializable]
@@ -57,6 +58,13 @@ namespace Features.Effects.Domain
         public bool onlySpecificBuff;
         public string buffId;
         public float heightOffset;
+
+        [Header("Cone Settings")]
+        public float coneAngle; // угол в градусах (например 90)
+        public float coneDistance; // дистанция (обычно = radius)
+
+        [Header("Target Selection")]
+        public bool selectClosest;
         
 
         [Header("Spawn")]
@@ -74,6 +82,12 @@ namespace Features.Effects.Domain
 
         public ProjectileConfig projectileConfig;
         public EffectDefinition[] childEffects;
+        
+        public EffectDefinition Build()
+        {
+            var copy = this;
 
+            return copy;
+        }
     }
 }

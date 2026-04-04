@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2278399130476344613}
   - component: {fileID: 55164777529020549}
   - component: {fileID: 4951315939074600691}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.050
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,7 +100,7 @@ GameObject:
   - component: {fileID: 3889086936530752945}
   - component: {fileID: 1096304016638322711}
   - component: {fileID: 2808920361377331676}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.032
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -187,7 +187,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4182726666302081256}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist3_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -221,7 +221,7 @@ GameObject:
   - component: {fileID: 5102845954175051083}
   - component: {fileID: 4405189149480150694}
   - component: {fileID: 6241994800295439441}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.034
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -308,7 +308,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2127447994848835033}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerbig_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -343,7 +343,7 @@ GameObject:
   - component: {fileID: 9058324348286300877}
   - component: {fileID: 8349784610507504956}
   - component: {fileID: 7793405575936461895}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.058
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -432,7 +432,7 @@ GameObject:
   - component: {fileID: 7212508306288945854}
   - component: {fileID: 9060037864145959860}
   - component: {fileID: 3107115276125979366}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.056
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -519,7 +519,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5840484847294078802}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerlast_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -554,7 +554,7 @@ GameObject:
   - component: {fileID: 3592778220856444607}
   - component: {fileID: 3143832210307879586}
   - component: {fileID: 4737292498857989531}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.048
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -644,7 +644,7 @@ GameObject:
   - component: {fileID: 368926391858416876}
   - component: {fileID: 1460636567854312947}
   - component: {fileID: 5479764256544470607}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.049
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -733,7 +733,7 @@ GameObject:
   - component: {fileID: 4673279421387555462}
   - component: {fileID: 5173193623133332775}
   - component: {fileID: 1402804725398689133}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.026
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -821,7 +821,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1519709283231214477}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist1_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -858,7 +858,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6605105965653852497}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist2_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -890,7 +890,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5376100214515694983}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: FPSArms
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -923,7 +923,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5628214407148254845}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerfirst1_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -957,7 +957,7 @@ GameObject:
   - component: {fileID: 1741821303413995071}
   - component: {fileID: 7318784617409942061}
   - component: {fileID: 5011513878025927889}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.051
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1046,7 +1046,7 @@ GameObject:
   - component: {fileID: 1510733609578762421}
   - component: {fileID: 7282666022151309933}
   - component: {fileID: 6438201724820426749}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.033
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1133,7 +1133,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4213568526423720163}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingermiddle_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1166,7 +1166,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7216994759137184103}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: WeaponSocket
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1197,7 +1197,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4427446843150177257}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist4_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1231,7 +1231,7 @@ GameObject:
   - component: {fileID: 4014132458395347469}
   - component: {fileID: 8954689560550202472}
   - component: {fileID: 384454837077134406}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.054
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1318,7 +1318,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5527584933945188378}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist4_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1350,7 +1350,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1462481194854330285}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: upperarm_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1383,7 +1383,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5976815073284657187}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerbig2_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1415,7 +1415,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 33031215602258028}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Sokcer_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1448,7 +1448,7 @@ GameObject:
   - component: {fileID: 8635355261985970673}
   - component: {fileID: 4249385516210249747}
   - component: {fileID: 2269403052934004418}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.027
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1535,7 +1535,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2815582563267513316}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerfirst_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1570,7 +1570,7 @@ GameObject:
   - component: {fileID: 7135455568666590809}
   - component: {fileID: 5804553135291433243}
   - component: {fileID: 5684026468646260422}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.036
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1657,7 +1657,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9177247571201798841}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerbig_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1690,7 +1690,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6633816796124063832}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Socker_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1723,7 +1723,7 @@ GameObject:
   - component: {fileID: 5553368728159544934}
   - component: {fileID: 373668233867971510}
   - component: {fileID: 2767341950192145707}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.052
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1814,7 +1814,7 @@ GameObject:
   - component: {fileID: 2959147662441919067}
   - component: {fileID: 4861335011243041265}
   - component: {fileID: 1078432855437271704}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.060
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1901,7 +1901,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5146771029154281520}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: upperarm_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1936,7 +1936,7 @@ GameObject:
   - component: {fileID: 8657596053634458475}
   - component: {fileID: 1597181778171650265}
   - component: {fileID: 2772664091961535250}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.029
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2025,7 +2025,7 @@ GameObject:
   - component: {fileID: 1593258059410578312}
   - component: {fileID: 3809159691544837584}
   - component: {fileID: 3941595257643691781}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.025
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2115,7 +2115,7 @@ GameObject:
   - component: {fileID: 16018412167909274}
   - component: {fileID: 2132748174836403930}
   - component: {fileID: 848464933921065505}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.031
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2206,7 +2206,7 @@ GameObject:
   - component: {fileID: 422258281786337448}
   - component: {fileID: 510032248240391959}
   - component: {fileID: 4659311669301285331}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.040
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2295,7 +2295,7 @@ GameObject:
   - component: {fileID: 6672344467300573574}
   - component: {fileID: 5679369703050108017}
   - component: {fileID: 1803232780390727263}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.057
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2382,7 +2382,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3485811132716756919}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: ribcage_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2416,7 +2416,7 @@ GameObject:
   - component: {fileID: 7913379099578393042}
   - component: {fileID: 8691202518150686324}
   - component: {fileID: 1129040740244461764}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.059
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2503,7 +2503,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2176745474723860295}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingermiddle_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2536,7 +2536,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7540141428825274484}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Bone.023
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2568,7 +2568,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3872672699947560154}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: shoulder_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2600,7 +2600,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8237205602667075655}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerlast2_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2632,7 +2632,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8529979359554979525}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: forearm_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2667,7 +2667,7 @@ GameObject:
   - component: {fileID: 4251834821716431778}
   - component: {fileID: 8668698233408828136}
   - component: {fileID: 7258867773889078449}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.053
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2756,7 +2756,7 @@ GameObject:
   - component: {fileID: 7031777882152577378}
   - component: {fileID: 991703250989112316}
   - component: {fileID: 8336401279331898342}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.047
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2845,7 +2845,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5225401069449907460}
   - component: {fileID: 1157472419762572892}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: ArmsMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2902,7 +2902,7 @@ GameObject:
   - component: {fileID: 7419051719668208913}
   - component: {fileID: 1993431222081309513}
   - component: {fileID: 5532834751395310833}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.055
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2989,7 +2989,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5403872022523721110}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: ribcage_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3021,7 +3021,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1902288243215618217}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingermiddle2_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3053,7 +3053,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4044049861140442127}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerlast_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3086,7 +3086,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4070912726625510524}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Bone.035
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3120,7 +3120,7 @@ GameObject:
   - component: {fileID: 5509753079663385861}
   - component: {fileID: 5175040738566394564}
   - component: {fileID: 6988308684544907222}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.035
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3209,7 +3209,7 @@ GameObject:
   - component: {fileID: 6597406147551631709}
   - component: {fileID: 6120102685349404705}
   - component: {fileID: 6558831650348424558}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.039
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3296,7 +3296,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4024790723234932334}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerbig2_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3328,7 +3328,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2405834469716961218}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist3_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3360,7 +3360,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2503941445272417392}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist2_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3392,7 +3392,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5025218767557168070}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: kist1_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3431,7 +3431,7 @@ GameObject:
   - component: {fileID: 4143908309009191943}
   - component: {fileID: 3771778463474913803}
   - component: {fileID: 8591250017560615635}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.037
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3518,7 +3518,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 614661479499959800}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingermiddle2_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3550,7 +3550,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 264359451180055139}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: shoulder_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3584,7 +3584,7 @@ GameObject:
   - component: {fileID: 8508653590701316997}
   - component: {fileID: 877893649771108475}
   - component: {fileID: 6418693990264546873}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.061
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3673,7 +3673,7 @@ GameObject:
   - component: {fileID: 3745614082950704501}
   - component: {fileID: 3125933960021291530}
   - component: {fileID: 375845783162339817}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.038
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3760,7 +3760,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8742239187307625150}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: forearm_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3795,7 +3795,7 @@ GameObject:
   - component: {fileID: 7685370710122399750}
   - component: {fileID: 1422642412421783890}
   - component: {fileID: 5144140577210515915}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Cube.028
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3882,7 +3882,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4105044999040777224}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerfirst2_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3914,7 +3914,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1152875021450802908}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerlast2_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3946,7 +3946,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6040620829425050219}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: fingerfirst_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}

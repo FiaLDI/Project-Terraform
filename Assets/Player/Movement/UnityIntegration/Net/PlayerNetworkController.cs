@@ -3,7 +3,6 @@ using FishNet.Connection;
 using UnityEngine;
 using System.Collections.Generic;
 using Features.Player.UnityIntegration;
-using System.Collections;
 
 [RequireComponent(typeof(DeterministicMovement))]
 public class PlayerNetworkController : NetworkBehaviour
@@ -14,30 +13,37 @@ public class PlayerNetworkController : NetworkBehaviour
     private readonly Dictionary<int, MoveCommand> inputBuffer = new();
     private readonly Dictionary<int, PlayerState> stateBuffer = new();
 
-    private const float IgnoreErrorThreshold = 0.05f;
-    private const float HardSnapThreshold = 2f;
+    private const int InputDelayTicks = 1;
+    private Vector3 visualPosition;
+
+    private Vector3 accumulatedError;
+    private Vector3 previousPosition;
+    private Quaternion previousRotation;
+    private Vector3 currentPosition;
+    private Quaternion currentRotation;
+
+    public Vector3 GetPreviousPosition() => previousPosition;
+    public Vector3 GetCurrentPosition() => currentPosition;
+
+    public Quaternion GetPreviousRotation() => previousRotation;
+    public Quaternion GetCurrentRotation() => currentRotation;
 
     private void Awake()
     {
         movement = GetComponent<DeterministicMovement>();
+        visualPosition = transform.position;
+
+        // 🔥 ВАЖНО
+        previousPosition = transform.position;
+        currentPosition  = transform.position;
+
+        previousRotation = transform.rotation;
+        currentRotation  = transform.rotation;
     }
 
     public void InjectInput(MovementInputHandler handler)
     {
         inputHandler = handler;
-    }
-
-    private void Update()
-    {
-        if (!IsOwner)
-            return;
-
-        if (inputHandler == null)
-            return;
-
-        float yaw = inputHandler.CurrentState.Yaw;
-
-        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
     }
 
     public override void OnStartNetwork()
@@ -50,6 +56,7 @@ public class PlayerNetworkController : NetworkBehaviour
     {
         base.OnStopNetwork();
         NetworkTickSystem.OnTick -= OnTick;
+
         inputBuffer.Clear();
         stateBuffer.Clear();
     }
@@ -60,7 +67,14 @@ public class PlayerNetworkController : NetworkBehaviour
             return;
 
         int currentTick = NetworkTickSystem.I.CurrentTick;
+    
+        previousPosition = currentPosition;
+        previousRotation = currentRotation;
 
+        currentPosition = transform.position;
+        currentRotation = transform.rotation;
+
+        // ================= CLIENT =================
         if (IsOwner)
         {
             if (inputHandler == null)
@@ -68,9 +82,11 @@ public class PlayerNetworkController : NetworkBehaviour
 
             var input = inputHandler.CurrentState;
 
+            int tick = currentTick + InputDelayTicks;
+
             MoveCommand cmd = new MoveCommand
             {
-                Tick   = currentTick,
+                Tick   = tick,
                 Move   = input.Move,
                 Yaw    = input.Yaw,
                 Pitch  = input.Pitch,
@@ -79,46 +95,49 @@ public class PlayerNetworkController : NetworkBehaviour
                 Sprint = input.Sprint
             };
 
-            inputBuffer[currentTick] = cmd;
+            inputBuffer[tick] = cmd;
 
+            // 🔥 CLIENT PREDICTION
             if (!IsServer)
             {
                 movement.Simulate(cmd);
 
-                stateBuffer[currentTick] = new PlayerState
+                stateBuffer[tick] = new PlayerState
                 {
-                    Tick     = currentTick,
+                    Tick     = tick,
                     Position = transform.position,
                     Velocity = movement.Velocity,
-                    Yaw      = transform.eulerAngles.y
+
+                    Yaw      = movement.CurrentYawInternal,
+                    Pitch    = input.Pitch,
+
+                    VerticalVelocity = movement.VerticalVelocityInternal,
+                    InternalYaw      = movement.CurrentYawInternal,
+
+                    Grounded = movement.Grounded,
+                    Crouch   = movement.IsCrouching
                 };
             }
 
             SendInputServerRpc(cmd);
-            inputHandler.ClearOneShotFlags();
         }
 
-        // ================= SERVER SIMULATION =================
+        // ================= SERVER =================
         if (IsServer)
         {
             int simulationTick = currentTick;
-            if (simulationTick < 0)
-                return;
 
             if (!inputBuffer.TryGetValue(simulationTick, out var cmd))
             {
-                // используем последний input
-                if (inputBuffer.Count == 0)
-                    cmd = default;
-                else
-                {
-                    int latestTick = -1;
-                    foreach (var kvp in inputBuffer)
-                        if (kvp.Key > latestTick)
-                            latestTick = kvp.Key;
+                int latestTick = -1;
 
-                    cmd = inputBuffer[latestTick];
+                foreach (var kvp in inputBuffer)
+                {
+                    if (kvp.Key > latestTick)
+                        latestTick = kvp.Key;
                 }
+
+                cmd = latestTick != -1 ? inputBuffer[latestTick] : default;
             }
 
             movement.Simulate(cmd);
@@ -128,23 +147,33 @@ public class PlayerNetworkController : NetworkBehaviour
                 Tick     = simulationTick,
                 Position = transform.position,
                 Velocity = movement.Velocity,
-                Yaw      = transform.eulerAngles.y,
+
+                Yaw      = movement.CurrentYawInternal,
                 Pitch    = cmd.Pitch,
+
+                VerticalVelocity = movement.VerticalVelocityInternal,
+                InternalYaw      = movement.CurrentYawInternal,
+
                 Grounded = movement.Grounded,
-                Crouch   = movement.IsCrouching,
-                Jump     = movement.JumpedThisTick
+                Crouch   = movement.IsCrouching
             };
 
             SendStateObserversRpc(state);
             SendStateTargetRpc(Owner, state);
+
+            inputBuffer.Remove(simulationTick - 100);
         }
     }
+
+    // ================= INPUT =================
 
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
         inputBuffer[cmd.Tick] = cmd;
     }
+
+    // ================= REMOTE =================
 
     [ObserversRpc(BufferLast = true)]
     private void SendStateObserversRpc(PlayerState state)
@@ -156,27 +185,51 @@ public class PlayerNetworkController : NetworkBehaviour
             ?.ReceiveState(state);
     }
 
+    // ================= RECONCILIATION =================
+
     [TargetRpc]
     private void SendStateTargetRpc(NetworkConnection conn, PlayerState serverState)
     {
-        if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
+        if (IsServer)
             return;
+
+        // если нет состояния — просто применяем
+        if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
+        {
+            movement.ApplyState(serverState);
+            return;
+        }
+
+        const float MinCorrectionError = 0.2f;
 
         float error = Vector3.Distance(predicted.Position, serverState.Position);
 
-        if (error < IgnoreErrorThreshold)
+        if (error < MinCorrectionError)
             return;
 
-        movement.Teleport(
-            serverState.Position,
-            serverState.Yaw,
-            serverState.Velocity.y
-        );
+        const float HardSnapThreshold = 3f;
 
-        // 🔥 Удаляем старые состояния
-        stateBuffer.Remove(serverState.Tick);
+        if (error > HardSnapThreshold)
+        {
+            movement.ApplyState(serverState);
+        }
+        else
+        {
+            Vector3 correction = serverState.Position - transform.position;
 
-        // 🔥 Пересимулируем input после этого тика
+            accumulatedError += correction;
+
+            Vector3 step = accumulatedError * 0.1f;
+
+            // clamp чтобы не было рывков
+            step = Vector3.ClampMagnitude(step, 0.5f);
+
+            movement.ApplyCorrection(step);
+
+            accumulatedError -= step;
+            return;
+        }
+
         int currentTick = NetworkTickSystem.I.CurrentTick;
 
         for (int tick = serverState.Tick + 1; tick <= currentTick; tick++)
@@ -190,25 +243,21 @@ public class PlayerNetworkController : NetworkBehaviour
                     Tick     = tick,
                     Position = transform.position,
                     Velocity = movement.Velocity,
-                    Yaw      = transform.eulerAngles.y
+
+                    Yaw      = movement.CurrentYawInternal,
+                    Pitch    = cmd.Pitch,
+
+                    VerticalVelocity = movement.VerticalVelocityInternal,
+                    InternalYaw      = movement.CurrentYawInternal,
+
+                    Grounded = movement.Grounded,
+                    Crouch   = movement.IsCrouching
                 };
             }
         }
     }
 
-    [ServerRpc]
-    public void RequestWorldServerRpc(int seed)
-    {
-        ServerWorldSession.PendingSeed = seed;
-
-        SceneTransitionService.LoadWorldScene();
-    }
-
-    [ServerRpc]
-    public void RequestReturnToHubServerRpc()
-    {
-        SceneTransitionService.LoadHubScene();
-    }
+    // ================= TELEPORT =================
 
     [ServerRpc]
     public void RequestReturnToSpawnServerRpc()
@@ -225,23 +274,90 @@ public class PlayerNetworkController : NetworkBehaviour
         inputBuffer.Clear();
         stateBuffer.Clear();
 
-        movement.Teleport(position, rotation.eulerAngles.y, 0f);
-
-        int tick = NetworkTickSystem.I.CurrentTick;
+        movement.ApplyState(new PlayerState
+        {
+            Tick = NetworkTickSystem.I.CurrentTick,
+            Position = position,
+            Velocity = Vector3.zero,
+            Yaw = rotation.eulerAngles.y,
+            Pitch = 0f,
+            VerticalVelocity = 0f,
+            InternalYaw = rotation.eulerAngles.y,
+            Grounded = true,
+            Crouch = false
+        });
 
         PlayerState state = new PlayerState
         {
-            Tick     = tick,
+            Tick     = NetworkTickSystem.I.CurrentTick,
             Position = transform.position,
             Velocity = movement.Velocity,
-            Yaw      = transform.eulerAngles.y,
+
+            Yaw      = movement.CurrentYawInternal,
             Pitch    = 0f,
+
+            VerticalVelocity = movement.VerticalVelocityInternal,
+            InternalYaw      = movement.CurrentYawInternal,
+
             Grounded = movement.Grounded,
-            Crouch   = movement.IsCrouching,
-            Jump     = false
+            Crouch   = movement.IsCrouching
         };
 
         SendStateObserversRpc(state);
         SendStateTargetRpc(Owner, state);
+    }
+
+    // ================= QUEST / WORLD RPC =================
+
+    [ServerRpc]
+    public void RequestReturnToHubServerRpc()
+    {
+        SceneTransitionService.LoadHubScene();
+    }
+
+    [ServerRpc]
+    public void RequestWorldServerRpc(int seed, List<string> questIds, List<string> chainIds)
+    {
+        ServerWorldSession.PendingSeed = seed;
+        ServerWorldSession.PendingQuestIds = questIds;
+        ServerWorldSession.PendingChainIds = chainIds;
+
+        SceneTransitionService.LoadWorldScene();
+    }
+
+    [ServerRpc]
+    public void GiveQuestsServerRpc(List<string> questIds)
+    {
+        GetComponent<PlayerQuestComponent>()?.GiveQuests(questIds);
+    }
+
+    [ServerRpc]
+    public void GiveChainsServerRpc(List<string> chainIds)
+    {
+        GetComponent<PlayerQuestComponent>()?.GiveChains(chainIds);
+    }
+
+    [ServerRpc]
+    public void ClearQuestsServerRpc()
+    {
+        GetComponent<PlayerQuestComponent>()?.ClearAll();
+    }
+
+    [ServerRpc]
+    public void DebugCompleteQuestServerRpc(string questId)
+    {
+        GetComponent<PlayerQuestComponent>()?.DebugCompleteQuest(questId);
+    }
+
+    [ServerRpc]
+    public void DebugFailQuestServerRpc(string questId)
+    {
+        GetComponent<PlayerQuestComponent>()?.DebugFailQuest(questId);
+    }
+
+    [ServerRpc]
+    public void DebugAdvanceQuestServerRpc(string questId)
+    {
+        GetComponent<PlayerQuestComponent>()?.DebugAdvance(questId);
     }
 }

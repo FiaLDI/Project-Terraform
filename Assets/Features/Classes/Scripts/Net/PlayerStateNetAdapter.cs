@@ -1,12 +1,15 @@
 using System.Collections;
 using UnityEngine;
-using Features.Abilities.Application;
-using Features.Abilities.Client;
-using Features.Abilities.Domain;
-using Features.Classes.Data;
-using Features.Stats.Domain;
-using Features.Stats.UnityIntegration;
 using FishNet.Object;
+using Features.Classes.Data;
+using Features.Abilities.Application;
+using Features.Abilities.Domain;
+using Features.Stats.UnityIntegration;
+using Features.Passives.UnityIntegration;
+using Features.Passives.Domain;
+using Features.Stats.Domain;
+using Features.Passives.Net;
+using Features.Abilities.Client;
 
 namespace Features.Class.Net
 {
@@ -14,12 +17,14 @@ namespace Features.Class.Net
     [RequireComponent(typeof(PlayerStats))]
     [RequireComponent(typeof(ServerGamePhase))]
     [RequireComponent(typeof(AbilityCaster))]
+    [RequireComponent(typeof(PassiveSystem))]
     public sealed class PlayerStateNetAdapter : NetworkBehaviour
     {
         private PlayerClassController classController;
-        private PlayerStats playerStats;     // роль
-        private IStatsOwner statsOwner;      // инфраструктура
+        private PlayerStats playerStats;
+        private IStatsOwner statsOwner;
         private AbilityCaster abilityCaster;
+        private PassiveSystem passiveSystem;
         private ServerGamePhase phase;
 
         [SerializeField]
@@ -63,6 +68,7 @@ namespace Features.Class.Net
             playerStats ??= GetComponent<PlayerStats>();
             statsOwner ??= GetComponent<IStatsOwner>();
             abilityCaster ??= GetComponent<AbilityCaster>();
+            passiveSystem ??= GetComponent<PassiveSystem>();
             phase ??= GetComponent<ServerGamePhase>();
 
             if (statsOwner == null)
@@ -76,10 +82,6 @@ namespace Features.Class.Net
         // SERVER ENTRY POINT
         // =====================================================
 
-        /// <summary>
-        /// Единственный допустимый способ применить класс.
-        /// Можно вызывать сразу после спавна.
-        /// </summary>
         [Server]
         public void ApplyClass(string classId)
         {
@@ -142,24 +144,86 @@ namespace Features.Class.Net
 
             classApplied = true;
 
-            // 1️⃣ базовые статы (роль PlayerStats)
-            playerStats.ResetAndApplyDefaults();
+            // =====================================================
+            // 1️⃣ СТАТЫ
+            // =====================================================
 
-            // 2️⃣ пресет класса
+            playerStats.ResetAndApplyDefaults();
             playerStats.ApplyPreset(cfg.preset);
 
-            // 3️⃣ пассивы / бафы / server-side abilities
+            // =====================================================
+            // 2️⃣ ПАССИВКИ (КЛЮЧЕВОЕ МЕСТО)
+            // =====================================================
+
+            var finalPassives = BuildPassives(cfg);
+
+            var net = GetComponent<PassiveNetAdapter>();
+            net.ServerSetPassives(finalPassives);
+
+            // =====================================================
+            // 3️⃣ КЛАСС (абилки + базовая логика)
+            // =====================================================
+
             classController.ApplyClass(pendingClassId);
 
             GetComponent<MovementStatsSync>()?.SendSnapshot();
 
-            // 4️⃣ abilities → clients (РОВНО 1 РАЗ)
+            // =====================================================
+            // 4️⃣ ABILITIES → CLIENT
+            // =====================================================
+
             StartCoroutine(SendAbilitiesOnce(cfg));
 
             Debug.Log(
                 $"[PlayerStateNetAdapter] ✅ Class '{pendingClassId}' applied",
                 this
             );
+        }
+
+        // =====================================================
+        // BUILD PASSIVES FROM PROGRESSION
+        // =====================================================
+
+        [Server]
+        private PassiveSO[] BuildPassives(PlayerClassConfigSO cfg)
+        {
+            var list = new System.Collections.Generic.List<PassiveSO>();
+
+            // 1. базовые пассивки класса
+            if (cfg.passives != null)
+                list.AddRange(cfg.passives);
+
+            // 2. прогрессия игрока
+            var state = PlayerProgressService.Instance?.GetActiveCharacter();
+            if (state != null && state.passives != null)
+            {
+                foreach (var id in state.passives)
+                {
+                    var p = Features.Passives.Data.PassiveRegistrySO.Instance.GetById(id);
+                    if (p != null)
+                        list.Add(p);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        [Server]
+        public void RefreshPassives()
+        {
+            if (!classApplied)
+                return;
+
+            var cfg = classLibrary.FindById(pendingClassId);
+            if (cfg == null)
+                return;
+
+            var finalPassives = BuildPassives(cfg);
+
+            var net = GetComponent<PassiveNetAdapter>();
+            net.ServerSetPassives(finalPassives);
+
+            Debug.Log("[PlayerStateNetAdapter] 🔄 Passives refreshed", this);
         }
 
         // =====================================================
@@ -174,7 +238,6 @@ namespace Features.Class.Net
 
             abilitiesSent = true;
 
-            // гарантируем, что клиент уже инициализирован
             yield return null;
             yield return null;
 
@@ -216,22 +279,12 @@ namespace Features.Class.Net
             for (int i = 0; i < abilityIds.Length; i++)
                 loaded[i] = lib.FindById(abilityIds[i]);
 
-            // 🔹 CLIENT VIEW (UI DATA ONLY)
             var view = GetComponent<ClientAbilityView>();
             if (view != null)
             {
                 view.SetAbilities(loaded);
             }
-            else
-            {
-                Debug.LogError(
-                    "[PlayerStateNetAdapter] ClientAbilityView missing",
-                    this
-                );
-            }
 
-            // 🔹 CLIENT RUNTIME (cooldowns / channel visuals)
-            // ⚠️ НЕ ВЫКЛЮЧАЕМ AbilityCaster!
             if (abilityCaster != null)
             {
                 abilityCaster.SetAbilities(loaded);

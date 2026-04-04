@@ -10,6 +10,7 @@ namespace Features.Stats.Data
         public bool hasCombat = true;
         public bool hasMovement = true;
         public bool hasMining = false;
+        public bool hasProtected = false;
 
         [Header("Combat")]
         public bool useTurretCombat;

@@ -55,7 +55,10 @@ namespace Features.Stats.UnityIntegration
                     aimSpread: 0.5f,
                     recoil: 1f,
                     range: 100f,
-                    magazineSize: 30
+                    magazineSize: 30,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
                 );
             }
 
@@ -75,6 +78,22 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Mining != null)
             {
                 Facade.Mining.ApplyBase(1f);
+            }
+
+            if (Facade.Protect != null)
+            {
+                Facade.Protect.ApplyBase(
+                    genericResistance: 0f,
+                    explosionResistance: 0f,
+                    energyResistance: 0f,
+                    miningResistance: 0f,
+                    meleeResistance: 0f,
+                    fireResistance: 0f,
+                    electricResistance: 0f,
+                    poisonResistance: 0f,
+                    frostResistance: 0f,
+                    acidResistance: 0f
+                );
             }
         }
 
@@ -166,7 +185,10 @@ namespace Features.Stats.UnityIntegration
                     preset.combat.baseSpread,
                     preset.combat.baseAimSpread,
                     preset.combat.baseRecoil,
-                    preset.combat.baseMagazineSize
+                    preset.combat.baseMagazineSize,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
                 );
             }
 
@@ -187,6 +209,22 @@ namespace Features.Stats.UnityIntegration
             {
                 Facade.Mining.ApplyBase(
                     preset.mining.baseMining
+                );
+            }
+
+            if (Facade.Protect != null)
+            {
+                Facade.Protect.ApplyBase(
+                    preset.protect.generic,
+                    preset.protect.explosion,
+                    preset.protect.energy,
+                    preset.protect.mining,
+                    preset.protect.melee,
+                    preset.protect.fire,
+                    preset.protect.electric,
+                    preset.protect.poison,
+                    preset.protect.frost,
+                    preset.protect.acid
                 );
             }
         }

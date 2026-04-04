@@ -29,9 +29,18 @@ namespace Features.Stats.Domain
 
         public static readonly StatKey MagazineSize =
             new("combat.magazine");
-        
+
         public static readonly StatKey DamageMultiplier =
             new("combat.damage.mult");
+
+        public static readonly StatKey CritChance = 
+            new("combat.crit.chance");
+
+        public static readonly StatKey CritMultiplier = 
+            new("combat.crit.multiplier");
+
+        public static readonly StatKey Penetration =
+            new("combat.penetration");
 
         // =========================
         // HEALTH
@@ -102,5 +111,38 @@ namespace Features.Stats.Domain
 
         public static readonly StatKey Cooldown =
             new("ability.cooldown");
+
+        // =========================
+        // DEFENSE (RESISTANCES)
+        // =========================
+        public static readonly StatKey GenericResistance =
+            new("defense.res.generic");
+
+        public static readonly StatKey ExplosionResistance =
+            new("defense.res.explosion");
+
+        public static readonly StatKey EnergyResistance =
+            new("defense.res.energy");
+
+        public static readonly StatKey MiningResistance =
+            new("defense.res.mining");
+
+        public static readonly StatKey MeleeResistance =
+            new("defense.res.melee");
+
+        public static readonly StatKey FireResistance =
+            new("defense.res.fire");
+
+        public static readonly StatKey ElectricResistance =
+            new("defense.res.electric");
+
+        public static readonly StatKey PoisonResistance =
+            new("defense.res.poison");
+
+        public static readonly StatKey FrostResistance =
+            new("defense.res.frost");
+
+        public static readonly StatKey AcidResistance =
+            new("defense.res.acid");
     }
 }

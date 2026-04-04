@@ -16,14 +16,27 @@ namespace Features.Effects.Application
                 TargetMode.Self => ResolveSelf(ctx),
                 TargetMode.Area => ResolveArea(def, ctx),
                 TargetMode.Directional => ResolveDirectional(def, ctx),
+                TargetMode.Explicit => ctx.Targets ?? System.Array.Empty<IBuffTarget>(),
                 _ => System.Array.Empty<IBuffTarget>()
             };
 
-            return ApplyOwnershipFilter(raw, def, ctx);
+            raw = ApplyOwnershipFilter(raw, def, ctx);
+
+            if (def.coneAngle > 0f)
+            {
+                raw = ApplyConeFilter(raw, def, ctx);
+            }
+
+            if (def.selectClosest)
+            {
+                raw = SelectClosest(raw, ctx);
+            }
+
+            return raw;
         }
 
         // =====================================================
-        // BASE RESOLUTION
+        // BASE
         // =====================================================
 
         private static IBuffTarget[] ResolveSelf(EffectContext ctx)
@@ -45,10 +58,7 @@ namespace Features.Effects.Application
                 def.layerMask);
 
             foreach (var h in hits)
-            {
-                if (h.TryGetComponent<IBuffTarget>(out var target))
-                    results.Add(target);
-            }
+                AddFromCollider(h, results);
 
             return results.ToArray();
         }
@@ -66,15 +76,109 @@ namespace Features.Effects.Application
                 def.radius,
                 def.layerMask))
             {
-                if (hit.collider.TryGetComponent<IBuffTarget>(out var target))
-                    results.Add(target);
+                AddFromCollider(hit.collider, results);
             }
 
             return results.ToArray();
         }
 
         // =====================================================
-        // OWNERSHIP FILTER
+        // 🎯 CONE FILTER
+        // =====================================================
+
+       private static IBuffTarget[] ApplyConeFilter(
+            IBuffTarget[] targets,
+            EffectDefinition def,
+            EffectContext ctx)
+        {
+            var results = new List<IBuffTarget>();
+
+            Vector3 origin = ctx.Origin;
+            Vector3 forward = ctx.Direction.normalized;
+
+            float halfAngle = def.coneAngle * 0.5f + 25f;
+
+            foreach (var t in targets)
+            {
+                if (t == null)
+                    continue;
+
+                Vector3 toTarget = t.Transform.position - origin;
+                float dist = toTarget.magnitude;
+
+                if (dist < 2.0f)
+                {
+                    results.Add(t);
+                    continue;
+                }
+
+                Vector3 dir = toTarget.normalized;
+
+                float angle = Vector3.Angle(forward, dir);
+
+                if (angle <= halfAngle)
+                    results.Add(t);
+            }
+
+            return results.ToArray();
+        }
+
+        // =====================================================
+        // 🧠 TARGET SELECTION
+        // =====================================================
+
+        private static IBuffTarget[] SelectClosest(
+            IBuffTarget[] targets,
+            EffectContext ctx)
+        {
+            IBuffTarget best = null;
+            float bestDist = float.MaxValue;
+
+            foreach (var t in targets)
+            {
+                if (t == null)
+                    continue;
+
+                var go = t.BuffSystem?.gameObject;
+                if (go == null)
+                    continue;
+
+                float dist =
+                    Vector3.Distance(ctx.Origin, go.transform.position);
+
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = t;
+                }
+            }
+
+            return best != null
+                ? new[] { best }
+                : System.Array.Empty<IBuffTarget>();
+        }
+
+        // =====================================================
+        // CORE (FIX INTERFACES)
+        // =====================================================
+
+        private static void AddFromCollider(
+            Collider col,
+            List<IBuffTarget> results)
+        {
+            var target = col.GetComponentInParent<StatsBuffTarget>();
+
+            if (target != null)
+            {
+                if (!results.Contains(target))
+                    results.Add(target);
+
+                return;
+            }
+        }
+
+        // =====================================================
+        // OWNERSHIP
         // =====================================================
 
         private static IBuffTarget[] ApplyOwnershipFilter(

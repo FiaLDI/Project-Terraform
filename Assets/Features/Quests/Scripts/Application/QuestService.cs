@@ -10,6 +10,13 @@ namespace Features.Quests.Domain
         private readonly Dictionary<QuestId, QuestRuntime> _active = new();
         private readonly HashSet<QuestRuntime> _completed = new();
 
+        private readonly GameObject owner;
+
+        public QuestService(GameObject owner)
+        {
+            this.owner = owner;
+        }
+
         // ----------------------------------------------------------
         // COLLECTIONS
         // ----------------------------------------------------------
@@ -34,33 +41,19 @@ namespace Features.Quests.Domain
 
         public QuestRuntime StartQuest(QuestDefinition def)
         {
-            Debug.Log("▶ StartQuest CALLED for: " + def.Id.Value);
-
-            // УЖЕ АКТИВЕН?
             if (_active.TryGetValue(def.Id, out var existing))
-            {
-                Debug.Log("⚠ Quest already active: " + def.Id.Value);
-
-                // UI должно получить состояние, если подключилось позже
-                OnQuestUpdated?.Invoke(existing);
                 return existing;
-            }
 
-            // СОЗДАЕМ РАНТАЙМ
-            var runtime = new QuestRuntime(def);
+            var runtime = new QuestRuntime(def, owner);
+
             runtime.OnUpdated += HandleQuestUpdated;
 
             _active.Add(def.Id, runtime);
 
-            // ВЫЗОВ domain-логики
-            def.Behaviour.OnStart(runtime);
+            foreach (var cond in def.Conditions)
+                cond.OnStart(runtime);
 
-            Debug.Log("✔ Quest actually started: " + def.Id.Value);
-
-            // UI: новый квест
             OnQuestAdded?.Invoke(runtime);
-
-            // UI: обновление состояния
             OnQuestUpdated?.Invoke(runtime);
 
             return runtime;
@@ -70,60 +63,124 @@ namespace Features.Quests.Domain
         // PROCESS EVENT
         // ----------------------------------------------------------
 
+        public void HandleEventFiltered(IQuestEvent e, bool isOwnerEvent)
+        {
+            foreach (var quest in _active.Values.ToList())
+            {
+                if (quest.State != QuestState.Active)
+                    continue;
+
+                if (quest.Definition.Scope == QuestScope.Personal && !isOwnerEvent)
+                    continue;
+
+                foreach (var condition in quest.Definition.Conditions)
+                {
+                    condition.OnEvent(quest, e);
+                }
+
+                if (quest.Definition.Conditions.All(c => c.IsCompleted(quest)))
+                {
+                    CompleteInternal(quest);
+                }
+            }
+        }
+
         public void HandleEvent(IQuestEvent e)
         {
             foreach (var quest in _active.Values.ToList())
             {
-                quest.Definition.Behaviour.OnEvent(quest, e);
+                if (quest.State != QuestState.Active)
+                    continue;
 
-                // завершён?
-                if (quest.State == QuestState.Completed && !_completed.Contains(quest))
+                // ❗ ВАЖНО
+                if (quest.Definition.Scope == QuestScope.Personal)
                 {
-                    _completed.Add(quest);
+                    // только если событие от владельца
+                    if (e.Source != owner)
+                        continue;
+                }
 
-                    OnQuestUpdated?.Invoke(quest);
+                // Shared — пропускаем ВСЕ события
+
+                foreach (var condition in quest.Definition.Conditions)
+                {
+                    condition.OnEvent(quest, e);
+                }
+
+                if (quest.Definition.Conditions.All(c => c.IsCompleted(quest)))
+                {
+                    CompleteInternal(quest);
                 }
             }
         }
 
         // ----------------------------------------------------------
-        // COMPLETE QUEST
+        // COMPLETE
         // ----------------------------------------------------------
+
+        private void CompleteInternal(QuestRuntime quest)
+        {
+            if (_completed.Contains(quest))
+                return;
+
+            quest.SetState(QuestState.Completed);
+
+            _completed.Add(quest);
+
+            Debug.Log($"[QuestService] Quest completed: {quest.Definition.Id}");
+
+            OnQuestUpdated?.Invoke(quest);
+        }
 
         public void CompleteQuest(QuestId id)
         {
-            if (_active.TryGetValue(id, out var quest))
-            {
-                quest.SetState(QuestState.Completed);
-                _completed.Add(quest);
+            if (!_active.TryGetValue(id, out var quest))
+                return;
 
-                OnQuestUpdated?.Invoke(quest);
-            }
+            CompleteInternal(quest);
         }
 
         // ----------------------------------------------------------
-        // RESET QUEST
+        // RESET
         // ----------------------------------------------------------
 
         public void ResetQuest(QuestId id)
         {
-            if (_active.TryGetValue(id, out var quest))
-            {
-                quest.Definition.Behaviour.OnReset(quest);
-                quest.OnUpdated -= HandleQuestUpdated;
+            if (!_active.TryGetValue(id, out var quest))
+                return;
 
-                _active.Remove(id);
+            quest.Reset();
 
-                OnQuestRemoved?.Invoke(quest);
-            }
+            quest.OnUpdated -= HandleQuestUpdated;
+
+            _active.Remove(id);
+
+            OnQuestRemoved?.Invoke(quest);
         }
 
         // ----------------------------------------------------------
-        // INTERNAL UPDATE FORWARD
+        // INTERNAL UPDATE
         // ----------------------------------------------------------
 
         private void HandleQuestUpdated(QuestRuntime quest)
         {
+            OnQuestUpdated?.Invoke(quest);
+        }
+
+        public bool TryGetQuest(QuestId id, out QuestRuntime quest)
+        {
+            return _active.TryGetValue(id, out quest);
+        }
+
+        public void FailQuest(QuestId id)
+        {
+            if (!_active.TryGetValue(id, out var quest))
+                return;
+
+            quest.SetState(QuestState.Failed);
+
+            Debug.Log($"[QuestService] Quest failed: {id}");
+
             OnQuestUpdated?.Invoke(quest);
         }
     }

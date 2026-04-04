@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Abilities.Domain.AbilitySO
   id: ch1
   displayName: Charge Device
+  tags: -1
   icon: {fileID: 21300000, guid: 1a67b07044cbd5e42bc7026de3f0f526, type: 3}
   description: a
   energyCost: 5
@@ -33,6 +34,9 @@ MonoBehaviour:
     onlySpecificBuff: 0
     buffId: 
     heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
     prefabId: charge-ability
     lifetime: 100
     useSourcePosition: 1
@@ -54,6 +58,9 @@ MonoBehaviour:
     onlySpecificBuff: 0
     buffId: 
     heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
     prefabId: 
     lifetime: 0
     useSourcePosition: 1

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Features.Quests.Domain
 {
@@ -6,94 +7,142 @@ namespace Features.Quests.Domain
     {
         public QuestDefinition Definition { get; }
 
-        public QuestState State { get; private set; } = QuestState.Inactive;
+        public QuestState State { get; private set; }
+        public object Context { get; }
 
-        public int CurrentProgress { get; private set; }
-        public int TargetProgress { get; private set; }
+        private readonly Dictionary<IQuestCondition, int> progress = new();
 
-        /// <summary>
-        /// Вызывается всегда, когда что-то меняется: прогресс, состояние, таргет, поведение.
-        /// </summary>
+        private readonly Dictionary<IQuestCondition, int> targets = new();
+
         public event Action<QuestRuntime> OnUpdated;
 
-        public QuestRuntime(QuestDefinition definition)
+        public QuestRuntime(QuestDefinition definition, object context)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            Context = context;
+
             State = QuestState.Active;
         }
 
-
         // ==========================================================
-        // PROGRESS CONTROL
+        // PROGRESS PER CONDITION
         // ==========================================================
 
-        public void SetTarget(int target)
+        public void SetTarget(IQuestCondition condition, int value)
         {
-            TargetProgress = Math.Max(0, target);
+            targets[condition] = Math.Max(0, value);
+            progress.TryAdd(condition, 0);
+
             EvaluateCompletion();
             NotifyUpdated();
         }
 
-        public void SetProgress(int value)
+        public void AddProgress(IQuestCondition condition, int delta)
         {
-            CurrentProgress = Math.Max(0, value);
+            if (delta == 0)
+                return;
+
+            if (!progress.ContainsKey(condition))
+                progress[condition] = 0;
+
+            progress[condition] = Math.Max(0, progress[condition] + delta);
+
             EvaluateCompletion();
             NotifyUpdated();
         }
 
-        public void AddProgress(int delta)
+        public int GetProgress(IQuestCondition condition)
         {
-            CurrentProgress = Math.Max(0, CurrentProgress + delta);
-            EvaluateCompletion();
-            NotifyUpdated();
+            return progress.TryGetValue(condition, out var value)
+                ? value
+                : 0;
         }
 
+        public int GetTarget(IQuestCondition condition)
+        {
+            return targets.TryGetValue(condition, out var value)
+                ? value
+                : 0;
+        }
 
         // ==========================================================
-        // STATE CONTROL
+        // STATE
         // ==========================================================
 
-        /// <summary>
-        /// Принудительно завершить квест из Behaviour или сервиса.
-        /// </summary>
         public void SetState(QuestState state)
         {
+            if (State == state)
+                return;
+
             State = state;
             NotifyUpdated();
         }
 
-        /// <summary>
-        /// Логически завершает квест, если достижён таргет.
-        /// </summary>
         private void EvaluateCompletion()
         {
-            if (State != QuestState.Completed &&
-                TargetProgress > 0 &&
-                CurrentProgress >= TargetProgress)
+            if (State != QuestState.Active)
+                return;
+
+            foreach (var cond in Definition.Conditions)
             {
-                State = QuestState.Completed;
+                var current = GetProgress(cond);
+                var target = GetTarget(cond);
+
+                if (target <= 0)
+                    return;
+
+                if (current < target)
+                    return;
             }
+
+            State = QuestState.Completed;
         }
 
-        /// <summary>
-        /// Сброс прогресса для переиспользования квеста.
-        /// </summary>
         public void Reset()
         {
-            CurrentProgress = 0;
-            TargetProgress = 0;
+            progress.Clear();
+            targets.Clear();
+
             State = QuestState.Inactive;
+
             NotifyUpdated();
         }
 
-
         // ==========================================================
-        // INTERNAL HELPERS
+        // INTERNAL
         // ==========================================================
 
         private void NotifyUpdated()
         {
             OnUpdated?.Invoke(this);
+        }
+
+        public int GetTotalProgress()
+        {
+            int total = 0;
+
+            foreach (var cond in Definition.Conditions)
+                total += GetProgress(cond);
+
+            return total;
+        }
+
+        public int GetTotalTarget()
+        {
+            int total = 0;
+
+            foreach (var cond in Definition.Conditions)
+                total += GetTarget(cond);
+
+            return total;
+        }
+
+        public void SetProgress(IQuestCondition condition, int value)
+        {
+            progress[condition] = Math.Max(0, value);
+
+            EvaluateCompletion();
+            NotifyUpdated();
         }
     }
 }

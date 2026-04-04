@@ -1,6 +1,10 @@
-using UnityEngine;
-using Features.Stats.Domain;
+using Features.Buffs.Domain;
 using Features.Enemy.Data;
+using Features.Quests.Application;
+using Features.Quests.Domain;
+using FishNet;
+using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Stats.UnityIntegration
 {
@@ -10,6 +14,8 @@ namespace Features.Stats.UnityIntegration
     {
         [Header("Config")]
         [SerializeField] private EnemyConfigSO config;
+        private IBuffSource lastAttacker;
+        private bool isDead;
 
         // =========================
         // SERVER
@@ -30,9 +36,9 @@ namespace Features.Stats.UnityIntegration
 
         private void ApplyDefaultsFromConfig()
         {
-            if (config.statsPreset != null)
+            if (config.stats != null)
             {
-                ApplyPreset(config.statsPreset);
+                ApplyPreset(config.stats);
                 return;
             }
 
@@ -45,13 +51,16 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    config.statsPreset.combat.baseDamageMultiplier,
+                    config.stats.combat.baseDamageMultiplier,
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,
                     recoil: 1f,
                     range: 100f,
-                    magazineSize: 30
+                    magazineSize: 30,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
                 );
             }
         }
@@ -67,14 +76,75 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    config.statsPreset.combat.baseDamageMultiplier,
+                    config.stats.combat.baseDamageMultiplier,
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,
                     recoil: 1f,
                     range: 100f,
-                    magazineSize: 30
+                    magazineSize: 30,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
                 );
+            }
+        }
+
+        public void RegisterAttacker(IBuffSource attacker)
+        {
+            lastAttacker = attacker;
+        }
+
+        private void Update()
+        {
+            if (!IsServer)
+                return;
+
+            CheckDeath();
+        }
+
+        private void CheckDeath()
+        {
+            if (isDead)
+                return;
+
+            if (Facade.Health == null)
+                return;
+
+            if (Facade.Health.CurrentHp > 0)
+                return;
+
+            isDead = true;
+
+            Debug.Log("[Enemy] Died");
+
+            var attackerGO = (lastAttacker as Component)?.gameObject;
+
+            if (attackerGO == null)
+            {
+                Debug.LogWarning("[EnemyStats] Attacker has no GameObject");
+                return;
+            }
+
+            QuestEventBus.Publish(
+                new EnemyKilledEvent(
+                    attackerGO,
+                    config.enemyId,
+                    lastAttacker
+                )
+            );
+
+            if (InstanceFinder.IsServer)
+            {
+                var netObj = GetComponent<NetworkObject>();
+                if (netObj != null)
+                {
+                    InstanceFinder.ServerManager.Despawn(netObj);
+                }
+                else
+                {
+                    Destroy(gameObject); // fallback
+                }
             }
         }
     }

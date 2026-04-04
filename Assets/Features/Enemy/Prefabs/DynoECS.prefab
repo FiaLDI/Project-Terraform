@@ -196,14 +196,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3066295441487001269}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2526760408442954474}
   m_Father: {fileID: 2271843924293331533}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &5739330300266458567
 GameObject:
   m_ObjectHideFlags: 0
@@ -220,16 +220,17 @@ GameObject:
   - component: {fileID: 5953923645941207714}
   - component: {fileID: 1301065148069508600}
   - component: {fileID: 2477525584403044842}
-  - component: {fileID: 8899890071420028954}
   - component: {fileID: 2637786417364705689}
   - component: {fileID: 984756496871841194}
-  - component: {fileID: -6394603796330078313}
   - component: {fileID: 6798121071620844925}
+  - component: {fileID: -6394603796330078313}
   - component: {fileID: 781611609165490846}
   - component: {fileID: -3025476531782380607}
   - component: {fileID: -3956627166990086975}
   - component: {fileID: 6325611359922830475}
   - component: {fileID: -3421877017634375112}
+  - component: {fileID: 4545127908142641363}
+  - component: {fileID: -6083213034349871330}
   m_Layer: 7
   m_Name: DynoECS
   m_TagString: Enemy
@@ -299,13 +300,15 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: 7363443033071884}
+  - {fileID: 3209661115049244770}
   - {fileID: 5953923645941207714}
   - {fileID: 1301065148069508600}
   - {fileID: 2477525584403044842}
-  - {fileID: 8899890071420028954}
-  - {fileID: -6394603796330078313}
+  - {fileID: 984756496871841194}
   - {fileID: 6798121071620844925}
+  - {fileID: -6394603796330078313}
   - {fileID: -3025476531782380607}
+  - {fileID: 0}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -316,7 +319,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584293882857454169
+  _initializedTimestamp: -8584263568032334999
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -331,7 +334,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 21
+  <PrefabId>k__BackingField: 24
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 15237321690452928042
   SceneId: 0
@@ -369,6 +372,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 096cacec036283a439f24afd2613a083, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.UnityIntegration.EnemyActor
+  _componentIndexCache: 1
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
 --- !u!114 &5953923645941207714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -381,7 +387,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a598ae0d0a239844191a98d1694e1afb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Application.BuffSystem
-  _componentIndexCache: 1
+  _componentIndexCache: 2
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
   debugMode: 0
@@ -397,21 +403,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb77eaeb4ffebe34da03788b2f945dbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEcsRuntimeBinder
-  _componentIndexCache: 2
+  _componentIndexCache: 3
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
+  config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
   patrolPoints:
   - {fileID: 276696072031083721}
   - {fileID: 2193609484933478631}
-  - {fileID: 6347864798002571670}
   - {fileID: 2324523982947549952}
-  reachDistance: 0.6
-  minWait: 1
-  maxWait: 3
-  randomPatrol: 1
-  moveSpeed: 3
-  aggroRadius: 8
-  loseAggroRadius: 12
+  - {fileID: 6347864798002571670}
 --- !u!114 &2477525584403044842
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -424,59 +424,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be60d8d74d3efa447a9edb955f896bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEcsMoveBridge
-  _componentIndexCache: 3
-  _addedNetworkObject: {fileID: 5928809208972985904}
-  _networkObjectCache: {fileID: 5928809208972985904}
-  moveSpeed: 3
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
---- !u!114 &8899890071420028954
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739330300266458567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
   _componentIndexCache: 4
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
-  _componentConfiguration: 2
-  _synchronizeParent: 0
-  _packing:
-    Position: 1
-    Rotation: 1
-    Scale: 0
-  _useScaledTime: 1
-  _interpolation: 1
-  _extrapolation: 2
-  _enableTeleport: 0
-  _teleportThreshold: 1
-  _clientAuthoritative: 0
-  _sendToOwner: 1
-  _interval: 1
-  _synchronizePosition: 1
-  _positionSensitivity: 0.001
-  _positionSnapping:
-    X: 0
-    Y: 0
-    Z: 0
-  _synchronizeRotation: 1
-  _rotationSnapping:
-    X: 0
-    Y: 0
-    Z: 0
-  _synchronizeScale: 1
-  _scaleSensitivity: 0.001
-  _scaleSnapping:
-    X: 0
-    Y: 0
-    Z: 0
+  moveSpeed: 3
+  rotationSpeed: 8
+  orbitStrength: 0.6
+  avoidDistance: 1.5
+  sideAvoidDistance: 1.2
+  separationRadius: 1.5
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!54 &2637786417364705689
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -500,10 +462,10 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
-  m_IsKinematic: 1
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 48
+  m_CollisionDetection: 1
 --- !u!114 &984756496871841194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -516,28 +478,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b537345655c7bb7489b9ac7f3d8cbd75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyVisualController
-  animator: {fileID: 9043510921884413813}
-  animatorController: {fileID: 9100000, guid: 17d88a246140d7c439423367a199d771, type: 2}
-  runSpeed: 2.5
-  dampTime: 0.1
-  modelRoot: {fileID: 44806263007014780}
-  rotationSpeed: 8
-  minTurnDistance: 0.2
---- !u!114 &-6394603796330078313
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739330300266458567}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.UnifiedStatsUpdateSystem
   _componentIndexCache: 5
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
+  animator: {fileID: 9043510921884413813}
 --- !u!114 &6798121071620844925
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -557,6 +501,21 @@ MonoBehaviour:
   syncInterval: 0.1
   threshold: 0.05
   lerpSpeed: 12
+--- !u!114 &-6394603796330078313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3aa29dbc520a91744be413a2217b900f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.UnifiedStatsUpdateSystem
+  _componentIndexCache: 7
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
 --- !u!114 &781611609165490846
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -581,7 +540,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbd9dc0870482446b7a003922fa9602, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatsBuffTarget
-  _componentIndexCache: 7
+  _componentIndexCache: 8
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 5928809208972985904}
 --- !u!114 &-3956627166990086975
@@ -620,6 +579,60 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85745559778e9b340bbacedfd6b65084, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.Adapter.EnergyStatsAdapter
+--- !u!114 &4545127908142641363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da32942358ec5fe4daf69db5b510df3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAttackHandler
+  attackDelay: 0.3
+  effect:
+    type: 0
+    targetMode: 1
+    radius: 3
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 1280
+    value: 20
+    damageType: 0
+    buff: {fileID: 0}
+    onlySpecificBuff: 0
+    buffId: 
+    heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 1
+    prefabId: 
+    lifetime: 0
+    useSourcePosition: 0
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []
+--- !u!114 &-6083213034349871330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fe657eeecaeb6b4584bd11793ec29a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 0}
+  lerpRate: 15
 --- !u!1 &5882816248013448756
 GameObject:
   m_ObjectHideFlags: 0

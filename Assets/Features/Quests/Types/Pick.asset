@@ -15,13 +15,13 @@ MonoBehaviour:
   questId: dffffsfsfsd
   questName: sfsfs
   description: fsfsfsdfsf
-  behaviourType: 1
-  enemyDatabase: {fileID: 0}
-  enemyId: 
-  requiredKills: 5
-  itemRequirements:
-  - itemId: 0
-    amountRequired: 1
-  pointId: 0
-  requiredStayTime: 2
-  rewards: []
+  scope: 0
+  killEnemies: []
+  collectItems: []
+  haveItems:
+  - itemId: 1
+    requiredAmount: 5
+  reachPointId: 
+  rewards:
+  - itemId: 1
+    amount: 100

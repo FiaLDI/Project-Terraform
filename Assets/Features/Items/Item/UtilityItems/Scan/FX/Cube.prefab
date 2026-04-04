@@ -143,7 +143,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584289732135530700
+  _initializedTimestamp: -8584267458430362879
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -165,7 +165,7 @@ MonoBehaviour:
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
-    Scale: {x: 0.02, y: 10, z: 0.02}
+    Scale: {x: 0.1, y: 20, z: 0.1}
     IsValid: 1
 --- !u!114 &-2212100175843466566
 MonoBehaviour:

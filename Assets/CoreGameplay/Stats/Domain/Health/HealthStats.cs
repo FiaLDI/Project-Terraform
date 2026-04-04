@@ -149,5 +149,13 @@ namespace Features.Stats.Domain
             NotifyHp();
             NotifyShield();
         }
+
+        public float Debug_BaseHp => _baseHp;
+        public float Debug_AddHp => _hpAdd;
+        public float Debug_MultHp => _hpMult;
+
+        public float Debug_BaseRegen => _baseRegen;
+        public float Debug_AddRegen => _regenAdd;
+        public float Debug_MultRegen => _regenMult;
     }
 }

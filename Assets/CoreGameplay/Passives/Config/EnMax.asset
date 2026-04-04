@@ -15,3 +15,5 @@ MonoBehaviour:
   id: asdasd
   effects:
   - {fileID: 11400000, guid: 5e9e6a57fce279a4d96cae5a79a26a3e, type: 2}
+  abilityModifiers:
+  - {fileID: 11400000, guid: 38c55056635638e45b091a623c250048, type: 2}

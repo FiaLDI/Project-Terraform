@@ -1,6 +1,7 @@
-using UnityEngine;
-using FishNet.Object;
 using System.Collections;
+using FishNet.Object;
+using UnityEngine;
+using static ServerCompositionRoot;
 
 public sealed class WorldReadyStatic : NetworkBehaviour
 {
@@ -30,6 +31,7 @@ public sealed class WorldReadyStatic : NetworkBehaviour
 
         root.Flow.NotifySceneLoaded();
         root.Flow.NotifyWorldPrepared();
+        root.SetWorldType(WorldType.Static);
 
         Debug.Log("[fix-net] Static world RUNNING");
 

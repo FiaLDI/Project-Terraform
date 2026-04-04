@@ -52,6 +52,8 @@ namespace Features.Passives.Net
                 if (so != null) list.Add(so);
                 else Debug.LogWarning($"[PassiveNet] Unknown passive ID: {id}");
             }
+
+            _system.SetPassives(list.ToArray());
         }
 
         // --- SERVER API ---

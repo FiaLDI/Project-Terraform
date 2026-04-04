@@ -1,6 +1,5 @@
 using UnityEngine;
-using Features.Biomes.Runtime.Visual;
-using Features.Biomes.Domain;
+using Biomes.Data;
 
 public class PlayerBiomeTracker : MonoBehaviour
 {

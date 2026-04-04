@@ -11,6 +11,8 @@ namespace Features.Abilities.Domain
         [Header("Identity")]
         public string id;
         public string displayName;
+        [SerializeField] private AbilityTag tags;
+        public AbilityTag Tags => tags;
 
         [Header("UI")]
         public Sprite icon;

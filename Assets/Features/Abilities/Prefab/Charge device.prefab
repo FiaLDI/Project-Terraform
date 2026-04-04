@@ -83,6 +83,7 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: 4179956770763471134}
+  - {fileID: 3431308948029755171}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -93,7 +94,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584344100630879546
+  _initializedTimestamp: -8584267458430362879
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -108,7 +109,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 8
+  <PrefabId>k__BackingField: 15
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 12097150125048999235
   SceneId: 0
@@ -129,6 +130,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d026e36cad502c947826ce6ca81ee300, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkAutoDespawn
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 2630362045978395626}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 2630362045978395626}

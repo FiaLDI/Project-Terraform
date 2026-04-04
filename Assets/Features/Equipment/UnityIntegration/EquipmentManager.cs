@@ -28,6 +28,8 @@ namespace Features.Equipment.UnityIntegration
         private InventoryManager invManager;
 
         private bool initialized;
+        private Transform worldMuzzle;
+        private Transform viewMuzzle;
 
         // ======================================================
         // UNITY
@@ -75,6 +77,12 @@ namespace Features.Equipment.UnityIntegration
             EquipFromInventory();
         }
 
+        public void SetMuzzles(Transform world, Transform view)
+        {
+            worldMuzzle = world;
+            viewMuzzle = view;
+        }
+
         private void SubscribeInventory()
         {
             if (inventory == null)
@@ -120,6 +128,11 @@ namespace Features.Equipment.UnityIntegration
                 ClearLeftHand();
             else
                 EquipLeftHand(model.leftHand.item);
+            
+            usageNet?.SetMuzzles(
+                currentRightHandObject?.transform.Find("Muzzle"),
+                currentViewWeapon?.transform.Find("Muzzle")
+            );
 
             usageNet?.OnHandsUpdated(
                 currentLeftHandObject,
@@ -127,8 +140,25 @@ namespace Features.Equipment.UnityIntegration
                 twoHanded
             );
 
-            if (IsOwner && !IsServerInitialized)
-                usageNet.SyncHands_Server();
+            Transform worldMuzzle = null;
+            Transform viewMuzzle = null;
+
+            if (currentRightHandObject != null)
+            {
+                var provider = currentRightHandObject.GetComponent<WeaponMuzzleProvider>();
+                worldMuzzle = provider != null ? provider.Muzzle : null;
+            }
+
+            if (currentViewWeapon != null)
+            {
+                var provider = currentViewWeapon.GetComponent<WeaponMuzzleProvider>();
+                viewMuzzle = provider != null ? provider.Muzzle : null;
+            }
+
+            usageNet?.SetMuzzles(worldMuzzle, viewMuzzle);
+
+            //if (IsOwner && !IsServerInitialized)
+            //    usageNet.SyncHands_Server();
         }
 
         // ======================================================
@@ -248,8 +278,14 @@ namespace Features.Equipment.UnityIntegration
                 return;
             }
 
+            var control = CameraServiceProvider.Control;
+
             camReg.InitializeFPS();
-            camReg.SetFPSVisible(true);
+
+            // 🔥 показываем ТОЛЬКО если реально FPS
+            bool isFPS = control != null && control.State.Blend < 0.5f;
+
+            camReg.SetFPSVisible(isFPS);
 
             var socket = camReg.WeaponSocket;
 

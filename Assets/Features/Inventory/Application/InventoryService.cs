@@ -3,6 +3,8 @@ using System.Linq;
 using Features.Inventory.Application;
 using Features.Items.Data;
 using Features.Items.Domain;
+using Features.Quests.Application;
+using Features.Quests.Domain;
 
 
 namespace Features.Inventory.Domain
@@ -88,14 +90,11 @@ namespace Features.Inventory.Domain
             return false;
         }
 
-
-
         // =====================================================
         // REMOVE
         // =====================================================
 
-
-        public bool TryRemove(Item def, int count)
+        public bool TryRemove(Item def, int count, object source = null)
         {
             int left = count;
 
@@ -119,6 +118,12 @@ namespace Features.Inventory.Domain
                 if (left <= 0)
                 {
                     OnChanged?.Invoke();
+                    if (source is UnityEngine.GameObject go)
+                    {
+                        QuestEventBus.Publish(
+                            new ItemRemovedEvent(go, def.id, count)
+                        );
+                    }
                     return true;
                 }
             }
@@ -180,11 +185,9 @@ namespace Features.Inventory.Domain
             return true;
         }
 
-
         // =====================================================
         // DROP / EXTRACT
         // =====================================================
-
 
         public ItemInstance ExtractFromSlot(
             InventorySection section,
@@ -202,7 +205,6 @@ namespace Features.Inventory.Domain
                 _ => ItemInstance.Empty
             };
         }
-
         private ItemInstance ExtractFromBag(int index, int amount)
         {
             if (index < 0 || index >= model.main.Count)
@@ -236,39 +238,38 @@ namespace Features.Inventory.Domain
             return extracted;
         }
 
-
         public ItemInstance DropFromHands()
-{
-    if (!model.rightHand.item.IsEmpty)
-    {
-        var item = model.rightHand.item;
-        UnityEngine.Debug.Log(
-            $"[InventoryService] DropFromHands RIGHT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
-            $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
-        );
+        {
+            if (!model.rightHand.item.IsEmpty)
+            {
+                var item = model.rightHand.item;
+                UnityEngine.Debug.Log(
+                    $"[InventoryService] DropFromHands RIGHT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
+                    $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
+                );
 
-        var dropped = model.rightHand.item;
-        model.rightHand.item = ItemInstance.Empty;
-        OnChanged?.Invoke();
-        return dropped;
-    }
+                var dropped = model.rightHand.item;
+                model.rightHand.item = ItemInstance.Empty;
+                OnChanged?.Invoke();
+                return dropped;
+            }
 
-    if (!model.leftHand.item.IsEmpty)
-    {
-        var item = model.leftHand.item;
-        UnityEngine.Debug.Log(
-            $"[InventoryService] DropFromHands LEFT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
-            $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
-        );
+            if (!model.leftHand.item.IsEmpty)
+            {
+                var item = model.leftHand.item;
+                UnityEngine.Debug.Log(
+                    $"[InventoryService] DropFromHands LEFT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
+                    $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
+                );
 
-        var dropped = model.leftHand.item;
-        model.leftHand.item = ItemInstance.Empty;
-        OnChanged?.Invoke();
-        return dropped;
-    }
+                var dropped = model.leftHand.item;
+                model.leftHand.item = ItemInstance.Empty;
+                OnChanged?.Invoke();
+                return dropped;
+            }
 
-    return ItemInstance.Empty;
-}
+            return ItemInstance.Empty;
+        }
 
 
 
