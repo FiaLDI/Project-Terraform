@@ -42,6 +42,13 @@ public class PlayerQuestComponent : NetworkBehaviour
     public override void OnStopServer()
     {
         UnsubscribeEvents();
+
+        if (service != null)
+        {
+            service.OnQuestAdded -= OnQuestAdded;
+            service.OnQuestUpdated -= OnQuestUpdated;
+            service.OnQuestRemoved -= OnQuestRemoved;
+        }
     }
 
     private void Update()

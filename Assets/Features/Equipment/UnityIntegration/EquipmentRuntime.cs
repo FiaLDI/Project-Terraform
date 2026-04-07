@@ -28,6 +28,12 @@ public sealed class EquipmentRuntime
         ItemRuntimeHolder holder,
         Transform overrideMuzzle = null)
     {
+        if (instance == null)
+            return null;
+
+        if (runtimes.TryGetValue(instance, out var existing))
+            return existing;
+
         var item = instance.itemDefinition;
 
         if (item.actions == null)
@@ -37,10 +43,13 @@ public sealed class EquipmentRuntime
         {
             if (action.actionType == actionType)
             {
-                return new ItemRuntimeContext(
+                var runtime = new ItemRuntimeContext(
                     source,
                     action
                 );
+
+                runtimes[instance] = runtime;
+                return runtime;
             }
         }
 

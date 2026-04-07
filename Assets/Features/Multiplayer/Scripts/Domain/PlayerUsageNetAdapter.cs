@@ -6,6 +6,8 @@ using Features.Buffs.Domain;
 using Features.Player.UnityIntegration;
 using Features.Equipment.UnityIntegration;
 using Features.Effects.Domain;
+using Features.Weapons.Domain;
+using Features.Items.Data;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
@@ -117,16 +119,55 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (activeRuntime == null)
             return;
 
-        activeRuntime.OnFire = (pos, dir) =>
+        activeRuntime.OnFire = (_, _) =>
         {
-            if (IsServer)
-                RpcPlayWorldFx(pos, dir);
+            if (!IsServer)
+                return;
+
+            if (!TryGetServerAim(out var ray))
+                return;
+
+            var config = GetCurrentProjectileConfig();
+            if (config == null)
+                return;
+
+            Vector3 origin = ray.origin;
+            Vector3 dir = ray.direction;
+
+            Vector3 hitPoint;
+
+            if (Physics.Raycast(ray, out var hit, 1000f))
+                hitPoint = hit.point;
+            else
+                hitPoint = origin + dir * 1000f;
+
+            ServerNotifyShot(hitPoint);
         };
 
         Vector3 fireOrigin = GetFireOrigin(ray.origin);
 
         activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
         activeRuntime.StartUse(hitPoint);
+    }
+
+    private void PlayViewModelFx(ItemActionType actionType)
+    {
+        if (!IsOwner || viewMuzzle == null)
+            return;
+
+        var config = GetCurrentProjectileConfig();
+        if (config == null)
+            return;
+
+        Vector3 origin = viewMuzzle.position;
+        Vector3 dir = viewMuzzle.forward;
+
+        Vector3 hitPoint = origin + dir * 100f;
+
+        if (Physics.Raycast(origin, dir, out var hit, 1000f))
+            hitPoint = hit.point;
+
+        SpawnVisual(hitPoint, config, true);
     }
 
     private void StopAction(ItemActionType action)
@@ -236,62 +277,21 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     // FX (LOCAL VIEW)
     // ======================================================
 
-    private void PlayViewModelFx(ItemActionType actionType)
-    {
-        if (!IsOwner || viewMuzzle == null)
-            return;
-
-        var equip = GetComponent<EquipmentManager>();
-        var right = equip?.GetRightHandObject();
-
-        var holder = right != null ? right.GetComponent<ItemRuntimeHolder>() : null;
-        if (holder == null)
-            return;
-
-        var item = holder.Instance?.itemDefinition;
-        if (item?.actions == null)
-            return;
-
-        foreach (var action in item.actions)
-        {
-            if (action.actionType != actionType)
-                continue;
-
-            foreach (var effect in action.effects)
-            {
-                if (effect.type != EffectType.SpawnProjectile)
-                    continue;
-
-                var config = effect.projectileConfig;
-                if (config?.clientProjectilePrefab == null)
-                    return;
-
-                var go = Instantiate(
-                    config.clientProjectilePrefab,
-                    viewMuzzle.position,
-                    viewMuzzle.rotation
-                );
-
-                var proj = go.GetComponent<LocalProjectile>();
-                if (proj != null)
-                    proj.Init(viewMuzzle.forward, config.speed);
-
-                return;
-            }
-        }
-    }
-
-    // ======================================================
-    // FX (WORLD)
-    // ======================================================
-
     [ObserversRpc]
-    private void RpcPlayWorldFx(Vector3 pos, Vector3 dir)
+    private void RpcPlayWorldFx(Vector3 hitPoint, string itemId)
     {
         if (IsOwner)
             return;
 
-        Debug.DrawRay(pos, dir * 2f, Color.yellow, 0.2f);
+        var item = ItemRegistrySO.Instance.Get(itemId);
+        if (item == null)
+            return;
+
+        var config = ExtractProjectileConfig(item);
+        if (config == null)
+            return;
+
+        SpawnVisual(hitPoint, config, false);
     }
 
     // ======================================================
@@ -314,6 +314,125 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private void ActionStop_Server(ItemActionType action)
     {
         StopAction(action);
+    }
+
+    [Server]
+    public void ServerNotifyShot(Vector3 hitPoint)
+    {
+        string itemId = rightHandInstance?.itemDefinition?.id;
+
+        if (string.IsNullOrEmpty(itemId))
+            return;
+
+        RpcPlayWorldFx(hitPoint, itemId);
+    }
+
+    private ProjectileConfig GetCurrentProjectileConfig()
+    {
+        var equip = GetComponent<EquipmentManager>();
+        var right = equip?.GetRightHandObject();
+
+        var holder = right != null
+            ? right.GetComponent<ItemRuntimeHolder>()
+            : null;
+
+        var item = holder?.Instance?.itemDefinition;
+
+        if (item?.actions == null)
+            return null;
+
+        foreach (var action in item.actions)
+        {
+            foreach (var effect in action.effects)
+            {
+                if (effect.type == EffectType.SpawnProjectile)
+                    return effect.projectileConfig;
+            }
+        }
+
+        return null;
+    }
+
+    private void SpawnVisual(
+        Vector3 hitPoint,
+        ProjectileConfig config,
+        bool isOwner)
+    {
+        if (config == null)
+            return;
+
+        Vector3 spawnPos = isOwner && viewMuzzle != null
+            ? viewMuzzle.position
+            : worldMuzzle != null
+                ? worldMuzzle.position
+                : transform.position;
+
+        switch (config.visualType)
+        {
+            case ProjectileVisualType.Trail:
+                {
+                    var go = ProjectilePool.Instance.Get(
+                        config.clientProjectilePrefab,
+                        spawnPos,
+                        Quaternion.identity
+                    );
+
+                    var trail = go.GetComponent<TrailProjectile>();
+                    if (trail != null)
+                        trail.Init(spawnPos, hitPoint, config.lifetime);
+
+                    break;
+                }
+
+            case ProjectileVisualType.Laser:
+                {
+                    var go = ProjectilePool.Instance.Get(
+                        config.clientProjectilePrefab,
+                        spawnPos,
+                        Quaternion.identity
+                    );
+
+                    var laser = go.GetComponent<LaserBeam>();
+                    if (laser != null)
+                        laser.Init(spawnPos, hitPoint, config.lifetime);
+
+                    break;
+                }
+
+            case ProjectileVisualType.Projectile:
+                {
+                    var dir = (hitPoint - spawnPos).normalized;
+
+                    var go = ProjectilePool.Instance.Get(
+                        config.clientProjectilePrefab,
+                        spawnPos,
+                        Quaternion.LookRotation(dir)
+                    );
+
+                    var proj = go.GetComponent<LocalProjectile>();
+                    if (proj != null)
+                        proj.Init(dir, config.speed);
+
+                    break;
+                }
+        }
+    }
+
+    private ProjectileConfig ExtractProjectileConfig(Item item)
+    {
+        if (item?.actions == null)
+            return null;
+
+        foreach (var action in item.actions)
+        {
+            foreach (var effect in action.effects)
+            {
+                if (effect.type == EffectType.SpawnProjectile)
+                    return effect.projectileConfig;
+            }
+        }
+
+        return null;
     }
 
     public bool HasWeapon()

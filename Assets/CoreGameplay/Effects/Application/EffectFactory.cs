@@ -67,7 +67,11 @@ namespace Features.Effects.Application
                     new SpawnProjectileEffect(
                         def.projectileConfig
                     ),
-
+                
+                EffectType.SpawnImpact =>
+                    new SpawnImpactEffect(
+                        def.impactFxId
+                    ),
 
                 _ => null
             };

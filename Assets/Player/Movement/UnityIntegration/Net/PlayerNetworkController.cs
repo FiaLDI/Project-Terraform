@@ -33,7 +33,6 @@ public class PlayerNetworkController : NetworkBehaviour
         movement = GetComponent<DeterministicMovement>();
         visualPosition = transform.position;
 
-        // 🔥 ВАЖНО
         previousPosition = transform.position;
         currentPosition  = transform.position;
 
@@ -162,6 +161,20 @@ public class PlayerNetworkController : NetworkBehaviour
             SendStateTargetRpc(Owner, state);
 
             inputBuffer.Remove(simulationTick - 100);
+        }
+
+        const int BUFFER_LIMIT = 256;
+
+        if (inputBuffer.Count > BUFFER_LIMIT)
+        {
+            int oldTick = currentTick - BUFFER_LIMIT;
+            inputBuffer.Remove(oldTick);
+        }
+
+        if (stateBuffer.Count > BUFFER_LIMIT)
+        {
+            int oldTick = currentTick - BUFFER_LIMIT;
+            stateBuffer.Remove(oldTick);
         }
     }
 

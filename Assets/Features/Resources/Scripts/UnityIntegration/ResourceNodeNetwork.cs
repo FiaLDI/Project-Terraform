@@ -1,10 +1,26 @@
+using System;
+using Features.Buffs.Application;
+using Features.Buffs.Domain;
 using Features.Resources.UnityIntegration;
+using Features.Stats.Domain;
 using FishNet.Object;
 using UnityEngine;
 
-public class ResourceNodeNetwork : NetworkBehaviour
+public class ResourceNodeNetwork : NetworkBehaviour, IBuffTarget, IBuffSource
 {
     private ResourceNodePresenter presenter;
+
+    public event Action OnReady;
+
+    public Transform Transform => transform;
+
+    public GameObject GameObject => gameObject;
+
+    public BuffSystem BuffSystem => null;
+
+    public IBuffSource OwnerSource => null;
+
+    public bool IsReady => true;
 
     private void Awake()
     {
@@ -61,5 +77,11 @@ public class ResourceNodeNetwork : NetworkBehaviour
         {
             presenter.SetHealthVisual(health);
         }
+    }
+
+    public IStatsFacade GetServerStats()
+    {
+
+        return null;
     }
 }

@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# UNT0007: Null coalescing on Unity objects
+dotnet_diagnostic.UNT0007.severity = silent
