@@ -14,20 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Items.Data.Item
   id: first_scan
   itemName: Scaner
-  description: Can
-  icon: {fileID: 21300000, guid: 336c44d818d49bc4ea6bfd730ccf9d8a, type: 3}
+  description: Can scan
+  icon: {fileID: 21300000, guid: 2f6b3098f32cc3a4eb8e212b5ae68813, type: 3}
   isTwoHanded: 0
   category: 3
   isStackable: 0
   maxStackAmount: 1
   equippedBuffs: []
   upgrades: []
-  worldPrefab: {fileID: 3952411509711560424, guid: fac2248d998e43b4d8dbc4c0eb25b2b7, type: 3}
-  equippedPrefab: {fileID: 2901227947270850009, guid: 268a7b8d19aac4847bd331692331f9d4, type: 3}
-  viewModelPrefab: {fileID: 3592765929068593648, guid: 2adcf5b39e1302b48b7bfbc1880da45b, type: 3}
+  worldPrefab: {fileID: 4611787718341025161, guid: c85416abe625f114a8e7bcaaee3b48e6, type: 3}
+  equippedPrefab: {fileID: 7046406216703117767, guid: f419a9f1f14148d418f8c7592fdaa4cd, type: 3}
+  viewModelPrefab: {fileID: 5326421530844226549, guid: 83459081dcfcaa24480c9547f3744894, type: 3}
   actions:
   - actionType: 0
-    cooldown: 5
+    cooldown: 30
     tickInterval: 0.01
     windupTime: 0
     reloadTime: 0
@@ -46,6 +46,10 @@ MonoBehaviour:
       onlySpecificBuff: 0
       buffId: 
       heightOffset: 1.5
+      coneAngle: 0
+      coneDistance: 0
+      selectClosest: 0
+      impactFxId: 
       prefabId: scan-item
       lifetime: 3
       useSourcePosition: 0
