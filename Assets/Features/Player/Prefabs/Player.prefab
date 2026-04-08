@@ -352,7 +352,6 @@ GameObject:
   - component: {fileID: 5530530445021933545}
   - component: {fileID: 217312396618154767}
   - component: {fileID: 2751139509848182196}
-  - component: {fileID: 2364264481245977081}
   - component: {fileID: 4130661444078387841}
   - component: {fileID: 8363241993167751770}
   - component: {fileID: 6311823513652316802}
@@ -610,28 +609,6 @@ MonoBehaviour:
   maxDistance: 3
   maxAngle: 45
   cleanupInterval: 60
---- !u!95 &2364264481245977081
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7813149641224511590}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &4130661444078387841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -781,26 +758,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 2683651113482784269}
   fpsPoint: {fileID: 5175878013477234654}
-  headTransform: {fileID: 0}
   visualRoot: {fileID: 5017748270277261448}
-  collisionMask:
-    serializedVersion: 2
-    m_Bits: 1791
-  collisionRadius: 0.3
-  minCameraDistance: 0.5
-  shoulderOffset: {x: 0.7, y: -0.9, z: 0}
-  maxTpsDistance: 1.5
-  baseFov: 75
-  sprintFov: 90
-  fovSpeed: 8
+  pitchMin: -80
+  pitchMax: 80
   fpsMask:
     serializedVersion: 2
     m_Bits: 6143
   tpsMask:
     serializedVersion: 2
     m_Bits: 4095
-  adsFov: 65
-  adsDistance: 2
+  distance: 1.5
+  shoulderOffset: {x: 0.7, y: -0.9, z: 0}
 --- !u!114 &5907872678837714149
 MonoBehaviour:
   m_ObjectHideFlags: 0

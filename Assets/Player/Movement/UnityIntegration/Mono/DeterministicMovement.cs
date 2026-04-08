@@ -85,7 +85,7 @@ public class DeterministicMovement : NetworkBehaviour
         // ================= ROTATION =================
 
         currentYaw = cmd.Yaw;
-        transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
+        // transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         // ================= SPEED =================
 
@@ -111,9 +111,7 @@ public class DeterministicMovement : NetworkBehaviour
             controller.center = new Vector3(0, normalHeight / 2f, 0);
         }
 
-        // ================= MOVE =================
-
-        Quaternion lookRot = Quaternion.Euler(0f, cmd.Yaw, 0f);
+        Quaternion lookRot = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
         Vector3 forward = lookRot * Vector3.forward;
         Vector3 right   = lookRot * Vector3.right;
@@ -134,7 +132,6 @@ public class DeterministicMovement : NetworkBehaviour
                 verticalVelocity = -2f;
         }
 
-        // 🔥 ГАРАНТИРОВАННЫЙ ПРЫЖОК
         if (jumpBufferTimer > 0f && coyoteTimer > 0f && !cmd.Crouch)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * Gravity);
@@ -148,15 +145,17 @@ public class DeterministicMovement : NetworkBehaviour
             verticalVelocity += Gravity * dt;
         }
 
-        // ================= APPLY =================
-
         Velocity = new Vector3(
             moveDir.x,
             verticalVelocity,
             moveDir.z
         );
 
-        controller.Move(Velocity * dt);
+        Vector3 horizontal = new Vector3(moveDir.x, 0, moveDir.z);
+        Vector3 vertical   = new Vector3(0, verticalVelocity, 0);
+
+        controller.Move(horizontal * dt);
+        controller.Move(vertical * dt);
     }
 
     public void Teleport(Vector3 position, float yaw, float verticalVel)
