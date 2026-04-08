@@ -14,7 +14,7 @@ static class EffectCache
 
         if (cache.TryGetValue(def, out var e))
             return e;
-
+        
         e = EffectFactory.Create(def);
         if (e == null)
         {

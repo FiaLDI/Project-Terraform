@@ -54,7 +54,7 @@ namespace Features.Effects.Application
                 EffectType.Scan =>
                     new ScanEffect(def.value),
                 
-               EffectType.ScanResourceEffect =>
+            EffectType.ScanResourceEffect =>
                     new ScanResourceEffect(
                         def.prefabId,
                         def.radius,

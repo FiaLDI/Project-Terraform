@@ -31,7 +31,15 @@ namespace Features.Effects.Application
 
             var targets = TargetResolver.Resolve(def, baseContext);
 
-            if (targets == null || targets.Length == 0)
+            bool requiresTarget = def.type switch
+            {
+                EffectType.SpawnPrefab => false,
+                EffectType.SpawnImpact => false,
+                EffectType.SpawnProjectile => false,
+                _ => true
+            };
+
+            if (requiresTarget && (targets == null || targets.Length == 0))
                 return;
 
             var ctx = EffectContextPool.Get(

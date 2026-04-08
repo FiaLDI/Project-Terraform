@@ -20,6 +20,8 @@ namespace Features.Effects.Application
 
         public void Apply(EffectContext context)
         {
+            UnityEngine.Debug.Log("TRY SPAWN");
+
             if (SpawnService.Instance == null)
             {
                 UnityEngine.Debug.LogError("SpawnService.Instance NULL");
