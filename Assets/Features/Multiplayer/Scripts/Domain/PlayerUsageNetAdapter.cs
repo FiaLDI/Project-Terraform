@@ -33,6 +33,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private PlayerCameraController camController;
 
     private readonly Dictionary<GameObject, IProjectileVisual> visualCache = new();
+    private Vector3 lastHitPoint;
 
     private void Awake()
     {
@@ -113,8 +114,8 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        // 🔥 ЛОКАЛЬНЫЙ ВИЗУАЛ ТОЛЬКО ЕСЛИ ЭТО СТРЕЛЬБА
-        PlayLocalShot(action);
+        if (lastHitPoint != null)
+            PlayLocalShot(action, lastHitPoint);
 
         if (IsServerInitialized)
         {
@@ -140,11 +141,27 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             return;
 
         Vector3 hitPoint;
+        Vector3 hitNormal;
 
         if (Physics.Raycast(ray, out var hit, 1000f))
+        {
             hitPoint = hit.point;
+            hitNormal = hit.normal; // 🔥 ВОТ ЭТО НОВОЕ
+        }
         else
+        {
             hitPoint = ray.origin + ray.direction * 1000f;
+            hitNormal = -ray.direction;
+        }
+
+        var effectContext = new HitEffectContext(
+            source,
+            null,               // targets (если нет — ок)
+            ray.origin,
+            ray.direction,
+            hitPoint,
+            hitNormal
+        );
 
         activeRuntime = equipmentRuntime.GetRuntime(
             rightHandInstance,
@@ -155,6 +172,8 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (activeRuntime == null)
             return;
 
+        Vector3 finalHitPoint = hitPoint;
+
         activeRuntime.OnFire = (_, _) =>
         {
             if (!IsServer)
@@ -164,17 +183,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             if (config == null)
                 return;
 
-            if (!TryGetServerAim(out var serverRay))
-                return;
-
-            Vector3 serverHit;
-
-            if (Physics.Raycast(serverRay, out var hit, 1000f))
-                serverHit = hit.point;
-            else
-                serverHit = serverRay.origin + serverRay.direction * 1000f;
-
-            ServerNotifyShot(serverHit);
+            ServerNotifyShot(finalHitPoint);
         };
 
         Vector3 fireOrigin = GetFireOrigin(ray.origin);
@@ -196,13 +205,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     // LOCAL VISUAL
     // ======================================================
 
-    private void PlayLocalShot(ItemActionType action)
+    private void PlayLocalShot(ItemActionType action, Vector3 hitPoint)
     {
         var config = GetCurrentProjectileConfig(action);
         if (config == null)
-            return;
-
-        if (!TryGetAimData(out _, out _, out var hitPoint))
             return;
 
         SpawnVisual(hitPoint, config, true);
@@ -235,6 +241,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             {
                 if (TryGetAimData(out var origin, out _, out var hitPoint))
                 {
+                    lastHitPoint = hitPoint;
                     activeRuntime.UpdateAim(origin, hitPoint, true);
                 }
             }
@@ -333,7 +340,9 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (config == null || config.clientProjectilePrefab == null)
             return;
 
-        Vector3 spawnPos = isOwner && viewMuzzle != null
+        bool isFPS = camController != null && camController.IsFPS();
+
+        Vector3 spawnPos = isFPS && viewMuzzle != null
             ? viewMuzzle.position
             : worldMuzzle != null
                 ? worldMuzzle.position

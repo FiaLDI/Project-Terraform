@@ -42,12 +42,29 @@ namespace Features.Effects.Application
             if (requiresTarget && (targets == null || targets.Length == 0))
                 return;
 
-            var ctx = EffectContextPool.Get(
-                baseContext.Source,
-                targets,
-                baseContext.Origin,
-                baseContext.Direction
-            );
+            EffectContext ctx;
+
+            if (baseContext is HitEffectContext hit)
+            {
+                var hitCtx = EffectContextPool.Get<HitEffectContext>(
+                    baseContext.Source,
+                    targets,
+                    baseContext.Origin,
+                    baseContext.Direction
+                );
+
+                hitCtx.UpdateHit(hit.HitPoint, hit.HitNormal);
+                ctx = hitCtx;
+            }
+            else
+            {
+                ctx = EffectContextPool.Get(
+                    baseContext.Source,
+                    targets,
+                    baseContext.Origin,
+                    baseContext.Direction
+                );
+            }
 
             try
             {

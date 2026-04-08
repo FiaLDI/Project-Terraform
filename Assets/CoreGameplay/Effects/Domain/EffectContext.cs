@@ -10,6 +10,8 @@ namespace Features.Effects.Domain
         public Vector3 Origin;
         public Vector3 Direction;
 
+        public EffectContext() { }
+
         public EffectContext(
             IBuffSource source,
             IBuffTarget[] targets,

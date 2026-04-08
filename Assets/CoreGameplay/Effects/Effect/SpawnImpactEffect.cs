@@ -1,31 +1,30 @@
-using UnityEngine;
-using FishNet;
 using Features.Effects.Domain;
+using FishNet;
 
-namespace Features.Effects.Application
+public sealed class SpawnImpactEffect : IEffect
 {
-    public sealed class SpawnImpactEffect : IEffect
+    private readonly string _fxId;
+
+    public SpawnImpactEffect(string fxId)
     {
-        private readonly string _fxId;
+        _fxId = fxId;
+    }
 
-        public SpawnImpactEffect(string fxId)
-        {
-            _fxId = fxId;
-        }
+    public void Apply(EffectContext context)
+    {
+        if (!InstanceFinder.IsServer)
+            return;
 
-        public void Apply(EffectContext context)
-        {
-            if (!InstanceFinder.IsServer)
-                return;
+        if (string.IsNullOrEmpty(_fxId))
+            return;
 
-            if (string.IsNullOrEmpty(_fxId))
-                return;
+        if (context is not IHitPointData hitData)
+            return;
 
-            ImpactFxDispatcher.Instance.ServerSpawn(
-                context.Origin,
-                context.Direction,
-                _fxId
-            );
-        }
+        ImpactFxDispatcher.Instance.ServerSpawn(
+            hitData.HitPoint,
+            hitData.HitNormal,
+            _fxId
+        );
     }
 }
