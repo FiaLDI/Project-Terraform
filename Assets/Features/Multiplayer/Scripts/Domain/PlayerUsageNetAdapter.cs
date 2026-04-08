@@ -113,8 +113,8 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        // 🔥 ЛОКАЛЬНЫЙ ВЫСТРЕЛ (фикс твоей проблемы)
-        PlayLocalShot();
+        // 🔥 ЛОКАЛЬНЫЙ ВИЗУАЛ ТОЛЬКО ЕСЛИ ЭТО СТРЕЛЬБА
+        PlayLocalShot(action);
 
         if (IsServerInitialized)
         {
@@ -155,13 +155,13 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (activeRuntime == null)
             return;
 
-        // =========================
-        // SERVER LOGIC
-        // =========================
-
         activeRuntime.OnFire = (_, _) =>
         {
             if (!IsServer)
+                return;
+
+            var config = GetCurrentProjectileConfig(action);
+            if (config == null)
                 return;
 
             if (!TryGetServerAim(out var serverRay))
@@ -169,8 +169,8 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
             Vector3 serverHit;
 
-            if (Physics.Raycast(serverRay, out var serverHitInfo, 1000f))
-                serverHit = serverHitInfo.point;
+            if (Physics.Raycast(serverRay, out var hit, 1000f))
+                serverHit = hit.point;
             else
                 serverHit = serverRay.origin + serverRay.direction * 1000f;
 
@@ -183,30 +183,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         activeRuntime.StartUse(hitPoint);
     }
 
-    // ======================================================
-    // ACTION STOP
-    // ======================================================
-
-    public void ActionStop(ItemActionType action)
-    {
-        if (!IsOwner)
-            return;
-
-        if (IsServerInitialized)
-        {
-            StopAction(action);
-            return;
-        }
-
-        ActionStop_Server(action);
-    }
-
-    [ServerRpc]
-    private void ActionStop_Server(ItemActionType action)
-    {
-        StopAction(action);
-    }
-
     private void StopAction(ItemActionType action)
     {
         if (activeRuntime == null)
@@ -217,12 +193,12 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     // ======================================================
-    // LOCAL VISUAL (ВАЖНО)
+    // LOCAL VISUAL
     // ======================================================
 
-    private void PlayLocalShot()
+    private void PlayLocalShot(ItemActionType action)
     {
-        var config = GetCurrentProjectileConfig();
+        var config = GetCurrentProjectileConfig(action);
         if (config == null)
             return;
 
@@ -349,13 +325,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     // ======================================================
-    // VISUAL SPAWN
+    // VISUAL
     // ======================================================
 
-    private void SpawnVisual(
-        Vector3 hitPoint,
-        ProjectileConfig config,
-        bool isOwner)
+    private void SpawnVisual(Vector3 hitPoint, ProjectileConfig config, bool isOwner)
     {
         if (config == null || config.clientProjectilePrefab == null)
             return;
@@ -396,7 +369,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     // CONFIG
     // ======================================================
 
-    private ProjectileConfig GetCurrentProjectileConfig()
+    private ProjectileConfig GetCurrentProjectileConfig(ItemActionType actionType)
     {
         var equip = GetComponent<EquipmentManager>();
         var right = equip?.GetRightHandObject();
@@ -412,6 +385,9 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
         foreach (var action in item.actions)
         {
+            if (action.actionType != actionType)
+                continue;
+
             foreach (var effect in action.effects)
             {
                 if (effect.type == EffectType.SpawnProjectile)
@@ -437,6 +413,30 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         }
 
         return null;
+    }
+
+    // ======================================================
+    // STOP
+    // ======================================================
+
+    public void ActionStop(ItemActionType action)
+    {
+        if (!IsOwner)
+            return;
+
+        if (IsServerInitialized)
+        {
+            StopAction(action);
+            return;
+        }
+
+        ActionStop_Server(action);
+    }
+
+    [ServerRpc]
+    private void ActionStop_Server(ItemActionType action)
+    {
+        StopAction(action);
     }
 
     public bool HasWeapon()

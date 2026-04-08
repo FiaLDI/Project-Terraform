@@ -17,6 +17,7 @@ MonoBehaviour:
   description: Can scan
   icon: {fileID: 21300000, guid: 2f6b3098f32cc3a4eb8e212b5ae68813, type: 3}
   isTwoHanded: 0
+  weaponPose: 1
   category: 3
   isStackable: 0
   maxStackAmount: 1

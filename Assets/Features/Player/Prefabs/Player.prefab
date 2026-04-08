@@ -788,8 +788,8 @@ MonoBehaviour:
     m_Bits: 1791
   collisionRadius: 0.3
   minCameraDistance: 0.5
-  shoulderOffset: {x: 0.5, y: 0, z: 0}
-  maxTpsDistance: 5
+  shoulderOffset: {x: 0.7, y: -0.9, z: 0}
+  maxTpsDistance: 1.5
   baseFov: 75
   sprintFov: 90
   fovSpeed: 8

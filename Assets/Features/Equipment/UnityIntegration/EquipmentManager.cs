@@ -119,6 +119,7 @@ namespace Features.Equipment.UnityIntegration
             if (model == null)
                 return;
 
+            // ===== EQUIP HANDS =====
             EquipRightHand(model.rightHand.item);
 
             bool twoHanded =
@@ -128,7 +129,8 @@ namespace Features.Equipment.UnityIntegration
                 ClearLeftHand();
             else
                 EquipLeftHand(model.leftHand.item);
-            
+
+            // ===== MUZZLES =====
             usageNet?.SetMuzzles(
                 currentRightHandObject?.transform.Find("Muzzle"),
                 currentViewWeapon?.transform.Find("Muzzle")
@@ -157,8 +159,18 @@ namespace Features.Equipment.UnityIntegration
 
             usageNet?.SetMuzzles(worldMuzzle, viewMuzzle);
 
-            //if (IsOwner && !IsServerInitialized)
-            //    usageNet.SyncHands_Server();
+            var anim = GetComponent<PlayerAnimationController>();
+
+            int pose = 0;
+
+            var def = model.rightHand.item?.itemDefinition;
+
+            if (def != null)
+            {
+                pose = def.GetWeaponPose();
+            }
+
+            anim?.SetWeaponPose(pose);
         }
 
         // ======================================================

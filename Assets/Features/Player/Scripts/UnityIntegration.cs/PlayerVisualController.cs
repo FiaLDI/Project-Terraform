@@ -68,6 +68,7 @@ public class PlayerVisualController : MonoBehaviour
             Debug.LogError("[PlayerVisualController] CharacterSockets NOT FOUND on model!");
 
         GetComponent<PlayerAnimationController>()?.SetAnimator(_animator);
+        GetComponent<EquipmentManager>()?.EquipFromInventory();
         GetComponent<EquipmentManager>()?.ApplySockets(Sockets);
         GetComponent<PlayerCameraController>().SetHead(Sockets.head);
 

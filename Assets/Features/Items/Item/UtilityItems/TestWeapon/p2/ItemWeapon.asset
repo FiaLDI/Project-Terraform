@@ -17,6 +17,7 @@ MonoBehaviour:
   description: Weapon
   icon: {fileID: 21300000, guid: 75aa400a89e99bd4f849e89526a8eabc, type: 3}
   isTwoHanded: 1
+  weaponPose: 2
   category: 1
   isStackable: 0
   maxStackAmount: 1

@@ -13,7 +13,12 @@ namespace Features.Items.Data
         public string description;
         public Sprite icon;
 
+        [Header("Handling")]
         public bool isTwoHanded;
+
+        [Tooltip("0 = none, 1 = one-hand, 2 = two-hand")]
+        [Range(0, 2)]
+        public int weaponPose = 0;
 
         [Header("Category")]
         public ItemCategory category;
@@ -23,7 +28,7 @@ namespace Features.Items.Data
         public int maxStackAmount = 1;
 
         // =============================
-        // NEW SYSTEM
+        // BUFFS
         // =============================
 
         [Header("Buff Applied When Equipped")]
@@ -42,5 +47,17 @@ namespace Features.Items.Data
 
         [Header("Actions")]
         public ItemActionDefinition[] actions;
+
+        // =============================
+        // HELPER
+        // =============================
+
+        public int GetWeaponPose()
+        {
+            if (isTwoHanded)
+                return 2;
+
+            return weaponPose;
+        }
     }
 }
