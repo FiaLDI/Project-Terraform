@@ -31,6 +31,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private Camera cachedCam;
     private PlayerCameraController camController;
+
     private readonly Dictionary<GameObject, IProjectileVisual> visualCache = new();
 
     private void Awake()
@@ -41,6 +42,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         cachedCam = Camera.main;
         camController = GetComponent<PlayerCameraController>();
     }
+
+    // ======================================================
+    // SETUP
+    // ======================================================
 
     public void SetMuzzles(Transform world, Transform view)
     {
@@ -65,6 +70,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         ray = new Ray(serverAimOrigin, serverAimForward);
         return hasServerAim;
     }
+
+    // ======================================================
+    // AIM
+    // ======================================================
 
     private bool TryGetAimData(out Vector3 origin, out Vector3 direction, out Vector3 hitPoint)
     {
@@ -94,11 +103,18 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
         return true;
     }
-    
+
+    // ======================================================
+    // ACTION START
+    // ======================================================
+
     public void ActionStart(ItemActionType action)
     {
         if (!IsOwner)
             return;
+
+        // 🔥 ЛОКАЛЬНЫЙ ВЫСТРЕЛ (фикс твоей проблемы)
+        PlayLocalShot();
 
         if (IsServerInitialized)
         {
@@ -130,9 +146,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         else
             hitPoint = ray.origin + ray.direction * 1000f;
 
-        if (IsOwner)
-            PlayViewModelFx(action);
-
         activeRuntime = equipmentRuntime.GetRuntime(
             rightHandInstance,
             action,
@@ -142,24 +155,26 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (activeRuntime == null)
             return;
 
+        // =========================
+        // SERVER LOGIC
+        // =========================
+
         activeRuntime.OnFire = (_, _) =>
         {
             if (!IsServer)
                 return;
 
-            if (!TryGetServerAim(out var ray))
+            if (!TryGetServerAim(out var serverRay))
                 return;
 
-            Vector3 targetPoint;
+            Vector3 serverHit;
 
-            if (Physics.Raycast(ray, out var camHit, 1000f))
-                targetPoint = camHit.point;
+            if (Physics.Raycast(serverRay, out var serverHitInfo, 1000f))
+                serverHit = serverHitInfo.point;
             else
-                targetPoint = ray.origin + ray.direction * 1000f;
+                serverHit = serverRay.origin + serverRay.direction * 1000f;
 
-            Vector3 finalHit = targetPoint;
-
-            ServerNotifyShot(finalHit);
+            ServerNotifyShot(serverHit);
         };
 
         Vector3 fireOrigin = GetFireOrigin(ray.origin);
@@ -168,19 +183,28 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         activeRuntime.StartUse(hitPoint);
     }
 
-    private void PlayViewModelFx(ItemActionType actionType)
+    // ======================================================
+    // ACTION STOP
+    // ======================================================
+
+    public void ActionStop(ItemActionType action)
     {
         if (!IsOwner)
             return;
 
-        var config = GetCurrentProjectileConfig();
-        if (config == null)
+        if (IsServerInitialized)
+        {
+            StopAction(action);
             return;
+        }
 
-        if (!TryGetAimData(out var origin, out _, out var hitPoint))
-            return;
+        ActionStop_Server(action);
+    }
 
-        SpawnVisual(hitPoint, config, true);
+    [ServerRpc]
+    private void ActionStop_Server(ItemActionType action)
+    {
+        StopAction(action);
     }
 
     private void StopAction(ItemActionType action)
@@ -190,6 +214,22 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
         activeRuntime.StopUse();
         activeRuntime = null;
+    }
+
+    // ======================================================
+    // LOCAL VISUAL (ВАЖНО)
+    // ======================================================
+
+    private void PlayLocalShot()
+    {
+        var config = GetCurrentProjectileConfig();
+        if (config == null)
+            return;
+
+        if (!TryGetAimData(out _, out _, out var hitPoint))
+            return;
+
+        SpawnVisual(hitPoint, config, true);
     }
 
     // ======================================================
@@ -277,7 +317,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     // ======================================================
-    // FX
+    // RPC VISUAL
     // ======================================================
 
     [ObserversRpc]
@@ -307,13 +347,17 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
         RpcPlayWorldFx(hitPoint, itemId);
     }
-    
+
+    // ======================================================
+    // VISUAL SPAWN
+    // ======================================================
+
     private void SpawnVisual(
         Vector3 hitPoint,
         ProjectileConfig config,
         bool isOwner)
     {
-        if (config == null)
+        if (config == null || config.clientProjectilePrefab == null)
             return;
 
         Vector3 spawnPos = isOwner && viewMuzzle != null
@@ -331,7 +375,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             spawnPos,
             rot
         );
-        
+
         if (!visualCache.TryGetValue(go, out var visual))
         {
             visual = go.GetComponent<IProjectileVisual>();
@@ -347,26 +391,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             Debug.LogError("NO IProjectileVisual ON PREFAB");
         }
     }
-    
-    public void ActionStop(ItemActionType action)
-    {
-        if (!IsOwner)
-            return;
 
-        if (IsServerInitialized)
-        {
-            StopAction(action);
-            return;
-        }
-
-        ActionStop_Server(action);
-    }
-
-    [ServerRpc]
-    private void ActionStop_Server(ItemActionType action)
-    {
-        StopAction(action);
-    }
+    // ======================================================
+    // CONFIG
+    // ======================================================
 
     private ProjectileConfig GetCurrentProjectileConfig()
     {
