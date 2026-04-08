@@ -10,7 +10,7 @@ public sealed class EquipmentRuntime
 {
     private readonly IBuffSource source;
 
-    private readonly Dictionary<ItemInstance, ItemRuntimeContext> runtimes
+    private readonly Dictionary<(ItemInstance, ItemActionType), ItemRuntimeContext> runtimes
         = new();
 
     public EquipmentRuntime(IBuffSource source)
@@ -31,7 +31,9 @@ public sealed class EquipmentRuntime
         if (instance == null)
             return null;
 
-        if (runtimes.TryGetValue(instance, out var existing))
+        var key = (instance, actionType);
+
+        if (runtimes.TryGetValue(key, out var existing))
             return existing;
 
         var item = instance.itemDefinition;
@@ -48,7 +50,7 @@ public sealed class EquipmentRuntime
                     action
                 );
 
-                runtimes[instance] = runtime;
+                runtimes[key] = runtime;
                 return runtime;
             }
         }
@@ -65,12 +67,19 @@ public sealed class EquipmentRuntime
         if (instance == null)
             return;
 
-        if (!runtimes.TryGetValue(instance, out var runtime))
-            return;
+        var keysToRemove = new List<(ItemInstance, ItemActionType)>();
 
-        runtime.StopUse();
+        foreach (var kv in runtimes)
+        {
+            if (kv.Key.Item1 == instance)
+            {
+                kv.Value.StopUse();
+                keysToRemove.Add(kv.Key);
+            }
+        }
 
-        runtimes.Remove(instance);
+        foreach (var key in keysToRemove)
+            runtimes.Remove(key);
     }
 
     // =====================================================

@@ -114,7 +114,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        if (lastHitPoint != null)
+        if (lastHitPoint != Vector3.zero)
             PlayLocalShot(action, lastHitPoint);
 
         if (IsServerInitialized)
