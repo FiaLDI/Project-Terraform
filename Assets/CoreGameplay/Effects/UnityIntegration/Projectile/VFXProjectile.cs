@@ -1,37 +1,34 @@
 using UnityEngine;
+using UnityEngine.VFX;
 
-[RequireComponent(typeof(TrailRenderer))]
-public class TrailProjectile : MonoBehaviour, IProjectileVisual 
+public class VFXProjectile : MonoBehaviour, IProjectileVisual
 {
-    private TrailRenderer trail;
+    private VisualEffect vfx;
     private PooledProjectile pooled;
 
-    private float lifetime;
     private float timer;
+    private float lifetime;
 
-    private Vector3 start;
-    private Vector3 end;
+    private static readonly int StartID = Shader.PropertyToID("start");
+    private static readonly int EndID = Shader.PropertyToID("end");
 
     private void Awake()
     {
-        trail = GetComponent<TrailRenderer>();
+        vfx = GetComponent<VisualEffect>();
         pooled = GetComponent<PooledProjectile>();
     }
 
     public void Init(Vector3 start, Vector3 end, float duration)
     {
-        this.start = start;
-        this.end = end;
-
-        lifetime = Mathf.Min(duration, 0.2f);
+        lifetime = Mathf.Min(duration, 0.15f);
         timer = 0f;
 
         transform.position = start;
 
-        trail.Clear();
-        trail.emitting = true;
+        vfx.SetVector3(StartID, start);
+        vfx.SetVector3(EndID, end);
 
-        transform.position = end;
+        vfx.Play();
     }
 
     private void Update()
@@ -39,9 +36,7 @@ public class TrailProjectile : MonoBehaviour, IProjectileVisual
         timer += Time.deltaTime;
 
         if (timer >= lifetime)
-        {
             Release();
-        }
     }
 
     private void Release()
@@ -52,11 +47,5 @@ public class TrailProjectile : MonoBehaviour, IProjectileVisual
             pooled.Release();
         else
             Destroy(gameObject);
-    }
-
-    private void OnDisable()
-    {
-        if (trail != null)
-            trail.Clear();
     }
 }

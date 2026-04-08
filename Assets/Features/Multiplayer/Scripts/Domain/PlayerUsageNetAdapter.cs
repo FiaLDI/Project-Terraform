@@ -8,6 +8,7 @@ using Features.Equipment.UnityIntegration;
 using Features.Effects.Domain;
 using Features.Weapons.Domain;
 using Features.Items.Data;
+using System.Collections.Generic;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
@@ -30,6 +31,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private Camera cachedCam;
     private PlayerCameraController camController;
+    private readonly Dictionary<GameObject, IProjectileVisual> visualCache = new();
 
     private void Awake()
     {
@@ -45,10 +47,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         worldMuzzle = world;
         viewMuzzle = view;
     }
-
-    // ======================================================
-    // HANDS
-    // ======================================================
 
     public void OnHandsUpdated(GameObject left, GameObject right, bool twoHanded)
     {
@@ -68,10 +66,35 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         return hasServerAim;
     }
 
-    // ======================================================
-    // ACTION START
-    // ======================================================
+    private bool TryGetAimData(out Vector3 origin, out Vector3 direction, out Vector3 hitPoint)
+    {
+        origin = default;
+        direction = default;
+        hitPoint = default;
 
+        if (cachedCam == null)
+            return false;
+
+        Ray camRay = cachedCam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+
+        if (Physics.Raycast(camRay, out var camHit, 1000f))
+            hitPoint = camHit.point;
+        else
+            hitPoint = camRay.origin + camRay.direction * 1000f;
+
+        bool isFPS = camController != null && camController.IsFPS();
+
+        origin = isFPS && viewMuzzle != null
+            ? viewMuzzle.position
+            : worldMuzzle != null
+                ? worldMuzzle.position
+                : camRay.origin;
+
+        direction = (hitPoint - origin).normalized;
+
+        return true;
+    }
+    
     public void ActionStart(ItemActionType action)
     {
         if (!IsOwner)
@@ -127,21 +150,16 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             if (!TryGetServerAim(out var ray))
                 return;
 
-            var config = GetCurrentProjectileConfig();
-            if (config == null)
-                return;
+            Vector3 targetPoint;
 
-            Vector3 origin = ray.origin;
-            Vector3 dir = ray.direction;
-
-            Vector3 hitPoint;
-
-            if (Physics.Raycast(ray, out var hit, 1000f))
-                hitPoint = hit.point;
+            if (Physics.Raycast(ray, out var camHit, 1000f))
+                targetPoint = camHit.point;
             else
-                hitPoint = origin + dir * 1000f;
+                targetPoint = ray.origin + ray.direction * 1000f;
 
-            ServerNotifyShot(hitPoint);
+            Vector3 finalHit = targetPoint;
+
+            ServerNotifyShot(finalHit);
         };
 
         Vector3 fireOrigin = GetFireOrigin(ray.origin);
@@ -152,20 +170,15 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private void PlayViewModelFx(ItemActionType actionType)
     {
-        if (!IsOwner || viewMuzzle == null)
+        if (!IsOwner)
             return;
 
         var config = GetCurrentProjectileConfig();
         if (config == null)
             return;
 
-        Vector3 origin = viewMuzzle.position;
-        Vector3 dir = viewMuzzle.forward;
-
-        Vector3 hitPoint = origin + dir * 100f;
-
-        if (Physics.Raycast(origin, dir, out var hit, 1000f))
-            hitPoint = hit.point;
+        if (!TryGetAimData(out var origin, out _, out var hitPoint))
+            return;
 
         SpawnVisual(hitPoint, config, true);
     }
@@ -187,7 +200,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     {
         if (activeRuntime != null)
         {
-            // SERVER (не владелец)
             if (IsServerInitialized && !IsOwner && TryGetServerAim(out var serverRay))
             {
                 Vector3 hitPoint;
@@ -203,21 +215,12 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
                 activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
             }
-            // LOCAL PLAYER
-            else if (IsOwner && cachedCam != null)
+            else if (IsOwner)
             {
-                Ray camRay = cachedCam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
-
-                Vector3 hitPoint;
-
-                if (Physics.Raycast(camRay, out var hit, 1000f))
-                    hitPoint = hit.point;
-                else
-                    hitPoint = camRay.origin + camRay.direction * 1000f;
-
-                Vector3 fireOrigin = GetFireOrigin(camRay.origin);
-
-                activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
+                if (TryGetAimData(out var origin, out _, out var hitPoint))
+                {
+                    activeRuntime.UpdateAim(origin, hitPoint, true);
+                }
             }
         }
 
@@ -228,7 +231,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     // ======================================================
-    // FIRE ORIGIN (FPS / TPS)
+    // FIRE ORIGIN
     // ======================================================
 
     private Vector3 GetFireOrigin(Vector3 fallback)
@@ -274,7 +277,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     // ======================================================
-    // FX (LOCAL VIEW)
+    // FX
     // ======================================================
 
     [ObserversRpc]
@@ -294,8 +297,57 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         SpawnVisual(hitPoint, config, false);
     }
 
-    // ======================================================
+    [Server]
+    public void ServerNotifyShot(Vector3 hitPoint)
+    {
+        string itemId = rightHandInstance?.itemDefinition?.id;
 
+        if (string.IsNullOrEmpty(itemId))
+            return;
+
+        RpcPlayWorldFx(hitPoint, itemId);
+    }
+    
+    private void SpawnVisual(
+        Vector3 hitPoint,
+        ProjectileConfig config,
+        bool isOwner)
+    {
+        if (config == null)
+            return;
+
+        Vector3 spawnPos = isOwner && viewMuzzle != null
+            ? viewMuzzle.position
+            : worldMuzzle != null
+                ? worldMuzzle.position
+                : transform.position;
+
+        Quaternion rot = config.visualType == ProjectileVisualType.Projectile
+            ? Quaternion.LookRotation((hitPoint - spawnPos).normalized)
+            : Quaternion.identity;
+
+        var go = ProjectilePool.Instance.Get(
+            config.clientProjectilePrefab,
+            spawnPos,
+            rot
+        );
+        
+        if (!visualCache.TryGetValue(go, out var visual))
+        {
+            visual = go.GetComponent<IProjectileVisual>();
+            visualCache[go] = visual;
+        }
+
+        if (visual != null)
+        {
+            visual.Init(spawnPos, hitPoint, config.lifetime);
+        }
+        else
+        {
+            Debug.LogError("NO IProjectileVisual ON PREFAB");
+        }
+    }
+    
     public void ActionStop(ItemActionType action)
     {
         if (!IsOwner)
@@ -314,17 +366,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private void ActionStop_Server(ItemActionType action)
     {
         StopAction(action);
-    }
-
-    [Server]
-    public void ServerNotifyShot(Vector3 hitPoint)
-    {
-        string itemId = rightHandInstance?.itemDefinition?.id;
-
-        if (string.IsNullOrEmpty(itemId))
-            return;
-
-        RpcPlayWorldFx(hitPoint, itemId);
     }
 
     private ProjectileConfig GetCurrentProjectileConfig()
@@ -351,71 +392,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         }
 
         return null;
-    }
-
-    private void SpawnVisual(
-        Vector3 hitPoint,
-        ProjectileConfig config,
-        bool isOwner)
-    {
-        if (config == null)
-            return;
-
-        Vector3 spawnPos = isOwner && viewMuzzle != null
-            ? viewMuzzle.position
-            : worldMuzzle != null
-                ? worldMuzzle.position
-                : transform.position;
-
-        switch (config.visualType)
-        {
-            case ProjectileVisualType.Trail:
-                {
-                    var go = ProjectilePool.Instance.Get(
-                        config.clientProjectilePrefab,
-                        spawnPos,
-                        Quaternion.identity
-                    );
-
-                    var trail = go.GetComponent<TrailProjectile>();
-                    if (trail != null)
-                        trail.Init(spawnPos, hitPoint, config.lifetime);
-
-                    break;
-                }
-
-            case ProjectileVisualType.Laser:
-                {
-                    var go = ProjectilePool.Instance.Get(
-                        config.clientProjectilePrefab,
-                        spawnPos,
-                        Quaternion.identity
-                    );
-
-                    var laser = go.GetComponent<LaserBeam>();
-                    if (laser != null)
-                        laser.Init(spawnPos, hitPoint, config.lifetime);
-
-                    break;
-                }
-
-            case ProjectileVisualType.Projectile:
-                {
-                    var dir = (hitPoint - spawnPos).normalized;
-
-                    var go = ProjectilePool.Instance.Get(
-                        config.clientProjectilePrefab,
-                        spawnPos,
-                        Quaternion.LookRotation(dir)
-                    );
-
-                    var proj = go.GetComponent<LocalProjectile>();
-                    if (proj != null)
-                        proj.Init(dir, config.speed);
-
-                    break;
-                }
-        }
     }
 
     private ProjectileConfig ExtractProjectileConfig(Item item)

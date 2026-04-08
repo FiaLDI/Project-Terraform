@@ -32,7 +32,12 @@ public sealed class ProjectilePool : MonoBehaviour
         else
         {
             obj = Instantiate(prefab, pos, rot);
-            obj.AddComponent<PooledProjectile>().Init(this, prefab);
+
+            var pooled = obj.GetComponent<PooledProjectile>();
+            if (pooled == null)
+                pooled = obj.AddComponent<PooledProjectile>();
+
+            pooled.Init(this, prefab);
         }
 
         return obj;

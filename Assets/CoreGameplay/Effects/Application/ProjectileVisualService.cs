@@ -19,6 +19,6 @@ public static class ProjectileVisualService
 
         var proj = go.GetComponent<LocalProjectile>();
         if (proj != null)
-            proj.Init(dir, speed);
+            proj.Init(pos, dir, 0.2f);
     }
 }

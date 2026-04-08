@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(LineRenderer))]
-public class LaserBeam : MonoBehaviour
+public class LaserBeam : MonoBehaviour, IProjectileVisual
 {
     private LineRenderer line;
     private PooledProjectile pooled;
@@ -13,12 +13,16 @@ public class LaserBeam : MonoBehaviour
     {
         line = GetComponent<LineRenderer>();
         pooled = GetComponent<PooledProjectile>();
+
+        line.useWorldSpace = true;
     }
 
     public void Init(Vector3 start, Vector3 end, float duration)
     {
-        lifetime = duration;
+        lifetime = Mathf.Min(duration, 0.15f);
         timer = 0f;
+
+        transform.position = Vector3.zero;
 
         line.enabled = true;
         line.positionCount = 2;
@@ -36,6 +40,8 @@ public class LaserBeam : MonoBehaviour
 
     private void Release()
     {
+        var pooled = GetComponent<PooledProjectile>();
+
         if (pooled != null)
             pooled.Release();
         else

@@ -1,23 +1,28 @@
 using UnityEngine;
 
-public class LocalProjectile : MonoBehaviour
+public class LocalProjectile : MonoBehaviour, IProjectileVisual
 {
+    [SerializeField] private float speed = 50f;
+
     private Vector3 velocity;
     private float lifetime;
     private float timer;
 
-    private PooledProjectile pooled;
-
     private void Awake()
     {
-        pooled = GetComponent<PooledProjectile>();
+        // pooled больше не кешируем (как и в других)
     }
 
-    public void Init(Vector3 dir, float speed)
+    // 🔥 ЭТО ТРЕБУЕТ ИНТЕРФЕЙС
+    public void Init(Vector3 start, Vector3 end, float duration)
     {
+        transform.position = start;
+
+        Vector3 dir = (end - start).normalized;
+
         velocity = dir * speed;
 
-        lifetime = 2f; // можно вынести в config
+        lifetime = duration > 0 ? duration : 2f;
         timer = 0f;
     }
 
@@ -34,14 +39,12 @@ public class LocalProjectile : MonoBehaviour
 
     private void Release()
     {
+        var pooled = GetComponent<PooledProjectile>();
+
         if (pooled != null)
-        {
             pooled.Release();
-        }
         else
-        {
             Destroy(gameObject);
-        }
     }
 
     private void OnDisable()

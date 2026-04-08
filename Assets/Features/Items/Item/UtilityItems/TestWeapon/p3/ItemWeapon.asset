@@ -59,3 +59,28 @@ MonoBehaviour:
       duration: 0
       projectileConfig: {fileID: 11400000, guid: 265d0ff5bb274454eb8d304cf0d05ce6, type: 2}
       childEffects: []
+    - type: 14
+      targetMode: 2
+      radius: 10
+      layerMask:
+        serializedVersion: 2
+        m_Bits: 128
+      value: 20
+      damageType: 0
+      buff: {fileID: 0}
+      onlySpecificBuff: 0
+      buffId: 
+      heightOffset: 0
+      coneAngle: 0
+      coneDistance: 0
+      selectClosest: 0
+      impactFxId: bullet_standart
+      prefabId: 
+      lifetime: 0
+      useSourcePosition: 0
+      ownership: 0
+      miningValue: 0
+      tickInterval: 0
+      duration: 0
+      projectileConfig: {fileID: 11400000, guid: 265d0ff5bb274454eb8d304cf0d05ce6, type: 2}
+      childEffects: []
