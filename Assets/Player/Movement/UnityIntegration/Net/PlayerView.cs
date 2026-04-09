@@ -41,7 +41,7 @@ public class PlayerView : NetworkBehaviour
         float smoothYaw = Mathf.LerpAngle(
             visualRoot.localEulerAngles.y,
             yaw,
-            1f - Mathf.Exp(-15f * Time.deltaTime)
+            1f - Mathf.Exp(-20f * Time.deltaTime)
         );
 
         visualRoot.localRotation = Quaternion.Euler(0f, smoothYaw, 0f);
