@@ -182,7 +182,7 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         }
     }
 
-    [ObserversRpc]
+    [ObserversRpc(BufferLast = true)]
     private void ObserversReceiveHands(InventorySlotNet left, InventorySlotNet right)
     {
         if (inventory == null)

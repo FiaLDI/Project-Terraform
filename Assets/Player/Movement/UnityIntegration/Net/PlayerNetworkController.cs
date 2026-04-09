@@ -18,6 +18,7 @@ public class PlayerNetworkController : NetworkBehaviour
     private MoveCommand lastServerCmd;
     private bool hasServerCmd;
     private MoveCommand currentCmd;
+    private int currentWeaponPose;
 
     private void Awake()
     {
@@ -27,6 +28,13 @@ public class PlayerNetworkController : NetworkBehaviour
     public void InjectInput(MovementInputHandler handler)
     {
         inputHandler = handler;
+    }
+
+    public void SetWeaponPose(int pose)
+    {
+        if (IsOwner && !IsServer)
+            SendWeaponPoseServerRpc(pose);
+        currentWeaponPose = pose;
     }
 
     public override void OnStartNetwork()
@@ -87,8 +95,6 @@ public class PlayerNetworkController : NetworkBehaviour
 
     private PlayerState CaptureState(int tick, MoveCommand cmd)
     {
-        var anim = GetComponent<PlayerAnimationController>();
-
         return new PlayerState
         {
             Tick = tick,
@@ -103,7 +109,7 @@ public class PlayerNetworkController : NetworkBehaviour
 
             Grounded = movement.Grounded,
             Crouch = movement.IsCrouching,
-            WeaponPose = anim != null ? anim.GetWeaponPose() : 0
+            WeaponPose = currentWeaponPose
         };
     }
 
@@ -129,6 +135,12 @@ public class PlayerNetworkController : NetworkBehaviour
 
         GetComponentInChildren<RemoteInterpolation>()
             ?.ReceiveState(state);
+    }
+
+    [ServerRpc]
+    private void SendWeaponPoseServerRpc(int pose)
+    {
+        currentWeaponPose = pose;
     }
 
     [Server]

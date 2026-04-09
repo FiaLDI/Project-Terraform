@@ -44,7 +44,7 @@ namespace Features.Equipment.UnityIntegration
         {
             base.OnStartClient();
 
-            if (IsOwner && initialized)
+            if (initialized)
                 EquipFromInventory();
         }
 
@@ -159,7 +159,7 @@ namespace Features.Equipment.UnityIntegration
 
             usageNet?.SetMuzzles(worldMuzzle, viewMuzzle);
 
-            var anim = GetComponent<PlayerAnimationController>();
+            var net = GetComponent<PlayerNetworkController>();
 
             int pose = 0;
 
@@ -170,7 +170,16 @@ namespace Features.Equipment.UnityIntegration
                 pose = def.GetWeaponPose();
             }
 
-            anim?.SetWeaponPose(pose);
+            
+            // REMOTE SIGNAL
+            net?.SetWeaponPose(pose);
+
+            if (IsOwner)
+            {
+                // LOCAL
+                var anim = GetComponent<PlayerAnimationController>();
+                anim?.SetWeaponPose(pose);
+            }
         }
 
         // ======================================================
