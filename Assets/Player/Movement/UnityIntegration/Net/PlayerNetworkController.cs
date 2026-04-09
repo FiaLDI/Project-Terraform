@@ -152,12 +152,10 @@ public class PlayerNetworkController : NetworkBehaviour
 
         float error = Vector3.Distance(transform.position, serverState.Position);
 
-        // ignore маленькие ошибки
-        if (error < 0.05f)
+        if (error < 0.2f)
             return;
 
-        // мягкая коррекция
-        if (error < 0.3f)
+        if (error < 0.5f)
         {
             Vector3 correction = serverState.Position - transform.position;
             correction = Vector3.ClampMagnitude(correction, 0.25f);
