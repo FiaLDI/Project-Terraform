@@ -19,37 +19,34 @@ public class PlayerView : NetworkBehaviour
 
     private Vector3 renderPosition;
     private Quaternion renderRotation;
+    private RemoteInterpolation remote;
 
     private void Awake()
     {
         movement = GetComponent<DeterministicMovement>();
         anim = GetComponent<PlayerAnimationController>();
         net = GetComponent<PlayerNetworkController>();
+        remote = GetComponentInChildren<RemoteInterpolation>();
     }
 
     private void Update()
     {
-        if (!IsOwner)
-            return;
         if (anim == null)
             return;
 
-        float t = Mathf.Clamp01(Time.deltaTime / NetworkTickSystem.TickDelta);
+        // ================= ВИЗУАЛ ПОВОРОТА =================
 
-        Vector3 from = net.GetPreviousPosition();
-        Vector3 to = net.GetCurrentPosition();
+        float yaw = movement.CurrentYawInternal;
 
-        renderPosition = Vector3.Lerp(from, to, t);
+        float smoothYaw = Mathf.LerpAngle(
+            visualRoot.localEulerAngles.y,
+            yaw,
+            1f - Mathf.Exp(-15f * Time.deltaTime)
+        );
 
-        Quaternion fromRot = net.GetPreviousRotation();
-        Quaternion toRot = net.GetCurrentRotation();
+        visualRoot.localRotation = Quaternion.Euler(0f, smoothYaw, 0f);
 
-        renderRotation = Quaternion.Slerp(fromRot, toRot, t);
-
-        visualRoot.position = renderPosition;
-        visualRoot.rotation = renderRotation;
-
-        // ================= �������� =================
+        // ================= АНИМАЦИЯ =================
 
         smoothVelocity = Vector3.Lerp(
             smoothVelocity,
@@ -58,7 +55,7 @@ public class PlayerView : NetworkBehaviour
         );
 
         Vector3 localVel =
-            visualRoot.InverseTransformDirection(smoothVelocity);
+            transform.InverseTransformDirection(smoothVelocity);
 
         float forward = localVel.z;
         float right = localVel.x;

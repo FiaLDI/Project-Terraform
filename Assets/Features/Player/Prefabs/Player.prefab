@@ -549,7 +549,7 @@ MonoBehaviour:
   networkController: {fileID: 187266121288184345}
   playerCameraController: {fileID: 9183921448104923755}
   abilityCasterNet: {fileID: 273676337467518626}
-  visualController: {fileID: 0}
+  visualController: {fileID: 283238272492682892}
 --- !u!114 &283238272492682892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -818,6 +818,7 @@ MonoBehaviour:
   jumpHeight: 1.2
   crouchHeight: 2
   normalHeight: 3
+  visualRoot: {fileID: 5017748270277261448}
 --- !u!114 &3277316184608179795
 MonoBehaviour:
   m_ObjectHideFlags: 0

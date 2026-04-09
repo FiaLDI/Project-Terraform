@@ -12,15 +12,6 @@ public class PlayerNetworkController : NetworkBehaviour
 
     private readonly Dictionary<int, MoveCommand> inputBuffer = new();
     private readonly Dictionary<int, PlayerState> stateBuffer = new();
-    private Vector3 previousPosition;
-    private Vector3 currentPosition;
-    private Quaternion previousRotation;
-    private Quaternion currentRotation;
-
-public Vector3 GetPreviousPosition() => previousPosition;
-public Vector3 GetCurrentPosition() => currentPosition;
-public Quaternion GetPreviousRotation() => previousRotation;
-public Quaternion GetCurrentRotation() => currentRotation;
 
     private int lastProcessedTick = -1;
 
@@ -47,73 +38,58 @@ public Quaternion GetCurrentRotation() => currentRotation;
     }
 
     private void OnTick()
+{
+    if (!IsSpawned)
+        return;
+
+    int tick = NetworkTickSystem.I.CurrentTick;
+
+    // ======================================================
+    // OWNER (CLIENT + HOST)
+    // ======================================================
+    if (IsOwner)
     {
-        if (!IsSpawned)
+        if (inputHandler == null)
             return;
 
-        int tick = NetworkTickSystem.I.CurrentTick;
+        var cmd = CreateCommand(tick, inputHandler.CurrentState);
 
-        previousPosition = currentPosition;
-        previousRotation = currentRotation;
+        inputBuffer[tick] = cmd;
 
-        currentPosition = transform.position;
-        currentRotation = transform.rotation;
+        // prediction
+        movement.Simulate(cmd);
 
-        // ======================================================
-        // HOST (самый стабильный путь)
-        // ======================================================
-        if (IsOwner && IsServer)
+        stateBuffer[tick] = CaptureState(tick, cmd);
+
+        // отправка на сервер
+        if (!IsServer)
         {
-            var input = inputHandler.CurrentState;
-
-            MoveCommand cmd = CreateCommand(tick, input);
-
-            movement.Simulate(cmd);
-            return;
-        }
-
-        // ======================================================
-        // CLIENT (prediction)
-        // ======================================================
-        if (IsOwner)
-        {
-            var input = inputHandler.CurrentState;
-
-            MoveCommand cmd = CreateCommand(tick, input);
-
-            inputBuffer[tick] = cmd;
-
-            // prediction
-            movement.Simulate(cmd);
-
-            stateBuffer[tick] = CaptureState(tick, cmd);
-
             SendInputServerRpc(cmd);
         }
 
-        // ======================================================
-        // SERVER
-        // ======================================================
+        // 🔥 ВАЖНО: для host — сразу кладём input
         if (IsServer)
         {
-            if (!inputBuffer.TryGetValue(tick, out var cmd))
-            {
-                // ❗ ВАЖНО: используем последний валидный, а не return
-                if (!inputBuffer.TryGetValue(lastProcessedTick, out cmd))
-                {
-                    cmd = default;
-                }
-            }
-
-            movement.Simulate(cmd);
-            lastProcessedTick = tick;
-
-            var state = CaptureState(tick, cmd);
-
-            SendStateObserversRpc(state);
-            SendStateTargetRpc(Owner, state);
+            inputBuffer[tick] = cmd;
         }
     }
+
+    // ======================================================
+    // SERVER (ТОЛЬКО НЕ ВЛАДЕЛЕЦ)
+    // ======================================================
+    if (IsServer && !IsOwner)
+    {
+        if (!inputBuffer.TryGetValue(tick, out var cmd))
+            return; // ждём input — это нормально
+
+        movement.Simulate(cmd);
+
+        var state = CaptureState(tick, cmd);
+
+        SendStateObserversRpc(state);
+        SendStateTargetRpc(Owner, state);
+    }
+}
 
     // ======================================================
     // INPUT
@@ -131,6 +107,8 @@ public Quaternion GetCurrentRotation() => currentRotation;
 
     private PlayerState CaptureState(int tick, MoveCommand cmd)
     {
+        var anim = GetComponent<PlayerAnimationController>();
+
         return new PlayerState
         {
             Tick = tick,
@@ -144,7 +122,8 @@ public Quaternion GetCurrentRotation() => currentRotation;
             InternalYaw = movement.CurrentYawInternal,
 
             Grounded = movement.Grounded,
-            Crouch = movement.IsCrouching
+            Crouch = movement.IsCrouching,
+            WeaponPose = anim != null ? anim.GetWeaponPose() : 0
         };
     }
 
@@ -177,16 +156,13 @@ public Quaternion GetCurrentRotation() => currentRotation;
     }
 
     // ======================================================
-    // RECONCILIATION
+    // RECONCILIATION (ТОЛЬКО ДЛЯ КЛИЕНТА)
     // ======================================================
 
     [TargetRpc]
     private void SendStateTargetRpc(NetworkConnection conn, PlayerState serverState)
     {
-        if (IsServer)
-            return;
-
-        if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
+                if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
         {
             movement.ApplyState(serverState);
             return;
@@ -194,16 +170,13 @@ public Quaternion GetCurrentRotation() => currentRotation;
 
         float error = Vector3.Distance(predicted.Position, serverState.Position);
 
-        // 🔥 анти-дрожание
         if (error < 0.5f)
             return;
 
-        // snap
         movement.ApplyState(serverState);
 
         int currentTick = NetworkTickSystem.I.CurrentTick;
 
-        // replay
         for (int t = serverState.Tick + 1; t <= currentTick; t++)
         {
             if (inputBuffer.TryGetValue(t, out var cmd))
@@ -213,6 +186,10 @@ public Quaternion GetCurrentRotation() => currentRotation;
             }
         }
     }
+
+    // ======================================================
+    // TELEPORT
+    // ======================================================
 
     [Server]
     private void TeleportTo(Vector3 position, Quaternion rotation)
@@ -231,7 +208,9 @@ public Quaternion GetCurrentRotation() => currentRotation;
         });
     }
 
-    // ================= QUEST / WORLD RPC =================
+    // ======================================================
+    // QUEST / WORLD RPC
+    // ======================================================
 
     [ServerRpc]
     public void RequestReturnToSpawnServerRpc()

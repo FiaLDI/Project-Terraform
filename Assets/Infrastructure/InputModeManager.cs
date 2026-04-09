@@ -33,6 +33,9 @@ namespace Features.Input
             }
 
             I = this;
+
+            if (input == null)
+                input = GetComponent<PlayerInputContext>() ?? null;
         }
 
         // ======================================================

@@ -14,6 +14,7 @@ public class RemoteInterpolation : MonoBehaviour
         public float Pitch;
         public bool Crouch;
         public bool Grounded;
+        public int WeaponPose;
     }
 
     private readonly List<Snapshot> snapshots = new();
@@ -32,7 +33,6 @@ public class RemoteInterpolation : MonoBehaviour
     {
         float time = Time.time;
 
-        // 🔥 защита от телепорта (очень важно)
         if (snapshots.Count > 0)
         {
             var last = snapshots[snapshots.Count - 1];
@@ -51,7 +51,8 @@ public class RemoteInterpolation : MonoBehaviour
             Yaw = state.Yaw,
             Pitch = state.Pitch,
             Crouch = state.Crouch,
-            Grounded = state.Grounded
+            Grounded = state.Grounded,
+            WeaponPose = state.WeaponPose
         });
 
         if (snapshots.Count > 32)
@@ -63,14 +64,12 @@ public class RemoteInterpolation : MonoBehaviour
         var netObj = GetComponentInParent<NetworkObject>();
         if (netObj != null && netObj.IsOwner)
             return;
-
+        
         if (snapshots.Count < 2)
             return;
 
-        // 🔥 ВАЖНО: не Time.time, а относительно снапшотов
         float renderTime = snapshots[snapshots.Count - 1].Time - InterpDelay;
 
-        // удаляем старые
         while (snapshots.Count >= 2 && snapshots[1].Time <= renderTime)
         {
             snapshots.RemoveAt(0);
@@ -85,11 +84,8 @@ public class RemoteInterpolation : MonoBehaviour
         float t = Mathf.InverseLerp(from.Time, to.Time, renderTime);
         t = Mathf.Clamp01(t);
 
-        // ================= POSITION =================
-
         Vector3 pos = Vector3.Lerp(from.Position, to.Position, t);
 
-        // 🔥 защита от скачков
         if ((pos - transform.position).sqrMagnitude > TeleportThreshold * TeleportThreshold)
         {
             transform.position = pos;
@@ -120,6 +116,7 @@ public class RemoteInterpolation : MonoBehaviour
             anim.SetSpeed(speed);
             anim.SetGrounded(to.Grounded);
             anim.SetCrouch(to.Crouch);
+            anim.SetWeaponPose(to.WeaponPose);
         }
     }
 }

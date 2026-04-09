@@ -13,20 +13,14 @@ namespace Features.Player.UnityIntegration
     {
         private PlayerInputContext input;
         private bool bound;
-
-        // Actions
         private InputAction moveAction;
         private InputAction jumpAction;
         private InputAction sprintAction;
         private InputAction walkAction;
         private InputAction crouchAction;
 
-        // Текущее состояние ввода (батч)
         private PlayerInputState inputState;
 
-        /// <summary>
-        /// Читается PlayerNetworkController’ом каждый тик.
-        /// </summary>
         public PlayerInputState CurrentState => inputState;
 
         private float jumpBufferTimer;
@@ -45,18 +39,18 @@ namespace Features.Player.UnityIntegration
             }
         }
 
+        private void Awake()
+        {
+            if (input == null)
+                input = GetComponent<PlayerInputContext>() ?? null;
+        }
+
         // ======================================================
         // BIND
         // ======================================================
 
         public void BindInput(PlayerInputContext ctx)
         {
-            if (input == ctx)
-                return;
-
-            if (input != null)
-                UnbindInput(input);
-
             input = ctx;
             if (input == null)
                 return;
@@ -75,7 +69,6 @@ namespace Features.Player.UnityIntegration
             walkAction.Enable();
             crouchAction.Enable();
 
-            // Подписки
             moveAction.performed += OnMove;
             moveAction.canceled  += OnMoveCanceled;
 

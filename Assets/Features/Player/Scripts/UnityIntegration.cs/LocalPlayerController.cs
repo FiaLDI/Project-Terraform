@@ -4,6 +4,7 @@ using Features.Player.UnityIntegration;
 using Features.Player;
 using Features.Player.UI;
 using Features.Interaction.UnityIntegration;
+using System;
 
 public sealed class LocalPlayerController : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public sealed class LocalPlayerController : MonoBehaviour
 
     private PlayerInputContext inputContext;
     private NetworkPlayer boundPlayer;
+    public static event Action<MovementInputHandler> OnInputReady;
 
     private void Awake()
     {
@@ -86,6 +88,9 @@ public sealed class LocalPlayerController : MonoBehaviour
             inputContext.Enable();
             InputModeManager.I.Bind(inputContext);
             InputModeManager.I.SetMode(InputMode.Gameplay);
+            var inputHandler = GetComponent<MovementInputHandler>();
+
+            OnInputReady?.Invoke(inputHandler);
         }
 
         var consumers = this.GetComponents<IInputContextConsumer>();
@@ -96,8 +101,7 @@ public sealed class LocalPlayerController : MonoBehaviour
         if (camController != null)
         {
             camController.SetLocal(true);
-
-            camController.ForceReattachCamera();
+            camController.ResolveCamera();
         }
 
         var cam = Camera.main;

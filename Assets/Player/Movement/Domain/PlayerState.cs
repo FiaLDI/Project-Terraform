@@ -15,4 +15,5 @@ public struct PlayerState
 
     public bool Grounded;
     public bool Crouch;
+    public int WeaponPose;
 }

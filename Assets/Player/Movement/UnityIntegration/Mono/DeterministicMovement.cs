@@ -15,6 +15,7 @@ public class DeterministicMovement : NetworkBehaviour
 
     [SerializeField] private float crouchHeight = 2f;
     [SerializeField] private float normalHeight = 3f;
+    [SerializeField] private Transform visualRoot;
 
     private CharacterController controller;
     private bool isCrouching;
@@ -46,6 +47,9 @@ public class DeterministicMovement : NetworkBehaviour
         var stats = GetComponent<StatsFacadeAdapter>();
         if (stats != null)
             movementStats = stats.MovementStats;
+        
+        if(visualRoot == null) 
+            visualRoot = GetComponent<PlayerVisualController>()?.transform;
 
         currentYaw = transform.eulerAngles.y;
     }
@@ -82,10 +86,9 @@ public class DeterministicMovement : NetworkBehaviour
         if (coyoteTimer < 0f)
             coyoteTimer = 0f;
 
-        // ================= ROTATION =================
+        // ================= ROTATION MODEL =================
 
         currentYaw = cmd.Yaw;
-        // transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         // ================= SPEED =================
 
@@ -111,16 +114,21 @@ public class DeterministicMovement : NetworkBehaviour
             controller.center = new Vector3(0, normalHeight / 2f, 0);
         }
 
-        Quaternion lookRot = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+        Quaternion lookRot = Quaternion.Euler(0f, currentYaw, 0f);
 
-        Vector3 forward = lookRot * Vector3.forward;
-        Vector3 right   = lookRot * Vector3.right;
+        float rad = currentYaw * Mathf.Deg2Rad;
+
+        Vector3 forward = new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad));
+        Vector3 right   = new Vector3(forward.z, 0f, -forward.x);
 
         Vector3 moveDir =
             forward * cmd.Move.y +
             right   * cmd.Move.x;
 
-        moveDir = moveDir.normalized * speed;
+        if (moveDir.sqrMagnitude > 1f)
+            moveDir.Normalize();
+
+        moveDir *= speed;
 
         // ================= JUMP =================
 

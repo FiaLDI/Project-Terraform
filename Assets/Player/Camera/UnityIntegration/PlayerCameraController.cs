@@ -34,11 +34,25 @@ public sealed class PlayerCameraController : MonoBehaviour
     private void Awake()
     {
         cam = Camera.main != null ? Camera.main.transform : null;
-        inputHandler = GetComponent<MovementInputHandler>();
+        
         ApplySensitivity();
     }
 
-    // ================= LOCAL =================
+    public void InjectInput(MovementInputHandler inputHandler)
+    {
+        this.inputHandler = inputHandler;
+    }
+
+    private void OnCameraChanged(Camera cam)
+    {
+        this.cam = cam != null ? cam.transform : null;
+    }
+
+    private void OnDisable()
+    {
+        if (CameraRegistry.Instance != null)
+            CameraRegistry.Instance.OnCameraChanged -= OnCameraChanged;
+    }
 
     public void SetLocal(bool value)
     {
@@ -53,11 +67,8 @@ public sealed class PlayerCameraController : MonoBehaviour
 
         CameraRegistry.Instance?.InitializeFPS();
         CameraRegistry.Instance?.SetFPSVisible(isFPS);
-    }
-
-    public void ForceReattachCamera()
-    {
-        cam = Camera.main != null ? Camera.main.transform : null;
+        CameraRegistry.Instance.OnCameraChanged += OnCameraChanged;
+        ResolveCamera();
     }
 
     // ================= INPUT =================
@@ -72,8 +83,6 @@ public sealed class PlayerCameraController : MonoBehaviour
         pitch -= input.y * sens;
 
         pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
-
-        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
         if (inputHandler != null)
         {
@@ -96,6 +105,12 @@ public sealed class PlayerCameraController : MonoBehaviour
     public void SetAiming(bool value)
     {
         isAiming = value;
+    }
+
+    public void ResolveCamera()
+    {
+        var unityCam = CameraRegistry.Instance?.CurrentCamera;
+        cam = unityCam != null ? unityCam.transform : null;
     }
 
     public void SetHead(Transform head)

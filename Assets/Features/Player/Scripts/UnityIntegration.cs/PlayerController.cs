@@ -29,10 +29,10 @@ namespace Features.Player.UnityIntegration
             if (!IsOwner)
                 return;
 
-            var input = FindObjectOfType<MovementInputHandler>();
-            var net = GetComponent<PlayerNetworkController>();
+            if (!IsOwner)
+                return;
 
-            net.InjectInput(input);
+            LocalPlayerController.OnInputReady += OnInputReady;
 
             if (CameraRegistry.Instance != null)
             {
@@ -53,10 +53,19 @@ namespace Features.Player.UnityIntegration
 
             if (IsOwner)
             {
+                LocalPlayerController.OnInputReady -= OnInputReady;
                 playerCameraController?.SetLocal(false);
             }
             if (CameraRegistry.Instance != null)
                 CameraRegistry.Instance.OnFPSModeChanged -= OnFPSModeChanged;
         }
+
+        private void OnInputReady(MovementInputHandler input)
+{
+    networkController.InjectInput(input);
+    playerCameraController.InjectInput(input);
+
+    Debug.Log("INPUT CONNECTED TO PLAYER");
+}
     }
 }

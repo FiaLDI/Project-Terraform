@@ -65,5 +65,11 @@ namespace Features.Player.UnityIntegration
             if (!IsReady) return;
             _animator.Play("Locomotion", 0, 0f);
         }
+
+        public int GetWeaponPose()
+        {
+            if (!IsReady) return 0;
+            return _animator.GetInteger("WeaponPose");
+        }
     }
 }
