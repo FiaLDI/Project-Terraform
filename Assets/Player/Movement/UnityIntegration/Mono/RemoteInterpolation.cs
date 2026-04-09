@@ -19,7 +19,7 @@ public class RemoteInterpolation : MonoBehaviour
 
     private readonly List<Snapshot> snapshots = new();
 
-    private const float InterpDelay = 0.05f;
+    private const float InterpDelay = 0.1f;
     private const float TeleportThreshold = 5f;
 
     private PlayerAnimationController anim;
@@ -88,11 +88,13 @@ public class RemoteInterpolation : MonoBehaviour
 
         if ((pos - transform.position).sqrMagnitude > TeleportThreshold * TeleportThreshold)
         {
-            transform.position = pos;
+            float smooth = 1f - Mathf.Exp(-15f * Time.deltaTime);
+transform.position = Vector3.Lerp(transform.position, pos, smooth);
         }
         else
         {
-            transform.position = pos;
+            float smooth = 1f - Mathf.Exp(-15f * Time.deltaTime);
+transform.position = Vector3.Lerp(transform.position, pos, smooth);
         }
 
         // ================= ROTATION =================

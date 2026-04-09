@@ -23,21 +23,7 @@ namespace Features.Player.UnityIntegration
 
         public PlayerInputState CurrentState => inputState;
 
-        private float jumpBufferTimer;
-        private const float JumpBufferTime = 0.15f;
-
-        private void Update()
-        {
-            if (jumpBufferTimer > 0f)
-            {
-                jumpBufferTimer -= Time.deltaTime;
-                inputState.Jump = true;
-            }
-            else
-            {
-                inputState.Jump = false;
-            }
-        }
+        private bool jumpPressed;
 
         private void Awake()
         {
@@ -128,7 +114,7 @@ namespace Features.Player.UnityIntegration
 
         private void OnJump(InputAction.CallbackContext ctx)
         {
-            jumpBufferTimer = JumpBufferTime;
+            jumpPressed = true;
         }
 
         private void OnSprintStart(InputAction.CallbackContext ctx)
@@ -156,9 +142,13 @@ namespace Features.Player.UnityIntegration
             inputState.Crouch = true; // one-shot
         }
 
-        // ======================================================
-        // ONE-SHOT RESET
-        // ======================================================
+        public PlayerInputState ConsumeState()
+        {
+            inputState.Jump = jumpPressed;
+            jumpPressed = false;
+
+            return inputState;
+        }
 
         // ======================================================
         // CAMERA INTEGRATION

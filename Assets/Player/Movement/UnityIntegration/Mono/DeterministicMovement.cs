@@ -162,8 +162,7 @@ public class DeterministicMovement : NetworkBehaviour
         Vector3 horizontal = new Vector3(moveDir.x, 0, moveDir.z);
         Vector3 vertical   = new Vector3(0, verticalVelocity, 0);
 
-        controller.Move(horizontal * dt);
-        controller.Move(vertical * dt);
+        controller.Move((horizontal + vertical) * dt);
     }
 
     public void Teleport(Vector3 position, float yaw, float verticalVel)

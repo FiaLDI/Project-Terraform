@@ -14,6 +14,10 @@ public class PlayerNetworkController : NetworkBehaviour
     private readonly Dictionary<int, PlayerState> stateBuffer = new();
 
     private int lastProcessedTick = -1;
+    private const int InputDelay = 2;
+    private MoveCommand lastServerCmd;
+    private bool hasServerCmd;
+    private MoveCommand currentCmd;
 
     private void Awake()
     {
@@ -38,72 +42,48 @@ public class PlayerNetworkController : NetworkBehaviour
     }
 
     private void OnTick()
-{
-    if (!IsSpawned)
-        return;
-
-    int tick = NetworkTickSystem.I.CurrentTick;
-
-    // ======================================================
-    // OWNER (CLIENT + HOST)
-    // ======================================================
-    if (IsOwner)
     {
-        if (inputHandler == null)
+        if (!IsSpawned)
             return;
 
-        var cmd = CreateCommand(tick, inputHandler.CurrentState);
+        int tick = NetworkTickSystem.I.CurrentTick;
 
-        inputBuffer[tick] = cmd;
-
-        // prediction
-        movement.Simulate(cmd);
-
-        stateBuffer[tick] = CaptureState(tick, cmd);
-
-        // отправка на сервер
-        if (!IsServer)
+        if (IsOwner)
         {
-            SendInputServerRpc(cmd);
-        }
+            if (inputHandler == null)
+                return;
 
-        // 🔥 ВАЖНО: для host — сразу кладём input
+            var input = inputHandler.ConsumeState();
+            var cmd = CreateCommand(tick, input);
+
+            currentCmd = cmd;
+
+            if (!IsServer)
+            {
+                movement.Simulate(cmd);
+                SendInputServerRpc(cmd);
+            }
+        }
+        
         if (IsServer)
         {
-            inputBuffer[tick] = cmd;
+            var cmd = currentCmd;
+
+            cmd.Tick = tick;
+
+            movement.Simulate(cmd);
+
+            var state = CaptureState(tick, cmd);
+
+            SendStateObserversRpc(state);
         }
     }
-
-    // ======================================================
-    // SERVER (ТОЛЬКО НЕ ВЛАДЕЛЕЦ)
-    // ======================================================
-    if (IsServer && !IsOwner)
-    {
-        if (!inputBuffer.TryGetValue(tick, out var cmd))
-            return; // ждём input — это нормально
-
-        movement.Simulate(cmd);
-
-        var state = CaptureState(tick, cmd);
-
-        SendStateObserversRpc(state);
-        SendStateTargetRpc(Owner, state);
-    }
-}
-
-    // ======================================================
-    // INPUT
-    // ======================================================
 
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
-        inputBuffer[cmd.Tick] = cmd;
+        currentCmd = cmd;
     }
-
-    // ======================================================
-    // STATE
-    // ======================================================
 
     private PlayerState CaptureState(int tick, MoveCommand cmd)
     {
@@ -141,55 +121,15 @@ public class PlayerNetworkController : NetworkBehaviour
         };
     }
 
-    // ======================================================
-    // REMOTE
-    // ======================================================
-
     [ObserversRpc(BufferLast = true)]
     private void SendStateObserversRpc(PlayerState state)
     {
-        if (IsOwner)
+        if (base.IsOwner && !base.IsServer)
             return;
 
         GetComponentInChildren<RemoteInterpolation>()
             ?.ReceiveState(state);
     }
-
-    // ======================================================
-    // RECONCILIATION (ТОЛЬКО ДЛЯ КЛИЕНТА)
-    // ======================================================
-
-    [TargetRpc]
-    private void SendStateTargetRpc(NetworkConnection conn, PlayerState serverState)
-    {
-                if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
-        {
-            movement.ApplyState(serverState);
-            return;
-        }
-
-        float error = Vector3.Distance(predicted.Position, serverState.Position);
-
-        if (error < 0.5f)
-            return;
-
-        movement.ApplyState(serverState);
-
-        int currentTick = NetworkTickSystem.I.CurrentTick;
-
-        for (int t = serverState.Tick + 1; t <= currentTick; t++)
-        {
-            if (inputBuffer.TryGetValue(t, out var cmd))
-            {
-                movement.Simulate(cmd);
-                stateBuffer[t] = CaptureState(t, cmd);
-            }
-        }
-    }
-
-    // ======================================================
-    // TELEPORT
-    // ======================================================
 
     [Server]
     private void TeleportTo(Vector3 position, Quaternion rotation)
@@ -207,10 +147,6 @@ public class PlayerNetworkController : NetworkBehaviour
             Crouch = false
         });
     }
-
-    // ======================================================
-    // QUEST / WORLD RPC
-    // ======================================================
 
     [ServerRpc]
     public void RequestReturnToSpawnServerRpc()
