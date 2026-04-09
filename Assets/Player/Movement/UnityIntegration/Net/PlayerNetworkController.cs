@@ -1,8 +1,10 @@
-using FishNet.Object;
-using FishNet.Connection;
-using UnityEngine;
 using System.Collections.Generic;
 using Features.Player.UnityIntegration;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using FishNet.Managing.Timing;
+using UnityEngine;
+using FishNet;
 
 [RequireComponent(typeof(DeterministicMovement))]
 public class PlayerNetworkController : NetworkBehaviour
@@ -10,15 +12,19 @@ public class PlayerNetworkController : NetworkBehaviour
     private DeterministicMovement movement;
     private MovementInputHandler inputHandler;
 
-    private readonly Dictionary<int, MoveCommand> inputBuffer = new();
-    private readonly Dictionary<int, PlayerState> stateBuffer = new();
+    private TimeManager timeManager;
 
-    private int lastProcessedTick = -1;
-    private const int InputDelay = 2;
+    // CLIENT
+    private readonly Dictionary<uint, MoveCommand> inputBuffer = new();
+
+    // SERVER
+    private readonly Dictionary<uint, MoveCommand> serverInputBuffer = new();
     private MoveCommand lastServerCmd;
-    private bool hasServerCmd;
-    private MoveCommand currentCmd;
-    private int currentWeaponPose;
+
+    private uint lastReconciledTick;
+
+    private const int BufferSize = 1024;
+    private int currentWeaponPose = 0;
 
     private void Awake()
     {
@@ -30,23 +36,24 @@ public class PlayerNetworkController : NetworkBehaviour
         inputHandler = handler;
     }
 
-    public void SetWeaponPose(int pose)
-    {
-        if (IsOwner && !IsServer)
-            SendWeaponPoseServerRpc(pose);
-        currentWeaponPose = pose;
-    }
-
     public override void OnStartNetwork()
     {
-        NetworkTickSystem.OnTick += OnTick;
+        timeManager = InstanceFinder.TimeManager;
+        timeManager.OnTick += OnTick;
     }
 
     public override void OnStopNetwork()
     {
-        NetworkTickSystem.OnTick -= OnTick;
+        if (timeManager != null)
+            timeManager.OnTick -= OnTick;
+
         inputBuffer.Clear();
-        stateBuffer.Clear();
+        serverInputBuffer.Clear();
+    }
+
+    public void SetWeaponPose(int pose)
+    {
+        currentWeaponPose = pose;
     }
 
     private void OnTick()
@@ -54,66 +61,159 @@ public class PlayerNetworkController : NetworkBehaviour
         if (!IsSpawned)
             return;
 
-        int tick = NetworkTickSystem.I.CurrentTick;
+        uint tick = timeManager.Tick;
 
+        // ================= CLIENT =================
         if (IsOwner)
         {
             if (inputHandler == null)
                 return;
 
             var input = inputHandler.ConsumeState();
+
             var cmd = CreateCommand(tick, input);
 
-            currentCmd = cmd;
+            inputBuffer[tick] = cmd;
 
+            // prediction
+            movement.Simulate(cmd);
+
+            // отправка на сервер
             if (!IsServer)
-            {
-                movement.Simulate(cmd);
                 SendInputServerRpc(cmd);
-            }
+
+            CleanupOldInputs(tick);
         }
-        
+
+        // ================= SERVER =================
         if (IsServer)
         {
-            var cmd = currentCmd;
+            MoveCommand cmd;
 
-            cmd.Tick = tick;
+            if (!serverInputBuffer.TryGetValue(tick, out cmd))
+            {
+                // fallback (если пакет потерян)
+                if (lastServerCmd.Tick != 0)
+                {
+                    cmd = lastServerCmd;
+                    cmd.Tick = tick;
+                }
+                else
+                {
+                    cmd = new MoveCommand { Tick = tick };
+                }
+            }
 
+            lastServerCmd = cmd;
+
+            // 🔥 сервер ВСЕГДА симулирует
             movement.Simulate(cmd);
 
             var state = CaptureState(tick, cmd);
 
             SendStateObserversRpc(state);
+
+            CleanupServerInputs(tick);
         }
     }
+
+    // ================= RPC =================
 
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
-        currentCmd = cmd;
+        serverInputBuffer[cmd.Tick] = cmd;
     }
 
-    private PlayerState CaptureState(int tick, MoveCommand cmd)
+    [ObserversRpc]
+    private void SendStateObserversRpc(PlayerState state)
     {
-        return new PlayerState
+        if (IsOwner && !IsServer)
         {
-            Tick = tick,
-            Position = transform.position,
-            Velocity = movement.Velocity,
+            Reconcile(state);
+            return;
+        }
 
-            Yaw = movement.CurrentYawInternal,
-            Pitch = cmd.Pitch,
-
-            VerticalVelocity = movement.VerticalVelocityInternal,
-            InternalYaw = movement.CurrentYawInternal,
-
-            Grounded = movement.Grounded,
-            Crouch = movement.IsCrouching,
-            WeaponPose = currentWeaponPose
-        };
+        GetComponentInChildren<RemoteInterpolation>()
+            ?.ReceiveState(state);
     }
 
-    private MoveCommand CreateCommand(int tick, PlayerInputState input)
+    // ================= RECONCILIATION =================
+
+    private void Reconcile(PlayerState serverState)
+    {
+        if (serverState.Tick <= lastReconciledTick)
+            return;
+
+        lastReconciledTick = serverState.Tick;
+
+        if (!inputBuffer.ContainsKey(serverState.Tick))
+            return;
+
+        float error = Vector3.Distance(transform.position, serverState.Position);
+
+        // ignore маленькие ошибки
+        if (error < 0.05f)
+            return;
+
+        // мягкая коррекция
+        if (error < 0.3f)
+        {
+            Vector3 correction = serverState.Position - transform.position;
+            correction = Vector3.ClampMagnitude(correction, 0.25f);
+
+            movement.ApplyCorrection(correction);
+            ReplayFromTick(serverState.Tick + 1);
+            return;
+        }
+
+        // жёсткий rollback
+        movement.ApplyState(serverState);
+        ReplayFromTick(serverState.Tick + 1);
+    }
+
+    private void ReplayFromTick(uint startTick)
+    {
+        uint currentTick = timeManager.Tick;
+
+        for (uint t = startTick; t <= currentTick; t++)
+        {
+            if (inputBuffer.TryGetValue(t, out var cmd))
+            {
+                movement.Simulate(cmd);
+            }
+        }
+    }
+
+    // ================= CLEANUP =================
+
+    private void CleanupOldInputs(uint currentTick)
+    {
+        uint minTick = currentTick > BufferSize ? currentTick - BufferSize : 0;
+
+        var keys = new List<uint>(inputBuffer.Keys);
+        foreach (var key in keys)
+        {
+            if (key < minTick)
+                inputBuffer.Remove(key);
+        }
+    }
+
+    private void CleanupServerInputs(uint currentTick)
+    {
+        uint minTick = currentTick > BufferSize ? currentTick - BufferSize : 0;
+
+        var keys = new List<uint>(serverInputBuffer.Keys);
+        foreach (var key in keys)
+        {
+            if (key < minTick)
+                serverInputBuffer.Remove(key);
+        }
+    }
+
+    // ================= DATA =================
+
+    private MoveCommand CreateCommand(uint tick, PlayerInputState input)
     {
         return new MoveCommand
         {
@@ -127,97 +227,21 @@ public class PlayerNetworkController : NetworkBehaviour
         };
     }
 
-    [ObserversRpc(BufferLast = true)]
-    private void SendStateObserversRpc(PlayerState state)
+    private PlayerState CaptureState(uint tick, MoveCommand cmd)
     {
-        if (base.IsOwner && !base.IsServer)
-            return;
-
-        GetComponentInChildren<RemoteInterpolation>()
-            ?.ReceiveState(state);
-    }
-
-    [ServerRpc]
-    private void SendWeaponPoseServerRpc(int pose)
-    {
-        currentWeaponPose = pose;
-    }
-
-    [Server]
-    private void TeleportTo(Vector3 position, Quaternion rotation)
-    {
-        movement.ApplyState(new PlayerState
+        return new PlayerState
         {
-            Tick = NetworkTickSystem.I.CurrentTick,
-            Position = position,
-            Velocity = Vector3.zero,
-            Yaw = rotation.eulerAngles.y,
-            Pitch = 0f,
-            VerticalVelocity = 0f,
-            InternalYaw = rotation.eulerAngles.y,
-            Grounded = true,
-            Crouch = false
-        });
-    }
+            Tick = tick,
+            Position = transform.position,
+            Velocity = movement.Velocity,
 
-    [ServerRpc]
-    public void RequestReturnToSpawnServerRpc()
-    {
-        if (!PlayerSpawnRegistry.I.TryGetSpawnPoint(out var pos, out var rot))
-            return;
+            Yaw = cmd.Yaw,
+            Pitch = cmd.Pitch,
 
-        TeleportTo(pos, rot);
-    }
-
-    [ServerRpc]
-    public void RequestReturnToHubServerRpc()
-    {
-        SceneTransitionService.LoadHubScene();
-    }
-
-    [ServerRpc]
-    public void RequestWorldServerRpc(int seed, List<string> questIds, List<string> chainIds)
-    {
-        ServerWorldSession.PendingSeed = seed;
-        ServerWorldSession.PendingQuestIds = questIds;
-        ServerWorldSession.PendingChainIds = chainIds;
-
-        SceneTransitionService.LoadWorldScene();
-    }
-
-    [ServerRpc]
-    public void GiveQuestsServerRpc(List<string> questIds)
-    {
-        GetComponent<PlayerQuestComponent>()?.GiveQuests(questIds);
-    }
-
-    [ServerRpc]
-    public void GiveChainsServerRpc(List<string> chainIds)
-    {
-        GetComponent<PlayerQuestComponent>()?.GiveChains(chainIds);
-    }
-
-    [ServerRpc]
-    public void ClearQuestsServerRpc()
-    {
-        GetComponent<PlayerQuestComponent>()?.ClearAll();
-    }
-
-    [ServerRpc]
-    public void DebugCompleteQuestServerRpc(string questId)
-    {
-        GetComponent<PlayerQuestComponent>()?.DebugCompleteQuest(questId);
-    }
-
-    [ServerRpc]
-    public void DebugFailQuestServerRpc(string questId)
-    {
-        GetComponent<PlayerQuestComponent>()?.DebugFailQuest(questId);
-    }
-
-    [ServerRpc]
-    public void DebugAdvanceQuestServerRpc(string questId)
-    {
-        GetComponent<PlayerQuestComponent>()?.DebugAdvance(questId);
+            VerticalVelocity = movement.VerticalVelocityInternal,
+            Grounded = movement.Grounded,
+            Crouch = movement.IsCrouching,
+            WeaponPose = currentWeaponPose
+        };
     }
 }

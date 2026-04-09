@@ -8,11 +8,11 @@ public class QuestDebugListUI : MonoBehaviour
     [SerializeField] private QuestDebugItemUI prefab;
 
     private PlayerQuestComponent questComponent;
-    private PlayerNetworkController net;
+    private PlayerQuestNetwork net;
 
     private readonly Dictionary<string, QuestDebugItemUI> items = new();
 
-    public void Init(PlayerQuestComponent comp, PlayerNetworkController controller)
+    public void Init(PlayerQuestComponent comp, PlayerQuestNetwork controller)
     {
         questComponent = comp;
         net = controller;

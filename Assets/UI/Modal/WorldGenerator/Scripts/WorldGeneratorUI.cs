@@ -79,7 +79,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             .Select(c => c.chainId)
             .ToList();
 
-        var net = BoundPlayer.GetComponent<PlayerNetworkController>();
+        var net = BoundPlayer.GetComponent<PlayerSessionNetwork>();
 
         net.RequestWorldServerRpc(seed, questIds, chainIds);
 

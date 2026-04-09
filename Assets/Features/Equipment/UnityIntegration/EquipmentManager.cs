@@ -159,7 +159,7 @@ namespace Features.Equipment.UnityIntegration
 
             usageNet?.SetMuzzles(worldMuzzle, viewMuzzle);
 
-            var net = GetComponent<PlayerNetworkController>();
+            var net = GetComponent<PlayerEquipmentNetwork>();
 
             int pose = 0;
 
@@ -169,9 +169,7 @@ namespace Features.Equipment.UnityIntegration
             {
                 pose = def.GetWeaponPose();
             }
-
             
-            // REMOTE SIGNAL
             net?.SetWeaponPose(pose);
 
             if (IsOwner)

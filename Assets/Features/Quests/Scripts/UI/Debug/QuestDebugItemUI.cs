@@ -16,9 +16,9 @@ public class QuestDebugItemUI : MonoBehaviour
     [SerializeField] private QuestDatabaseAsset questDatabase;
 
     private string questId;
-    private PlayerNetworkController net;
+    private PlayerQuestNetwork net;
 
-    public void Bind(string id, QuestNetState state, PlayerNetworkController controller)
+    public void Bind(string id, QuestNetState state, PlayerQuestNetwork controller)
     {
         questId = id;
         net = controller;

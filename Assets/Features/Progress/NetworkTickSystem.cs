@@ -35,4 +35,10 @@ public sealed class NetworkTickSystem : MonoBehaviour
             OnTick?.Invoke();
         }
     }
+
+    public void SetTick(int serverTick)
+    {
+        CurrentTick = serverTick;
+        _accumulator = 0f;
+    }
 }

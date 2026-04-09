@@ -74,7 +74,7 @@ public class PauseMenu : MonoBehaviour, IUIScreen
 
     private void onHubReturn()
     {
-        GetComponentInParent<BootstrapRoot>().LocalPlayer.GetComponent<PlayerNetworkController>().RequestReturnToHubServerRpc();
+        GetComponentInParent<BootstrapRoot>().LocalPlayer.GetComponent<PlayerSessionNetwork>().RequestReturnToHubServerRpc();
         
         UIStackManager.I.Clear();
     }
@@ -87,7 +87,7 @@ public class PauseMenu : MonoBehaviour, IUIScreen
 
         foreach (var obj in conn.Objects)
         {
-            var controller = obj.GetComponent<PlayerNetworkController>();
+            var controller = obj.GetComponent<PlayerSessionNetwork>();
             if (controller != null && controller.IsOwner)
             {
                 controller.RequestReturnToSpawnServerRpc();

@@ -20,6 +20,7 @@ public class PlayerView : NetworkBehaviour
     private Vector3 renderPosition;
     private Quaternion renderRotation;
     private RemoteInterpolation remote;
+    private MovementInputHandler inputHandler;
 
     private void Awake()
     {
@@ -29,14 +30,33 @@ public class PlayerView : NetworkBehaviour
         remote = GetComponentInChildren<RemoteInterpolation>();
     }
 
+    private void Start()
+    {
+        inputHandler = LocalPlayerController.I.GetComponent<MovementInputHandler>();
+    }
+
     private void Update()
     {
         if (anim == null)
             return;
 
+        if (inputHandler == null) {
+            inputHandler = LocalPlayerController.I.GetComponent<MovementInputHandler>();
+            if (inputHandler != null) return;
+        }
+
         // ================= ВИЗУАЛ ПОВОРОТА =================
 
-        float yaw = movement.CurrentYawInternal;
+        float yaw;
+
+        if (IsOwner)
+        {
+            yaw = inputHandler.CurrentState.Yaw;
+        }
+        else
+        {
+            yaw = remote.GetInterpolatedYaw();
+        }
 
         float smoothYaw = Mathf.LerpAngle(
             visualRoot.localEulerAngles.y,

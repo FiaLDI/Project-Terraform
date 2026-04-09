@@ -1,6 +1,7 @@
 using UnityEngine;
 using FishNet.Object;
 using Features.Stats.Adapter;
+using FishNet;
 
 [RequireComponent(typeof(CharacterController))]
 public class DeterministicMovement : NetworkBehaviour
@@ -15,28 +16,23 @@ public class DeterministicMovement : NetworkBehaviour
 
     [SerializeField] private float crouchHeight = 2f;
     [SerializeField] private float normalHeight = 3f;
-    [SerializeField] private Transform visualRoot;
 
     private CharacterController controller;
     private bool isCrouching;
 
     private float verticalVelocity;
-    private float currentYaw;
 
     public Vector3 Velocity { get; private set; }
     public bool Grounded => controller.isGrounded;
     public bool IsCrouching => isCrouching;
 
     public float VerticalVelocityInternal => verticalVelocity;
-    public float CurrentYawInternal => currentYaw;
 
     private MovementStatsAdapter movementStats;
 
-    // 🔥 JUMP BUFFER
     private float jumpBufferTimer;
     private const float JumpBufferTime = 0.15f;
 
-    // 🔥 COYOTE TIME
     private float coyoteTimer;
     private const float CoyoteTime = 0.15f;
 
@@ -47,11 +43,6 @@ public class DeterministicMovement : NetworkBehaviour
         var stats = GetComponent<StatsFacadeAdapter>();
         if (stats != null)
             movementStats = stats.MovementStats;
-        
-        if(visualRoot == null) 
-            visualRoot = GetComponent<PlayerVisualController>()?.transform;
-
-        currentYaw = transform.eulerAngles.y;
     }
 
     public void Simulate(MoveCommand cmd)
@@ -65,7 +56,7 @@ public class DeterministicMovement : NetworkBehaviour
 
         TryResolveStats();
 
-        float dt = NetworkTickSystem.TickDelta;
+        float dt = (float)InstanceFinder.TimeManager.TickDelta;
 
         // ================= INPUT BUFFER =================
 
@@ -85,10 +76,6 @@ public class DeterministicMovement : NetworkBehaviour
 
         if (coyoteTimer < 0f)
             coyoteTimer = 0f;
-
-        // ================= ROTATION MODEL =================
-
-        currentYaw = cmd.Yaw;
 
         // ================= SPEED =================
 
@@ -114,9 +101,10 @@ public class DeterministicMovement : NetworkBehaviour
             controller.center = new Vector3(0, normalHeight / 2f, 0);
         }
 
-        Quaternion lookRot = Quaternion.Euler(0f, currentYaw, 0f);
+        // ================= MOVEMENT (через YAW ИЗ CMD) =================
 
-        float rad = currentYaw * Mathf.Deg2Rad;
+        float yaw = cmd.Yaw;
+        float rad = yaw * Mathf.Deg2Rad;
 
         Vector3 forward = new Vector3(Mathf.Sin(rad), 0f, Mathf.Cos(rad));
         Vector3 right   = new Vector3(forward.z, 0f, -forward.x);
@@ -165,15 +153,14 @@ public class DeterministicMovement : NetworkBehaviour
         controller.Move((horizontal + vertical) * dt);
     }
 
-    public void Teleport(Vector3 position, float yaw, float verticalVel)
+    // ================= STATE =================
+
+    public void Teleport(Vector3 position, float verticalVel)
     {
         controller.enabled = false;
 
         transform.position = position;
-        currentYaw = yaw;
         verticalVelocity = verticalVel;
-
-        transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         controller.enabled = true;
     }
@@ -183,11 +170,7 @@ public class DeterministicMovement : NetworkBehaviour
         controller.enabled = false;
 
         transform.position = state.Position;
-
-        currentYaw = state.InternalYaw;
         verticalVelocity = state.VerticalVelocity;
-
-        transform.rotation = Quaternion.Euler(0f, currentYaw, 0f);
 
         controller.enabled = true;
 
@@ -196,7 +179,7 @@ public class DeterministicMovement : NetworkBehaviour
 
     public void ApplyCorrection(Vector3 correction)
     {
-        Velocity += correction * 5f;
+        Velocity += correction * 2f;
     }
 
     private void TryResolveStats()

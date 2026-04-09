@@ -121,4 +121,20 @@ transform.position = Vector3.Lerp(transform.position, pos, smooth);
             anim.SetWeaponPose(to.WeaponPose);
         }
     }
+
+    public float GetInterpolatedYaw()
+    {
+        if (snapshots.Count < 2)
+            return transform.eulerAngles.y;
+
+        var from = snapshots[0];
+        var to = snapshots[1];
+
+        float renderTime = snapshots[snapshots.Count - 1].Time - InterpDelay;
+
+        float t = Mathf.InverseLerp(from.Time, to.Time, renderTime);
+        t = Mathf.Clamp01(t);
+
+        return Mathf.LerpAngle(from.Yaw, to.Yaw, t);
+    }
 }
