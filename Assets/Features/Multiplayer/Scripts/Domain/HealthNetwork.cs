@@ -22,8 +22,16 @@ public sealed class HealthNetwork : NetworkBehaviour
     {
         base.OnStartNetwork();
 
-        _maxHp.OnChange += (_, __, ___) => RaiseChanged();
-        _currentHp.OnChange += (_, __, ___) => RaiseChanged();
+        _maxHp.OnChange += OnMaxHpChanged;
+        _currentHp.OnChange += OnCurrentHpChanged;
+    }
+
+    public override void OnStopNetwork()
+    {
+        _maxHp.OnChange -= OnMaxHpChanged;
+        _currentHp.OnChange -= OnCurrentHpChanged;
+
+        base.OnStopNetwork();
     }
 
     public override void OnStartServer()
@@ -50,6 +58,27 @@ public sealed class HealthNetwork : NetworkBehaviour
         _currentHp.Value = health.CurrentHp;
 
         health.OnHealthChanged += HandleHealthChanged;
+    }
+
+    public override void OnStopServer()
+    {
+        if (health != null)
+            health.OnHealthChanged -= HandleHealthChanged;
+
+        health = null;
+        statsOwner = null;
+
+        base.OnStopServer();
+    }
+
+    private void OnMaxHpChanged(float _, float __, bool ___)
+    {
+        RaiseChanged();
+    }
+
+    private void OnCurrentHpChanged(float _, float __, bool ___)
+    {
+        RaiseChanged();
     }
 
     private void HandleHealthChanged(float current, float max)

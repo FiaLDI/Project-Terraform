@@ -154,12 +154,7 @@ namespace Features.Resources.UnityIntegration
         /// </summary>
         public void SetHealthVisual(float health)
         {
-            var renderer = GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                float healthPct = Mathf.Clamp01(health / config.maxHealth);
-                renderer.material.color = Color.Lerp(Color.red, Color.green, healthPct);
-            }
+            _ = health;
         }
 
         public void OnScanned(float scanSpeed) { }

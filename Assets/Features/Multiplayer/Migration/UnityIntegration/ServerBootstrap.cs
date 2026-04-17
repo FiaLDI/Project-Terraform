@@ -21,6 +21,15 @@ public sealed class ServerBootstrap : MonoBehaviour
         net.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
     }
 
+    private void OnDestroy()
+    {
+        if (net == null)
+            return;
+
+        net.ServerManager.OnServerConnectionState -= OnServerState;
+        net.ServerManager.OnRemoteConnectionState -= OnRemoteConnectionState;
+    }
+
     public void StartDedicatedServer()
     {
         ServerCompositionRoot.I.Flow.StartServer();
