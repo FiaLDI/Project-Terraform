@@ -88,18 +88,7 @@ public class DeterministicMovement : NetworkBehaviour
 
         // ================= CROUCH =================
 
-        if (cmd.Crouch && !isCrouching)
-        {
-            isCrouching = true;
-            controller.height = crouchHeight;
-            controller.center = new Vector3(0, crouchHeight / 2f, 0);
-        }
-        else if (!cmd.Crouch && isCrouching)
-        {
-            isCrouching = false;
-            controller.height = normalHeight;
-            controller.center = new Vector3(0, normalHeight / 2f, 0);
-        }
+        SetCrouchState(cmd.Crouch);
 
         // ================= MOVEMENT (через YAW ИЗ CMD) =================
 
@@ -169,8 +158,14 @@ public class DeterministicMovement : NetworkBehaviour
     {
         controller.enabled = false;
 
+        SetCrouchState(state.Crouch);
         transform.position = state.Position;
+        Velocity = state.Velocity;
         verticalVelocity = state.VerticalVelocity;
+        CurrentMaxSpeed = new Vector3(state.Velocity.x, 0f, state.Velocity.z).magnitude;
+        JumpedThisTick = false;
+        jumpBufferTimer = 0f;
+        coyoteTimer = 0f;
 
         controller.enabled = true;
 
@@ -179,7 +174,16 @@ public class DeterministicMovement : NetworkBehaviour
 
     public void ApplyCorrection(Vector3 correction)
     {
-        Velocity += correction * 2f;
+        if (correction.sqrMagnitude <= 0f)
+            return;
+
+        bool wasEnabled = controller.enabled;
+        controller.enabled = false;
+        transform.position += correction;
+        controller.enabled = wasEnabled;
+
+        if (controller.enabled)
+            controller.Move(Vector3.zero);
     }
 
     private void TryResolveStats()
@@ -190,5 +194,17 @@ public class DeterministicMovement : NetworkBehaviour
         var stats = GetComponent<StatsFacadeAdapter>();
         if (stats != null)
             movementStats = stats.MovementStats;
+    }
+
+    private void SetCrouchState(bool crouch)
+    {
+        if (isCrouching == crouch)
+            return;
+
+        isCrouching = crouch;
+
+        float height = isCrouching ? crouchHeight : normalHeight;
+        controller.height = height;
+        controller.center = new Vector3(0f, height / 2f, 0f);
     }
 }

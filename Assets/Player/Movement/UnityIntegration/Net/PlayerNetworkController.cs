@@ -24,6 +24,9 @@ public class PlayerNetworkController : NetworkBehaviour
     private uint lastReconciledTick;
 
     private const int BufferSize = 1024;
+    private const float IgnoreReconcileError = 0.2f;
+    private const float SoftReconcileError = 0.35f;
+    private const float SoftCorrectionLimit = 0.06f;
     private int currentWeaponPose = 0;
 
     private void Awake()
@@ -152,13 +155,13 @@ public class PlayerNetworkController : NetworkBehaviour
 
         float error = Vector3.Distance(transform.position, serverState.Position);
 
-        if (error < 0.2f)
+        if (error < IgnoreReconcileError)
             return;
 
-        if (error < 0.5f)
+        if (error < SoftReconcileError)
         {
             Vector3 correction = serverState.Position - transform.position;
-            correction = Vector3.ClampMagnitude(correction, 0.25f);
+            correction = Vector3.ClampMagnitude(correction, SoftCorrectionLimit);
 
             movement.ApplyCorrection(correction);
             ReplayFromTick(serverState.Tick + 1);
