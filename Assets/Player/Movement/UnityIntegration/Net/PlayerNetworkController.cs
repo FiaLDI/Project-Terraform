@@ -16,6 +16,7 @@ public class PlayerNetworkController : NetworkBehaviour
 
     // CLIENT
     private readonly Dictionary<uint, MoveCommand> inputBuffer = new();
+    private readonly Dictionary<uint, PlayerState> predictedStateBuffer = new();
 
     // SERVER
     private readonly Dictionary<uint, MoveCommand> serverInputBuffer = new();
@@ -51,6 +52,7 @@ public class PlayerNetworkController : NetworkBehaviour
             timeManager.OnTick -= OnTick;
 
         inputBuffer.Clear();
+        predictedStateBuffer.Clear();
         serverInputBuffer.Clear();
     }
 
@@ -80,6 +82,7 @@ public class PlayerNetworkController : NetworkBehaviour
 
             // prediction
             movement.Simulate(cmd);
+            predictedStateBuffer[tick] = CaptureState(tick, cmd);
 
             // отправка на сервер
             if (!IsServer)
@@ -150,26 +153,28 @@ public class PlayerNetworkController : NetworkBehaviour
 
         lastReconciledTick = serverState.Tick;
 
-        if (!inputBuffer.ContainsKey(serverState.Tick))
+        if (!inputBuffer.ContainsKey(serverState.Tick) ||
+            !predictedStateBuffer.TryGetValue(serverState.Tick, out var predictedState))
             return;
 
-        float error = Vector3.Distance(transform.position, serverState.Position);
+        float error = Vector3.Distance(predictedState.Position, serverState.Position);
 
         if (error < IgnoreReconcileError)
             return;
 
         if (error < SoftReconcileError)
         {
-            Vector3 correction = serverState.Position - transform.position;
+            Vector3 correction = serverState.Position - predictedState.Position;
             correction = Vector3.ClampMagnitude(correction, SoftCorrectionLimit);
 
             movement.ApplyCorrection(correction);
-            ReplayFromTick(serverState.Tick + 1);
+            ShiftPredictedStates(serverState.Tick, correction);
             return;
         }
 
         // жёсткий rollback
         movement.ApplyState(serverState);
+        predictedStateBuffer[serverState.Tick] = serverState;
         ReplayFromTick(serverState.Tick + 1);
     }
 
@@ -182,6 +187,7 @@ public class PlayerNetworkController : NetworkBehaviour
             if (inputBuffer.TryGetValue(t, out var cmd))
             {
                 movement.Simulate(cmd);
+                predictedStateBuffer[t] = CaptureState(t, cmd);
             }
         }
     }
@@ -198,6 +204,13 @@ public class PlayerNetworkController : NetworkBehaviour
             if (key < minTick)
                 inputBuffer.Remove(key);
         }
+
+        keys = new List<uint>(predictedStateBuffer.Keys);
+        foreach (var key in keys)
+        {
+            if (key < minTick)
+                predictedStateBuffer.Remove(key);
+        }
     }
 
     private void CleanupServerInputs(uint currentTick)
@@ -209,6 +222,23 @@ public class PlayerNetworkController : NetworkBehaviour
         {
             if (key < minTick)
                 serverInputBuffer.Remove(key);
+        }
+    }
+
+    private void ShiftPredictedStates(uint startTick, Vector3 correction)
+    {
+        if (correction.sqrMagnitude <= 0f)
+            return;
+
+        var keys = new List<uint>(predictedStateBuffer.Keys);
+        foreach (var key in keys)
+        {
+            if (key < startTick)
+                continue;
+
+            var predicted = predictedStateBuffer[key];
+            predicted.Position += correction;
+            predictedStateBuffer[key] = predicted;
         }
     }
 

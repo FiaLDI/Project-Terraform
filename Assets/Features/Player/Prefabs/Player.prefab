@@ -182,11 +182,11 @@ Transform:
   m_GameObject: {fileID: 5151272602035875914}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.4460001, y: 3.54, z: 0.02}
+  m_LocalPosition: {x: 0.4460001, y: 3.54, z: 0.01999998}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5017748270277261448}
+  m_Father: {fileID: 8962433313233342359}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6202741382508557473
 GameObject:
@@ -252,7 +252,7 @@ Transform:
   - {fileID: 6661307558894028265}
   - {fileID: 5376905879590580319}
   - {fileID: 1158711919289892428}
-  m_Father: {fileID: 5017748270277261448}
+  m_Father: {fileID: 8962433313233342359}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7012883752185838559
 GameObject:
@@ -263,7 +263,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5017748270277261448}
-  - component: {fileID: 2647050478538188210}
+  - component: {fileID: 9161322020062546935}
   m_Layer: 8
   m_Name: Model
   m_TagString: Untagged
@@ -283,12 +283,10 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2683651113482784269}
-  - {fileID: 8282239097301865665}
+  m_Children: []
   m_Father: {fileID: 8962433313233342359}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2647050478538188210
+--- !u!114 &9161322020062546935
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -408,6 +406,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2683651113482784269}
+  - {fileID: 8282239097301865665}
   - {fileID: 5017748270277261448}
   - {fileID: 2093033724641454212}
   m_Father: {fileID: 0}
@@ -821,7 +821,6 @@ MonoBehaviour:
   jumpHeight: 1.2
   crouchHeight: 2
   normalHeight: 3
-  visualRoot: {fileID: 5017748270277261448}
 --- !u!114 &3277316184608179795
 MonoBehaviour:
   m_ObjectHideFlags: 0

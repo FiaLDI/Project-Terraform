@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using Features.Classes.Data;
-using Features.Classes.Domain;
 
 namespace Features.Classes.Application
 {
-    public class PlayerClassService : IPlayerClassService
+    public class PlayerClassService
     {
         private readonly Dictionary<string, PlayerClassConfigSO> _classes =
             new Dictionary<string, PlayerClassConfigSO>();
