@@ -20,6 +20,8 @@ namespace Biomes.Application
 
         public static void Build(WorldConfig world)
         {
+            Dispose();
+
             var layers = world.biomes;
 
             List<EnvironmentRule> env = new();
@@ -199,6 +201,20 @@ namespace Biomes.Application
             QuestRules = new NativeArray<QuestRule>(que.ToArray(), Allocator.Persistent);
 
             Debug.Log($"[BiomeRuntimeDatabase] Build completed. Env={EnvRules.Length}, Res={ResRules.Length}, Enemies={EnemyRules.Length}, Quests={QuestRules.Length}");
+        }
+
+        public static void Dispose()
+        {
+            if (EnvRules.IsCreated)
+                EnvRules.Dispose();
+            if (ResRules.IsCreated)
+                ResRules.Dispose();
+            if (EnemyRules.IsCreated)
+                EnemyRules.Dispose();
+            if (QuestRules.IsCreated)
+                QuestRules.Dispose();
+
+            BiomeParamsArray = null;
         }
     }
 }

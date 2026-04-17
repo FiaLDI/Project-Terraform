@@ -14,10 +14,24 @@ public class QuestDebugListUI : MonoBehaviour
 
     public void Init(PlayerQuestComponent comp, PlayerQuestNetwork controller)
     {
+        Unsubscribe();
+
         questComponent = comp;
         net = controller;
 
-        questComponent.Quests.OnChange += OnQuestChanged;
+        if (questComponent != null)
+            questComponent.Quests.OnChange += OnQuestChanged;
+    }
+
+    private void OnDestroy()
+    {
+        Unsubscribe();
+    }
+
+    private void Unsubscribe()
+    {
+        if (questComponent != null)
+            questComponent.Quests.OnChange -= OnQuestChanged;
     }
 
     private void OnQuestChanged(

@@ -30,8 +30,17 @@ namespace Features.Stats.UnityIntegration
 
         public override void OnStartClient()
         {
+            base.OnStartClient();
             adapter = GetComponent<StatsFacadeAdapter>();
             synced.OnChange += OnChanged;
+        }
+
+        public override void OnStopClient()
+        {
+            synced.OnChange -= OnChanged;
+            adapter = null;
+
+            base.OnStopClient();
         }
 
         private void OnChanged(
