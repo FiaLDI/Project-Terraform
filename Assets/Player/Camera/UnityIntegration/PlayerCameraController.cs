@@ -19,6 +19,9 @@ public sealed class PlayerCameraController : MonoBehaviour
     [Header("TPS")]
     [SerializeField] private float distance = 5f;
     [SerializeField] private Vector3 shoulderOffset = new Vector3(0.5f, 0, 0);
+    [SerializeField] private LayerMask tpsCollisionMask = ~0;
+    [SerializeField] private float tpsCollisionRadius = 0.2f;
+    [SerializeField] private float tpsMinDistance = 0.35f;
 
     private Transform cam;
 
@@ -30,6 +33,7 @@ public sealed class PlayerCameraController : MonoBehaviour
     private bool isAiming;
 
     private MovementInputHandler inputHandler;
+    private readonly RaycastHit[] tpsHits = new RaycastHit[8];
 
     private void Awake()
     {
@@ -168,10 +172,46 @@ public sealed class PlayerCameraController : MonoBehaviour
             cameraPivot.right * shoulderOffset.x +
             cameraPivot.up    * shoulderOffset.y;
 
-        Vector3 targetPos =
-            pivot + offsetWorld + back;
+        Vector3 shoulderPivot = pivot + offsetWorld;
+        float resolvedDistance = ResolveTpsDistance(shoulderPivot, back.normalized, finalDistance);
+        Vector3 targetPos = shoulderPivot + back.normalized * resolvedDistance;
 
         cam.position = targetPos;
         cam.rotation = Quaternion.Euler(pitch, yaw, 0f);
+    }
+
+    private float ResolveTpsDistance(Vector3 origin, Vector3 direction, float desiredDistance)
+    {
+        if (desiredDistance <= tpsMinDistance)
+            return desiredDistance;
+
+        int hitCount = Physics.SphereCastNonAlloc(
+            origin,
+            tpsCollisionRadius,
+            direction,
+            tpsHits,
+            desiredDistance,
+            tpsCollisionMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        float resolvedDistance = desiredDistance;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            var hit = tpsHits[i];
+            if (hit.collider == null)
+                continue;
+
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                continue;
+
+            resolvedDistance = Mathf.Min(
+                resolvedDistance,
+                Mathf.Max(hit.distance - tpsCollisionRadius, tpsMinDistance)
+            );
+        }
+
+        return resolvedDistance;
     }
 }

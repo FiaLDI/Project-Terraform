@@ -163,6 +163,13 @@ namespace Features.Player.UnityIntegration
             var abilities = GetComponent<AbilityCaster>();
             if (abilities != null)
                 abilities.enabled = false;
+
+            // Remote player replicas should not participate in client-side
+            // CharacterController collisions, otherwise the local owner can
+            // predict against different physics than the server.
+            var controller = GetComponent<CharacterController>();
+            if (controller != null && !IsServer)
+                controller.enabled = false;
         }
 
         private void EnableLocalComponents()
@@ -177,6 +184,10 @@ namespace Features.Player.UnityIntegration
             var abilities = GetComponent<AbilityCaster>();
             if (abilities != null)
                 abilities.enabled = true;
+
+            var controller = GetComponent<CharacterController>();
+            if (controller != null)
+                controller.enabled = true;
         }
     }
 }

@@ -17,10 +17,16 @@ public class DeterministicMovement : NetworkBehaviour
     [SerializeField] private float crouchHeight = 2f;
     [SerializeField] private float normalHeight = 3f;
 
+    [Header("Debug")]
+    [SerializeField] private bool debugMovementSim;
+    [SerializeField] private bool debugOnlyWhenSprinting = true;
+    [SerializeField] private float debugLogInterval = 0.5f;
+
     private CharacterController controller;
     private bool isCrouching;
 
     private float verticalVelocity;
+    private float nextDebugLogTime;
 
     public Vector3 Velocity { get; private set; }
     public bool Grounded => controller.isGrounded;
@@ -140,6 +146,7 @@ public class DeterministicMovement : NetworkBehaviour
         Vector3 vertical   = new Vector3(0, verticalVelocity, 0);
 
         controller.Move((horizontal + vertical) * dt);
+        MaybeLogSimulation(cmd, speed, moveDir);
     }
 
     // ================= STATE =================
@@ -206,5 +213,42 @@ public class DeterministicMovement : NetworkBehaviour
         float height = isCrouching ? crouchHeight : normalHeight;
         controller.height = height;
         controller.center = new Vector3(0f, height / 2f, 0f);
+    }
+
+    private void MaybeLogSimulation(MoveCommand cmd, float speed, Vector3 moveDir)
+    {
+        if (!debugMovementSim)
+            return;
+
+        if (debugOnlyWhenSprinting && !cmd.Sprint)
+            return;
+
+        float now = Time.unscaledTime;
+        if (now < nextDebugLogTime)
+            return;
+
+        nextDebugLogTime = now + Mathf.Max(0.1f, debugLogInterval);
+
+        Debug.Log(
+            $"[MoveSim] {name} role={GetRoleLabel()} tick={InstanceFinder.TimeManager.Tick} " +
+            $"yaw={cmd.Yaw:0.##} move={cmd.Move} sprint={cmd.Sprint} crouch={cmd.Crouch} " +
+            $"grounded={controller.isGrounded} speed={speed:0.##} moveDir={moveDir} " +
+            $"vel={Velocity} verticalVel={verticalVelocity:0.###} pos={transform.position} " +
+            $"ccEnabled={controller.enabled}",
+            this);
+    }
+
+    private string GetRoleLabel()
+    {
+        if (IsServerStarted && IsOwner)
+            return "host-owner";
+
+        if (IsServerStarted)
+            return "server";
+
+        if (IsOwner)
+            return "owner-client";
+
+        return "remote-client";
     }
 }

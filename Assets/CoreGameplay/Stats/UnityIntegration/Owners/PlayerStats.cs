@@ -26,8 +26,10 @@ namespace Features.Stats.UnityIntegration
             base.InitStats();
 
             phase = GetComponent<ServerGamePhase>();
+            Adapter = GetComponent<StatsFacadeAdapter>();
 
             ApplyClassDefaults();
+            InitServerAdapters();
 
             Debug.Log("[PlayerStats] SERVER ready → StatsReady", this);
             phase.Reach(GamePhase.StatsReady);
@@ -67,7 +69,7 @@ namespace Features.Stats.UnityIntegration
                 Facade.Movement.ApplyBase(
                     baseSpeed: 0f,
                     walk: 5f,
-                    sprint: 6.5f,
+                    sprint: 8f,
                     crouch: 3.5f,
                     rotation: 180f,
                     gravity: -40f,
@@ -95,6 +97,17 @@ namespace Features.Stats.UnityIntegration
                     acidResistance: 0f
                 );
             }
+        }
+
+        private void InitServerAdapters()
+        {
+            if (Adapter == null || Facade == null)
+                return;
+
+            Adapter.CombatStats?.Init(Facade.Combat);
+            Adapter.MovementStats?.Init(Facade.Movement);
+            Adapter.MiningStats?.Init(Facade.Mining);
+            Adapter.ProtectStats?.Init(Facade.Protect);
         }
 
         // =====================================================

@@ -28,8 +28,8 @@ MonoBehaviour:
     baseRegen: 0.1
   movement:
     baseSpeed: 5
-    walkSpeed: 4
-    sprintSpeed: 20
+    walkSpeed: 5
+    sprintSpeed: 8
     crouchSpeed: 2
     rotationSpeed: 0
     gravity: -20

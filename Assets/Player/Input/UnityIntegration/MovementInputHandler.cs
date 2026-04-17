@@ -67,7 +67,7 @@ namespace Features.Player.UnityIntegration
             walkAction.canceled  += OnWalkStop;
 
             crouchAction.performed += OnCrouch;
-            crouchAction.canceled  += ctx => inputState.Crouch = false;
+            crouchAction.canceled  += OnCrouchCanceled;
 
             bound = true;
         }
@@ -93,6 +93,7 @@ namespace Features.Player.UnityIntegration
             walkAction.canceled  -= OnWalkStop;
 
             crouchAction.performed -= OnCrouch;
+            crouchAction.canceled  -= OnCrouchCanceled;
 
             input = null;
             bound = false;
@@ -140,6 +141,11 @@ namespace Features.Player.UnityIntegration
         private void OnCrouch(InputAction.CallbackContext ctx)
         {
             inputState.Crouch = true; // one-shot
+        }
+
+        private void OnCrouchCanceled(InputAction.CallbackContext ctx)
+        {
+            inputState.Crouch = false;
         }
 
         public PlayerInputState ConsumeState()

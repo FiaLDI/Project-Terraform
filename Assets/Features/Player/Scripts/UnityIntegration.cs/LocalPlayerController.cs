@@ -88,14 +88,17 @@ public sealed class LocalPlayerController : MonoBehaviour
             inputContext.Enable();
             InputModeManager.I.Bind(inputContext);
             InputModeManager.I.SetMode(InputMode.Gameplay);
-            var inputHandler = GetComponent<MovementInputHandler>();
-
-            OnInputReady?.Invoke(inputHandler);
         }
 
         var consumers = this.GetComponents<IInputContextConsumer>();
         foreach (var c in consumers)
             c.BindInput(inputContext);
+
+        if (inputContext != null)
+        {
+            var inputHandler = GetComponent<MovementInputHandler>();
+            OnInputReady?.Invoke(inputHandler);
+        }
 
         var camController = player.GetComponent<PlayerCameraController>();
         if (camController != null)
