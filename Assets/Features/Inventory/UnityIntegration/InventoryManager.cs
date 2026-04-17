@@ -60,7 +60,10 @@ namespace Features.Inventory.UnityIntegration
         private void OnDestroy()
         {
             if (Service != null)
+            {
                 Service.OnChanged -= HandleInventoryChanged;
+                Service.OnItemAdded -= HandleItemAdded;
+            }
         }
 
         private void CreateModel()
@@ -304,13 +307,16 @@ namespace Features.Inventory.UnityIntegration
         // QUEST EVENTS
         // ======================================================
 
-        private void HandleItemAdded(ItemInstance inst)
+        private void HandleItemAdded(ItemInstance inst, int addedAmount)
         {
+            if (inst == null || inst.IsEmpty || addedAmount <= 0)
+                return;
+
             QuestEventBus.Publish(
                 new ItemAddedEvent(
                     gameObject,
                     inst.itemDefinition.id,
-                    inst.quantity
+                    addedAmount
                 )
             );
         }

@@ -14,6 +14,7 @@ public class PlayerQuestComponent : NetworkBehaviour
 {
     public readonly SyncDictionary<string, QuestNetState> Quests = new();
     private readonly HashSet<string> rewarded = new();
+    private readonly HashSet<string> advancedChains = new();
 
     private QuestService service;
     private QuestChainService chainService;
@@ -104,6 +105,7 @@ public class PlayerQuestComponent : NetworkBehaviour
 
         pendingUpdates.Add(state);
 
+        TryAdvanceChain(quest);
         TryGiveRewards(quest);
     }
 
@@ -202,6 +204,20 @@ public class PlayerQuestComponent : NetworkBehaviour
 
         GiveRewards(quest);
         TargetLevelUp(Owner);
+    }
+
+    private void TryAdvanceChain(QuestRuntime quest)
+    {
+        if (quest.State != QuestState.Completed)
+            return;
+
+        var id = quest.Definition.Id.Value;
+
+        if (advancedChains.Contains(id))
+            return;
+
+        advancedChains.Add(id);
+        chainService?.Advance(quest.Definition.Id);
     }
 
     [TargetRpc]

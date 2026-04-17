@@ -20,6 +20,7 @@ public sealed class HaveItemCondition : IQuestCondition
 
     public void OnStart(QuestRuntime quest)
     {
+        quest.SetTarget(this, required);
         UpdateProgress(quest);
     }
 
