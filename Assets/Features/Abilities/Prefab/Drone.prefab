@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 5996046911851083023}
   - component: {fileID: 8539235162580694826}
   - component: {fileID: 7348829560662059472}
-  - component: {fileID: 6601543691781795039}
   m_Layer: 0
   m_Name: Drone
   m_TagString: Untagged
@@ -84,7 +83,7 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: 8539235162580694826}
-  - {fileID: 6601543691781795039}
+  - {fileID: 0}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -95,7 +94,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584267458430362879
+  _initializedTimestamp: -8584250999913164421
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -110,7 +109,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 19
+  <PrefabId>k__BackingField: 22
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 14622794977849008595
   SceneId: 0
@@ -119,21 +118,6 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
---- !u!114 &6601543691781795039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7817172014945752216}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d026e36cad502c947826ce6ca81ee300, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkAutoDespawn
-  _componentIndexCache: 1
-  _addedNetworkObject: {fileID: 7348829560662059472}
-  _networkObjectCache: {fileID: 7348829560662059472}
 --- !u!1001 &1694410525645975029
 PrefabInstance:
   m_ObjectHideFlags: 0

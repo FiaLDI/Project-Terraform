@@ -49,8 +49,5 @@ public sealed class WorldReadyRuntime : NetworkBehaviour
         root.SetWorldType(WorldType.Dynamic);
 
         root.Spawner.RespawnAllOnline();
-
-        if (NetworkTickSystem.I != null)
-            NetworkTickSystem.I.Paused = false;
     }
 }
