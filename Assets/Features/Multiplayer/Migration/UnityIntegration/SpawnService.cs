@@ -88,6 +88,29 @@ public sealed class SpawnService
         Debug.Log("[fix-net] === RespawnAllOnline END ===");
     }
 
+    public void RespawnSession(PlayerSession session)
+    {
+        if (session == null || !session.IsOnline || !session.ClientId.HasValue)
+            return;
+
+        if (!CanSpawnNow())
+        {
+            Debug.Log("[fix-net] RespawnSession aborted: world not ready");
+            return;
+        }
+
+        if (!nm.ServerManager.Clients.TryGetValue(session.ClientId.Value, out var conn))
+            return;
+
+        if (session.PlayerObject != null)
+        {
+            nm.ServerManager.Despawn(session.PlayerObject);
+            session.SetPlayerObject(null);
+        }
+
+        SpawnInternal(conn, session);
+    }
+
 
     // =============================
     // INTERNAL SPAWN

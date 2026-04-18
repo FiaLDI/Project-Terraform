@@ -9,14 +9,12 @@ namespace Features.Player.UnityIntegration
     public sealed class AbilityCasterNetAdapter : NetworkBehaviour
     {
         private AbilityCaster caster;
-
-        // =====================================================
-        // LIFECYCLE
-        // =====================================================
+        private NetworkPlayer networkPlayer;
 
         private void Awake()
         {
             caster = GetComponent<AbilityCaster>();
+            networkPlayer = GetComponent<NetworkPlayer>();
         }
 
         public override void OnStartServer()
@@ -25,31 +23,24 @@ namespace Features.Player.UnityIntegration
 
             if (caster == null)
                 caster = GetComponent<AbilityCaster>();
+
+            if (networkPlayer == null)
+                networkPlayer = GetComponent<NetworkPlayer>();
         }
 
-        // =====================================================
-        // CLIENT → SERVER
-        // =====================================================
-
-        /// <summary>
-        /// Вызывается ТОЛЬКО локальным игроком.
-        /// Отправляет намерение каста на сервер.
-        /// </summary>
         public void Cast(int index)
         {
             if (!IsOwner)
                 return;
 
-            // защита от гонок до инициализации
+            if (networkPlayer != null && networkPlayer.IsDead)
+                return;
+
             if (!IsClientInitialized)
                 return;
 
             Cast_Server(index);
         }
-
-        // =====================================================
-        // SERVER (AUTHORITATIVE)
-        // =====================================================
 
         [ServerRpc]
         private void Cast_Server(int index)
@@ -57,11 +48,12 @@ namespace Features.Player.UnityIntegration
             if (caster == null)
                 return;
 
+            if (networkPlayer != null && networkPlayer.IsDead)
+                return;
+
             if (!caster.IsReady)
                 return;
 
-            // ❗ ВАЖНО:
-            // Execute происходит ТОЛЬКО на сервере внутри AbilityService
             caster.TryCastWithContext(index, out _, out _);
         }
     }

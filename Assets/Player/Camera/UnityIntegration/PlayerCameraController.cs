@@ -8,6 +8,7 @@ public sealed class PlayerCameraController : MonoBehaviour
     [SerializeField] private Transform cameraPivot;
     [SerializeField] private Transform fpsPoint;
     [SerializeField] private Transform visualRoot;
+    [SerializeField] private DeterministicMovement movement;
 
     [Header("Settings")]
     private float sensitivity = 1.5f;
@@ -19,18 +20,26 @@ public sealed class PlayerCameraController : MonoBehaviour
     [Header("TPS")]
     [SerializeField] private float distance = 5f;
     [SerializeField] private Vector3 shoulderOffset = new Vector3(0.5f, 0, 0);
+    [SerializeField] private float tpsPivotHeight = 0.35f;
+    [SerializeField] private float tpsPivotForwardOffset = 0.15f;
     [SerializeField] private LayerMask tpsCollisionMask = ~0;
     [SerializeField] private float tpsCollisionRadius = 0.2f;
     [SerializeField] private float tpsMinDistance = 0.35f;
+
+    [Header("Crouch Camera")]
+    [SerializeField] private float crouchCameraDrop = 0.4f;
+    [SerializeField] private float crouchCameraSmooth = 12f;
 
     private Transform cam;
 
     private float yaw;
     private float pitch;
+    private float currentCrouchOffset;
 
     private bool isFPS = true;
     private bool isLocal;
     private bool isAiming;
+    private bool isLookEnabled = true;
 
     private MovementInputHandler inputHandler;
     private readonly RaycastHit[] tpsHits = new RaycastHit[8];
@@ -38,7 +47,9 @@ public sealed class PlayerCameraController : MonoBehaviour
     private void Awake()
     {
         cam = Camera.main != null ? Camera.main.transform : null;
-        
+        if (movement == null)
+            movement = GetComponent<DeterministicMovement>();
+
         ApplySensitivity();
     }
 
@@ -75,11 +86,10 @@ public sealed class PlayerCameraController : MonoBehaviour
         ResolveCamera();
     }
 
-    // ================= INPUT =================
-
     public void SetLookInput(Vector2 input)
     {
-        if (!isLocal) return;
+        if (!isLocal || !isLookEnabled)
+            return;
 
         float sens = sensitivity * 100f * Time.deltaTime;
 
@@ -97,6 +107,9 @@ public sealed class PlayerCameraController : MonoBehaviour
 
     public void SwitchView()
     {
+        if (!isLookEnabled)
+            return;
+
         isFPS = !isFPS;
         CameraRegistry.Instance?.SetFPSVisible(isFPS);
     }
@@ -106,9 +119,17 @@ public sealed class PlayerCameraController : MonoBehaviour
         return isFPS;
     }
 
+    public float CurrentPitch => pitch;
+    public float CurrentYaw => yaw;
+
     public void SetAiming(bool value)
     {
         isAiming = value;
+    }
+
+    public void SetLookEnabled(bool value)
+    {
+        isLookEnabled = value;
     }
 
     public void ResolveCamera()
@@ -119,7 +140,14 @@ public sealed class PlayerCameraController : MonoBehaviour
 
     public void SetHead(Transform head)
     {
-        // больше не нужен, но оставим для совместимости
+        if (head == null)
+            return;
+
+        HeadPitchController headPitch = head.GetComponent<HeadPitchController>();
+        if (headPitch == null)
+            headPitch = head.gameObject.AddComponent<HeadPitchController>();
+
+        headPitch.BindCamera(this);
     }
 
     public void RefreshSensitivity()
@@ -132,8 +160,6 @@ public sealed class PlayerCameraController : MonoBehaviour
         sensitivity = SettingsStorage.Sensitivity;
     }
 
-    // ================= UPDATE =================
-
     private void LateUpdate()
     {
         if (!isLocal || cam == null)
@@ -143,18 +169,16 @@ public sealed class PlayerCameraController : MonoBehaviour
             UpdateFPS();
         else
             UpdateTPS();
-        
-        var unityCamera = CameraRegistry.Instance?.CurrentCamera;
 
+        var unityCamera = CameraRegistry.Instance?.CurrentCamera;
         if (unityCamera != null)
-        {
             unityCamera.cullingMask = isFPS ? fpsMask : tpsMask;
-        }
     }
 
     private void UpdateFPS()
     {
-        cam.position = fpsPoint.position;
+        Vector3 crouchOffset = Vector3.up * GetCurrentCrouchOffset();
+        cam.position = fpsPoint.position + crouchOffset;
         cam.rotation = Quaternion.Euler(pitch, yaw, 0f);
     }
 
@@ -162,7 +186,16 @@ public sealed class PlayerCameraController : MonoBehaviour
     {
         cameraPivot.rotation = Quaternion.Euler(pitch, yaw, 0f);
 
-        Vector3 pivot = cameraPivot.position;
+        Vector3 planarForward = Vector3.ProjectOnPlane(cameraPivot.forward, Vector3.up);
+        if (planarForward.sqrMagnitude < 0.0001f)
+            planarForward = transform.forward;
+        else
+            planarForward.Normalize();
+
+        Vector3 pivot =
+            cameraPivot.position +
+            Vector3.up * (GetCurrentCrouchOffset() + tpsPivotHeight) +
+            planarForward * tpsPivotForwardOffset;
 
         float finalDistance = isAiming ? 2f : distance;
 
@@ -170,7 +203,8 @@ public sealed class PlayerCameraController : MonoBehaviour
 
         Vector3 offsetWorld =
             cameraPivot.right * shoulderOffset.x +
-            cameraPivot.up    * shoulderOffset.y;
+            Vector3.up * shoulderOffset.y +
+            planarForward * shoulderOffset.z;
 
         Vector3 shoulderPivot = pivot + offsetWorld;
         float resolvedDistance = ResolveTpsDistance(shoulderPivot, back.normalized, finalDistance);
@@ -178,6 +212,17 @@ public sealed class PlayerCameraController : MonoBehaviour
 
         cam.position = targetPos;
         cam.rotation = Quaternion.Euler(pitch, yaw, 0f);
+    }
+
+    private float GetCurrentCrouchOffset()
+    {
+        float targetOffset = 0f;
+        if (movement != null && movement.IsCrouching)
+            targetOffset = -Mathf.Abs(crouchCameraDrop);
+
+        float lerpFactor = 1f - Mathf.Exp(-Mathf.Max(1f, crouchCameraSmooth) * Time.deltaTime);
+        currentCrouchOffset = Mathf.Lerp(currentCrouchOffset, targetOffset, lerpFactor);
+        return currentCrouchOffset;
     }
 
     private float ResolveTpsDistance(Vector3 origin, Vector3 direction, float desiredDistance)

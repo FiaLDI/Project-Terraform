@@ -83,7 +83,7 @@ public class PlayerNetworkController : NetworkBehaviour
 
     private void OnTick()
     {
-        if (!IsSpawned)
+        if (!enabled || !IsSpawned)
             return;
 
         uint tick = timeManager.Tick;

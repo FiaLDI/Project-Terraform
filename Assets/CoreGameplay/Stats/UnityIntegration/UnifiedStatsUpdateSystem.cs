@@ -43,7 +43,7 @@ namespace Features.Stats.UnityIntegration
 
         private void OnTick()
         {
-            if (!IsServerStarted)
+            if (!enabled || !IsServerStarted)
                 return;
 
             if (!ready)

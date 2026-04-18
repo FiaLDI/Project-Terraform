@@ -688,7 +688,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584251424895995884
+  _initializedTimestamp: -8584251095129409074
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -762,6 +762,7 @@ MonoBehaviour:
   cameraPivot: {fileID: 2683651113482784269}
   fpsPoint: {fileID: 5175878013477234654}
   visualRoot: {fileID: 5017748270277261448}
+  movement: {fileID: 0}
   pitchMin: -80
   pitchMax: 80
   fpsMask:
@@ -771,12 +772,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4095
   distance: 1.5
-  shoulderOffset: {x: 0.7, y: -0.9, z: 0}
+  shoulderOffset: {x: 2, y: 0.1, z: -3}
+  tpsPivotHeight: 0.35
+  tpsPivotForwardOffset: 0.15
   tpsCollisionMask:
     serializedVersion: 2
     m_Bits: 4294967295
   tpsCollisionRadius: 0.2
   tpsMinDistance: 0.35
+  crouchCameraDrop: 0.4
+  crouchCameraSmooth: 12
 --- !u!114 &5907872678837714149
 MonoBehaviour:
   m_ObjectHideFlags: 0
