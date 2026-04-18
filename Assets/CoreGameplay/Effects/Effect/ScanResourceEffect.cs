@@ -27,8 +27,6 @@ namespace Features.Effects.Application
             _heightOffset = heightOffset;
         }
 
-
-
         public void Apply(EffectContext context)
         {
             if (!InstanceFinder.IsServer)

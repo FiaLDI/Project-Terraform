@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &5488107644579969124
+--- !u!1 &4655979638605053677
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,27 +8,27 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8515160143105028495}
-  - component: {fileID: 7933257331999988349}
-  - component: {fileID: 5257293869719479027}
-  - component: {fileID: 4249660788218673768}
-  - component: {fileID: 4934093918610812480}
-  - component: {fileID: 5857724373703191055}
-  - component: {fileID: 3242860444255855864}
+  - component: {fileID: 2822632572380759882}
+  - component: {fileID: 784317103770899943}
+  - component: {fileID: 6802337012093371497}
+  - component: {fileID: 8721339802944894652}
+  - component: {fileID: 3495921157886736816}
+  - component: {fileID: 3612623664390582460}
+  - component: {fileID: 6493021074193023021}
   m_Layer: 6
-  m_Name: CrystalResourse1
+  m_Name: CrystalResourse2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8515160143105028495
+--- !u!4 &2822632572380759882
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5488107644579969124}
+  m_GameObject: {fileID: 4655979638605053677}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -37,21 +37,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &7933257331999988349
+--- !u!33 &784317103770899943
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5488107644579969124}
-  m_Mesh: {fileID: -6899791618136124932, guid: d72333a4e5b4111449f6d2740e928274, type: 3}
---- !u!23 &5257293869719479027
+  m_GameObject: {fileID: 4655979638605053677}
+  m_Mesh: {fileID: -5366804245377931033, guid: 4cd668bb74cb8fd419c8d905be90b6c6, type: 3}
+--- !u!23 &6802337012093371497
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5488107644579969124}
+  m_GameObject: {fileID: 4655979638605053677}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -70,7 +70,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 5849691808246445478, guid: d72333a4e5b4111449f6d2740e928274, type: 3}
+  - {fileID: 5849691808246445478, guid: 4cd668bb74cb8fd419c8d905be90b6c6, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -93,13 +93,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &4249660788218673768
+--- !u!135 &8721339802944894652
 SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5488107644579969124}
+  m_GameObject: {fileID: 4655979638605053677}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -114,41 +114,41 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.7
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4934093918610812480
+--- !u!114 &3495921157886736816
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5488107644579969124}
+  m_GameObject: {fileID: 4655979638605053677}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d826361863f48cd479b7bd8ac5f7f491, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Resources.UnityIntegration.ResourceNodePresenter
   config: {fileID: 11400000, guid: e4e91796d5445cc4e9358bb7d608f4a2, type: 2}
---- !u!114 &5857724373703191055
+--- !u!114 &3612623664390582460
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5488107644579969124}
+  m_GameObject: {fileID: 4655979638605053677}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44b23f8518a4b41428ff961ad9921804, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResourceNodeNetwork
   _componentIndexCache: 0
-  _addedNetworkObject: {fileID: 3242860444255855864}
-  _networkObjectCache: {fileID: 3242860444255855864}
---- !u!114 &3242860444255855864
+  _addedNetworkObject: {fileID: 6493021074193023021}
+  _networkObjectCache: {fileID: 6493021074193023021}
+--- !u!114 &6493021074193023021
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5488107644579969124}
+  m_GameObject: {fileID: 4655979638605053677}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
@@ -161,7 +161,7 @@ MonoBehaviour:
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
-  - {fileID: 5857724373703191055}
+  - {fileID: 3612623664390582460}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -172,7 +172,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584267458430362879
+  _initializedTimestamp: -8584250988166548644
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -181,15 +181,15 @@ MonoBehaviour:
   _enableStateForwarding: 1
   _networkTransform: {fileID: 0}
   _ownerInterpolation: 1
-  _ownerSmoothedProperties: 4294967295
+  _ownerSmoothedProperties: 255
   _adaptiveInterpolation: 3
-  _spectatorSmoothedProperties: 4294967295
+  _spectatorSmoothedProperties: 255
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 25
+  <PrefabId>k__BackingField: 26
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 15985857002264024551
+  <AssetPathHash>k__BackingField: 7402998256260202484
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}

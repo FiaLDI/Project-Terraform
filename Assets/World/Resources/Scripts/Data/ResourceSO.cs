@@ -13,13 +13,11 @@ namespace Features.Resources.Data
         public Color color = Color.white;
 
         [Header("Item Settings")]
-        public Item item; //Что выпадет игроку
+        public Item item;
 
         [Header("Node Settings")]
         public GameObject nodePrefab;
         public float maxHealth = 50f;
-        public GameObject hitEffect;
-        public GameObject destroyEffect;
 
         [Header("Spawn Settings")]
         public float noiseThreshold = 0.5f;
