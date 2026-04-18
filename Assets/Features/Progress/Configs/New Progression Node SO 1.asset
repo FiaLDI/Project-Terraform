@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: New Progression Node SO 1
   m_EditorClassIdentifier: Assembly-CSharp::ProgressionNodeSO
   id: rwew
+  displayName: Damage Burst
+  description: Adds an extra damage effect to the Tech combat package and increases burst pressure.
   requiredLevel: 2
   passive: {fileID: 11400000, guid: 72a9f240d16ad604fa71bc0357ab8d8d, type: 2}
   position: {x: 0, y: 300}
+  uiSize: 92

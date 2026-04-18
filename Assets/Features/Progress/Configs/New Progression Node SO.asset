@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: New Progression Node SO
   m_EditorClassIdentifier: Assembly-CSharp::ProgressionNodeSO
   id: aaaaa
+  displayName: Buff Cleanse
+  description: Removes matching buff effects from Tech ability chains and helps control crowded targets.
   requiredLevel: 0
   passive: {fileID: 11400000, guid: a7303eb4cb789ef4f8e842d7d8789142, type: 2}
   position: {x: -100, y: 0}
+  uiSize: 72
