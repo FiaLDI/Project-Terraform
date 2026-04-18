@@ -40,9 +40,11 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
         if (em == default)
             return;
 
+        if (entity != Entity.Null && em.Exists(entity))
+            return;
+
         entity = em.CreateEntity(
-            typeof(LocalTransform),
-            typeof(PlayerTag)
+            typeof(LocalTransform)
         );
 
         em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
@@ -63,6 +65,8 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
             return;
         }
 
+        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
+
         bool shouldBeTargetable = networkPlayer == null || networkPlayer.IsAiTargetable;
         bool hasPlayerTag = em.HasComponent<PlayerTag>(entity);
 
@@ -70,8 +74,6 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
             em.AddComponent<PlayerTag>(entity);
         else if (!shouldBeTargetable && hasPlayerTag)
             em.RemoveComponent<PlayerTag>(entity);
-
-        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
     }
 
     private void OnDestroy()
