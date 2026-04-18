@@ -25,8 +25,6 @@ namespace Features.Player.UI
 
             I = this;
 
-            EnsureBuiltinScreens();
-
             if (transform.parent == null && gameObject.scene.name != "DontDestroyOnLoad")
             {
                 DontDestroyOnLoad(gameObject);
@@ -94,17 +92,6 @@ namespace Features.Player.UI
             BoundPlayer = null;
             Debug.Log("[PlayerUIRoot] Player unbound");
             OnPlayerBound?.Invoke(null);
-        }
-
-        private void EnsureBuiltinScreens()
-        {
-            if (GetComponentInChildren<DeathScreenUI>(true) != null)
-                return;
-
-            var go = new GameObject("DeathScreenUI");
-            go.transform.SetParent(transform, false);
-            go.AddComponent<RectTransform>();
-            go.AddComponent<DeathScreenUI>();
         }
     }
 }
