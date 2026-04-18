@@ -341,6 +341,14 @@ namespace Features.Player.UnityIntegration
             if (unifiedStatsUpdateSystem != null && IsServerStarted)
                 unifiedStatsUpdateSystem.enabled = !dead;
 
+            if (visual != null && IsClientInitialized)
+            {
+                if (dead)
+                    visual.PlayDeathBurst(movement != null ? movement.Velocity : Vector3.zero);
+                else
+                    visual.ResetDeathVisualState();
+            }
+
             if (IsClientInitialized && IsOwner)
                 SetLocalGameplayEnabled(!dead);
         }
