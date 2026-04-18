@@ -18,10 +18,8 @@ namespace Biomes.UnityIntegration
         public int batchSize = 1023;
 
         [Header("Update Settings")]
-        [Tooltip("Обновлять чанки не за 1 кадр, а порциями")]
+        [Tooltip("Reserved for future optimization. Instanced chunks must render every frame.")]
         public int updatesPerFrame = 3;
-
-        private int _chunkCursor = 0;
 
         private MaterialPropertyBlock _mpb;
         private Matrix4x4[] _matrices;
@@ -29,6 +27,9 @@ namespace Biomes.UnityIntegration
 
         private readonly Dictionary<int, Mesh> _meshCache = new();
         private readonly Dictionary<int, Material[]> _matCache = new();
+        private readonly Dictionary<int, Matrix4x4> _localMatrixCache = new();
+        private readonly Dictionary<int, Vector3> _rootScaleCache = new();
+        private readonly Dictionary<int, Material> _ownedInstancedMaterials = new();
 
         private void Awake()
         {
@@ -40,36 +41,36 @@ namespace Biomes.UnityIntegration
             _randoms = new float[batchSize];
         }
 
-        // ====================================================================
-        // MAIN UPDATE ENTRY
-        // ====================================================================
+        private void OnDestroy()
+        {
+            foreach (var kv in _ownedInstancedMaterials)
+            {
+                if (kv.Value != null)
+                    Destroy(kv.Value);
+            }
+
+            _ownedInstancedMaterials.Clear();
+
+            if (Instance == this)
+                Instance = null;
+        }
 
         public void UpdateVisibleChunks(List<ChunkRuntimeData> activeChunks)
         {
             if (activeChunks == null || activeChunks.Count == 0)
                 return;
 
-            // Берём текущую камеру через CameraRegistry
             var cam = GetActiveCamera();
             if (cam == null)
-                return; // камера ещё не появилась → пропускаем кадр
+                return;
 
-            int iterations = Mathf.Min(updatesPerFrame, activeChunks.Count);
-
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < activeChunks.Count; i++)
             {
-                if (_chunkCursor >= activeChunks.Count)
-                    _chunkCursor = 0;
-
-                RenderChunk(activeChunks[_chunkCursor], cam);
-                _chunkCursor++;
+                RenderChunk(activeChunks[i], cam);
             }
         }
 
-        // ====================================================================
-        // RENDER SINGLE CHUNK
-        // ====================================================================
-        private void RenderChunk(ChunkRuntimeData chunk, UnityEngine.Camera cam)
+        private void RenderChunk(ChunkRuntimeData chunk, Camera cam)
         {
             if (chunk == null || cam == null)
                 return;
@@ -85,7 +86,12 @@ namespace Biomes.UnityIntegration
                 int prefabIndex = kv.Key;
                 var instances = kv.Value;
 
-                if (!TryGetMesh(prefabIndex, out Mesh mesh, out Material[] mats))
+                if (!TryGetRenderData(
+                        prefabIndex,
+                        out Mesh mesh,
+                        out Material[] mats,
+                        out Matrix4x4 localMatrix,
+                        out Vector3 rootScale))
                     continue;
 
                 var mat = (mats != null && mats.Length > 0) ? mats[0] : null;
@@ -106,11 +112,12 @@ namespace Biomes.UnityIntegration
                         ? Quaternion.FromToRotation(Vector3.up, inst.normal)
                         : Quaternion.identity;
 
-                    Matrix4x4 m = Matrix4x4.TRS(
+                    Matrix4x4 rootMatrix = Matrix4x4.TRS(
                         inst.position,
                         rot,
-                        Vector3.one * inst.scale
+                        Vector3.Scale(rootScale, Vector3.one * inst.scale)
                     );
+                    Matrix4x4 m = rootMatrix * localMatrix;
 
                     if (d2 <= lod0Sqr) lod0.Add((m, inst.random));
                     else if (d2 <= lod1Sqr) lod1.Add((m, inst.random));
@@ -123,13 +130,11 @@ namespace Biomes.UnityIntegration
             }
         }
 
-        // ====================================================================
-        // BATCH DRAW
-        // ====================================================================
         private void DrawBatch(Mesh mesh, Material mat, List<(Matrix4x4, float)> list)
         {
             int total = list.Count;
-            if (total == 0) return;
+            if (total == 0)
+                return;
 
             int index = 0;
             while (index < total)
@@ -151,37 +156,74 @@ namespace Biomes.UnityIntegration
             }
         }
 
-        // ====================================================================
-        // CAMERA RESOLUTION
-        // ====================================================================
-        private UnityEngine.Camera GetActiveCamera()
+        private Camera GetActiveCamera()
         {
-            // 1) активная камера из CameraRegistry
             if (CameraRegistry.Instance != null &&
                 CameraRegistry.Instance.CurrentCamera != null)
                 return CameraRegistry.Instance.CurrentCamera;
 
-            // 2) камеры ещё нет → ничего не рендерим
             return null;
         }
 
-        // ====================================================================
-        // CACHE LOOKUP
-        // ====================================================================
-        private bool TryGetMesh(int id, out Mesh mesh, out Material[] mats)
+        private bool TryGetRenderData(
+            int id,
+            out Mesh mesh,
+            out Material[] mats,
+            out Matrix4x4 localMatrix,
+            out Vector3 rootScale)
         {
             if (_meshCache.TryGetValue(id, out mesh) &&
-                _matCache.TryGetValue(id, out mats))
+                _matCache.TryGetValue(id, out mats) &&
+                _localMatrixCache.TryGetValue(id, out localMatrix) &&
+                _rootScaleCache.TryGetValue(id, out rootScale))
                 return true;
 
-            if (InstanceRegistry.TryGetInstancedMesh(id, out mesh, out mats))
+            if (InstanceRegistry.TryGetInstancedRenderData(
+                    id,
+                    out mesh,
+                    out mats,
+                    out localMatrix,
+                    out rootScale))
             {
+                var mat = (mats != null && mats.Length > 0) ? mats[0] : null;
+                var ensured = EnsureInstancedMaterial(id, mat);
+                mats = ensured != null ? new[] { ensured } : mats;
+
                 _meshCache[id] = mesh;
                 _matCache[id] = mats;
+                _localMatrixCache[id] = localMatrix;
+                _rootScaleCache[id] = rootScale;
                 return true;
             }
 
+            localMatrix = Matrix4x4.identity;
+            rootScale = Vector3.one;
             return false;
+        }
+
+        private Material EnsureInstancedMaterial(int prefabId, Material source)
+        {
+            if (source == null)
+                return null;
+
+            if (source.enableInstancing)
+                return source;
+
+            if (_ownedInstancedMaterials.TryGetValue(prefabId, out var existing) && existing != null)
+                return existing;
+
+            var instanced = new Material(source)
+            {
+                name = source.name + " (Instanced)"
+            };
+            instanced.enableInstancing = true;
+            _ownedInstancedMaterials[prefabId] = instanced;
+
+            Debug.LogWarning(
+                $"[ChunkedInstanceLOD] Material '{source.name}' had instancing disabled. " +
+                $"Created instanced copy '{instanced.name}'.");
+
+            return instanced;
         }
     }
 }

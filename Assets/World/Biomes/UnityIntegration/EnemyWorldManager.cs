@@ -2,7 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using Biomes.Application;
 
-namespace Biomes.UnityIntegration { 
+namespace Biomes.UnityIntegration
+{
     public class EnemyWorldManager : MonoBehaviour
     {
         public static EnemyWorldManager Instance;
@@ -14,19 +15,27 @@ namespace Biomes.UnityIntegration {
 
         void Awake() => Instance = this;
 
-        public bool CanSpawn()
+        public bool CanSpawn(int configuredLimit = -1)
         {
+            CleanupDead();
+
             float scale = EnemyPerformanceManager.Instance != null
                 ? EnemyPerformanceManager.Instance.EnemyCountScale
                 : 1f;
 
-            int softLimit = Mathf.RoundToInt(maxEnemiesInWorld * scale);
+            int baseLimit = configuredLimit > 0
+                ? Mathf.Min(configuredLimit, maxEnemiesInWorld)
+                : maxEnemiesInWorld;
+
+            int softLimit = Mathf.Max(1, Mathf.RoundToInt(baseLimit * scale));
             return enemies.Count < softLimit;
         }
 
         public void Register(EnemyInstanceTracker inst)
         {
             if (inst == null) return;
+            CleanupDead();
+
             if (!enemies.Contains(inst))
                 enemies.Add(inst);
         }
@@ -37,6 +46,20 @@ namespace Biomes.UnityIntegration {
             enemies.Remove(inst);
         }
 
-        public int GetCount() => enemies.Count;
+        public int GetCount()
+        {
+            CleanupDead();
+            return enemies.Count;
+        }
+
+        private void CleanupDead()
+        {
+            for (int i = enemies.Count - 1; i >= 0; i--)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || !enemy.isActiveAndEnabled)
+                    enemies.RemoveAt(i);
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using Features.Player.UnityIntegration;
 using Features.Enemy.Data;
 using Features.Enemy.Integration.LOD;
+using Biomes.Application;
 
 namespace Features.Enemy.Presentation.LOD
 {
@@ -27,9 +28,7 @@ namespace Features.Enemy.Presentation.LOD
             logic = GetComponent<EnemyLogicLODAdapter>();
 
             if (!HasValidLODConfig())
-            {
                 enabled = false;
-            }
 
             if (config != null)
             {
@@ -46,7 +45,8 @@ namespace Features.Enemy.Presentation.LOD
             return config != null &&
                 config.render.lod0Prefab != null &&
                 config.render.lod1Prefab != null &&
-                config.render.lod2Prefab != null && !OffLod == false;
+                config.render.lod2Prefab != null &&
+                !OffLod;
         }
 
         private void Update()
@@ -62,25 +62,29 @@ namespace Features.Enemy.Presentation.LOD
             if (player == null) return;
 
             float dist = Vector3.Distance(player.transform.position, transform.position);
+            float lodScale = EnemyPerformanceManager.Instance != null
+                ? Mathf.Max(0.25f, EnemyPerformanceManager.Instance.LodScale)
+                : 1f;
+
+            float lod0Distance = config.render.lod0Distance * lodScale;
+            float lod1Distance = config.render.lod1Distance * lodScale;
+            float instancingDistance = config.render.instancingDistance * lodScale;
 
             bool useInstancing =
                 config.render.useGPUInstancing &&
-                dist > config.render.instancingDistance;
+                dist > instancingDistance;
 
             if (useInstancing)
             {
                 instancing?.EnableInstancing();
                 return;
             }
-            else
-            {
-                instancing?.DisableInstancing();
-            }
 
-            // LOD
+            instancing?.DisableInstancing();
+
             int lod =
-                dist <= config.render.lod0Distance ? 0 :
-                dist <= config.render.lod1Distance ? 1 : 2;
+                dist <= lod0Distance ? 0 :
+                dist <= lod1Distance ? 1 : 2;
 
             if (lod == currentLOD)
                 return;

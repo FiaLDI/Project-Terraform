@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6dfcc09296954b418c8065bb3d566d7, type: 3}
+  m_Name: Toxic Mire
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
+  biomeID: toxic_mire
+  biomeName: Toxic Mire
+  mapColor: {r: 0.24313726, g: 0.4745098, b: 0.1882353, a: 1}
+  isGenerate: 1
+  useLowPoly: 1
+  terrainType: 5
+  textureTiling: 2.2
+  groundMaterial: {fileID: 2100000, guid: c4a4ec3a829cab84f8ca3330f6aac8e3, type: 2}
+  terrainScale: 5
+  heightMultiplier: 9
+  groundColor: {r: 0.34117648, g: 0.4627451, b: 0.24705882, a: 1}
+  groundSmoothness: 0.08
+  groundMetallic: 0
+  textureTilingMultiplier: 1.4
+  biomeAlbedo: {fileID: 0}
+  biomeNormal: {fileID: 0}
+  fractalOctaves: 3
+  fractalPersistence: 0.38
+  fractalLacunarity: 2.3
+  blendStrength: 0.58
+  environmentPrefabs:
+  - prefab: {fileID: 696428073521063714, guid: bd15429c51a1f4d43b5f35d7ca3b61f2, type: 3}
+    spawnChance: 0.015
+    weight: 1
+    minSlope: 0
+    maxSlope: 35
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 1
+    minScale: 0.5
+    maxScale: 2.5
+    markAsResourceBlocker: 1
+  environmentDensity: 0.04
+  possibleResources:
+  - resourcePrefab: {fileID: 5488107644579969124, guid: 0f4d96242479bba488e69b6265d0908d, type: 3}
+    spawnChance: 0.05
+    weight: 1
+    clusterType: 2
+    clusterCountRange: {x: 1, y: 3}
+    clusterRadius: 3.5
+    verticalStep: 1
+    noiseScale: 0.7
+    noiseAmplitude: 2
+    followTerrain: 1
+    minSlope: 0
+    maxSlope: 30
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 1
+    minScale: 0.8
+    maxScale: 1.3
+    useHeightLimit: 0
+    minHeight: 0
+    maxHeight: 0
+    useMinDistance: 1
+    minDistance: 12
+    resourceEdgeFalloff: 0.2
+    avoidEnvironment: 0
+    environmentRadius: 0
+    useDistributionMap: 1
+    distributionStrength: 0.9
+    distributionScale: 0.7
+    distributionOffset: {x: 2, y: 18}
+    allowedBiomes:
+  resourceDensity: 0.0035
+  resourceSpawnYOffset: 0.25
+  resourceEdgeFalloff: 1
+  possibleQuests: []
+  questTargetsMin: 2
+  questTargetsMax: 5
+  enemyTable:
+  - config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
+    weight: 1
+    spawnChance: 0.1
+    minGroup: 2
+    maxGroup: 8
+    minSlope: 0
+    maxSlope: 35
+    minHeight: -10
+    maxHeight: 25
+    alignToNormal: 1
+  enemyDensity: 0.04
+  enemyRespawnDelay: 38
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  skyTopColor: {r: 0.23, g: 0.35, b: 0.17, a: 1}
+  skyBottomColor: {r: 0.1, g: 0.12, b: 0.05, a: 1}
+  skyExposure: 0.7
+  uiColor: {r: 0.7137255, g: 0.95686275, b: 0.4509804, a: 1}
+  fogLightColor: {r: 0.41960785, g: 0.58431375, b: 0.22745098, a: 1}
+  fogHeavyColor: {r: 0.14117648, g: 0.22352941, b: 0.08627451, a: 1}
+  fogGradientScale: 6
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.24313726, g: 0.34509805, b: 0.1254902, a: 1}
+  fogDensity: 0.16
+  fogLinearStart: 14
+  fogLinearEnd: 45
+  rainPrefab: {fileID: 0}
+  dustPrefab: {fileID: 0}
+  firefliesPrefab: {fileID: 0}
+  weatherIntensity: 1
+  useWater: 1
+  waterType: 3
+  seaLevel: 6
+  waterMaterial: {fileID: 2100000, guid: 38058fa9251d5bb4a8c5739e0d072043, type: 2}
+  swampWaterMaterial: {fileID: 2100000, guid: 38058fa9251d5bb4a8c5739e0d072043, type: 2}
+  lakeWaterMaterial: {fileID: 2100000, guid: 38058fa9251d5bb4a8c5739e0d072043, type: 2}
+  oceanWaterMaterial: {fileID: 2100000, guid: 38058fa9251d5bb4a8c5739e0d072043, type: 2}
+  generateLakes: 1
+  lakeLevel: 0.7
+  lakeNoiseScale: 0.07
+  generateRivers: 1
+  riverNoiseScale: 0.025
+  riverWidth: 0.14
+  riverDepth: 1.5
+  width: 100
+  height: 100

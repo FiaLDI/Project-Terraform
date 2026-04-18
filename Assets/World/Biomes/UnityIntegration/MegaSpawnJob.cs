@@ -144,7 +144,8 @@ namespace Biomes.UnityIntegration
                     prefabIndex = r.prefabIndex,
                     biomeId     = biome.biomeId,
                     scale       = scale,
-                    spawnType   = (int)SpawnKind.EnvironmentInstanced
+                    spawnType   = (int)SpawnKind.EnvironmentInstanced,
+                    random01    = rng.NextFloat()
                 });
             }
 
@@ -247,6 +248,8 @@ namespace Biomes.UnityIntegration
                 float scale = r.randomScale != 0
                     ? math.lerp(r.minScale, r.maxScale, rng.NextFloat())
                     : r.minScale;
+                if (scale <= 0f || !math.isfinite(scale))
+                    scale = 1f;
 
                 float3 worldP = localP + chunkOffset;
 

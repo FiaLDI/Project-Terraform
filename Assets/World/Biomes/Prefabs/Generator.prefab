@@ -54,6 +54,12 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 7688760262762765644}
   _networkObjectCache: {fileID: 7688760262762765644}
   worldConfig: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+  availableWorldConfigs:
+  - {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+  - {fileID: 11400000, guid: 2a94bd5fd5cf4ac2a6d8623911aa5105, type: 2}
+  - {fileID: 11400000, guid: 4d2d8670f02a4486987c77b644e6c106, type: 2}
+  - {fileID: 11400000, guid: 6a7f437d1a3c48b78f4e680a51cfd107, type: 2}
+  - {fileID: 11400000, guid: 8c2bced8450e4637a35fb4b8e9239108, type: 2}
   spawnPointPrefab: {fileID: 7891511044358976705, guid: ac7569557f29c0142be7a8d2cffe30a6, type: 3}
   spawnPointCount: 4
   spawnRadius: 15

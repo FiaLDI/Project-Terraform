@@ -34,12 +34,16 @@ public class PlayerSessionNetwork : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void RequestWorldServerRpc(int seed, List<string> questIds, List<string> chainIds)
+    public void RequestWorldServerRpc(string worldConfigId, List<string> questIds, List<string> chainIds)
     {
+        int seed = Random.Range(int.MinValue, int.MaxValue);
+
         ServerWorldSession.PendingSeed = seed;
+        ServerWorldSession.PendingWorldConfigId = worldConfigId;
         ServerWorldSession.PendingQuestIds = questIds;
         ServerWorldSession.PendingChainIds = chainIds;
 
+        Debug.Log($"[PlayerSessionNetwork] Generated world seed {seed} for '{worldConfigId}'.");
         SceneTransitionService.LoadWorldScene();
     }
 }

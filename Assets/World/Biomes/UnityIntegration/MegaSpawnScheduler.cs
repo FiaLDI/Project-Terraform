@@ -73,7 +73,11 @@ namespace Biomes.UnityIntegration {
                     {
                         task.job.Complete();
                         task.completed = true;
-                        InstancedSpawnerSystem.Instance.AddSpawnInstances(task.spawnList);
+
+                        if (ChunkedInstanceLODSystem.Instance != null)
+                            RegisterInstancedEnvironment(task);
+                        else if (InstancedSpawnerSystem.Instance != null)
+                            InstancedSpawnerSystem.Instance.AddSpawnInstances(task.spawnList);
                     }
                     else
                     {
@@ -118,6 +122,34 @@ namespace Biomes.UnityIntegration {
                 task.spawnList.Dispose();
             if (task.vertices.IsCreated)
                 task.vertices.Dispose();
+        }
+
+        private static void RegisterInstancedEnvironment(SpawnTask task)
+        {
+            int count = task.spawnList.Length;
+
+            for (int i = 0; i < count; i++)
+            {
+                var inst = task.spawnList[i];
+                if ((SpawnKind)inst.spawnType != SpawnKind.EnvironmentInstanced)
+                    continue;
+
+                float random = inst.random01;
+                if (random <= 0f)
+                {
+                    float value = Mathf.Sin(inst.position.x * 12.9898f + inst.position.z * 78.233f) * 43758.5453f;
+                    random = value - Mathf.Floor(value);
+                }
+
+                ChunkedGameObjectStorage.RegisterInstanced(task.coord, inst.prefabIndex, new InstanceData
+                {
+                    position = new Vector3(inst.position.x, inst.position.y, inst.position.z),
+                    normal = new Vector3(inst.normal.x, inst.normal.y, inst.normal.z),
+                    scale = inst.scale <= 0f ? 1f : inst.scale,
+                    random = random,
+                    biomeId = inst.biomeId
+                });
+            }
         }
 
         // ==== DEBUG API ====

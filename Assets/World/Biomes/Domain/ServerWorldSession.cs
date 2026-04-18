@@ -4,20 +4,19 @@ using System.Collections.Generic;
 public static class ServerWorldSession
 {
     public static int PendingSeed;
+    public static string PendingWorldConfigId = string.Empty;
     public static List<string> PendingQuestIds = new();
     public static List<string> PendingChainIds = new();
 
-    public static (int seed, List<string> quests, List<string> chains) Consume()
+    public static (int seed, string worldConfigId) ConsumeBootstrap()
     {
         var result = (
             PendingSeed,
-            PendingQuestIds,
-            PendingChainIds
+            PendingWorldConfigId
         );
 
         PendingSeed = 0;
-        PendingQuestIds = new();
-        PendingChainIds = new();
+        PendingWorldConfigId = string.Empty;
 
         return result;
     }

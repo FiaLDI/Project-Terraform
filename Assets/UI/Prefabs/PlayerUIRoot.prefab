@@ -17440,8 +17440,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UI.WorldGeneratorUI
   root: {fileID: 4084203816528016652}
   seedInput: {fileID: 2517805503380208478}
+  randomSeedButton: {fileID: 393577328377226032}
+  generateWorldButton: {fileID: 8026734598524608392}
+  polygonButtonTemplate: {fileID: 1977525686216282345, guid: d42415c61fa48e54b9ae3b5491b5eb81, type: 3}
+  mapBackgroundSprite: {fileID: 21300000, guid: dae159f0e042fb140b81217b40e2667d, type: 3}
+  desertRegionSprite: {fileID: 21300000, guid: 1ff36d74c3f23794fae31503561f7b95, type: 3}
+  caveRegionSprite: {fileID: 21300000, guid: e93bae593755eb54c937e3ee0f2be60c, type: 3}
+  mountainsRegionSprite: {fileID: 21300000, guid: 9a4289db2fc496c4e8825ab62ea84e0d, type: 3}
+  availableWorldConfigs:
+  - {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+  - {fileID: 11400000, guid: 2a94bd5fd5cf4ac2a6d8623911aa5105, type: 2}
+  - {fileID: 11400000, guid: 4d2d8670f02a4486987c77b644e6c106, type: 2}
+  - {fileID: 11400000, guid: 6a7f437d1a3c48b78f4e680a51cfd107, type: 2}
+  - {fileID: 11400000, guid: 8c2bced8450e4637a35fb4b8e9239108, type: 2}
+  worldConfigButton: {fileID: 0}
+  worldConfigButtonLabel: {fileID: 0}
   availableQuests:
+  - {fileID: 11400000, guid: f88681f73985baf4ca33f4f09a6e055f, type: 2}
   - {fileID: 11400000, guid: f764e69a9b22cf94d95eee67e3c3e0e6, type: 2}
+  - {fileID: 11400000, guid: 7a0fd488b836ede4392c146652727ea0, type: 2}
+  - {fileID: 11400000, guid: fda4d22d481ccaf4b9e422a08ecdb472, type: 2}
   availableChains: []
 --- !u!114 &7021371441311421265
 MonoBehaviour:

@@ -12,6 +12,7 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
     [SerializeField] private EnemyConfigSO config;
     [SerializeField] private Transform[] patrolPoints;
     [SerializeField] private LayerMask obstacleMask;
+    [SerializeField] private float despawnDistance = 80f;
 
     private EntityManager GetEM()
     {
@@ -28,6 +29,26 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
     public void SetConfig(EnemyConfigSO cfg)
     {
         config = cfg;
+    }
+
+    public void SetDespawnDistance(float distance)
+    {
+        despawnDistance = Mathf.Max(1f, distance);
+
+        var em = GetEM();
+        if (em == default)
+            return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+            return;
+
+        if (em.HasComponent<EnemyDespawnDistance>(entity))
+        {
+            em.SetComponentData(entity, new EnemyDespawnDistance
+            {
+                Value = despawnDistance
+            });
+        }
     }
 
     public void ForceInit()
@@ -88,7 +109,7 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 
         em.AddComponentData(entity, new EnemyDespawnDistance
         {
-            Value = 80f
+            Value = despawnDistance
         });
 
         em.SetComponentData(entity, new EnemyPatrolState
@@ -198,9 +219,7 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
         if (em == default) return;
 
         if (entity == Entity.Null || !em.Exists(entity))
-        {
             Init();
-        }
     }
 
     private void OnDestroy()

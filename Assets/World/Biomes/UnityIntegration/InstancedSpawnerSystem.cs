@@ -38,6 +38,8 @@ namespace Biomes.UnityIntegration
             public Mesh Mesh;
             public Material Material;
             public bool OwnsMaterial;
+            public Matrix4x4 LocalMatrix = Matrix4x4.identity;
+            public Vector3 RootScale = Vector3.one;
 
             public readonly List<InstanceData> Instances = new();
 
@@ -94,7 +96,12 @@ namespace Biomes.UnityIntegration
                 if (inst.spawnType != (int)SpawnKind.EnvironmentInstanced)
                     continue;
 
-                if (!InstanceRegistry.TryGetInstancedMesh(inst.prefabIndex, out var mesh, out var mats))
+                if (!InstanceRegistry.TryGetInstancedRenderData(
+                        inst.prefabIndex,
+                        out var mesh,
+                        out var mats,
+                        out var localMatrix,
+                        out var rootScale))
                     continue;
 
                 var mat = (mats != null && mats.Length > 0) ? mats[0] : null;
@@ -108,7 +115,9 @@ namespace Biomes.UnityIntegration
                     {
                         Mesh = mesh,
                         Material = material,
-                        OwnsMaterial = ownsMaterial
+                        OwnsMaterial = ownsMaterial,
+                        LocalMatrix = localMatrix,
+                        RootScale = rootScale
                     };
                     _buckets[inst.prefabIndex] = bucket;
                 }
@@ -186,7 +195,13 @@ namespace Biomes.UnityIntegration
                     if (d2 > lod2Sqr)
                         continue;
 
-                    if (!TryBuildMatrix(inst.position, inst.normal, inst.scale, out Matrix4x4 m))
+                    if (!TryBuildMatrix(
+                            inst.position,
+                            inst.normal,
+                            inst.scale,
+                            bucket.RootScale,
+                            bucket.LocalMatrix,
+                            out Matrix4x4 m))
                         continue;
 
                     if (d2 <= lod0Sqr)
@@ -252,7 +267,13 @@ namespace Biomes.UnityIntegration
             return true;
         }
 
-        private static bool TryBuildMatrix(Vector3 pos, Vector3 normal, float scale, out Matrix4x4 m)
+        private static bool TryBuildMatrix(
+            Vector3 pos,
+            Vector3 normal,
+            float scale,
+            Vector3 rootScale,
+            Matrix4x4 localMatrix,
+            out Matrix4x4 m)
         {
             if (!IsFinite(pos))
             {
@@ -273,7 +294,12 @@ namespace Biomes.UnityIntegration
             if (scale <= 0f || float.IsNaN(scale) || float.IsInfinity(scale))
                 scale = 1f;
 
-            m = Matrix4x4.TRS(pos, rot, Vector3.one * scale);
+            Matrix4x4 rootMatrix = Matrix4x4.TRS(
+                pos,
+                rot,
+                Vector3.Scale(rootScale, Vector3.one * scale)
+            );
+            m = rootMatrix * localMatrix;
             return IsMatrixFinite(m);
         }
 

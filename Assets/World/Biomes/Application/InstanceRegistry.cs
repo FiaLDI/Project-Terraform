@@ -11,6 +11,8 @@ namespace Biomes.Application
             public Mesh       mesh;
             public Material[] materials;
             public bool       allowInstancing;
+            public Matrix4x4  localMatrix = Matrix4x4.identity;
+            public Vector3    rootScale = Vector3.one;
         }
 
         private static readonly Dictionary<int, Entry> _entries = new();
@@ -30,16 +32,34 @@ namespace Biomes.Application
             var e = new Entry
             {
                 prefab          = prefab,
-                allowInstancing = allowInstancing
+                allowInstancing = allowInstancing,
+                rootScale = prefab.transform.localScale
             };
 
-            var mf = prefab.GetComponentInChildren<MeshFilter>();
-            var mr = prefab.GetComponentInChildren<MeshRenderer>();
+            MeshFilter mf = null;
+            MeshRenderer mr = null;
+
+            var renderers = prefab.GetComponentsInChildren<MeshRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                var candidate = renderers[i];
+                if (candidate == null)
+                    continue;
+
+                var candidateMf = candidate.GetComponent<MeshFilter>();
+                if (candidateMf == null || candidateMf.sharedMesh == null)
+                    continue;
+
+                mr = candidate;
+                mf = candidateMf;
+                break;
+            }
 
             if (mf != null && mr != null)
             {
                 e.mesh      = mf.sharedMesh;
                 e.materials = mr.sharedMaterials;
+                e.localMatrix = prefab.transform.worldToLocalMatrix * mr.transform.localToWorldMatrix;
             }
 
             _entries[id] = e;
@@ -72,6 +92,33 @@ namespace Biomes.Application
 
             mesh      = null;
             materials = null;
+            return false;
+        }
+
+        public static bool TryGetInstancedRenderData(
+            int id,
+            out Mesh mesh,
+            out Material[] materials,
+            out Matrix4x4 localMatrix,
+            out Vector3 rootScale)
+        {
+            if (_entries.TryGetValue(id, out var e) &&
+                e.allowInstancing &&
+                e.mesh != null &&
+                e.materials != null &&
+                e.materials.Length > 0)
+            {
+                mesh = e.mesh;
+                materials = e.materials;
+                localMatrix = e.localMatrix;
+                rootScale = e.rootScale;
+                return true;
+            }
+
+            mesh = null;
+            materials = null;
+            localMatrix = Matrix4x4.identity;
+            rootScale = Vector3.one;
             return false;
         }
     }

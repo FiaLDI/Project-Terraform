@@ -2,6 +2,7 @@ using UnityEngine;
 using FishNet.Object;
 using Unity.Mathematics;
 using System.Collections;
+using System.Collections.Generic;
 using Features.Player.UnityIntegration;
 using Biomes.Application;
 using Biomes.Data;
@@ -12,6 +13,7 @@ namespace Biomes.UnityIntegration
     {
         [Header("World Settings")]
         public WorldConfig worldConfig;
+        [SerializeField] private WorldConfig[] availableWorldConfigs;
 
         [Header("Spawn Points")]
         [SerializeField] private ScenePlayerSpawnPoint spawnPointPrefab;
@@ -28,17 +30,17 @@ namespace Biomes.UnityIntegration
         [Header("Spawn Settings")]
         public float spawnHeightCheck = 20f;
 
-        private ChunkManager manager;
+        private ChunkManager serverManager;
+        private ChunkManager clientManager;
         private WorldProvider worldProvider;
         private Transform trackedPlayer;
         private int worldSeed;
+        private string selectedWorldConfigId;
         private int groundMask;
+        private bool customPrefabSpawned;
+        private readonly List<Vector3> serverStreamingTargets = new();
 
         public static WorldConfig World { get; private set; }
-
-        // ======================================================
-        // SERVER
-        // ======================================================
 
         public override void OnStartServer()
         {
@@ -49,6 +51,7 @@ namespace Biomes.UnityIntegration
         private IEnumerator ServerFlow()
         {
             yield return WaitForWorldProvider();
+            ApplySelectedWorldConfig();
             groundMask = LayerMask.GetMask("Ground");
             InitializeSeed(worldSeed);
 
@@ -57,27 +60,38 @@ namespace Biomes.UnityIntegration
             worldProvider.SetWorldReady();
         }
 
-        // ======================================================
-        // CLIENT
-        // ======================================================
-
         public override void OnStartClient()
         {
             base.OnStartClient();
 
-            if (IsServer && !IsClient)
-                 return;
+            if (IsServer)
+            {
+                StartCoroutine(HostClientFlow());
+                return;
+            }
 
             StartCoroutine(ClientFlow());
+        }
+
+        private IEnumerator HostClientFlow()
+        {
+            yield return WaitForWorldProvider();
+            ApplySelectedWorldConfig();
+            InitializeSeed(worldSeed);
+
+            World = worldConfig;
+            SpawnCustomPrefabIfNeeded();
         }
 
         private IEnumerator ClientFlow()
         {
             yield return WaitForWorldProvider();
+            ApplySelectedWorldConfig();
             InitializeSeed(worldSeed);
 
             yield return ClientGenerateWorld();
 
+            PlayerRegistry.SubscribeLocalPlayerReady(OnLocalPlayerReady);
             yield return WaitForLocalPlayerController();
         }
 
@@ -105,10 +119,6 @@ namespace Biomes.UnityIntegration
             PlayerRegistry.UnsubscribeLocalPlayerReady(OnLocalPlayerReady);
         }
 
-        // ======================================================
-        // COMMON
-        // ======================================================
-
         private IEnumerator WaitForWorldProvider()
         {
             while (true)
@@ -116,9 +126,10 @@ namespace Biomes.UnityIntegration
                 if (worldProvider == null)
                     worldProvider = FindObjectOfType<WorldProvider>();
 
-                if (worldProvider != null && worldProvider.Seed.Value != 0)
+                if (worldProvider != null && worldProvider.HasBootstrap.Value)
                 {
                     worldSeed = worldProvider.Seed.Value;
+                    selectedWorldConfigId = worldProvider.WorldConfigId.Value;
                     Debug.Log($"[world-gen] seed='{worldSeed}'");
                     yield break;
                 }
@@ -129,79 +140,91 @@ namespace Biomes.UnityIntegration
 
         private void InitializeSeed(int seed)
         {
+            if (worldConfig == null)
+                return;
+
             worldConfig.seed = seed;
             UnityEngine.Random.InitState(seed);
         }
 
-        // ======================================================
-        // CLIENT GENERATION
-        // ======================================================
-
         private IEnumerator ClientGenerateWorld()
         {
-            if (!BiomeRuntimeDatabase.Initialized)
+            if (!BiomeRuntimeDatabase.IsBuiltFor(worldConfig))
                 BiomeRuntimeDatabase.Build(worldConfig);
 
-            manager = new ChunkManager(worldConfig);
+            clientManager = new ChunkManager(worldConfig);
             World = worldConfig;
 
             yield return null;
 
-            if (customPrefab != null)
-            {
-                var pos = GetWorldCenterSpawn();
-                Instantiate(customPrefab, pos, Quaternion.identity);
-            }
+            SpawnCustomPrefabIfNeeded();
 
             Debug.Log("[WorldGen] Client world ready");
         }
 
-        // ======================================================
-        // SERVER GENERATION
-        // ======================================================
-
         private IEnumerator ServerGenerateWorld()
         {
-            if (!BiomeRuntimeDatabase.Initialized)
+            if (!BiomeRuntimeDatabase.IsBuiltFor(worldConfig))
                 BiomeRuntimeDatabase.Build(worldConfig);
 
-            manager = new ChunkManager(worldConfig);
+            serverManager = new ChunkManager(worldConfig);
             World = worldConfig;
 
-            manager.UpdateChunks(GetWorldCenterSpawn(), loadDistance, unloadDistance);
-            manager.ProcessLoadQueue();
+            serverManager.UpdateChunks(GetWorldCenterSpawn(), loadDistance, unloadDistance);
+            serverManager.ProcessLoadQueue();
 
             yield return new WaitForFixedUpdate();
-            
             yield return WaitForPhysicsReady();
 
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();
-
         }
-
-        // ======================================================
-        // STREAMING (CLIENT ONLY)
-        // ======================================================
 
         private void Update()
         {
-            if (manager == null)
+            UpdateServerStreaming();
+            UpdateClientStreaming();
+        }
+
+        private void UpdateServerStreaming()
+        {
+            if (!IsServerStarted || serverManager == null)
                 return;
 
-            if (IsServer && !IsClient)
+            var registry = PlayerRegistry.Instance;
+            if (registry == null)
+                return;
+
+            serverStreamingTargets.Clear();
+
+            var players = registry.Players;
+            for (int i = 0; i < players.Count; i++)
+            {
+                var player = players[i];
+                if (player == null)
+                    continue;
+
+                serverStreamingTargets.Add(player.transform.position);
+            }
+
+            if (serverStreamingTargets.Count == 0)
+                return;
+
+            serverManager.UpdateChunks(serverStreamingTargets, loadDistance, unloadDistance);
+            serverManager.ProcessLoadQueue();
+        }
+
+        private void UpdateClientStreaming()
+        {
+            if (!IsClientStarted || clientManager == null)
                 return;
 
             if (trackedPlayer == null)
                 return;
 
-            manager.UpdateChunks(trackedPlayer.position, loadDistance, unloadDistance);
-            manager.ProcessLoadQueue();
+            clientManager.UpdateChunks(trackedPlayer.position, loadDistance, unloadDistance);
+            clientManager.ProcessLoadQueue();
         }
-
-        // ======================================================
-        // HELPERS
-        // ======================================================
 
         private IEnumerator WaitForPhysicsReady()
         {
@@ -258,6 +281,64 @@ namespace Biomes.UnityIntegration
                 var sp = Instantiate(spawnPointPrefab, pos, Quaternion.identity);
                 sp.name = $"WorldSpawnPoint_{i}";
             }
+        }
+
+        private void SpawnCustomPrefabIfNeeded()
+        {
+            if (customPrefabSpawned || customPrefab == null)
+                return;
+
+            var pos = GetWorldCenterSpawn();
+            Instantiate(customPrefab, pos, Quaternion.identity);
+            customPrefabSpawned = true;
+        }
+
+        private void ApplySelectedWorldConfig()
+        {
+            var resolved = ResolveWorldConfig(selectedWorldConfigId);
+            if (resolved == null)
+            {
+                Debug.LogError("[WorldGen] Failed to resolve WorldConfig for runtime generation");
+                return;
+            }
+
+            worldConfig = resolved;
+        }
+
+        private WorldConfig ResolveWorldConfig(string configId)
+        {
+            if (worldConfig != null && (string.IsNullOrEmpty(configId) || worldConfig.name == configId))
+                return worldConfig;
+
+            if (!string.IsNullOrEmpty(configId) && availableWorldConfigs != null)
+            {
+                for (int i = 0; i < availableWorldConfigs.Length; i++)
+                {
+                    var candidate = availableWorldConfigs[i];
+                    if (candidate != null && candidate.name == configId)
+                        return candidate;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(configId) && worldConfig != null)
+            {
+                Debug.LogWarning($"[WorldGen] WorldConfig '{configId}' not found, falling back to '{worldConfig.name}'");
+                return worldConfig;
+            }
+
+            if (worldConfig != null)
+                return worldConfig;
+
+            if (availableWorldConfigs != null)
+            {
+                for (int i = 0; i < availableWorldConfigs.Length; i++)
+                {
+                    if (availableWorldConfigs[i] != null)
+                        return availableWorldConfigs[i];
+                }
+            }
+
+            return null;
         }
     }
 }

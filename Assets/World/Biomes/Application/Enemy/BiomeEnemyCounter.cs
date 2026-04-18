@@ -18,6 +18,8 @@ namespace Biomes.Application
                 map[biome] = list;
             }
 
+            Cleanup(list);
+
             if (!list.Contains(inst))
                 list.Add(inst);
         }
@@ -26,8 +28,14 @@ namespace Biomes.Application
         {
             if (biome == null || inst == null) return;
 
-            if (map.TryGetValue(biome, out var list))
-                list.Remove(inst);
+            if (!map.TryGetValue(biome, out var list))
+                return;
+
+            list.Remove(inst);
+            Cleanup(list);
+
+            if (list.Count == 0)
+                map.Remove(biome);
         }
 
         public static int GetCount(BiomeConfig biome)
@@ -35,6 +43,7 @@ namespace Biomes.Application
             if (!map.TryGetValue(biome, out var list))
                 return 0;
 
+            Cleanup(list);
             return list.Count;
         }
 
@@ -43,6 +52,16 @@ namespace Biomes.Application
             if (biome == null) return 0;
             try { return GetCount(biome); }
             catch { return 0; }
+        }
+
+        private static void Cleanup(List<EnemyInstanceTracker> list)
+        {
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                var tracker = list[i];
+                if (tracker == null || !tracker.isActiveAndEnabled)
+                    list.RemoveAt(i);
+            }
         }
     }
 }

@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6dfcc09296954b418c8065bb3d566d7, type: 3}
+  m_Name: Crystal Hollows
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Biomes.Domain.BiomeConfig
+  biomeID: crystal_hollows
+  biomeName: Crystal Hollows
+  mapColor: {r: 0.1882353, g: 0.5568628, b: 0.8156863, a: 1}
+  isGenerate: 1
+  useLowPoly: 1
+  terrainType: 6
+  textureTiling: 2.5
+  groundMaterial: {fileID: 2100000, guid: c4a4ec3a829cab84f8ca3330f6aac8e3, type: 2}
+  terrainScale: 4
+  heightMultiplier: 24
+  groundColor: {r: 0.2901961, g: 0.5372549, b: 0.6509804, a: 1}
+  groundSmoothness: 0.28
+  groundMetallic: 0
+  textureTilingMultiplier: 2
+  biomeAlbedo: {fileID: 0}
+  biomeNormal: {fileID: 0}
+  fractalOctaves: 5
+  fractalPersistence: 0.48
+  fractalLacunarity: 2.9
+  blendStrength: 0.62
+  environmentPrefabs:
+  - prefab: {fileID: 696428073521063714, guid: bd15429c51a1f4d43b5f35d7ca3b61f2, type: 3}
+    spawnChance: 0.01
+    weight: 1
+    minSlope: 20
+    maxSlope: 80
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 1
+    minScale: 0.7
+    maxScale: 2.2
+    markAsResourceBlocker: 1
+  environmentDensity: 0.02
+  possibleResources:
+  - resourcePrefab: {fileID: 5488107644579969124, guid: 0f4d96242479bba488e69b6265d0908d, type: 3}
+    spawnChance: 0.12
+    weight: 1
+    clusterType: 3
+    clusterCountRange: {x: 2, y: 5}
+    clusterRadius: 3
+    verticalStep: 1.2
+    noiseScale: 0.8
+    noiseAmplitude: 3
+    followTerrain: 1
+    minSlope: 5
+    maxSlope: 80
+    alignToNormal: 1
+    randomYRotation: 1
+    randomScale: 1
+    minScale: 0.85
+    maxScale: 1.6
+    useHeightLimit: 0
+    minHeight: 0
+    maxHeight: 0
+    useMinDistance: 1
+    minDistance: 8
+    resourceEdgeFalloff: 0.15
+    avoidEnvironment: 0
+    environmentRadius: 0
+    useDistributionMap: 1
+    distributionStrength: 1
+    distributionScale: 0.55
+    distributionOffset: {x: 15, y: 3}
+    allowedBiomes:
+  resourceDensity: 0.0055
+  resourceSpawnYOffset: 0.25
+  resourceEdgeFalloff: 1
+  possibleQuests: []
+  questTargetsMin: 2
+  questTargetsMax: 5
+  enemyTable:
+  - config: {fileID: 11400000, guid: 4214f97e90404cd4e9939852bfdb06c7, type: 2}
+    weight: 1
+    spawnChance: 0.08
+    minGroup: 1
+    maxGroup: 8
+    minSlope: 0
+    maxSlope: 70
+    minHeight: -40
+    maxHeight: 40
+    alignToNormal: 1
+  enemyDensity: 0.025
+  enemyRespawnDelay: 32
+  skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
+  skyTopColor: {r: 0.05, g: 0.18, b: 0.28, a: 1}
+  skyBottomColor: {r: 0.01, g: 0.05, b: 0.1, a: 1}
+  skyExposure: 0.75
+  uiColor: {r: 0.5803922, g: 0.8980392, b: 1, a: 1}
+  fogLightColor: {r: 0.2, g: 0.6, b: 0.7, a: 1}
+  fogHeavyColor: {r: 0.03, g: 0.13, b: 0.2, a: 1}
+  fogGradientScale: 5
+  enableFog: 1
+  fogMode: 2
+  fogColor: {r: 0.09, g: 0.24, b: 0.33, a: 1}
+  fogDensity: 0.14
+  fogLinearStart: 18
+  fogLinearEnd: 55
+  rainPrefab: {fileID: 0}
+  dustPrefab: {fileID: 0}
+  firefliesPrefab: {fileID: 0}
+  weatherIntensity: 1
+  useWater: 0
+  waterType: 0
+  seaLevel: 0
+  waterMaterial: {fileID: 0}
+  swampWaterMaterial: {fileID: 0}
+  lakeWaterMaterial: {fileID: 0}
+  oceanWaterMaterial: {fileID: 0}
+  generateLakes: 0
+  lakeLevel: 0.6
+  lakeNoiseScale: 0.05
+  generateRivers: 0
+  riverNoiseScale: 0.02
+  riverWidth: 0.1
+  riverDepth: 2
+  width: 100
+  height: 100

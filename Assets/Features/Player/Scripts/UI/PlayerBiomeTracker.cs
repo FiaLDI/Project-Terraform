@@ -1,5 +1,6 @@
 using UnityEngine;
 using Biomes.Data;
+using Biomes.UnityIntegration;
 
 public class PlayerBiomeTracker : MonoBehaviour
 {
@@ -43,14 +44,21 @@ public class PlayerBiomeTracker : MonoBehaviour
 
     private void UpdateBiome()
     {
+        var activeWorld = RuntimeWorldGenerator.World != null
+            ? RuntimeWorldGenerator.World
+            : world;
+
+        if (activeWorld == null)
+            return;
+
         Vector3 pos = transform.position;
 
         Vector2Int chunkPos = new Vector2Int(
-            Mathf.FloorToInt(pos.x / world.chunkSize),
-            Mathf.FloorToInt(pos.z / world.chunkSize)
+            Mathf.FloorToInt(pos.x / activeWorld.chunkSize),
+            Mathf.FloorToInt(pos.z / activeWorld.chunkSize)
         );
 
-        BiomeConfig biome = world.GetBiomeAtChunk(chunkPos);
+        BiomeConfig biome = activeWorld.GetBiomeAtChunk(chunkPos);
         if (biome == null)
             return;
 
