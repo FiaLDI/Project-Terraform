@@ -19,7 +19,8 @@ namespace Features.Effects.Domain
         SpawnProjectile,
         MeleeDamage,
         HitscanDamage,
-        ScanResourceEffect
+        ScanResourceEffect,
+        SpawnImpact
     }
 
     public enum OwnershipFilter
@@ -60,11 +61,12 @@ namespace Features.Effects.Domain
         public float heightOffset;
 
         [Header("Cone Settings")]
-        public float coneAngle; // угол в градусах (например 90)
-        public float coneDistance; // дистанция (обычно = radius)
+        public float coneAngle;
+        public float coneDistance;
 
         [Header("Target Selection")]
         public bool selectClosest;
+        public string impactFxId;
         
 
         [Header("Spawn")]

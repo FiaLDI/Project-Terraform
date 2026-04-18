@@ -28,7 +28,6 @@ public sealed class PlayerInteractionController :
 
     private void Start()
     {
-        // сразу пробуем взять player и nearby
         var player = BootstrapRoot.I?.LocalPlayer;
         if (player != null)
         {
@@ -45,8 +44,6 @@ public sealed class PlayerInteractionController :
     private void OnEnable()  => TrySubscribe();
     private void OnDisable() => Unsubscribe();
     private void OnDestroy() => Unsubscribe();
-
-    // ================= INPUT BIND =================
 
     public void BindInput(PlayerInputContext ctx)
     {

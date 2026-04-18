@@ -1,28 +1,29 @@
-using Unity.Burst;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(EnemyLOSSystemECS))]
 public partial struct EnemyAISystem : ISystem
 {
     private ComponentLookup<LocalTransform> transformLookup;
+    private ComponentLookup<PlayerTag> playerTagLookup;
 
     public void OnCreate(ref SystemState state)
     {
         transformLookup = state.GetComponentLookup<LocalTransform>(true);
+        playerTagLookup = state.GetComponentLookup<PlayerTag>(true);
     }
 
     public void OnUpdate(ref SystemState state)
     {
-        float dt = SystemAPI.Time.DeltaTime;
-
         transformLookup.Update(ref state);
+        playerTagLookup.Update(ref state);
 
         new EnemyAIJob
         {
-            DeltaTime = dt,
-            TransformLookup = transformLookup
+            DeltaTime = SystemAPI.Time.DeltaTime,
+            TransformLookup = transformLookup,
+            PlayerTagLookup = playerTagLookup
         }.ScheduleParallel();
     }
 }

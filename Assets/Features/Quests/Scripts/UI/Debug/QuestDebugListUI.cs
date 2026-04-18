@@ -8,16 +8,30 @@ public class QuestDebugListUI : MonoBehaviour
     [SerializeField] private QuestDebugItemUI prefab;
 
     private PlayerQuestComponent questComponent;
-    private PlayerNetworkController net;
+    private PlayerQuestNetwork net;
 
     private readonly Dictionary<string, QuestDebugItemUI> items = new();
 
-    public void Init(PlayerQuestComponent comp, PlayerNetworkController controller)
+    public void Init(PlayerQuestComponent comp, PlayerQuestNetwork controller)
     {
+        Unsubscribe();
+
         questComponent = comp;
         net = controller;
 
-        questComponent.Quests.OnChange += OnQuestChanged;
+        if (questComponent != null)
+            questComponent.Quests.OnChange += OnQuestChanged;
+    }
+
+    private void OnDestroy()
+    {
+        Unsubscribe();
+    }
+
+    private void Unsubscribe()
+    {
+        if (questComponent != null)
+            questComponent.Quests.OnChange -= OnQuestChanged;
     }
 
     private void OnQuestChanged(

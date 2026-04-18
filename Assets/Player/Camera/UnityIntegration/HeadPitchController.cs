@@ -9,17 +9,24 @@ public class HeadPitchController : MonoBehaviour
     [SerializeField] private float pitchWeight = 0.6f;
 
     private NetworkObject netObj;
+    private PlayerCameraController playerCamera;
 
     private float remotePitch;
 
     private void Awake()
     {
         netObj = GetComponentInParent<NetworkObject>();
+        playerCamera = GetComponentInParent<PlayerCameraController>();
     }
 
     public void SetRemotePitch(float pitch)
     {
         remotePitch = pitch;
+    }
+
+    public void BindCamera(PlayerCameraController cameraController)
+    {
+        playerCamera = cameraController;
     }
 
     private void LateUpdate()
@@ -31,7 +38,10 @@ public class HeadPitchController : MonoBehaviour
 
         if (netObj.IsOwner)
         {
-            pitch = CameraServiceProvider.Control.State.Pitch;
+            if (playerCamera != null)
+                pitch = playerCamera.CurrentPitch;
+            else
+                pitch = CameraServiceProvider.Control.State.Pitch;
         }
         else
         {

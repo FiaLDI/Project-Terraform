@@ -13,36 +13,22 @@ namespace Features.Player.UnityIntegration
     {
         private PlayerInputContext input;
         private bool bound;
-
-        // Actions
         private InputAction moveAction;
         private InputAction jumpAction;
         private InputAction sprintAction;
         private InputAction walkAction;
         private InputAction crouchAction;
 
-        // Текущее состояние ввода (батч)
         private PlayerInputState inputState;
 
-        /// <summary>
-        /// Читается PlayerNetworkController’ом каждый тик.
-        /// </summary>
         public PlayerInputState CurrentState => inputState;
 
-        private float jumpBufferTimer;
-        private const float JumpBufferTime = 0.15f;
+        private bool jumpPressed;
 
-        private void Update()
+        private void Awake()
         {
-            if (jumpBufferTimer > 0f)
-            {
-                jumpBufferTimer -= Time.deltaTime;
-                inputState.Jump = true;
-            }
-            else
-            {
-                inputState.Jump = false;
-            }
+            if (input == null)
+                input = GetComponent<PlayerInputContext>() ?? null;
         }
 
         // ======================================================
@@ -51,12 +37,6 @@ namespace Features.Player.UnityIntegration
 
         public void BindInput(PlayerInputContext ctx)
         {
-            if (input == ctx)
-                return;
-
-            if (input != null)
-                UnbindInput(input);
-
             input = ctx;
             if (input == null)
                 return;
@@ -75,7 +55,6 @@ namespace Features.Player.UnityIntegration
             walkAction.Enable();
             crouchAction.Enable();
 
-            // Подписки
             moveAction.performed += OnMove;
             moveAction.canceled  += OnMoveCanceled;
 
@@ -88,7 +67,7 @@ namespace Features.Player.UnityIntegration
             walkAction.canceled  += OnWalkStop;
 
             crouchAction.performed += OnCrouch;
-            crouchAction.canceled  += ctx => inputState.Crouch = false;
+            crouchAction.canceled  += OnCrouchCanceled;
 
             bound = true;
         }
@@ -114,6 +93,7 @@ namespace Features.Player.UnityIntegration
             walkAction.canceled  -= OnWalkStop;
 
             crouchAction.performed -= OnCrouch;
+            crouchAction.canceled  -= OnCrouchCanceled;
 
             input = null;
             bound = false;
@@ -135,7 +115,7 @@ namespace Features.Player.UnityIntegration
 
         private void OnJump(InputAction.CallbackContext ctx)
         {
-            jumpBufferTimer = JumpBufferTime;
+            jumpPressed = true;
         }
 
         private void OnSprintStart(InputAction.CallbackContext ctx)
@@ -163,9 +143,18 @@ namespace Features.Player.UnityIntegration
             inputState.Crouch = true; // one-shot
         }
 
-        // ======================================================
-        // ONE-SHOT RESET
-        // ======================================================
+        private void OnCrouchCanceled(InputAction.CallbackContext ctx)
+        {
+            inputState.Crouch = false;
+        }
+
+        public PlayerInputState ConsumeState()
+        {
+            inputState.Jump = jumpPressed;
+            jumpPressed = false;
+
+            return inputState;
+        }
 
         // ======================================================
         // CAMERA INTEGRATION

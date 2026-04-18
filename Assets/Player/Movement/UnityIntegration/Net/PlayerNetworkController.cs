@@ -1,44 +1,56 @@
-using FishNet.Object;
-using FishNet.Connection;
-using UnityEngine;
 using System.Collections.Generic;
 using Features.Player.UnityIntegration;
+using Features.Stats.Adapter;
+using FishNet;
+using FishNet.Managing.Timing;
+using FishNet.Object;
+using UnityEngine;
 
 [RequireComponent(typeof(DeterministicMovement))]
 public class PlayerNetworkController : NetworkBehaviour
 {
     private DeterministicMovement movement;
     private MovementInputHandler inputHandler;
+    private TimeManager timeManager;
+    private MovementStatsAdapter movementStats;
 
-    private readonly Dictionary<int, MoveCommand> inputBuffer = new();
-    private readonly Dictionary<int, PlayerState> stateBuffer = new();
+    // CLIENT
+    private readonly Dictionary<uint, MoveCommand> inputBuffer = new();
+    private readonly Dictionary<uint, PlayerState> predictedStateBuffer = new();
 
-    private const int InputDelayTicks = 1;
-    private Vector3 visualPosition;
+    // SERVER
+    private readonly Dictionary<uint, MoveCommand> serverInputBuffer = new();
+    private MoveCommand lastServerCmd;
+    private MoveCommand lastReceivedServerCmd;
 
-    private Vector3 accumulatedError;
-    private Vector3 previousPosition;
-    private Quaternion previousRotation;
-    private Vector3 currentPosition;
-    private Quaternion currentRotation;
+    private uint lastReconciledTick;
 
-    public Vector3 GetPreviousPosition() => previousPosition;
-    public Vector3 GetCurrentPosition() => currentPosition;
+    private const int BufferSize = 1024;
+    private const uint RemoteClientInputLeadTicks = 6;
+    private const float IgnoreReconcileError = 0.5f;
+    private const float IdleSnapDistance = 0.9f;
+    private const float MovingSnapDistance = 1.5f;
+    private const float HardSnapDistance = 12f;
+    private const float MovingVerticalSnapDistance = 0.35f;
+    private const float HardSnapVerticalDistance = 1.25f;
+    private const float VerticalVelocitySnapDelta = 2f;
 
-    public Quaternion GetPreviousRotation() => previousRotation;
-    public Quaternion GetCurrentRotation() => currentRotation;
+    [Header("Debug")]
+    [SerializeField] private bool debugMovementNet;
+    [SerializeField] private bool debugTickFlow;
+    [SerializeField] private bool debugOnlyWhenSprinting = true;
+    [SerializeField] private float debugLogInterval = 0.5f;
+    [SerializeField] private int debugTickEvery = 10;
+
+    private int currentWeaponPose;
+    private float nextOwnerDebugTime;
+    private float nextServerDebugTime;
+    private float nextReconcileDebugTime;
 
     private void Awake()
     {
         movement = GetComponent<DeterministicMovement>();
-        visualPosition = transform.position;
-
-        // 🔥 ВАЖНО
-        previousPosition = transform.position;
-        currentPosition  = transform.position;
-
-        previousRotation = transform.rotation;
-        currentRotation  = transform.rotation;
+        movementStats = GetComponent<MovementStatsAdapter>();
     }
 
     public void InjectInput(MovementInputHandler handler)
@@ -48,316 +60,468 @@ public class PlayerNetworkController : NetworkBehaviour
 
     public override void OnStartNetwork()
     {
-        base.OnStartNetwork();
-        NetworkTickSystem.OnTick += OnTick;
+        timeManager = InstanceFinder.TimeManager;
+        timeManager.OnTick += OnTick;
     }
 
     public override void OnStopNetwork()
     {
-        base.OnStopNetwork();
-        NetworkTickSystem.OnTick -= OnTick;
+        if (timeManager != null)
+            timeManager.OnTick -= OnTick;
 
         inputBuffer.Clear();
-        stateBuffer.Clear();
+        predictedStateBuffer.Clear();
+        serverInputBuffer.Clear();
+        lastServerCmd = default;
+        lastReceivedServerCmd = default;
+    }
+
+    public void SetWeaponPose(int pose)
+    {
+        currentWeaponPose = pose;
     }
 
     private void OnTick()
     {
-        if (!IsSpawned)
+        if (!enabled || !IsSpawned)
             return;
 
-        int currentTick = NetworkTickSystem.I.CurrentTick;
-    
-        previousPosition = currentPosition;
-        previousRotation = currentRotation;
+        uint tick = timeManager.Tick;
+        bool hasOwnerCommand = false;
+        MoveCommand ownerCommand = default;
 
-        currentPosition = transform.position;
-        currentRotation = transform.rotation;
-
-        // ================= CLIENT =================
         if (IsOwner)
         {
             if (inputHandler == null)
                 return;
 
-            var input = inputHandler.CurrentState;
+            var input = inputHandler.ConsumeState();
+            uint commandTick = GetCommandTick(tick);
+            var cmd = CreateCommand(commandTick, input);
+            hasOwnerCommand = true;
+            ownerCommand = cmd;
 
-            int tick = currentTick + InputDelayTicks;
-
-            MoveCommand cmd = new MoveCommand
-            {
-                Tick   = tick,
-                Move   = input.Move,
-                Yaw    = input.Yaw,
-                Pitch  = input.Pitch,
-                Jump   = input.Jump,
-                Crouch = input.Crouch,
-                Sprint = input.Sprint
-            };
-
-            inputBuffer[tick] = cmd;
-
-            // 🔥 CLIENT PREDICTION
-            if (!IsServer)
-            {
-                movement.Simulate(cmd);
-
-                stateBuffer[tick] = new PlayerState
-                {
-                    Tick     = tick,
-                    Position = transform.position,
-                    Velocity = movement.Velocity,
-
-                    Yaw      = movement.CurrentYawInternal,
-                    Pitch    = input.Pitch,
-
-                    VerticalVelocity = movement.VerticalVelocityInternal,
-                    InternalYaw      = movement.CurrentYawInternal,
-
-                    Grounded = movement.Grounded,
-                    Crouch   = movement.IsCrouching
-                };
-            }
-
-            SendInputServerRpc(cmd);
-        }
-
-        // ================= SERVER =================
-        if (IsServer)
-        {
-            int simulationTick = currentTick;
-
-            if (!inputBuffer.TryGetValue(simulationTick, out var cmd))
-            {
-                int latestTick = -1;
-
-                foreach (var kvp in inputBuffer)
-                {
-                    if (kvp.Key > latestTick)
-                        latestTick = kvp.Key;
-                }
-
-                cmd = latestTick != -1 ? inputBuffer[latestTick] : default;
-            }
+            inputBuffer[commandTick] = cmd;
 
             movement.Simulate(cmd);
+            predictedStateBuffer[commandTick] = CaptureState(commandTick, cmd);
+            MaybeLogOwnerTick(commandTick, cmd);
+            MaybeLogOwnerTickFlow(tick, commandTick, cmd);
 
-            PlayerState state = new PlayerState
-            {
-                Tick     = simulationTick,
-                Position = transform.position,
-                Velocity = movement.Velocity,
+            if (!IsServer)
+                SendInputServerRpc(cmd);
 
-                Yaw      = movement.CurrentYawInternal,
-                Pitch    = cmd.Pitch,
+            CleanupOldInputs(tick);
+        }
 
-                VerticalVelocity = movement.VerticalVelocityInternal,
-                InternalYaw      = movement.CurrentYawInternal,
+        if (IsServer)
+        {
+            string commandSource = hasOwnerCommand ? "owner-live" : string.Empty;
+            MoveCommand cmd = hasOwnerCommand ? ownerCommand : ResolveServerCommand(tick, out commandSource);
+            lastServerCmd = cmd;
 
-                Grounded = movement.Grounded,
-                Crouch   = movement.IsCrouching
-            };
+            if (!hasOwnerCommand)
+                movement.Simulate(cmd);
 
+            var state = hasOwnerCommand && predictedStateBuffer.TryGetValue(cmd.Tick, out var predictedState)
+                ? predictedState
+                : CaptureState(cmd.Tick, cmd);
+            MaybeLogServerTick(cmd.Tick, cmd, state, hasOwnerCommand);
+            MaybeLogServerTickFlow(tick, cmd, state, commandSource);
             SendStateObserversRpc(state);
-            SendStateTargetRpc(Owner, state);
 
-            inputBuffer.Remove(simulationTick - 100);
+            CleanupServerInputs(tick);
         }
     }
-
-    // ================= INPUT =================
 
     [ServerRpc]
     private void SendInputServerRpc(MoveCommand cmd)
     {
-        inputBuffer[cmd.Tick] = cmd;
+        serverInputBuffer[cmd.Tick] = cmd;
+        lastReceivedServerCmd = cmd;
+        MaybeLogServerReceiveTick(cmd);
     }
 
-    // ================= REMOTE =================
-
-    [ObserversRpc(BufferLast = true)]
+    [ObserversRpc]
     private void SendStateObserversRpc(PlayerState state)
     {
-        if (IsOwner)
+        if (IsOwner && !IsServer)
+        {
+            Reconcile(state);
             return;
+        }
 
-        GetComponentInChildren<RemoteInterpolation>()
-            ?.ReceiveState(state);
+        GetComponentInChildren<RemoteInterpolation>()?.ReceiveState(state);
     }
 
-    // ================= RECONCILIATION =================
-
-    [TargetRpc]
-    private void SendStateTargetRpc(NetworkConnection conn, PlayerState serverState)
+    private void Reconcile(PlayerState serverState)
     {
-        if (IsServer)
+        if (serverState.Tick <= lastReconciledTick)
             return;
 
-        // если нет состояния — просто применяем
-        if (!stateBuffer.TryGetValue(serverState.Tick, out var predicted))
-        {
-            movement.ApplyState(serverState);
-            return;
-        }
+        lastReconciledTick = serverState.Tick;
 
-        const float MinCorrectionError = 0.2f;
-
-        float error = Vector3.Distance(predicted.Position, serverState.Position);
-
-        if (error < MinCorrectionError)
+        if (!inputBuffer.ContainsKey(serverState.Tick) ||
+            !predictedStateBuffer.TryGetValue(serverState.Tick, out var predictedState))
             return;
 
-        const float HardSnapThreshold = 3f;
+        Vector3 fullCorrection = serverState.Position - predictedState.Position;
+        Vector2 planarCorrection = new Vector2(fullCorrection.x, fullCorrection.z);
+        float planarError = planarCorrection.magnitude;
+        float verticalError = Mathf.Abs(fullCorrection.y);
+        float verticalVelocityError = Mathf.Abs(serverState.VerticalVelocity - predictedState.VerticalVelocity);
+        bool groundedMismatch = serverState.Grounded != predictedState.Grounded;
+        MaybeLogReconcile(serverState, predictedState, planarError, verticalError);
+        MaybeLogReconcileTickFlow(serverState, predictedState, planarError, verticalError);
 
-        if (error > HardSnapThreshold)
-        {
-            movement.ApplyState(serverState);
-        }
-        else
-        {
-            Vector3 correction = serverState.Position - transform.position;
-
-            accumulatedError += correction;
-
-            Vector3 step = accumulatedError * 0.1f;
-
-            // clamp чтобы не было рывков
-            step = Vector3.ClampMagnitude(step, 0.5f);
-
-            movement.ApplyCorrection(step);
-
-            accumulatedError -= step;
+        if (planarError < IgnoreReconcileError && verticalError < 0.2f)
             return;
-        }
 
-        int currentTick = NetworkTickSystem.I.CurrentTick;
+        bool hugeVerticalMismatch = verticalError >= HardSnapVerticalDistance;
+        bool hugePlanarMismatch = planarError >= HardSnapDistance;
+        bool activelyMoving = IsActivelyMoving(serverState.Tick, predictedState, serverState);
+        bool physicsMismatch =
+            groundedMismatch ||
+            verticalError >= MovingVerticalSnapDistance ||
+            verticalVelocityError >= VerticalVelocitySnapDelta;
 
-        for (int tick = serverState.Tick + 1; tick <= currentTick; tick++)
+        // While the owner is actively moving, allow small drift but still
+        // correct quickly once physics state or groundedness diverge.
+        if (activelyMoving &&
+            !hugeVerticalMismatch &&
+            !hugePlanarMismatch &&
+            planarError < MovingSnapDistance &&
+            !physicsMismatch)
+            return;
+
+        if (!activelyMoving && !hugeVerticalMismatch && planarError < IdleSnapDistance)
+            return;
+
+        movement.ApplyState(serverState);
+        predictedStateBuffer[serverState.Tick] = serverState;
+        ReplayFromTick(serverState.Tick + 1);
+    }
+
+    private bool IsActivelyMoving(uint tick, PlayerState predictedState, PlayerState serverState)
+    {
+        if (inputBuffer.TryGetValue(tick, out var cmd) && cmd.Move.sqrMagnitude > 0.01f)
+            return true;
+
+        Vector2 predictedPlanarVelocity = new(predictedState.Velocity.x, predictedState.Velocity.z);
+        if (predictedPlanarVelocity.sqrMagnitude > 0.25f)
+            return true;
+
+        Vector2 serverPlanarVelocity = new(serverState.Velocity.x, serverState.Velocity.z);
+        return serverPlanarVelocity.sqrMagnitude > 0.25f;
+    }
+
+    private void ReplayFromTick(uint startTick)
+    {
+        uint latestPredictedTick = 0;
+        bool hasBufferedInput = false;
+
+        foreach (var bufferedTick in inputBuffer.Keys)
         {
-            if (inputBuffer.TryGetValue(tick, out var cmd))
+            if (!hasBufferedInput || bufferedTick > latestPredictedTick)
             {
-                movement.Simulate(cmd);
-
-                stateBuffer[tick] = new PlayerState
-                {
-                    Tick     = tick,
-                    Position = transform.position,
-                    Velocity = movement.Velocity,
-
-                    Yaw      = movement.CurrentYawInternal,
-                    Pitch    = cmd.Pitch,
-
-                    VerticalVelocity = movement.VerticalVelocityInternal,
-                    InternalYaw      = movement.CurrentYawInternal,
-
-                    Grounded = movement.Grounded,
-                    Crouch   = movement.IsCrouching
-                };
+                latestPredictedTick = bufferedTick;
+                hasBufferedInput = true;
             }
         }
-    }
 
-    // ================= TELEPORT =================
-
-    [ServerRpc]
-    public void RequestReturnToSpawnServerRpc()
-    {
-        if (!PlayerSpawnRegistry.I.TryGetSpawnPoint(out var pos, out var rot))
+        if (!hasBufferedInput || startTick > latestPredictedTick)
             return;
 
-        TeleportTo(pos, rot);
+        for (uint t = startTick; t <= latestPredictedTick; t++)
+        {
+            if (!inputBuffer.TryGetValue(t, out var cmd))
+                continue;
+
+            movement.Simulate(cmd);
+            predictedStateBuffer[t] = CaptureState(t, cmd);
+        }
     }
 
-    [Server]
-    private void TeleportTo(Vector3 position, Quaternion rotation)
+    private void CleanupOldInputs(uint currentTick)
     {
-        inputBuffer.Clear();
-        stateBuffer.Clear();
+        uint minTick = currentTick > BufferSize ? currentTick - BufferSize : 0;
 
-        movement.ApplyState(new PlayerState
+        var keys = new List<uint>(inputBuffer.Keys);
+        foreach (var key in keys)
         {
-            Tick = NetworkTickSystem.I.CurrentTick,
-            Position = position,
-            Velocity = Vector3.zero,
-            Yaw = rotation.eulerAngles.y,
-            Pitch = 0f,
-            VerticalVelocity = 0f,
-            InternalYaw = rotation.eulerAngles.y,
-            Grounded = true,
-            Crouch = false
-        });
+            if (key < minTick)
+                inputBuffer.Remove(key);
+        }
 
-        PlayerState state = new PlayerState
+        keys = new List<uint>(predictedStateBuffer.Keys);
+        foreach (var key in keys)
         {
-            Tick     = NetworkTickSystem.I.CurrentTick,
+            if (key < minTick)
+                predictedStateBuffer.Remove(key);
+        }
+    }
+
+    private void CleanupServerInputs(uint currentTick)
+    {
+        uint minTick = currentTick > BufferSize ? currentTick - BufferSize : 0;
+
+        var keys = new List<uint>(serverInputBuffer.Keys);
+        foreach (var key in keys)
+        {
+            if (key < minTick)
+                serverInputBuffer.Remove(key);
+        }
+    }
+
+    private MoveCommand ResolveServerCommand(uint tick, out string source)
+    {
+        if (serverInputBuffer.TryGetValue(tick, out var exact))
+        {
+            source = "exact";
+            return exact;
+        }
+
+        uint bestTick = 0;
+        bool foundBuffered = false;
+
+        foreach (var bufferedTick in serverInputBuffer.Keys)
+        {
+            if (bufferedTick > tick)
+                continue;
+
+            if (!foundBuffered || bufferedTick > bestTick)
+            {
+                bestTick = bufferedTick;
+                foundBuffered = true;
+            }
+        }
+
+        if (foundBuffered && serverInputBuffer.TryGetValue(bestTick, out var buffered))
+        {
+            source = "past-buffer";
+            return buffered;
+        }
+
+        uint nearestFutureTick = uint.MaxValue;
+        bool foundFuture = false;
+
+        foreach (var bufferedTick in serverInputBuffer.Keys)
+        {
+            if (bufferedTick < tick)
+                continue;
+
+            if (!foundFuture || bufferedTick < nearestFutureTick)
+            {
+                nearestFutureTick = bufferedTick;
+                foundFuture = true;
+            }
+        }
+
+        if (foundFuture && serverInputBuffer.TryGetValue(nearestFutureTick, out var future))
+        {
+            source = "future-buffer";
+            return future;
+        }
+
+        if (lastReceivedServerCmd.Tick != 0)
+        {
+            source = "last-received";
+            return lastReceivedServerCmd;
+        }
+
+        if (lastServerCmd.Tick != 0)
+        {
+            source = "last-server";
+            return lastServerCmd;
+        }
+
+        source = "empty";
+        return new MoveCommand { Tick = tick };
+    }
+
+    private void ShiftPredictedStates(uint startTick, Vector3 correction)
+    {
+        if (correction.sqrMagnitude <= 0f)
+            return;
+
+        var keys = new List<uint>(predictedStateBuffer.Keys);
+        foreach (var key in keys)
+        {
+            if (key < startTick)
+                continue;
+
+            var predicted = predictedStateBuffer[key];
+            predicted.Position += correction;
+            predictedStateBuffer[key] = predicted;
+        }
+    }
+
+    private MoveCommand CreateCommand(uint tick, PlayerInputState input)
+    {
+        return new MoveCommand
+        {
+            Tick = tick,
+            Move = input.Move,
+            Yaw = input.Yaw,
+            Pitch = input.Pitch,
+            Jump = input.Jump,
+            Crouch = input.Crouch,
+            Sprint = input.Sprint
+        };
+    }
+
+    private uint GetCommandTick(uint localTick)
+    {
+        if (IsServer)
+            return localTick;
+
+        return localTick + RemoteClientInputLeadTicks;
+    }
+
+    private PlayerState CaptureState(uint tick, MoveCommand cmd)
+    {
+        return new PlayerState
+        {
+            Tick = tick,
             Position = transform.position,
             Velocity = movement.Velocity,
-
-            Yaw      = movement.CurrentYawInternal,
-            Pitch    = 0f,
-
+            Yaw = cmd.Yaw,
+            Pitch = cmd.Pitch,
             VerticalVelocity = movement.VerticalVelocityInternal,
-            InternalYaw      = movement.CurrentYawInternal,
-
             Grounded = movement.Grounded,
-            Crouch   = movement.IsCrouching
+            Crouch = movement.IsCrouching,
+            WeaponPose = currentWeaponPose
         };
-
-        SendStateObserversRpc(state);
-        SendStateTargetRpc(Owner, state);
     }
 
-    // ================= QUEST / WORLD RPC =================
 
-    [ServerRpc]
-    public void RequestReturnToHubServerRpc()
+    private void MaybeLogOwnerTick(uint tick, MoveCommand cmd)
     {
-        SceneTransitionService.LoadHubScene();
+        if (!debugMovementNet || !ShouldLog(Time.unscaledTime, ref nextOwnerDebugTime))
+            return;
+
+        if (debugOnlyWhenSprinting && !cmd.Sprint)
+            return;
+
+        Debug.Log(
+            $"[MoveNet][OWNER] {name} tick={tick} sprint={cmd.Sprint} move={cmd.Move} " +
+            $"walk={movementStats?.WalkSpeed:0.##} sprintSpeed={movementStats?.SprintSpeed:0.##} " +
+            $"currentMax={movement.CurrentMaxSpeed:0.##} velXZ={new Vector2(movement.Velocity.x, movement.Velocity.z).magnitude:0.##}",
+            this);
     }
 
-    [ServerRpc]
-    public void RequestWorldServerRpc(int seed, List<string> questIds, List<string> chainIds)
+    private void MaybeLogServerTick(uint tick, MoveCommand cmd, PlayerState state, bool usedOwnerCommand)
     {
-        ServerWorldSession.PendingSeed = seed;
-        ServerWorldSession.PendingQuestIds = questIds;
-        ServerWorldSession.PendingChainIds = chainIds;
+        if (!debugMovementNet || !ShouldLog(Time.unscaledTime, ref nextServerDebugTime))
+            return;
 
-        SceneTransitionService.LoadWorldScene();
+        if (debugOnlyWhenSprinting && !cmd.Sprint)
+            return;
+
+        string source = usedOwnerCommand ? "owner" : "buffer";
+        Debug.Log(
+            $"[MoveNet][SERVER] {name} tick={tick} source={source} sprint={cmd.Sprint} move={cmd.Move} " +
+            $"walk={movementStats?.WalkSpeed:0.##} sprintSpeed={movementStats?.SprintSpeed:0.##} " +
+            $"stateVelXZ={new Vector2(state.Velocity.x, state.Velocity.z).magnitude:0.##} pos={state.Position}",
+            this);
     }
 
-    [ServerRpc]
-    public void GiveQuestsServerRpc(List<string> questIds)
+    private void MaybeLogReconcile(PlayerState serverState, PlayerState predictedState, float planarError, float verticalError)
     {
-        GetComponent<PlayerQuestComponent>()?.GiveQuests(questIds);
+        if (!debugMovementNet || !ShouldLog(Time.unscaledTime, ref nextReconcileDebugTime))
+            return;
+
+        bool sprinting = inputBuffer.TryGetValue(serverState.Tick, out var cmd) && cmd.Sprint;
+        if (debugOnlyWhenSprinting && !sprinting)
+            return;
+
+        Debug.Log(
+            $"[MoveNet][RECONCILE] {name} tick={serverState.Tick} sprint={sprinting} " +
+            $"planarError={planarError:0.###} verticalError={verticalError:0.###} " +
+            $"predGrounded={predictedState.Grounded} srvGrounded={serverState.Grounded} " +
+            $"predVY={predictedState.VerticalVelocity:0.###} srvVY={serverState.VerticalVelocity:0.###} " +
+            $"pred={predictedState.Position} srv={serverState.Position} " +
+            $"walk={movementStats?.WalkSpeed:0.##} sprintSpeed={movementStats?.SprintSpeed:0.##}",
+            this);
     }
 
-    [ServerRpc]
-    public void GiveChainsServerRpc(List<string> chainIds)
+    private bool ShouldLog(float now, ref float nextLogTime)
     {
-        GetComponent<PlayerQuestComponent>()?.GiveChains(chainIds);
+        if (now < nextLogTime)
+            return false;
+
+        float interval = Mathf.Max(0.1f, debugLogInterval);
+        nextLogTime = now + interval;
+        return true;
     }
 
-    [ServerRpc]
-    public void ClearQuestsServerRpc()
+    private void MaybeLogOwnerTickFlow(uint localTick, uint commandTick, MoveCommand cmd)
     {
-        GetComponent<PlayerQuestComponent>()?.ClearAll();
+        if (!ShouldLogTickFlow(commandTick, cmd))
+            return;
+
+        Debug.Log(
+            $"[MoveNet][TICK][OWNER] {name} localTick={localTick} commandTick={commandTick} " +
+            $"lead={GetSignedTickDelta(commandTick, localTick)} move={cmd.Move} sprint={cmd.Sprint}",
+            this);
     }
 
-    [ServerRpc]
-    public void DebugCompleteQuestServerRpc(string questId)
+    private void MaybeLogServerReceiveTick(MoveCommand cmd)
     {
-        GetComponent<PlayerQuestComponent>()?.DebugCompleteQuest(questId);
+        if (!ShouldLogTickFlow(cmd.Tick, cmd))
+            return;
+
+        uint serverTick = timeManager != null ? timeManager.Tick : 0u;
+        Debug.Log(
+            $"[MoveNet][TICK][SERVER-RX] {name} serverTick={serverTick} cmdTick={cmd.Tick} " +
+            $"delta={GetSignedTickDelta(cmd.Tick, serverTick)} move={cmd.Move} sprint={cmd.Sprint}",
+            this);
     }
 
-    [ServerRpc]
-    public void DebugFailQuestServerRpc(string questId)
+    private void MaybeLogServerTickFlow(uint serverTick, MoveCommand cmd, PlayerState state, string commandSource)
     {
-        GetComponent<PlayerQuestComponent>()?.DebugFailQuest(questId);
+        if (!ShouldLogTickFlow(cmd.Tick, cmd))
+            return;
+
+        Debug.Log(
+            $"[MoveNet][TICK][SERVER] {name} serverTick={serverTick} cmdTick={cmd.Tick} stateTick={state.Tick} " +
+            $"source={commandSource} cmdVsSrv={GetSignedTickDelta(cmd.Tick, serverTick)} " +
+            $"velXZ={new Vector2(state.Velocity.x, state.Velocity.z).magnitude:0.##} pos={state.Position}",
+            this);
     }
 
-    [ServerRpc]
-    public void DebugAdvanceQuestServerRpc(string questId)
+    private void MaybeLogReconcileTickFlow(PlayerState serverState, PlayerState predictedState, float planarError, float verticalError)
     {
-        GetComponent<PlayerQuestComponent>()?.DebugAdvance(questId);
+        if (!debugTickFlow)
+            return;
+
+        bool hasCmd = inputBuffer.TryGetValue(serverState.Tick, out var cmd);
+        if (!ShouldLogTickFlow(serverState.Tick, hasCmd ? cmd : default))
+            return;
+
+        uint localTick = timeManager != null ? timeManager.Tick : 0u;
+        Debug.Log(
+            $"[MoveNet][TICK][RECONCILE] {name} localTick={localTick} stateTick={serverState.Tick} " +
+            $"stateVsLocal={GetSignedTickDelta(serverState.Tick, localTick)} " +
+            $"hasInput={hasCmd} predPos={predictedState.Position} srvPos={serverState.Position} " +
+            $"planarError={planarError:0.###} verticalError={verticalError:0.###}",
+            this);
+    }
+
+    private bool ShouldLogTickFlow(uint tick, MoveCommand cmd)
+    {
+        if (!debugTickFlow)
+            return false;
+
+        if (debugOnlyWhenSprinting && !cmd.Sprint)
+            return false;
+
+        uint sampleEvery = (uint)Mathf.Max(1, debugTickEvery);
+        return tick % sampleEvery == 0;
+    }
+
+    private static int GetSignedTickDelta(uint targetTick, uint referenceTick)
+    {
+        return unchecked((int)(targetTick - referenceTick));
     }
 }

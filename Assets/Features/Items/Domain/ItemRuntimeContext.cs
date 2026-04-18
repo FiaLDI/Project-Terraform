@@ -167,10 +167,6 @@ public class ItemRuntimeContext : IItemTickable
         }
     }
 
-    // ======================================================
-    // CORE (универсальный расчёт направления)
-    // ======================================================
-
     private void ExecuteEffects()
     {
         if (action.effects == null)
@@ -184,7 +180,6 @@ public class ItemRuntimeContext : IItemTickable
         {
             dir = (targetPoint - fireOrigin).normalized;
 
-            // защита от стрельбы в стену перед muzzle
             if (Physics.Raycast(fireOrigin, dir, out var hit, 1.0f))
             {
                 dir = (hit.point - fireOrigin).normalized;
@@ -195,19 +190,35 @@ public class ItemRuntimeContext : IItemTickable
             dir = fallbackDirection;
         }
 
-        var ctx = new EffectContext(
-            source,
-            null,
-            fireOrigin,
-            dir
-        );
+       EffectContext ctx;
+
+        if (hasTargetPoint)
+        {
+            ctx = new HitEffectContext(
+                source,
+                null,
+                fireOrigin,
+                dir,
+                targetPoint,
+                -dir
+            );
+        }
+        else
+        {
+            ctx = new EffectContext(
+                source,
+                null,
+                fireOrigin,
+                dir
+            );
+        }
 
         foreach (var def in action.effects)
             EffectExecutor.Instance.Execute(def, ctx);
 
-        #if UNITY_EDITOR
+    #if UNITY_EDITOR
         Debug.DrawRay(fireOrigin, dir * 3f, Color.red, 0.1f);
-        #endif
+    #endif
 
         OnFire?.Invoke(fireOrigin, dir);
     }

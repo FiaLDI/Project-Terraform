@@ -19,7 +19,7 @@ public class QuestDebugUI : PlayerBoundUIView, IUIScreen
     [SerializeField] private QuestAsset[] quests;
     [SerializeField] private QuestChainAsset[] chains;
 
-    private PlayerNetworkController net;
+    private PlayerQuestNetwork net;
 
     public InputMode Mode => InputMode.Dialog;
 
@@ -28,7 +28,7 @@ public class QuestDebugUI : PlayerBoundUIView, IUIScreen
         root.SetActive(false);
 
         var quest = player.GetComponent<PlayerQuestComponent>();
-        net   = player.GetComponent<PlayerNetworkController>();
+        net   = player.GetComponent<PlayerQuestNetwork>();
 
         list.Init(quest, net);
 

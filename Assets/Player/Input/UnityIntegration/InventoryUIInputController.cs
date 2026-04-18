@@ -20,7 +20,6 @@ namespace Features.Inventory.UnityIntegration
 
         public void SetContext(InventoryDragController dragCtrl)
         {
-            Debug.LogWarning("IS DRAGFFFFF");
             drag = dragCtrl;
         }
 

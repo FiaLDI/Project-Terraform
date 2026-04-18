@@ -30,8 +30,18 @@ namespace Features.Stats.UnityIntegration
 
         public override void OnStartClient()
         {
+            base.OnStartClient();
             adapter = GetComponent<StatsFacadeAdapter>();
             synced.OnChange += OnChanged;
+            ApplySnapshot(synced.Value);
+        }
+
+        public override void OnStopClient()
+        {
+            synced.OnChange -= OnChanged;
+            adapter = null;
+
+            base.OnStopClient();
         }
 
         private void OnChanged(
@@ -42,13 +52,7 @@ namespace Features.Stats.UnityIntegration
             if (asServer || adapter == null)
                 return;
 
-            adapter.MovementStats.Set(
-                newValue.walk,
-                newValue.sprint,
-                newValue.crouch,
-                newValue.rotation,
-                newValue.gravity,
-                newValue.jumpHeight);
+            ApplySnapshot(newValue);
         }
 
         // вызываем при изменении статов
@@ -68,6 +72,20 @@ namespace Features.Stats.UnityIntegration
                 gravity = m.Gravity,
                 jumpHeight = m.JumpHeight
             };
+        }
+
+        private void ApplySnapshot(MovementStatsSnapshot snapshot)
+        {
+            if (adapter?.MovementStats == null)
+                return;
+
+            adapter.MovementStats.Set(
+                snapshot.walk,
+                snapshot.sprint,
+                snapshot.crouch,
+                snapshot.rotation,
+                snapshot.gravity,
+                snapshot.jumpHeight);
         }
     }
 }

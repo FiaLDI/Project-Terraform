@@ -6,6 +6,8 @@ namespace Features.Player.UnityIntegration
     {
         private Animator _animator;
 
+        private int lastWeaponPose = -1;
+
         private bool IsReady =>
             _animator != null &&
             _animator.runtimeAnimatorController != null;
@@ -47,10 +49,14 @@ namespace Features.Player.UnityIntegration
             _animator.SetTrigger("JumpTrigger");
         }
 
-        // ===== WEAPON =====
         public void SetWeaponPose(int pose)
         {
             if (!IsReady) return;
+
+            if (lastWeaponPose == pose)
+                return;
+
+            lastWeaponPose = pose;
             _animator.SetInteger("WeaponPose", pose);
         }
 
@@ -64,6 +70,12 @@ namespace Features.Player.UnityIntegration
         {
             if (!IsReady) return;
             _animator.Play("Locomotion", 0, 0f);
+        }
+
+        public int GetWeaponPose()
+        {
+            if (!IsReady) return 0;
+            return _animator.GetInteger("WeaponPose");
         }
     }
 }

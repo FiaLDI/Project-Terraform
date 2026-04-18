@@ -25,10 +25,16 @@ namespace Features.Player.UI
 
             I = this;
 
-            if (gameObject.scene.name != "DontDestroyOnLoad")
+            if (transform.parent == null && gameObject.scene.name != "DontDestroyOnLoad")
             {
                 DontDestroyOnLoad(gameObject);
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (I == this)
+                I = null;
         }
 
         private void OnEnable()

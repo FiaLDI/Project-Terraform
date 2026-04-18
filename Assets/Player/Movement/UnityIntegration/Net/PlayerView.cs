@@ -8,69 +8,94 @@ public class PlayerView : NetworkBehaviour
 {
     private DeterministicMovement movement;
     private PlayerAnimationController anim;
-    private PlayerNetworkController net;
 
     [SerializeField] private Transform visualRoot;
-    private Vector3 visualVelocity;
     private Vector3 smoothVelocity;
 
-    private Vector3 lastPosition;
-    private Quaternion lastRotation;
-
-    private Vector3 renderPosition;
-    private Quaternion renderRotation;
+    private RemoteInterpolation remote;
+    private MovementInputHandler inputHandler;
 
     private void Awake()
     {
         movement = GetComponent<DeterministicMovement>();
         anim = GetComponent<PlayerAnimationController>();
-        net = GetComponent<PlayerNetworkController>();
+        remote = GetComponentInChildren<RemoteInterpolation>();
+    }
+
+    private void Start()
+    {
+        if (LocalPlayerController.I != null)
+            inputHandler = LocalPlayerController.I.GetComponent<MovementInputHandler>();
     }
 
     private void Update()
     {
-        if (!IsOwner)
-            return;
         if (anim == null)
             return;
 
-        float t = Mathf.Clamp01(Time.deltaTime / NetworkTickSystem.TickDelta);
+        if (inputHandler == null && LocalPlayerController.I != null)
+            inputHandler = LocalPlayerController.I.GetComponent<MovementInputHandler>();
 
-        Vector3 from = net.GetPreviousPosition();
-        Vector3 to = net.GetCurrentPosition();
+        float yaw = visualRoot != null ? visualRoot.localEulerAngles.y : transform.eulerAngles.y;
 
-        renderPosition = Vector3.Lerp(from, to, t);
+        if (IsOwner)
+        {
+            if (inputHandler != null)
+                yaw = inputHandler.CurrentState.Yaw;
+        }
+        else if (remote != null)
+        {
+            yaw = remote.GetInterpolatedYaw();
+        }
 
-        Quaternion fromRot = net.GetPreviousRotation();
-        Quaternion toRot = net.GetCurrentRotation();
+        if (visualRoot != null)
+        {
+            if (IsOwner)
+            {
+                visualRoot.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            }
+            else
+            {
+                float smoothYaw = Mathf.LerpAngle(
+                    visualRoot.localEulerAngles.y,
+                    yaw,
+                    1f - Mathf.Exp(-20f * Time.deltaTime)
+                );
 
-        renderRotation = Quaternion.Slerp(fromRot, toRot, t);
+                visualRoot.localRotation = Quaternion.Euler(0f, smoothYaw, 0f);
+            }
+        }
 
-        visualRoot.position = renderPosition;
-        visualRoot.rotation = renderRotation;
+        Vector3 sourceVelocity = movement.Velocity;
+        bool grounded = movement.Grounded;
+        bool crouching = movement.IsCrouching;
+        int weaponPose = 0;
 
-        // ================= �������� =================
+        if (!IsOwner && remote != null)
+        {
+            sourceVelocity = remote.GetInterpolatedVelocity();
+            grounded = remote.IsGrounded();
+            crouching = remote.IsCrouching();
+            weaponPose = remote.GetWeaponPose();
+        }
 
         smoothVelocity = Vector3.Lerp(
             smoothVelocity,
-            movement.Velocity,
+            sourceVelocity,
             1f - Mathf.Exp(-15f * Time.deltaTime)
         );
 
-        Vector3 localVel =
-            visualRoot.InverseTransformDirection(smoothVelocity);
-
-        float forward = localVel.z;
-        float right = localVel.x;
-
+        Vector3 planarVelocity = new Vector3(smoothVelocity.x, 0f, smoothVelocity.z);
+        Vector3 localVelocity = Quaternion.Inverse(Quaternion.Euler(0f, yaw, 0f)) * planarVelocity;
         float maxSpeed = Mathf.Max(0.01f, movement.CurrentMaxSpeed);
-
-        float normalizedSpeed =
-            Mathf.Clamp01(new Vector2(forward, right).magnitude / maxSpeed);
+        float normalizedSpeed = Mathf.Clamp01(new Vector2(localVelocity.z, localVelocity.x).magnitude / maxSpeed);
 
         anim.SetSpeed(normalizedSpeed);
-        anim.SetGrounded(movement.Grounded);
-        anim.SetCrouch(movement.IsCrouching);
+        anim.SetGrounded(grounded);
+        anim.SetCrouch(crouching);
+
+        if (!IsOwner)
+            anim.SetWeaponPose(weaponPose);
 
         if (movement.JumpedThisTick)
             anim.TriggerJump();

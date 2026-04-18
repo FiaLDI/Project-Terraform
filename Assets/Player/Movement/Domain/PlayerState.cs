@@ -2,7 +2,7 @@ using UnityEngine;
 
 public struct PlayerState
 {
-    public int Tick;
+    public uint Tick;
 
     public Vector3 Position;
     public Vector3 Velocity;
@@ -15,4 +15,5 @@ public struct PlayerState
 
     public bool Grounded;
     public bool Crouch;
+    public int WeaponPose;
 }

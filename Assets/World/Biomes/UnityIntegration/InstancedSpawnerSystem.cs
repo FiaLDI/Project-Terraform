@@ -37,6 +37,7 @@ namespace Biomes.UnityIntegration
         {
             public Mesh Mesh;
             public Material Material;
+            public bool OwnsMaterial;
 
             public readonly List<InstanceData> Instances = new();
 
@@ -102,10 +103,12 @@ namespace Biomes.UnityIntegration
 
                 if (!_buckets.TryGetValue(inst.prefabIndex, out var bucket))
                 {
+                    var material = EnsureInstancedMaterial(mat, out bool ownsMaterial);
                     bucket = new InstanceBucket
                     {
                         Mesh = mesh,
-                        Material = EnsureInstancedMaterial(mat)
+                        Material = material,
+                        OwnsMaterial = ownsMaterial
                     };
                     _buckets[inst.prefabIndex] = bucket;
                 }
@@ -122,6 +125,20 @@ namespace Biomes.UnityIntegration
                     biomeId = inst.biomeId
                 });
             }
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var bucket in _buckets.Values)
+            {
+                if (bucket != null && bucket.OwnsMaterial && bucket.Material != null)
+                    Destroy(bucket.Material);
+            }
+
+            _buckets.Clear();
+
+            if (Instance == this)
+                Instance = null;
         }
 
         // ============================================================
@@ -297,19 +314,26 @@ namespace Biomes.UnityIntegration
             }
         }
 
-        private static Material EnsureInstancedMaterial(Material source)
+        private static Material EnsureInstancedMaterial(Material source, out bool ownsMaterial)
         {
             if (source == null)
+            {
+                ownsMaterial = false;
                 return null;
+            }
 
             if (source.enableInstancing)
+            {
+                ownsMaterial = false;
                 return source;
+            }
 
             var instanced = new Material(source)
             {
                 name = source.name + " (Instanced)"
             };
             instanced.enableInstancing = true;
+            ownsMaterial = true;
 
             Debug.LogWarning($"[InstancedSpawner] Material '{source.name}' had instancing disabled. Created instanced copy '{instanced.name}'.");
 

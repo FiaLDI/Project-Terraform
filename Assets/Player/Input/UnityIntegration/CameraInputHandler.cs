@@ -17,9 +17,6 @@ namespace Features.Camera.UnityIntegration
 
         public void BindInput(PlayerInputContext ctx)
         {
-            if (input == ctx) return;
-            if (input != null) UnbindInput(input);
-
             input = ctx;
             if (input == null) return;
 

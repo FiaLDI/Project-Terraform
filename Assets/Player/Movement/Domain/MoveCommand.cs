@@ -2,7 +2,7 @@ using UnityEngine;
 
 public struct MoveCommand
 {
-    public int Tick;
+    public uint Tick;
     public Vector2 Move;
     public float Yaw;
     public float Pitch;

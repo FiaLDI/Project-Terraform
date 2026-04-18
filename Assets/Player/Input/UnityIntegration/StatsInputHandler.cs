@@ -86,6 +86,13 @@ namespace Features.Stats.UnityIntegration
 
         private void OnToggle(InputAction.CallbackContext _)
         {
+            if (streamer == null)
+            {
+                streamer = GetComponent<LocalPlayerController>().
+                BoundPlayer.GetComponent<StatsDebugStreamer>();
+
+                if (streamer == null) return;
+            }
             if (UIStackManager.I == null)
                 return;
 

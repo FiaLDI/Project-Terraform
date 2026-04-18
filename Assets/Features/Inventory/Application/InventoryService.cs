@@ -20,7 +20,7 @@ namespace Features.Inventory.Domain
 
 
         public event Action OnChanged;
-        public event Action<ItemInstance> OnItemAdded;
+        public event Action<ItemInstance, int> OnItemAdded;
 
 
         public InventoryService(InventoryModel model)
@@ -59,6 +59,8 @@ namespace Features.Inventory.Domain
                     item.quantity += add;
                     remaining -= add;
 
+                    OnItemAdded?.Invoke(item, add);
+
 
                     if (remaining <= 0)
                     {
@@ -81,7 +83,7 @@ namespace Features.Inventory.Domain
                 );
 
 
-                OnItemAdded?.Invoke(slot.item);
+                OnItemAdded?.Invoke(slot.item, remaining);
                 OnChanged?.Invoke();
                 return true;
             }

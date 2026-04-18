@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe1562863d4b1de488f057dbb29431b1, type: 3}
   m_Name: EnemyCrystalCombat
   m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Data.EnemyCombatConfigSO
-  attackRange: 2
+  attackRange: 5
   attackDamage: 10
   attackCooldown: 1.2
-  attackEnterOffset: 0.5
+  attackEnterOffset: 0.1
   attackExitOffset: 1
   stopDistanceMultiplier: 0.7

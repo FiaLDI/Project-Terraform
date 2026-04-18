@@ -44,7 +44,7 @@ namespace Features.Equipment.UnityIntegration
         {
             base.OnStartClient();
 
-            if (IsOwner && initialized)
+            if (initialized)
                 EquipFromInventory();
         }
 
@@ -119,6 +119,7 @@ namespace Features.Equipment.UnityIntegration
             if (model == null)
                 return;
 
+            // ===== EQUIP HANDS =====
             EquipRightHand(model.rightHand.item);
 
             bool twoHanded =
@@ -128,7 +129,8 @@ namespace Features.Equipment.UnityIntegration
                 ClearLeftHand();
             else
                 EquipLeftHand(model.leftHand.item);
-            
+
+            // ===== MUZZLES =====
             usageNet?.SetMuzzles(
                 currentRightHandObject?.transform.Find("Muzzle"),
                 currentViewWeapon?.transform.Find("Muzzle")
@@ -157,8 +159,25 @@ namespace Features.Equipment.UnityIntegration
 
             usageNet?.SetMuzzles(worldMuzzle, viewMuzzle);
 
-            //if (IsOwner && !IsServerInitialized)
-            //    usageNet.SyncHands_Server();
+            var net = GetComponent<PlayerEquipmentNetwork>();
+
+            int pose = 0;
+
+            var def = model.rightHand.item?.itemDefinition;
+
+            if (def != null)
+            {
+                pose = def.GetWeaponPose();
+            }
+            
+            net?.SetWeaponPose(pose);
+
+            if (IsOwner)
+            {
+                // LOCAL
+                var anim = GetComponent<PlayerAnimationController>();
+                anim?.SetWeaponPose(pose);
+            }
         }
 
         // ======================================================
@@ -282,7 +301,6 @@ namespace Features.Equipment.UnityIntegration
 
             camReg.InitializeFPS();
 
-            // 🔥 показываем ТОЛЬКО если реально FPS
             bool isFPS = control != null && control.State.Blend < 0.5f;
 
             camReg.SetFPSVisible(isFPS);
