@@ -6,16 +6,16 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/BootstrapScene.unity
+    path: Assets/World/Scenes/BootstrapScene.unity
     guid: c33be8ee9a3f6c94392e36c407a95c2b
   - enabled: 1
-    path: Assets/Scenes/NetHubScene.unity
+    path: Assets/World/Scenes/NetHubScene.unity
     guid: 34c1f722337c41e4e92c97a9e2ecbb33
   - enabled: 0
     path: Assets/Scenes/MainMenu.unity
     guid: f4ca0a8d81e025944ac01c66a8c3a26a
   - enabled: 1
-    path: Assets/Scenes/ProceduralWorld.unity
+    path: Assets/World/Scenes/ProceduralWorld.unity
     guid: c6cc3e473f3e30c438ee7843f70720cc
   - enabled: 0
     path: Assets/Scenes/HubScene.unity

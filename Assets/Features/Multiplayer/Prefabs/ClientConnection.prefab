@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7718143006086609763}
   - component: {fileID: -8249141905818440923}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: ClientConnection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -94,7 +94,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 5
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 7313797325911893131
+  <AssetPathHash>k__BackingField: 1344373102500927024
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: -11.85676, y: 0, z: -0.19277}

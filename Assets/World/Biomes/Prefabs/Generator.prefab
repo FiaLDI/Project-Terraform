@@ -108,7 +108,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 18
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 14090675556484538564
+  <AssetPathHash>k__BackingField: 2253178460253432610
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 333.255, y: 299.6556, z: 48.91909}
@@ -159,8 +159,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b1749e82ca04c447b64f5c018b028f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BiomeEnemySpawner
-  player: {fileID: 0}
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 7688760262762765644}
+  _networkObjectCache: {fileID: 0}
   world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+  spawnInterval: 1.2
+  spawnRadiusMin: 20
+  spawnRadiusMax: 40
+  maxPerPlayer: 12
+  maxGlobal: 120
 --- !u!1 &1710447925271196028
 GameObject:
   m_ObjectHideFlags: 0
