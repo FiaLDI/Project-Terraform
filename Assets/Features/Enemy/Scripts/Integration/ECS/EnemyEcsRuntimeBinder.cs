@@ -11,6 +11,7 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 
     [SerializeField] private EnemyConfigSO config;
     [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] private LayerMask obstacleMask;
 
     private EntityManager GetEM()
     {
@@ -18,7 +19,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
         return world != null ? world.EntityManager : default;
     }
 
-    // =========================================================
     public override void OnStartServer()
     {
         base.OnStartServer();
@@ -56,7 +56,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             typeof(EnemyHasLineOfSight),
             typeof(EnemyRadius),
             typeof(EnemySteeringData),
-
             typeof(EnemyPatrolState),
             typeof(EnemyPatrolSettings),
             typeof(EnemyAggroState),
@@ -89,14 +88,15 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 
         em.AddComponentData(entity, new EnemyDespawnDistance
         {
-            Value = 80f // можно из config потом
+            Value = 80f
         });
 
         em.SetComponentData(entity, new EnemyPatrolState
         {
             CurrentIndex = 0,
             IsWaiting = false,
-            WaitTimer = 0f
+            WaitTimer = 0f,
+            CurrentWaitDuration = 0f
         });
 
         em.SetComponentData(entity, new EnemyPatrolSettings
@@ -118,7 +118,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
                 transform.rotation
             ));
 
-
         em.SetComponentData(entity, new EnemyTarget
         {
             Value = Entity.Null
@@ -129,7 +128,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             Value = true
         });
 
-        
         em.SetComponentData(entity, new EnemyRadius
         {
             Value = 0.6f
@@ -138,7 +136,6 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
         em.AddBuffer<EnemyAggroElement>(entity);
 
         var buffer = em.AddBuffer<EnemyPatrolPoint>(entity);
-
         foreach (var p in patrolPoints)
         {
             if (p == null) continue;
@@ -154,15 +151,23 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 
     private void ApplyConfig(EntityManager em)
     {
+        if (obstacleMask.value == 0)
+            obstacleMask = ~0;
+
         em.SetComponentData(entity, new EnemyAI
         {
-            MoveSpeed = 3f,
+            MoveSpeed = config.ai.moveSpeed,
             AggroRadius = config.ai.aggroRadius,
-            LoseAggroRadius = config.ai.aggroRadius * 1.5f,
+            LoseAggroRadius = config.ai.loseAggroRadius,
             AttackRange = config.combat.attackRange,
             AttackCooldown = config.combat.attackCooldown,
+            AttackEnterOffset = config.combat.attackEnterOffset,
+            AttackExitOffset = config.combat.attackExitOffset,
             StopDistanceMultiplier = config.combat.stopDistanceMultiplier,
-            VisionRange = config.ai.visionRange
+            VisionAngle = config.ai.visionAngle,
+            VisionRange = config.ai.visionRange,
+            RequireLOS = config.ai.requireLineOfSight,
+            ObstacleMask = obstacleMask.value
         });
 
         em.SetComponentData(entity, new EnemyState
@@ -175,15 +180,16 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
             Value = transform.position
         });
 
-
         em.SetComponentData(entity, new EnemyAttackState
         {
+            DoAttack = false,
+            IsAttacking = false,
             Cooldown = 0f,
-            DoAttack = false
+            Timer = 0f,
+            Type = EnemyAttackType.None
         });
     }
 
-    // =========================================================
     private void Update()
     {
         if (!IsServer) return;
@@ -194,13 +200,7 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
         if (entity == Entity.Null || !em.Exists(entity))
         {
             Init();
-            return;
         }
-
-        var t = em.GetComponentData<LocalTransform>(entity);
-
-        var pos = transform.position;
-
     }
 
     private void OnDestroy()

@@ -24,6 +24,7 @@ namespace Features.Player.UnityIntegration
 
         [Header("Death")]
         [SerializeField] private float respawnDelay = 4f;
+        [SerializeField] private float aiSpawnProtectionDuration = 2.5f;
 
         private readonly SyncVar<bool> isDead = new();
 
@@ -32,10 +33,12 @@ namespace Features.Player.UnityIntegration
         private Coroutine bindHealthRoutine;
         private Coroutine respawnRoutine;
         private bool hasSeenAliveHealth;
+        private float aiSpawnProtectionUntil;
 
         public PlayerController Controller => playerController;
         public bool IsDead => isDead.Value;
         public float RespawnDelay => respawnDelay;
+        public bool IsAiTargetable => !isDead.Value && (!IsServerStarted || Time.time >= aiSpawnProtectionUntil);
 
         public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
 
@@ -75,6 +78,8 @@ namespace Features.Player.UnityIntegration
         public override void OnStartServer()
         {
             base.OnStartServer();
+
+            aiSpawnProtectionUntil = Time.time + Mathf.Max(0f, aiSpawnProtectionDuration);
 
             var registry = PlayerRegistry.Instance;
             if (registry != null)

@@ -1065,7 +1065,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68466c01d28ee65439f15f239603cc97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraRayProvider
-  maxDistance: 3
+  maxDistance: 4
 --- !u!1 &4247568062323122573
 GameObject:
   m_ObjectHideFlags: 0

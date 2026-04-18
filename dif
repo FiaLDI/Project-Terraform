@@ -1,0 +1,1587 @@
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+
+[BurstCompile]
+[WithNone(typeof(EnemyInactive))]
+public partial struct EnemyAIJob : IJobEntity
+{
+    public float DeltaTime;
+
+    [ReadOnly]
+    public ComponentLookup<LocalTransform> TransformLookup;
+    [ReadOnly]
+    public ComponentLookup<PlayerTag> PlayerTagLookup;
+
+    void Execute(
+        ref EnemyState aiState,
+        ref EnemyPatrolState patrolState,
+        ref EnemyAggroState aggro,
+        ref EnemyLastKnownPosition lastKnown,
+        ref EnemyTargetPosition target,
+        ref EnemyAttackState attackState,
+
+        in EnemyAI ai,
+        in EnemyPatrolSettings settings,
+        in LocalTransform transform,
+        in EnemyTarget enemyTarget,
+        in EnemyHasLineOfSight lineOfSight,
+        in DynamicBuffer<EnemyPatrolPoint> patrolPoints
+    )
+    {
+        float3 pos = transform.Position;
+
+        float3 posXZ = pos;
+        posXZ.y = 0;
+
+        // ================= TARGET =================
+        bool hasTarget = false;
+        float3 playerPos = default;
+
+        if (enemyTarget.Value != Entity.Null &&
+            TransformLookup.HasComponent(enemyTarget.Value) &&
+            PlayerTagLookup.HasComponent(enemyTarget.Value))
+        {
+            hasTarget = true;
+            playerPos = TransformLookup[enemyTarget.Value].Position;
+        }
+
+        float3 playerXZ = playerPos;
+        playerXZ.y = 0;
+
+        float3 flatToPlayer = hasTarget ? (playerXZ - posXZ) : float3.zero;
+        float distToPlayer = hasTarget ? math.length(flatToPlayer) : 9999f;
+        bool hasValidLos = !ai.RequireLOS || lineOfSight.Value;
+        float attackEnterDistance = math.max(0f, ai.AttackRange - ai.AttackEnterOffset);
+        float attackExitDistance = ai.AttackRange + ai.AttackExitOffset;
+
+        // ================= COOLDOWN =================
+        if (attackState.Cooldown > 0f)
+            attackState.Cooldown -= DeltaTime;
+
+        // ================= PATROL =================
+        if (aiState.Value == EnemyAIState.Patrol)
+        {
+            if (patrolPoints.Length > 0)
+            {
+                int index = patrolState.CurrentIndex;
+
+                float3 patrolPoint = patrolPoints[index].Position;
+
+                float3 patrolXZ = patrolPoint;
+                patrolXZ.y = 0;
+
+                float dist = math.distance(posXZ, patrolXZ);
+
+                if (patrolState.IsWaiting)
+                {
+                    patrolState.WaitTimer += DeltaTime;
+
+                    if (patrolState.WaitTimer >= patrolState.CurrentWaitDuration)
+                    {
+                        patrolState.IsWaiting = false;
+                        patrolState.WaitTimer = 0f;
+
+                        patrolState.CurrentIndex =
+                            (index + 1) % patrolPoints.Length;
+                    }
+
+                    return;
+                }
+
+                target.Value = patrolPoint;
+
+                if (dist <= settings.ReachDistance)
+                {
+                    patrolState.IsWaiting = true;
+
+                    patrolState.CurrentWaitDuration =
+                        settings.RandomPatrol
+                            ? Unity.Mathematics.Random.CreateFromIndex((uint)(index + 1) * 1234)
+                                .NextFloat(settings.MinWaitTime, settings.MaxWaitTime)
+                            : settings.MinWaitTime;
+                }
+            }
+
+            if (hasTarget && hasValidLos && distToPlayer <= ai.VisionRange)
+            {
+                aggro.Timer += DeltaTime;
+
+                if (aggro.Timer > 0.3f)
+                    aiState.Value = EnemyAIState.Chase;
+            }
+            else
+            {
+                aggro.Timer = 0f;
+            }
+        }
+
+        // ================= CHASE =================
+        else if (aiState.Value == EnemyAIState.Chase)
+        {
+            if (!hasTarget)
+            {
+                aiState.Value = EnemyAIState.Return;
+                return;
+            }
+
+            lastKnown.Value = playerPos;
+
+            float3 dir = math.normalizesafe(flatToPlayer);
+
+            float stopDistance = ai.AttackRange * ai.StopDistanceMultiplier;
+
+            float3 desiredPos = playerPos - dir * stopDistance;
+
+            target.Value = desiredPos;
+
+            if (hasValidLos && distToPlayer <= attackEnterDistance)
+            {
+                aiState.Value = EnemyAIState.Attack;
+                attackState.Timer = 0f;
+            }
+            else if (distToPlayer > ai.LoseAggroRadius)
+            {
+                aiState.Value = EnemyAIState.Return;
+            }
+        }
+
+        // ================= ATTACK =================
+        else if (aiState.Value == EnemyAIState.Attack)
+        {
+            if (!hasTarget)
+            {
+                aiState.Value = EnemyAIState.Return;
+                return;
+            }
+
+            lastKnown.Value = playerPos;
+
+            float attackHoldDistance = ai.AttackRange * ai.StopDistanceMultiplier;
+
+            if (distToPlayer > attackHoldDistance + 0.15f)
+                target.Value = playerPos;
+            else
+                target.Value = pos;
+
+            if (!hasValidLos)
+            {
+                attackState.Timer += DeltaTime;
+            }
+            else
+            {
+                attackState.Timer = 0f;
+            }
+
+            if (attackState.Timer > 0.25f || distToPlayer > attackExitDistance)
+            {
+                aiState.Value = EnemyAIState.Chase;
+                target.Value = playerPos;
+                attackState.DoAttack = false;
+                attackState.Timer = 0f;
+                return;
+            }
+
+            if (distToPlayer <= ai.AttackRange && attackState.Cooldown <= 0f)
+            {
+                attackState.Cooldown = ai.AttackCooldown;
+                attackState.DoAttack = true;
+            }
+        }
+
+        // ================= RETURN =================
+        else if (aiState.Value == EnemyAIState.Return)
+        {
+            if (hasTarget)
+            {
+                lastKnown.Value = playerPos;
+                target.Value = playerPos;
+
+                if (hasValidLos && distToPlayer <= attackEnterDistance)
+                {
+                    aiState.Value = EnemyAIState.Attack;
+                    attackState.Timer = 0f;
+                    return;
+                }
+
+                if (distToPlayer <= ai.LoseAggroRadius)
+                {
+                    aiState.Value = EnemyAIState.Chase;
+                    return;
+                }
+            }
+
+            float3 returnPos = lastKnown.Value;
+
+            float3 returnXZ = returnPos;
+            returnXZ.y = 0;
+
+            float dist = math.distance(posXZ, returnXZ);
+
+            target.Value = returnPos;
+
+            if (dist < 1f)
+            {
+                aiState.Value = EnemyAIState.Patrol;
+                aggro.Timer = 0f;
+            }
+        }
+    }
+}
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(EnemyLOSSystemECS))]
+public partial struct EnemyAISystem : ISystem
+{
+    private ComponentLookup<LocalTransform> transformLookup;
+    private ComponentLookup<PlayerTag> playerTagLookup;
+
+    public void OnCreate(ref SystemState state)
+    {
+        transformLookup = state.GetComponentLookup<LocalTransform>(true);
+        playerTagLookup = state.GetComponentLookup<PlayerTag>(true);
+    }
+
+    public void OnUpdate(ref SystemState state)
+    {
+        float dt = SystemAPI.Time.DeltaTime;
+
+        transformLookup.Update(ref state);
+        playerTagLookup.Update(ref state);
+
+        new EnemyAIJob
+        {
+            DeltaTime = dt,
+            TransformLookup = transformLookup,
+            PlayerTagLookup = playerTagLookup
+        }.ScheduleParallel();
+    }
+}
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(EnemyLOSSystemECS))]
+public partial struct EnemyTargetingSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (transform, target, aggroBuffer, ai, los) in SystemAPI.Query<
+            RefRO<LocalTransform>,
+            RefRW<EnemyTarget>,
+            DynamicBuffer<EnemyAggroElement>,
+            RefRO<EnemyAI>,
+            RefRO<EnemyHasLineOfSight>>())
+        {
+            float3 pos = transform.ValueRO.Position;
+
+            float bestScore = float.MinValue;
+            Entity bestTarget = Entity.Null;
+
+            for (int i = 0; i < aggroBuffer.Length; i++)
+            {
+                var entry = aggroBuffer[i];
+                if (!SystemAPI.HasComponent<LocalTransform>(entry.Target) ||
+                    !SystemAPI.HasComponent<PlayerTag>(entry.Target))
+                    continue;
+
+                float3 targetPos = SystemAPI.GetComponent<LocalTransform>(entry.Target).Position;
+                float dist = math.distance(pos, targetPos);
+
+                if (dist > ai.ValueRO.LoseAggroRadius)
+                    continue;
+
+                float score = entry.Value - dist * 0.5f;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestTarget = entry.Target;
+                }
+            }
+
+            if (bestTarget == Entity.Null)
+            {
+                float nearestDist = float.MaxValue;
+
+                foreach (var (playerTransform, playerEntity) in SystemAPI
+                    .Query<RefRO<LocalTransform>>()
+                    .WithAll<PlayerTag>()
+                    .WithEntityAccess())
+                {
+                    float dist = math.distance(pos, playerTransform.ValueRO.Position);
+                    if (dist > ai.ValueRO.AggroRadius || dist >= nearestDist)
+                        continue;
+
+                    nearestDist = dist;
+                    bestTarget = playerEntity;
+                }
+            }
+
+            target.ValueRW.Value = bestTarget;
+        }
+    }
+}
+﻿using FishNet.Object;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine;
+
+public sealed class EnemyEcsMoveBridge : NetworkBehaviour
+{
+    [Header("Movement")]
+    public float moveSpeed = 3f;
+    public float rotationSpeed = 8f;
+
+    [Header("Jump")]
+    public float jumpForce = 6f;
+    public float highJumpForce = 8.5f;
+    public float jumpForwardBoost = 1.25f;
+    public float jumpCooldownTime = 0.75f;
+    public float jumpObstacleHeight = 0.9f;
+    public float highJumpObstacleHeight = 1.6f;
+    public float groundCheckDistance = 0.35f;
+
+    [Header("Detour")]
+    public float detourDistance = 2.5f;
+    public float detourProbeDistance = 2f;
+    public float detourAngle = 55f;
+
+    [Header("Steering")]
+    public float orbitStrength = 0.6f;
+    public float avoidDistance = 1.5f;
+    public float sideAvoidDistance = 1.2f;
+    public float separationRadius = 1.5f;
+
+    [Header("Layers")]
+    [SerializeField] private LayerMask obstacleMask;
+    [SerializeField] private LayerMask groundMask;
+
+    private Vector3 smoothDir;
+    private float jumpCooldown;
+
+    private Entity entity;
+    private EntityManager em;
+    private Rigidbody rb;
+    private bool initialized;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+
+        if (obstacleMask.value == 0)
+            obstacleMask = ~0;
+
+        if (groundMask.value == 0)
+            groundMask = ~0;
+
+        rb.constraints =
+            RigidbodyConstraints.FreezeRotationX |
+            RigidbodyConstraints.FreezeRotationZ;
+
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null)
+            em = world.EntityManager;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        if (!IsServer && rb != null)
+            rb.isKinematic = true; // ❗ клиент не симулирует физику
+    }
+
+    private void TryInit()
+    {
+        if (initialized) return;
+
+        var binder = GetComponent<EnemyEcsRuntimeBinder>();
+        if (binder == null || binder.Entity == Entity.Null) return;
+
+        if (!em.Exists(binder.Entity)) return;
+
+        entity = binder.Entity;
+        initialized = true;
+    }
+
+    private void FixedUpdate()
+    {
+        if (!IsServer) return;
+
+        if (jumpCooldown > 0f)
+            jumpCooldown -= Time.fixedDeltaTime;
+
+        TryInit();
+        if (!initialized) return;
+
+        if (!em.Exists(entity))
+        {
+            enabled = false;
+            return;
+        }
+
+        var targetData = em.GetComponentData<EnemyTargetPosition>(entity);
+        var ai = em.GetComponentData<EnemyAI>(entity);
+        var enemyState = em.GetComponentData<EnemyState>(entity);
+        var steering = em.GetComponentData<EnemySteeringData>(entity);
+
+        Vector3 pos = rb.position;
+        Vector3 target = targetData.Value;
+        Vector3 moveTarget = target;
+
+        Vector3 flatTarget = new Vector3(moveTarget.x, pos.y, moveTarget.z);
+        Vector3 toTarget = flatTarget - pos;
+
+        float dist = toTarget.magnitude;
+
+        if (dist < 0.1f)
+        {
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+            return;
+        }
+
+        Vector3 forward = toTarget.normalized;
+        float attackEnterDistance = Mathf.Max(0f, ai.AttackRange - ai.AttackEnterOffset);
+        bool isCombatState =
+            enemyState.Value == EnemyAIState.Chase ||
+            enemyState.Value == EnemyAIState.Attack;
+        bool forceCloseApproach = isCombatState && dist <= attackEnterDistance + 0.35f;
+
+        // ===== ORBIT =====
+        Vector3 orbit = Vector3.zero;
+        bool allowOrbit =
+            steering.enableOrbit &&
+            enemyState.Value == EnemyAIState.Attack &&
+            dist <= ai.AttackRange &&
+            !forceCloseApproach;
+
+        if (allowOrbit)
+        {
+            Vector3 right = new Vector3(-forward.z, 0, forward.x);
+            orbit = right * steering.orbitStrength;
+        }
+
+        // ===== AVOID =====
+        Vector3 avoid = Vector3.zero;
+        Vector3 origin = pos + Vector3.up * 0.5f;
+        bool forwardBlocked = false;
+
+        Vector3 left = Quaternion.Euler(0, -30, 0) * forward;
+        Vector3 rightDir = Quaternion.Euler(0, 30, 0) * forward;
+
+        if (Physics.Raycast(origin, forward, out var hitF, avoidDistance, obstacleMask))
+        {
+            avoid += hitF.normal;
+            forwardBlocked = true;
+        }
+
+        if (Physics.Raycast(origin, left, out var hitL, sideAvoidDistance, obstacleMask))
+            avoid += hitL.normal;
+
+        if (Physics.Raycast(origin, rightDir, out var hitR, sideAvoidDistance, obstacleMask))
+            avoid += hitR.normal;
+
+        // ===== SEPARATION =====
+        Vector3 separation = Vector3.zero;
+
+        var neighbors = Physics.OverlapSphere(pos, separationRadius);
+
+        foreach (var col in neighbors)
+        {
+            if (col.attachedRigidbody == rb) continue;
+            if (!col.CompareTag("Enemy")) continue;
+
+            Vector3 diff = pos - col.transform.position;
+            diff.y = 0;
+
+            float d = diff.magnitude;
+            if (d > 0.001f)
+                separation += diff.normalized / d;
+        }
+
+        if (!steering.enableAvoidance)
+            avoid = Vector3.zero;
+
+        if (!steering.enableSeparation)
+            separation = Vector3.zero;
+
+        if (forceCloseApproach)
+        {
+            orbit = Vector3.zero;
+            avoid *= 0.5f;
+            separation *= 0.25f;
+        }
+
+        // ===== FINAL DIR =====
+        Vector3 desiredDir =
+            forward * steering.seekWeight +
+            orbit * steering.orbitWeight +
+            avoid * steering.avoidWeight +
+            separation * steering.separationWeight;
+
+        desiredDir.y = 0;
+
+        if (desiredDir.sqrMagnitude > 0.001f)
+            desiredDir.Normalize();
+
+        smoothDir = Vector3.Lerp(
+            smoothDir,
+            desiredDir,
+            8f * Time.fixedDeltaTime
+        );
+
+        Vector3 finalDir = smoothDir.normalized;
+
+        bool canDoNormalJump =
+            forwardBlocked &&
+            jumpCooldown <= 0f &&
+            IsGrounded(pos) &&
+            HasJumpClearance(pos, finalDir);
+
+        bool canDoHighJump =
+            forwardBlocked &&
+            !canDoNormalJump &&
+            jumpCooldown <= 0f &&
+            IsGrounded(pos) &&
+            HasHighJumpClearance(pos, finalDir);
+
+        if (forwardBlocked && !canDoNormalJump && !canDoHighJump)
+        {
+            moveTarget = GetDetourTarget(pos, target, forward);
+            flatTarget = new Vector3(moveTarget.x, pos.y, moveTarget.z);
+            toTarget = flatTarget - pos;
+            dist = toTarget.magnitude;
+
+            if (dist >= 0.1f)
+            {
+                forward = toTarget.normalized;
+
+                Vector3 detourDesiredDir = forward +
+                                           orbit * steering.orbitWeight +
+                                           avoid * steering.avoidWeight +
+                                           separation * steering.separationWeight;
+
+                detourDesiredDir.y = 0f;
+
+                if (detourDesiredDir.sqrMagnitude > 0.001f)
+                    detourDesiredDir.Normalize();
+
+                smoothDir = Vector3.Lerp(
+                    smoothDir,
+                    detourDesiredDir,
+                    8f * Time.fixedDeltaTime
+                );
+
+                finalDir = smoothDir.normalized;
+            }
+        }
+
+        // ===== MOVE =====
+        float speed = ai.MoveSpeed > 0f ? ai.MoveSpeed : moveSpeed;
+
+        if (dist < 1.5f)
+            speed *= dist / 1.5f;
+
+        Vector3 vel = finalDir * speed;
+
+        if (canDoNormalJump || canDoHighJump)
+        {
+            jumpCooldown = jumpCooldownTime;
+            vel += finalDir * jumpForwardBoost;
+        }
+
+        rb.linearVelocity = new Vector3(
+            vel.x,
+            canDoHighJump
+                ? Mathf.Max(rb.linearVelocity.y, highJumpForce)
+                : canDoNormalJump
+                    ? Mathf.Max(rb.linearVelocity.y, jumpForce)
+                    : rb.linearVelocity.y,
+            vel.z
+        );
+
+        // ===== ROTATION =====
+        if (finalDir.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(finalDir);
+
+            rb.MoveRotation(Quaternion.Slerp(
+                rb.rotation,
+                targetRot,
+                rotationSpeed * Time.fixedDeltaTime
+            ));
+        }
+
+        // ===== ECS SYNC =====
+        var t = em.GetComponentData<LocalTransform>(entity);
+        t.Position = rb.position;
+        t.Rotation = rb.rotation;
+        em.SetComponentData(entity, t);
+    }
+
+    private bool IsGrounded(Vector3 pos)
+    {
+        Vector3 origin = pos + Vector3.up * 0.1f;
+        return Physics.Raycast(
+            origin,
+            Vector3.down,
+            groundCheckDistance,
+            groundMask,
+            QueryTriggerInteraction.Ignore
+        );
+    }
+
+    private bool HasJumpClearance(Vector3 pos, Vector3 direction)
+    {
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+
+        Vector3 lowOrigin = pos + Vector3.up * 0.2f;
+        Vector3 highOrigin = pos + Vector3.up * jumpObstacleHeight;
+
+        bool lowBlocked = Physics.Raycast(
+            lowOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (!lowBlocked)
+            return false;
+
+        bool highBlocked = Physics.Raycast(
+            highOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        return !highBlocked;
+    }
+
+    private bool HasHighJumpClearance(Vector3 pos, Vector3 direction)
+    {
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+
+        Vector3 lowOrigin = pos + Vector3.up * (jumpObstacleHeight * 0.5f);
+        Vector3 highOrigin = pos + Vector3.up * highJumpObstacleHeight;
+
+        bool lowBlocked = Physics.Raycast(
+            lowOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (!lowBlocked)
+            return false;
+
+        bool highBlocked = Physics.Raycast(
+            highOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        return !highBlocked;
+    }
+
+    private Vector3 GetDetourTarget(Vector3 pos, Vector3 originalTarget, Vector3 forward)
+    {
+        if (forward.sqrMagnitude < 0.001f)
+            return originalTarget;
+
+        Vector3 leftDir = Quaternion.Euler(0f, -detourAngle, 0f) * forward;
+        Vector3 rightDir = Quaternion.Euler(0f, detourAngle, 0f) * forward;
+
+        bool leftBlocked = Physics.Raycast(
+            pos + Vector3.up * 0.5f,
+            leftDir,
+            detourProbeDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        bool rightBlocked = Physics.Raycast(
+            pos + Vector3.up * 0.5f,
+            rightDir,
+            detourProbeDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        Vector3 detourDir;
+        if (leftBlocked && !rightBlocked)
+            detourDir = rightDir;
+        else if (rightBlocked && !leftBlocked)
+            detourDir = leftDir;
+        else
+            detourDir = leftDir;
+
+        detourDir.y = 0f;
+        detourDir.Normalize();
+
+        return pos + detourDir * detourDistance;
+    }
+}
+using UnityEngine;
+using Unity.Entities;
+using Unity.Transforms;
+using FishNet.Object;
+using Features.Enemy.Data;
+
+public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
+{
+    private Entity entity;
+    public Entity Entity => entity;
+
+    [SerializeField] private EnemyConfigSO config;
+    [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] private LayerMask obstacleMask;
+
+    private EntityManager GetEM()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        return world != null ? world.EntityManager : default;
+    }
+
+    // =========================================================
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        Init();
+    }
+
+    public void SetConfig(EnemyConfigSO cfg)
+    {
+        config = cfg;
+    }
+
+    public void ForceInit()
+    {
+        if (!IsServer) return;
+        Init();
+    }
+
+    private void Init()
+    {
+        var em = GetEM();
+        if (em == default || config == null)
+            return;
+
+        if (entity != Entity.Null && em.Exists(entity))
+            return;
+
+        entity = em.CreateEntity(
+            typeof(LocalTransform),
+            typeof(EnemyTag),
+            typeof(EnemyAI),
+            typeof(EnemyState),
+            typeof(EnemyTargetPosition),
+            typeof(EnemyAttackState),
+            typeof(EnemyTarget),
+            typeof(EnemyHasLineOfSight),
+            typeof(EnemyRadius),
+            typeof(EnemySteeringData),
+
+            typeof(EnemyPatrolState),
+            typeof(EnemyPatrolSettings),
+            typeof(EnemyAggroState),
+            typeof(EnemyLastKnownPosition)
+        );
+
+        em.SetComponentData(entity, new EnemyLastKnownPosition
+        {
+            Value = transform.position
+        });
+
+        em.AddComponentData(entity, new EnemySteeringData
+        {
+            seekWeight = config.ai.seekWeight,
+            avoidWeight = config.ai.avoidWeight,
+            separationWeight = config.ai.separationWeight,
+            orbitWeight = config.ai.orbitWeight,
+
+            avoidDistance = config.ai.avoidDistance,
+            sideAvoidDistance = config.ai.sideAvoidDistance,
+            separationRadius = config.ai.separationRadius,
+
+            rotationSpeed = config.ai.rotationSpeed,
+            orbitStrength = config.ai.orbitStrength,
+
+            enableSeparation = config.ai.enableSeparation,
+            enableAvoidance = config.ai.enableAvoidance,
+            enableOrbit = config.ai.enableOrbit
+        });
+
+        em.AddComponentData(entity, new EnemyDespawnDistance
+        {
+            Value = 80f // можно из config потом
+        });
+
+        em.SetComponentData(entity, new EnemyPatrolState
+        {
+            CurrentIndex = 0,
+            IsWaiting = false,
+            WaitTimer = 0f
+        });
+
+        em.SetComponentData(entity, new EnemyPatrolSettings
+        {
+            ReachDistance = 0.5f,
+            MinWaitTime = 1f,
+            MaxWaitTime = 2f,
+            RandomPatrol = true
+        });
+
+        em.SetComponentData(entity, new EnemyAggroState
+        {
+            Timer = 0f
+        });
+
+        em.SetComponentData(entity,
+            LocalTransform.FromPositionRotation(
+                transform.position,
+                transform.rotation
+            ));
+
+
+        em.SetComponentData(entity, new EnemyTarget
+        {
+            Value = Entity.Null
+        });
+
+        em.SetComponentData(entity, new EnemyHasLineOfSight
+        {
+            Value = true
+        });
+
+        
+        em.SetComponentData(entity, new EnemyRadius
+        {
+            Value = 0.6f
+        });
+
+        em.AddBuffer<EnemyAggroElement>(entity);
+
+        var buffer = em.AddBuffer<EnemyPatrolPoint>(entity);
+
+        foreach (var p in patrolPoints)
+        {
+            if (p == null) continue;
+
+            buffer.Add(new EnemyPatrolPoint
+            {
+                Position = p.position
+            });
+        }
+
+        ApplyConfig(em);
+    }
+
+    private void ApplyConfig(EntityManager em)
+    {
+        if (obstacleMask.value == 0)
+            obstacleMask = ~0;
+
+        em.SetComponentData(entity, new EnemyAI
+        {
+            MoveSpeed = config.ai.moveSpeed,
+            AggroRadius = config.ai.aggroRadius,
+            LoseAggroRadius = config.ai.loseAggroRadius,
+            AttackRange = config.combat.attackRange,
+            AttackCooldown = config.combat.attackCooldown,
+            AttackEnterOffset = config.combat.attackEnterOffset,
+            AttackExitOffset = config.combat.attackExitOffset,
+            StopDistanceMultiplier = config.combat.stopDistanceMultiplier,
+            VisionAngle = config.ai.visionAngle,
+            VisionRange = config.ai.visionRange,
+            RequireLOS = config.ai.requireLineOfSight,
+            ObstacleMask = obstacleMask.value
+        });
+
+        em.SetComponentData(entity, new EnemyState
+        {
+            Value = EnemyAIState.Patrol
+        });
+
+        em.SetComponentData(entity, new EnemyTargetPosition
+        {
+            Value = transform.position
+        });
+
+
+        em.SetComponentData(entity, new EnemyAttackState
+        {
+            Cooldown = 0f,
+            DoAttack = false
+        });
+    }
+
+    // =========================================================
+    private void Update()
+    {
+        if (!IsServer) return;
+
+        var em = GetEM();
+        if (em == default) return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+        {
+            Init();
+            return;
+        }
+
+        var t = em.GetComponentData<LocalTransform>(entity);
+
+        var pos = transform.position;
+
+    }
+
+    private void OnDestroy()
+    {
+        if (!IsServer) return;
+
+        var em = GetEM();
+        if (em == default) return;
+
+        if (em.Exists(entity))
+            em.DestroyEntity(entity);
+    }
+}
+using UnityEngine;
+using System.Collections;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
+using Unity.Entities;
+using Unity.Transforms;
+using Unity.Mathematics;
+
+public sealed class EnemyAttackHandler : MonoBehaviour
+{
+    [Header("Attack Timing")]
+    [SerializeField] private float attackDelay = 0.3f;
+
+    [Header("Effect")]
+    [SerializeField] private EffectDefinition effect;
+
+    private bool isAttacking;
+
+    private EntityManager em;
+    private EnemyEcsRuntimeBinder binder;
+
+    private void Awake()
+    {
+        binder = GetComponent<EnemyEcsRuntimeBinder>();
+
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null)
+            em = world.EntityManager;
+    }
+
+    public void TriggerAttack()
+    {
+        if (!isAttacking)
+            StartCoroutine(AttackRoutine());
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        isAttacking = true;
+
+        yield return new WaitForSeconds(attackDelay);
+
+        DealDamage();
+
+        yield return new WaitForSeconds(0.2f);
+
+        isAttacking = false;
+    }
+
+    private void DealDamage()
+    {
+        if (binder == null || binder.Entity == Entity.Null)
+            return;
+
+        if (!em.Exists(binder.Entity))
+            return;
+
+        if (!em.HasComponent<EnemyTarget>(binder.Entity))
+            return;
+
+        if (!em.HasComponent<EnemyAI>(binder.Entity) ||
+            !em.HasComponent<EnemyHasLineOfSight>(binder.Entity))
+            return;
+
+        var enemyTarget = em.GetComponentData<EnemyTarget>(binder.Entity);
+        var enemyAI = em.GetComponentData<EnemyAI>(binder.Entity);
+        var enemyLos = em.GetComponentData<EnemyHasLineOfSight>(binder.Entity);
+
+        if (enemyTarget.Value == Entity.Null)
+            return;
+
+        if (!em.HasComponent<LocalTransform>(enemyTarget.Value))
+            return;
+
+        float3 targetPos3 =
+            em.GetComponentData<LocalTransform>(enemyTarget.Value).Position;
+
+        Vector3 targetPos = targetPos3;
+
+        if (enemyAI.RequireLOS && !enemyLos.Value)
+            return;
+
+        Vector3 flatOffset = targetPos - transform.position;
+        flatOffset.y = 0f;
+
+        if (flatOffset.sqrMagnitude > enemyAI.AttackRange * enemyAI.AttackRange)
+            return;
+
+        Vector3 dir = targetPos - transform.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.001f)
+            return;
+
+        dir.Normalize();
+
+        Vector3 origin = transform.position + dir * 1.2f;
+
+        IBuffSource source = GetComponentInParent<IBuffSource>(); // 👈 проще
+
+        var ctx = new EffectContext(
+            source,
+            null,
+            origin,
+            dir
+        );
+
+        var targets = TargetResolver.Resolve(effect, ctx);
+
+        if (targets.Length == 0)
+            return;
+
+        var newCtx = new EffectContext(
+            ctx.Source,
+            targets,
+            ctx.Origin,
+            ctx.Direction
+        );
+
+        var effectInstance = EffectFactory.Create(effect);
+        effectInstance?.Apply(newCtx);
+    }
+}
+using System.Collections;
+using FishNet;
+using FishNet.Connection;
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using Features.Abilities.Application;
+using Features.Interaction.UnityIntegration;
+using Features.Stats.Domain;
+using Features.Stats.UnityIntegration;
+using UnityEngine;
+
+namespace Features.Player.UnityIntegration
+{
+    [RequireComponent(typeof(PlayerController))]
+    public sealed class NetworkPlayer : NetworkBehaviour
+    {
+        [Header("Refs")]
+        [SerializeField] private PlayerController playerController;
+        [SerializeField] private PlayerVisualController visual;
+        [SerializeField] private PlayerNetworkController networkController;
+        [SerializeField] private DeterministicMovement movement;
+        [SerializeField] private UnifiedStatsUpdateSystem unifiedStatsUpdateSystem;
+        [SerializeField] private PlayerCameraController playerCameraController;
+
+        [Header("Death")]
+        [SerializeField] private float respawnDelay = 4f;
+        [SerializeField] private float aiSpawnProtectionDuration = 2.5f;
+
+        private readonly SyncVar<bool> isDead = new();
+
+        private IStatsOwner statsOwner;
+        private IHealthStats health;
+        private Coroutine bindHealthRoutine;
+        private Coroutine respawnRoutine;
+        private bool hasSeenAliveHealth;
+        private float aiSpawnProtectionUntil;
+
+        public PlayerController Controller => playerController;
+        public bool IsDead => isDead.Value;
+        public float RespawnDelay => respawnDelay;
+        public bool IsAiTargetable => !isDead.Value && (!IsServerStarted || Time.time >= aiSpawnProtectionUntil);
+
+        public static event System.Action<NetworkPlayer> OnLocalPlayerSpawned;
+
+        private void Awake()
+        {
+            if (playerController == null)
+                playerController = GetComponent<PlayerController>();
+
+            if (visual == null)
+                visual = GetComponent<PlayerVisualController>();
+
+            if (networkController == null)
+                networkController = GetComponent<PlayerNetworkController>();
+
+            if (movement == null)
+                movement = GetComponent<DeterministicMovement>();
+
+            if (unifiedStatsUpdateSystem == null)
+                unifiedStatsUpdateSystem = GetComponent<UnifiedStatsUpdateSystem>();
+
+            if (playerCameraController == null)
+                playerCameraController = GetComponent<PlayerCameraController>();
+        }
+
+        public override void OnStartNetwork()
+        {
+            base.OnStartNetwork();
+            isDead.OnChange += OnDeadChanged;
+        }
+
+        public override void OnStopNetwork()
+        {
+            isDead.OnChange -= OnDeadChanged;
+            base.OnStopNetwork();
+        }
+
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+
+            aiSpawnProtectionUntil = Time.time + Mathf.Max(0f, aiSpawnProtectionDuration);
+
+            var registry = PlayerRegistry.Instance;
+            if (registry != null)
+                registry.RegisterPlayer(gameObject);
+
+            if (bindHealthRoutine != null)
+                StopCoroutine(bindHealthRoutine);
+
+            bindHealthRoutine = StartCoroutine(BindHealthRoutine());
+        }
+
+        public override void OnStopServer()
+        {
+            if (bindHealthRoutine != null)
+            {
+                StopCoroutine(bindHealthRoutine);
+                bindHealthRoutine = null;
+            }
+
+            if (respawnRoutine != null)
+            {
+                StopCoroutine(respawnRoutine);
+                respawnRoutine = null;
+            }
+
+            UnbindHealth();
+
+            var registry = PlayerRegistry.Instance;
+            if (registry != null)
+                registry.UnregisterPlayer(gameObject);
+
+            base.OnStopServer();
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            visual?.SetLocal(IsOwner);
+
+            Debug.Log(
+                $"[fix-net] OnStartClient -> name={name}, " +
+                $"IsOwner={IsOwner}, " +
+                $"OwnerId={Owner?.ClientId}, ",
+                this
+            );
+
+            var registry = PlayerRegistry.Instance;
+            if (registry == null)
+            {
+                Debug.LogError("[fix-net] PlayerRegistry missing!", this);
+                return;
+            }
+
+            registry.RegisterPlayer(gameObject);
+
+            if (!IsOwner)
+            {
+                Debug.Log("[fix-net] Not owner, disabling local components", this);
+                DisableLocalComponents();
+            }
+            else
+            {
+                Debug.Log("[fix-net] IsOwner TRUE in OnStartClient", this);
+                SetupAsLocal();
+            }
+
+            ApplyDeadState(isDead.Value);
+        }
+
+        public override void OnOwnershipClient(NetworkConnection prevOwner)
+        {
+            base.OnOwnershipClient(prevOwner);
+
+            visual?.SetLocal(IsOwner);
+
+            int localId = InstanceFinder.ClientManager.Connection.ClientId;
+
+            Debug.Log(
+                $"[fix-net] OnOwnershipClient -> name={name}, " +
+                $"IsOwner={IsOwner}, " +
+                $"OwnerId={Owner?.ClientId}, " +
+                $"LocalId={localId}",
+                this
+            );
+
+            if (IsOwner)
+            {
+                Debug.Log("[fix-net] Ownership became LOCAL", this);
+                SetupAsLocal();
+            }
+            else
+            {
+                Debug.Log("[fix-net] Ownership removed", this);
+                DisableLocalComponents();
+            }
+
+            ApplyDeadState(isDead.Value);
+        }
+
+        private void SetupAsLocal()
+        {
+            var registry = PlayerRegistry.Instance;
+            if (registry == null)
+                return;
+
+            if (!isDead.Value)
+                EnableLocalComponents();
+
+            registry.SetLocalPlayer(gameObject);
+            OnLocalPlayerSpawned?.Invoke(this);
+
+            Debug.Log($"[NetworkPlayer] Set as LOCAL player: {name}", this);
+        }
+
+        public override void OnStopClient()
+        {
+            base.OnStopClient();
+
+            var registry = PlayerRegistry.Instance;
+            if (registry != null)
+                registry.UnregisterPlayer(gameObject);
+
+            Debug.Log($"[NetworkPlayer] Stopped client for {name}", this);
+        }
+
+        public void SetLocalGameplayEnabled(bool enabled)
+        {
+            if (!IsOwner)
+                return;
+
+            if (playerCameraController != null)
+                playerCameraController.SetLookEnabled(enabled);
+
+            if (enabled)
+                EnableLocalComponents();
+            else
+                DisableLocalComponents();
+        }
+
+        private IEnumerator BindHealthRoutine()
+        {
+            while (IsServerStarted)
+            {
+                if (TryBindHealth())
+                {
+                    bindHealthRoutine = null;
+                    yield break;
+                }
+
+                yield return null;
+            }
+
+            bindHealthRoutine = null;
+        }
+
+        private bool TryBindHealth()
+        {
+            if (health != null)
+                return true;
+
+            statsOwner = GetComponent<IStatsOwner>();
+            if (statsOwner == null || !statsOwner.IsReady)
+                return false;
+
+            health = statsOwner.Facade?.Health;
+            if (health == null)
+                return false;
+
+            health.OnHealthChanged += HandleHealthChanged;
+            hasSeenAliveHealth = health.MaxHp > 0f && health.CurrentHp > 0f;
+            return true;
+        }
+
+        private void UnbindHealth()
+        {
+            if (health != null)
+                health.OnHealthChanged -= HandleHealthChanged;
+
+            health = null;
+            statsOwner = null;
+        }
+
+        private void HandleHealthChanged(float current, float max)
+        {
+            if (!IsServerInitialized || isDead.Value)
+                return;
+
+            if (max > 0f && current > 0f)
+            {
+                hasSeenAliveHealth = true;
+                return;
+            }
+
+            if (!hasSeenAliveHealth || max <= 0f)
+                return;
+
+            if (current <= 0f)
+                DieServer();
+        }
+
+        [Server]
+        private void DieServer()
+        {
+            if (isDead.Value)
+                return;
+
+            isDead.Value = true;
+            ApplyDeadState(true);
+
+            if (respawnRoutine != null)
+                StopCoroutine(respawnRoutine);
+
+            respawnRoutine = StartCoroutine(RespawnAfterDelay());
+        }
+
+        private IEnumerator RespawnAfterDelay()
+        {
+            float remaining = Mathf.Max(0f, respawnDelay);
+
+            while (remaining > 0f)
+            {
+                if (!IsServerStarted)
+                    yield break;
+
+                remaining -= Time.deltaTime;
+                yield return null;
+            }
+
+            respawnRoutine = null;
+            RespawnServer();
+        }
+
+        [Server]
+        private void RespawnServer()
+        {
+            var root = ServerCompositionRoot.I;
+            if (root == null || root.Sessions == null || root.Spawner == null)
+                return;
+
+            if (Owner == null)
+                return;
+
+            var session = root.Sessions.GetSessionByClient(Owner.ClientId);
+            if (session == null || !session.IsOnline)
+                return;
+
+            root.Spawner.RespawnSession(session);
+        }
+
+        private void OnDeadChanged(bool prev, bool next, bool asServer)
+        {
+            ApplyDeadState(next);
+        }
+
+        private void ApplyDeadState(bool dead)
+        {
+            if (movement != null)
+                movement.IsFrozen = dead;
+
+            if (networkController != null)
+                networkController.enabled = !dead;
+
+            if (unifiedStatsUpdateSystem != null && IsServerStarted)
+                unifiedStatsUpdateSystem.enabled = !dead;
+
+            if (visual != null && IsClientInitialized)
+            {
+                if (dead)
+                    visual.PlayDeathBurst(movement != null ? movement.Velocity : Vector3.zero);
+                else
+                    visual.ResetDeathVisualState();
+            }
+
+            if (IsClientInitialized && IsOwner)
+                SetLocalGameplayEnabled(!dead);
+        }
+
+        private void DisableLocalComponents()
+        {
+            if (playerController != null)
+                playerController.enabled = false;
+
+            var nearby = GetComponent<NearbyInteractables>();
+            if (nearby != null)
+                nearby.enabled = false;
+
+            var abilities = GetComponent<AbilityCaster>();
+            if (abilities != null)
+                abilities.enabled = false;
+
+            var controller = GetComponent<CharacterController>();
+            if (controller != null && !IsServer)
+                controller.enabled = false;
+        }
+
+        private void EnableLocalComponents()
+        {
+            if (playerController != null)
+                playerController.enabled = true;
+
+            var nearby = GetComponent<NearbyInteractables>();
+            if (nearby != null)
+                nearby.Initialize(true);
+
+            var abilities = GetComponent<AbilityCaster>();
+            if (abilities != null)
+                abilities.enabled = true;
+
+            var controller = GetComponent<CharacterController>();
+            if (controller != null)
+                controller.enabled = true;
+        }
+    }
+}
+using FishNet.Object;
+using Unity.Entities;
+using Unity.Transforms;
+using UnityEngine;
+using Features.Player.UnityIntegration;
+
+public sealed class PlayerEcsBinder : NetworkBehaviour
+{
+    private Entity entity;
+    private NetworkPlayer networkPlayer;
+
+    public Entity Entity => entity;
+
+    private void Awake()
+    {
+        networkPlayer = GetComponent<NetworkPlayer>();
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        StartCoroutine(InitNextFrame());
+    }
+
+    private System.Collections.IEnumerator InitNextFrame()
+    {
+        yield return null;
+        CreateEntity();
+    }
+
+    private EntityManager GetEM()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        return world != null ? world.EntityManager : default;
+    }
+
+    private void CreateEntity()
+    {
+        var em = GetEM();
+        if (em == default)
+            return;
+
+        entity = em.CreateEntity(
+            typeof(LocalTransform),
+            typeof(PlayerTag)
+        );
+
+        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
+    }
+
+    private void Update()
+    {
+        if (!IsServer)
+            return;
+
+        var em = GetEM();
+        if (em == default)
+            return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+        {
+            CreateEntity();
+            return;
+        }
+
+        bool shouldBeTargetable = networkPlayer == null || networkPlayer.IsAiTargetable;
+        bool hasPlayerTag = em.HasComponent<PlayerTag>(entity);
+
+        if (shouldBeTargetable && !hasPlayerTag)
+            em.AddComponent<PlayerTag>(entity);
+        else if (!shouldBeTargetable && hasPlayerTag)
+            em.RemoveComponent<PlayerTag>(entity);
+
+        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
+    }
+
+    private void OnDestroy()
+    {
+        if (!IsServer)
+            return;
+
+        var em = GetEM();
+        if (em == default)
+            return;
+
+        if (em.Exists(entity))
+            em.DestroyEntity(entity);
+    }
+}

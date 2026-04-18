@@ -59,7 +59,13 @@ public sealed class EnemyAttackHandler : MonoBehaviour
         if (!em.HasComponent<EnemyTarget>(binder.Entity))
             return;
 
+        if (!em.HasComponent<EnemyAI>(binder.Entity) ||
+            !em.HasComponent<EnemyHasLineOfSight>(binder.Entity))
+            return;
+
         var enemyTarget = em.GetComponentData<EnemyTarget>(binder.Entity);
+        var enemyAI = em.GetComponentData<EnemyAI>(binder.Entity);
+        var enemyLos = em.GetComponentData<EnemyHasLineOfSight>(binder.Entity);
 
         if (enemyTarget.Value == Entity.Null)
             return;
@@ -71,6 +77,15 @@ public sealed class EnemyAttackHandler : MonoBehaviour
             em.GetComponentData<LocalTransform>(enemyTarget.Value).Position;
 
         Vector3 targetPos = targetPos3;
+
+        if (enemyAI.RequireLOS && !enemyLos.Value)
+            return;
+
+        Vector3 flatOffset = targetPos - transform.position;
+        flatOffset.y = 0f;
+
+        if (flatOffset.sqrMagnitude > enemyAI.AttackRange * enemyAI.AttackRange)
+            return;
 
         Vector3 dir = targetPos - transform.position;
         dir.y = 0f;

@@ -1,14 +1,21 @@
-using UnityEngine;
+using FishNet.Object;
 using Unity.Entities;
 using Unity.Transforms;
-using FishNet.Object;
+using UnityEngine;
+using Features.Player.UnityIntegration;
 
 public sealed class PlayerEcsBinder : NetworkBehaviour
 {
     private Entity entity;
+    private NetworkPlayer networkPlayer;
+
     public Entity Entity => entity;
 
-    // =========================================================
+    private void Awake()
+    {
+        networkPlayer = GetComponent<NetworkPlayer>();
+    }
+
     public override void OnStartServer()
     {
         base.OnStartServer();
@@ -17,12 +24,10 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
 
     private System.Collections.IEnumerator InitNextFrame()
     {
-        yield return null; // ждём ECS
-
+        yield return null;
         CreateEntity();
     }
 
-    // =========================================================
     private EntityManager GetEM()
     {
         var world = World.DefaultGameObjectInjectionWorld;
@@ -32,42 +37,51 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
     private void CreateEntity()
     {
         var em = GetEM();
-        if (em == default) return;
+        if (em == default)
+            return;
 
         entity = em.CreateEntity(
             typeof(LocalTransform),
             typeof(PlayerTag)
         );
 
-        em.SetComponentData(entity,
-            LocalTransform.FromPosition(transform.position));
+        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
     }
 
     private void Update()
     {
-        if (!IsServer) return;
+        if (!IsServer)
+            return;
 
         var em = GetEM();
-        if (em == default) return;
+        if (em == default)
+            return;
 
-        // 🔥 пересоздание после смены сцены
         if (entity == Entity.Null || !em.Exists(entity))
         {
             CreateEntity();
             return;
         }
 
-        // 🔥 sync GameObject → ECS
-        em.SetComponentData(entity,
-            LocalTransform.FromPosition(transform.position));
+        bool shouldBeTargetable = networkPlayer == null || networkPlayer.IsAiTargetable;
+        bool hasPlayerTag = em.HasComponent<PlayerTag>(entity);
+
+        if (shouldBeTargetable && !hasPlayerTag)
+            em.AddComponent<PlayerTag>(entity);
+        else if (!shouldBeTargetable && hasPlayerTag)
+            em.RemoveComponent<PlayerTag>(entity);
+
+        em.SetComponentData(entity, LocalTransform.FromPosition(transform.position));
     }
 
     private void OnDestroy()
     {
-        if (!IsServer) return;
+        if (!IsServer)
+            return;
 
         var em = GetEM();
-        if (em == default) return;
+        if (em == default)
+            return;
 
         if (em.Exists(entity))
             em.DestroyEntity(entity);

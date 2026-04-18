@@ -555,6 +555,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerVisualController
   visualLibrary: {fileID: 11400000, guid: 92992d9b3b0baee4aac268ab4ac09620, type: 2}
   modelRoot: {fileID: 5017748270277261448}
+  deathBurstLifetime: 3
+  deathBurstForce: 4.5
+  deathBurstUpwardForce: 1.5
+  deathBurstInheritedVelocityFactor: 0.35
+  deathBurstRandomTorque: 12
+  deathBurstDrag: 0.15
+  deathBurstAngularDrag: 0.05
 --- !u!114 &5530530445021933545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -597,7 +604,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85040d66c8788a049875915e09b793cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NearbyInteractables
-  maxDistance: 3
+  maxDistance: 6
   maxAngle: 45
   cleanupInterval: 60
 --- !u!114 &4130661444078387841
@@ -629,6 +636,11 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 6311823513652316802}
   playerController: {fileID: 7022724963732028029}
   visual: {fileID: 0}
+  networkController: {fileID: 0}
+  movement: {fileID: 0}
+  unifiedStatsUpdateSystem: {fileID: 0}
+  playerCameraController: {fileID: 0}
+  respawnDelay: 4
 --- !u!114 &6311823513652316802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -782,6 +794,15 @@ MonoBehaviour:
   tpsMinDistance: 0.35
   crouchCameraDrop: 0.4
   crouchCameraSmooth: 12
+  normalFov: 70
+  fpsAimFov: 52
+  tpsAimFov: 58
+  aimSmooth: 14
+  tpsAimDistance: 1.35
+  tpsAimShoulderOffset: {x: 0.3, y: 0.1, z: 0.15}
+  tpsAimPivotHeight: 0.18
+  tpsAimForwardOffset: 0.35
+  fpsAimOffset: {x: 0, y: -0.03, z: 0.05}
 --- !u!114 &5907872678837714149
 MonoBehaviour:
   m_ObjectHideFlags: 0

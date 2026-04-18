@@ -412,6 +412,9 @@ MonoBehaviour:
   - {fileID: 2193609484933478631}
   - {fileID: 2324523982947549952}
   - {fileID: 6347864798002571670}
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!114 &2477525584403044842
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -429,6 +432,16 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 5928809208972985904}
   moveSpeed: 3
   rotationSpeed: 8
+  jumpForce: 6
+  highJumpForce: 8.5
+  jumpForwardBoost: 1.25
+  jumpCooldownTime: 0.75
+  jumpObstacleHeight: 0.9
+  highJumpObstacleHeight: 1.6
+  groundCheckDistance: 0.35
+  detourDistance: 2.5
+  detourProbeDistance: 2
+  detourAngle: 55
   orbitStrength: 0.6
   avoidDistance: 1.5
   sideAvoidDistance: 1.2
@@ -608,6 +621,7 @@ MonoBehaviour:
     coneAngle: 0
     coneDistance: 0
     selectClosest: 1
+    impactFxId: 
     prefabId: 
     lifetime: 0
     useSourcePosition: 0
