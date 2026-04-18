@@ -1,3 +1,7 @@
+
+Download latest build:
+https://github.com/FiaLDI/Project-Terraform/releases
+
 # Project: Terraform
 
 Co-op sci-fi survival/exploration game built with Unity.
@@ -6,8 +10,6 @@ Co-op sci-fi survival/exploration game built with Unity.
 
 Project: Terraform is a cooperative sci-fi action game where players control autonomous robots exploring procedural zones, gathering resources, and building infrastructure to prepare a hostile planet for colonization.
 
-## Download latest build:
-https://github.com/FiaLDI/Project-Terraform/releases
 
 ## Features
 1–4 player co-op gameplay
@@ -24,6 +26,8 @@ Domain / Application / Infrastructure
 Gradual migration from legacy systems
 Partial use of Unity ECS (Jobs + Burst)
 ## Project Structure
+
+```
 Assets/
   CoreGameplay/   # Core gameplay logic and shared systems
   Features/       # Feature modules (AI, quests, multiplayer, etc.)
@@ -36,6 +40,8 @@ Assets/
 
 ProjectSettings/  # Unity project settings
 Packages/         # Dependencies
+```
+
 ## Tech Stack
 Unity (2022+ / 2023 LTS)
 C#
