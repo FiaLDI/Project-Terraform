@@ -9,6 +9,7 @@ using Features.Effects.Domain;
 using Features.Weapons.Domain;
 using Features.Items.Data;
 using System.Collections.Generic;
+using Features.Camera.UnityIntegration;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
@@ -82,7 +83,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         direction = default;
         hitPoint = default;
 
-        if (cachedCam == null)
+        if (!TryResolveAimCamera())
             return false;
 
         Ray camRay = cachedCam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
@@ -114,8 +115,11 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        if (lastHitPoint != Vector3.zero)
-            PlayLocalShot(action, lastHitPoint);
+        if (TryGetAimData(out _, out _, out var hitPoint))
+        {
+            lastHitPoint = hitPoint;
+            PlayLocalShot(action, hitPoint);
+        }
 
         if (IsServerInitialized)
         {
@@ -173,6 +177,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             return;
 
         Vector3 finalHitPoint = hitPoint;
+        Vector3 fireOrigin = GetFireOrigin(ray.origin);
 
         activeRuntime.OnFire = (_, _) =>
         {
@@ -183,10 +188,8 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             if (config == null)
                 return;
 
-            ServerNotifyShot(finalHitPoint);
+            ServerNotifyShot(fireOrigin, finalHitPoint);
         };
-
-        Vector3 fireOrigin = GetFireOrigin(ray.origin);
 
         activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
         activeRuntime.StartUse(hitPoint);
@@ -280,7 +283,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
         nextAimSendTime = Time.time + (1f / Mathf.Max(1f, aimSendRate));
 
-        if (cachedCam == null)
+        if (!TryResolveAimCamera())
             return;
 
         Ray ray = cachedCam.ViewportPointToRay(new Vector3(0.5f, 0.5f));
@@ -304,7 +307,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     // ======================================================
 
     [ObserversRpc]
-    private void RpcPlayWorldFx(Vector3 hitPoint, string itemId)
+    private void RpcPlayWorldFx(Vector3 spawnPos, Vector3 hitPoint, string itemId)
     {
         if (IsOwner)
             return;
@@ -317,18 +320,18 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (config == null)
             return;
 
-        SpawnVisual(hitPoint, config, false);
+        SpawnVisual(spawnPos, hitPoint, config);
     }
 
     [Server]
-    public void ServerNotifyShot(Vector3 hitPoint)
+    public void ServerNotifyShot(Vector3 spawnPos, Vector3 hitPoint)
     {
         string itemId = rightHandInstance?.itemDefinition?.id;
 
         if (string.IsNullOrEmpty(itemId))
             return;
 
-        RpcPlayWorldFx(hitPoint, itemId);
+        RpcPlayWorldFx(spawnPos, hitPoint, itemId);
     }
 
     // ======================================================
@@ -340,13 +343,22 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (config == null || config.clientProjectilePrefab == null)
             return;
 
-        bool isFPS = camController != null && camController.IsFPS();
+        Vector3 spawnPos = GetVisualSpawnPosition();
+        SpawnVisual(spawnPos, hitPoint, config);
+    }
 
-        Vector3 spawnPos = isFPS && viewMuzzle != null
-            ? viewMuzzle.position
-            : worldMuzzle != null
-                ? worldMuzzle.position
-                : transform.position;
+    private void SpawnVisual(Vector3 spawnPos, Vector3 hitPoint, ProjectileConfig config)
+    {
+        if (config == null || config.clientProjectilePrefab == null)
+            return;
+
+        if (ProjectilePool.Instance == null)
+        {
+            Debug.LogWarning("[PlayerUsageNetAdapter] ProjectilePool missing, cannot spawn visual.", this);
+            return;
+        }
+
+        bool isFPS = camController != null && camController.IsFPS();
 
         Quaternion rot = config.visualType == ProjectileVisualType.Projectile
             ? Quaternion.LookRotation((hitPoint - spawnPos).normalized)
@@ -372,6 +384,33 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         {
             Debug.LogError("NO IProjectileVisual ON PREFAB");
         }
+    }
+
+    private Vector3 GetVisualSpawnPosition()
+    {
+        bool isFPS = camController != null && camController.IsFPS();
+
+        return isFPS && viewMuzzle != null
+            ? viewMuzzle.position
+            : worldMuzzle != null
+                ? worldMuzzle.position
+                : transform.position;
+    }
+
+    private bool TryResolveAimCamera()
+    {
+        if (cachedCam != null && cachedCam.isActiveAndEnabled)
+            return true;
+
+        var registryCamera = CameraRegistry.Instance?.CurrentCamera;
+        if (registryCamera != null && registryCamera.isActiveAndEnabled)
+        {
+            cachedCam = registryCamera;
+            return true;
+        }
+
+        cachedCam = Camera.main;
+        return cachedCam != null && cachedCam.isActiveAndEnabled;
     }
 
     // ======================================================

@@ -80,7 +80,7 @@ namespace Features.Effects.Application
                 ?.GetComponentInParent<PlayerUsageNetAdapter>();
 
             if (adapter != null)
-                adapter.ServerNotifyShot(hitPoint);
+                adapter.ServerNotifyShot(origin, hitPoint);
         }
 
         private void SpawnServerProjectile(
