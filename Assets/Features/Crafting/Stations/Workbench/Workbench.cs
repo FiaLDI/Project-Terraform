@@ -1,48 +1,22 @@
-using Features.Inventory;
-using Features.Player;
 using UnityEngine;
 
 public class Workbench : MonoBehaviour, IInteractable
 {
-    [SerializeField] private CraftingProcessor processor;
-    [SerializeField] private RecipeDatabase recipeDB;
-    [SerializeField] private WorkbenchUIController ui;
-
     public string InteractionPrompt => "Открыть верстак";
-
-    private bool initialized;
-
-    public RecipeSO[] GetRecipes()
-        => recipeDB.GetForWorkbench();
 
     public bool Interact()
     {
         InteractionDebug.Log("Workbench.Interact() called", this);
 
-        if (!initialized)
+        WorkbenchUI ui = UIRegistry.I?.Get<WorkbenchUI>();
+        if (ui == null)
         {
-            InteractionDebug.Log("Workbench initializing for local player", this);
-            InitForLocalPlayer();
+            Debug.LogError("[Workbench] WorkbenchUI not registered", this);
+            return false;
         }
 
         ui.Open();
         InteractionDebug.Log("Workbench UI opened", this);
         return true;
-    }
-
-
-    private void InitForLocalPlayer()
-    {
-        IInventoryContext inventory = LocalPlayerContext.Inventory;
-        if (inventory == null)
-        {
-            Debug.LogError("[Workbench] Local inventory not available");
-            return;
-        }
-
-        processor.Init(inventory);
-        ui.Init(this, processor, inventory);
-
-        initialized = true;
     }
 }

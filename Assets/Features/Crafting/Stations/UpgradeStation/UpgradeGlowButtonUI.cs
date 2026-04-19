@@ -1,8 +1,8 @@
-using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
-using Features.Items.Domain;
 using Features.Items.Data;
+using Features.Items.Domain;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class UpgradeGlowButtonUI : MonoBehaviour
 {
@@ -15,33 +15,22 @@ public class UpgradeGlowButtonUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI levelText;
 
     private InventorySlotRef slotRef;
-
     private ItemInstance inst;
     private UpgradeRecipeSO recipe;
-    private UpgradeStationUIController ui;
+    private UpgradeStationUI ui;
 
-    // ======================================================
-    // INIT
-    // ======================================================
-
-    public void Init(ItemInstance inst, UpgradeRecipeSO recipe, UpgradeStationUIController ui, InventorySlotRef slotRef)
+    public void Init(ItemInstance inst, UpgradeRecipeSO recipe, UpgradeStationUI ui, InventorySlotRef slotRef)
     {
         this.inst = inst;
         this.recipe = recipe;
         this.ui = ui;
         this.slotRef = slotRef;
-    
 
         RefreshVisuals();
 
-        // -------- BUTTON ACTION ----------
         glowButton.onClick.RemoveAllListeners();
         glowButton.onClick.AddListener(OnClick);
     }
-
-    // ======================================================
-    // VISUALS
-    // ======================================================
 
     public void RefreshVisuals()
     {
@@ -60,14 +49,9 @@ public class UpgradeGlowButtonUI : MonoBehaviour
         if (levelText != null)
             levelText.text = $"Lv {inst.level}/{maxLv}";
 
-        // если уже максимум — выключаем кнопку
         bool canUpgrade = inst.level < maxLv;
         SetInteractable(canUpgrade);
     }
-
-    // ======================================================
-    // BUTTON
-    // ======================================================
 
     private void OnClick()
     {
@@ -76,10 +60,6 @@ public class UpgradeGlowButtonUI : MonoBehaviour
 
         ui.OnUpgradeItemSelected(inst, recipe, slotRef);
     }
-
-    // ======================================================
-    // STATE
-    // ======================================================
 
     public void SetInteractable(bool value)
     {

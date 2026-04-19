@@ -21,6 +21,7 @@ public class RecipePanelUI : MonoBehaviour
 
     [Header("Action Button")]
     [SerializeField] private Button actionButton;
+    [SerializeField] private Button cancelButton;
 
     [Header("Progress UI")]
     [SerializeField] private CraftingProgressUI progressUI;
@@ -32,6 +33,7 @@ public class RecipePanelUI : MonoBehaviour
     private RecipeSO currentRecipe;
     private ItemInstance currentInstance;
     private Action currentAction;
+    private Action currentCancelAction;
 
     // ========================================================
     // INIT
@@ -63,6 +65,17 @@ public class RecipePanelUI : MonoBehaviour
         actionButton.onClick.AddListener(() => currentAction?.Invoke());
     }
 
+    public void SetCancelAction(Action action)
+    {
+        currentCancelAction = action;
+
+        if (cancelButton == null)
+            return;
+
+        cancelButton.onClick.RemoveAllListeners();
+        cancelButton.onClick.AddListener(() => currentCancelAction?.Invoke());
+    }
+
     // ========================================================
     // CRAFT VIEW
     // ========================================================
@@ -82,7 +95,7 @@ public class RecipePanelUI : MonoBehaviour
 
         RefreshIngredients();
 
-        progressUI.SetVisible(false);
+        SetProcessingState(false);
         actionButton.onClick.RemoveAllListeners();
     }
 
@@ -113,7 +126,7 @@ public class RecipePanelUI : MonoBehaviour
             next.UpgradedIcon != null ? next.UpgradedIcon : def.icon;
 
         RefreshIngredients();
-        progressUI.SetVisible(false);
+        SetProcessingState(false);
     }
 
     // ========================================================
@@ -144,7 +157,8 @@ public class RecipePanelUI : MonoBehaviour
 
     public void StartProgress()
     {
-        progressUI.SetVisible(true);
+        CancelInvoke(nameof(HideProgress));
+        SetProcessingState(true);
         progressUI.UpdateProgress(0f);
     }
 
@@ -156,12 +170,13 @@ public class RecipePanelUI : MonoBehaviour
     public void ProcessComplete()
     {
         progressUI.UpdateProgress(1f);
+        SetCancelButtonVisible(false);
         Invoke(nameof(HideProgress), 0.2f);
     }
 
     private void HideProgress()
     {
-        progressUI.SetVisible(false);
+        SetProcessingState(false);
     }
 
     // ========================================================
@@ -176,7 +191,8 @@ public class RecipePanelUI : MonoBehaviour
 
     public void ResetProgress()
     {
-        progressUI.SetVisible(false);
+        CancelInvoke(nameof(HideProgress));
+        SetProcessingState(false);
         progressUI.UpdateProgress(0f);
     }
 
@@ -185,6 +201,7 @@ public class RecipePanelUI : MonoBehaviour
         currentRecipe = null;
         currentSlot   = null;
         currentAction = null;
+        currentCancelAction = null;
 
         Close();
     }
@@ -275,6 +292,23 @@ public class RecipePanelUI : MonoBehaviour
         }
 
         return sb.ToString();
+    }
+
+    private void SetProcessingState(bool isProcessing)
+    {
+        if (progressUI != null)
+            progressUI.SetVisible(isProcessing);
+
+        if (actionButton != null)
+            actionButton.interactable = !isProcessing;
+
+        SetCancelButtonVisible(isProcessing);
+    }
+
+    private void SetCancelButtonVisible(bool isVisible)
+    {
+        if (cancelButton != null)
+            cancelButton.gameObject.SetActive(isVisible);
     }
 
 
