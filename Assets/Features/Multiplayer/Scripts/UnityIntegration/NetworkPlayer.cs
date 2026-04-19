@@ -8,6 +8,7 @@ using Features.Interaction.UnityIntegration;
 using Features.Stats.Domain;
 using Features.Stats.UnityIntegration;
 using UnityEngine;
+using Unity.Entities;
 
 namespace Features.Player.UnityIntegration
 {
@@ -337,6 +338,9 @@ namespace Features.Player.UnityIntegration
 
         private void ApplyDeadState(bool dead)
         {
+
+            SyncEcsDeadState(dead);
+            
             if (movement != null)
                 movement.IsFrozen = dead;
 
@@ -392,6 +396,34 @@ namespace Features.Player.UnityIntegration
             var controller = GetComponent<CharacterController>();
             if (controller != null)
                 controller.enabled = true;
+        }
+    
+        private void SyncEcsDeadState(bool dead)
+        {
+            if (!IsServerStarted)
+                return;
+
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null)
+                return;
+
+            var em = world.EntityManager;
+
+            var binder = GetComponent<PlayerEcsBinder>();
+            if (binder == null)
+                return;
+
+            var entity = binder.Entity;
+
+            if (entity == Entity.Null || !em.Exists(entity))
+                return;
+
+            bool hasDead = em.HasComponent<PlayerDead>(entity);
+
+            if (dead && !hasDead)
+                em.AddComponent<PlayerDead>(entity);
+            else if (!dead && hasDead)
+                em.RemoveComponent<PlayerDead>(entity);
         }
     }
 }

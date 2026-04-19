@@ -13,6 +13,7 @@ namespace Biomes.Application
             public bool       allowInstancing;
             public Matrix4x4  localMatrix = Matrix4x4.identity;
             public Vector3    rootScale = Vector3.one;
+            public float      groundOffset;
         }
 
         private static readonly Dictionary<int, Entry> _entries = new();
@@ -60,6 +61,7 @@ namespace Biomes.Application
                 e.mesh      = mf.sharedMesh;
                 e.materials = mr.sharedMaterials;
                 e.localMatrix = prefab.transform.worldToLocalMatrix * mr.transform.localToWorldMatrix;
+                e.groundOffset = ComputeGroundOffset(e.mesh, e.localMatrix);
             }
 
             _entries[id] = e;
@@ -100,7 +102,8 @@ namespace Biomes.Application
             out Mesh mesh,
             out Material[] materials,
             out Matrix4x4 localMatrix,
-            out Vector3 rootScale)
+            out Vector3 rootScale,
+            out float groundOffset)
         {
             if (_entries.TryGetValue(id, out var e) &&
                 e.allowInstancing &&
@@ -112,6 +115,7 @@ namespace Biomes.Application
                 materials = e.materials;
                 localMatrix = e.localMatrix;
                 rootScale = e.rootScale;
+                groundOffset = e.groundOffset;
                 return true;
             }
 
@@ -119,7 +123,40 @@ namespace Biomes.Application
             materials = null;
             localMatrix = Matrix4x4.identity;
             rootScale = Vector3.one;
+            groundOffset = 0f;
             return false;
+        }
+
+        private static float ComputeGroundOffset(Mesh mesh, Matrix4x4 localMatrix)
+        {
+            if (mesh == null)
+                return 0f;
+
+            Bounds bounds = mesh.bounds;
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+
+            Vector3[] corners =
+            {
+                new Vector3(min.x, min.y, min.z),
+                new Vector3(min.x, min.y, max.z),
+                new Vector3(min.x, max.y, min.z),
+                new Vector3(min.x, max.y, max.z),
+                new Vector3(max.x, min.y, min.z),
+                new Vector3(max.x, min.y, max.z),
+                new Vector3(max.x, max.y, min.z),
+                new Vector3(max.x, max.y, max.z)
+            };
+
+            float minY = float.PositiveInfinity;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                float y = localMatrix.MultiplyPoint3x4(corners[i]).y;
+                if (y < minY)
+                    minY = y;
+            }
+
+            return float.IsNaN(minY) || float.IsInfinity(minY) ? 0f : minY;
         }
     }
 }

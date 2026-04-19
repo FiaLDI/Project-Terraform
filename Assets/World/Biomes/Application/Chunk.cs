@@ -371,14 +371,6 @@ public class Chunk
         }
         _runtimeMeshes.Clear();
 
-        var enemies = rootObject.GetComponentsInChildren<EnemyInstanceTracker>();
-
-        foreach (var e in enemies)
-        {
-            if (e != null)
-                Object.Destroy(e.gameObject);
-        }
-
         // 4) уничтожаем корневой объект чанка (с MeshFilter, MeshRenderer, MeshCollider, ChunkMeshLOD и т.д.)
         Object.Destroy(rootObject);
         rootObject = null;

@@ -88,10 +88,12 @@ namespace Biomes.Application {
                     {
                         chunk = new Chunk(coord, world, chunkSize);
                         chunks[coord] = chunk;
+                        ChunkedGameObjectStorage.EnsureChunk(coord);
                         EnqueueChunk(coord);
                     }
                     else if (!chunk.IsLoaded)
                     {
+                        ChunkedGameObjectStorage.EnsureChunk(coord);
                         EnqueueChunk(coord);
                     }
                 }
@@ -142,10 +144,12 @@ namespace Biomes.Application {
                         {
                             chunk = new Chunk(coord, world, chunkSize);
                             chunks[coord] = chunk;
+                            ChunkedGameObjectStorage.EnsureChunk(coord);
                             EnqueueChunk(coord);
                         }
                         else if (!chunk.IsLoaded)
                         {
+                            ChunkedGameObjectStorage.EnsureChunk(coord);
                             EnqueueChunk(coord);
                         }
                     }

@@ -31,6 +31,12 @@ namespace Biomes.UnityIntegration {
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             Instance = this;
         }
 
@@ -118,6 +124,9 @@ namespace Biomes.UnityIntegration {
 
         private void ForceDispose(SpawnTask task)
         {
+            if (!task.completed)
+                task.job.Complete();
+
             if (task.spawnList.IsCreated)
                 task.spawnList.Dispose();
             if (task.vertices.IsCreated)
@@ -154,5 +163,16 @@ namespace Biomes.UnityIntegration {
 
         // ==== DEBUG API ====
         public int Debug_ActiveTaskCount => tasks.Count;
+
+        private void OnDestroy()
+        {
+            for (int i = tasks.Count - 1; i >= 0; i--)
+                ForceDispose(tasks[i]);
+
+            tasks.Clear();
+
+            if (Instance == this)
+                Instance = null;
+        }
     }   
 }

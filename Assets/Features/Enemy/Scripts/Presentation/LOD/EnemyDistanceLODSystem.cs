@@ -27,8 +27,25 @@ namespace Features.Enemy.Presentation.LOD
             instancing = GetComponent<EnemyInstancingController>();
             logic = GetComponent<EnemyLogicLODAdapter>();
 
-            if (!HasValidLODConfig())
-                enabled = false;
+            if (config != null)
+            {
+                view.Init(
+                    config.render.lod0Prefab,
+                    config.render.lod1Prefab,
+                    config.render.lod2Prefab
+                );
+
+                view.SetLOD(0);
+                currentLOD = 0;
+            }
+        }
+
+        public void SetConfig(EnemyConfigSO cfg)
+        {
+            config = cfg;
+
+            if (view == null)
+                view = GetComponent<EnemyLODView>();
 
             if (config != null)
             {
@@ -38,6 +55,8 @@ namespace Features.Enemy.Presentation.LOD
                     config.render.lod2Prefab
                 );
             }
+
+            enabled = HasValidLODConfig();
         }
 
         private bool HasValidLODConfig()

@@ -40,6 +40,7 @@ namespace Biomes.UnityIntegration
             public bool OwnsMaterial;
             public Matrix4x4 LocalMatrix = Matrix4x4.identity;
             public Vector3 RootScale = Vector3.one;
+            public float GroundOffset;
 
             public readonly List<InstanceData> Instances = new();
 
@@ -101,7 +102,8 @@ namespace Biomes.UnityIntegration
                         out var mesh,
                         out var mats,
                         out var localMatrix,
-                        out var rootScale))
+                        out var rootScale,
+                        out var groundOffset))
                     continue;
 
                 var mat = (mats != null && mats.Length > 0) ? mats[0] : null;
@@ -117,7 +119,8 @@ namespace Biomes.UnityIntegration
                         Material = material,
                         OwnsMaterial = ownsMaterial,
                         LocalMatrix = localMatrix,
-                        RootScale = rootScale
+                        RootScale = rootScale,
+                        GroundOffset = groundOffset
                     };
                     _buckets[inst.prefabIndex] = bucket;
                 }
@@ -201,6 +204,7 @@ namespace Biomes.UnityIntegration
                             inst.scale,
                             bucket.RootScale,
                             bucket.LocalMatrix,
+                            bucket.GroundOffset,
                             out Matrix4x4 m))
                         continue;
 
@@ -273,6 +277,7 @@ namespace Biomes.UnityIntegration
             float scale,
             Vector3 rootScale,
             Matrix4x4 localMatrix,
+            float groundOffset,
             out Matrix4x4 m)
         {
             if (!IsFinite(pos))
@@ -294,10 +299,13 @@ namespace Biomes.UnityIntegration
             if (scale <= 0f || float.IsNaN(scale) || float.IsInfinity(scale))
                 scale = 1f;
 
+            Vector3 finalScale = Vector3.Scale(rootScale, Vector3.one * scale);
+            Vector3 renderPos = pos + (rot * Vector3.up) * (-groundOffset * finalScale.y);
+
             Matrix4x4 rootMatrix = Matrix4x4.TRS(
-                pos,
+                renderPos,
                 rot,
-                Vector3.Scale(rootScale, Vector3.one * scale)
+                finalScale
             );
             m = rootMatrix * localMatrix;
             return IsMatrixFinite(m);
@@ -364,6 +372,17 @@ namespace Biomes.UnityIntegration
             Debug.LogWarning($"[InstancedSpawner] Material '{source.name}' had instancing disabled. Created instanced copy '{instanced.name}'.");
 
             return instanced;
+        }
+
+        public void ClearRuntimeState()
+        {
+            foreach (var bucket in _buckets.Values)
+            {
+                if (bucket != null && bucket.OwnsMaterial && bucket.Material != null)
+                    Destroy(bucket.Material);
+            }
+
+            _buckets.Clear();
         }
     }
 }

@@ -185,5 +185,7 @@ public struct EnemySteeringData : IComponentData
     public bool enableOrbit;
 }
 
+public struct PlayerDead : IComponentData {}
+
 public struct EnemyTag : IComponentData { }
 public struct PlayerTag : IComponentData { }

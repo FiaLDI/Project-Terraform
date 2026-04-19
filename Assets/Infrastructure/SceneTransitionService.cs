@@ -6,13 +6,24 @@ public static class SceneTransitionService
     public const string NameWorldScene = "ProceduralWorld";
     public const string NameHubScene   = "NetHubScene";
 
+    // ================= PUBLIC API =================
+
     public static void LoadWorldScene()
+        => LoadScene(NameWorldScene);
+
+    public static void LoadHubScene()
+        => LoadScene(NameHubScene);
+
+    public static void LoadScene(string sceneName)
     {
         var nm = InstanceFinder.NetworkManager;
+
         if (nm == null || !nm.IsServer)
             return;
 
-        var data = new SceneLoadData(NameWorldScene)
+        PreSceneCleanup();
+
+        var data = new SceneLoadData(sceneName)
         {
             ReplaceScenes = ReplaceOption.All,
         };
@@ -20,17 +31,17 @@ public static class SceneTransitionService
         nm.SceneManager.LoadGlobalScenes(data);
     }
 
-    public static void LoadHubScene()
+    // ================= INTERNAL =================
+
+    private static void PreSceneCleanup()
     {
-        var nm = InstanceFinder.NetworkManager;
-        if (nm == null || !nm.IsServer)
-            return;
+        UnityEngine.Debug.Log("[SceneTransition] Cleanup");
+        
+        PlayerRegistryECS.Clear();
+        PlayerSpatialGrid.Clear();
 
-        var data = new SceneLoadData(NameHubScene)
-        {
-            ReplaceScenes = ReplaceOption.All,
-        };
-
-        nm.SceneManager.LoadGlobalScenes(data);
+        // 👉 сюда можно добавлять другие системы
+        // ChunkManager?.ClearAll();
+        // EnemyWorldManager?.Clear();
     }
 }

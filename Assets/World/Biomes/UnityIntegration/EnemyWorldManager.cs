@@ -13,7 +13,16 @@ namespace Biomes.UnityIntegration
 
         private readonly List<EnemyInstanceTracker> enemies = new();
 
-        void Awake() => Instance = this;
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+        }
 
         public bool CanSpawn(int configuredLimit = -1)
         {
@@ -60,6 +69,19 @@ namespace Biomes.UnityIntegration
                 if (enemy == null || !enemy.isActiveAndEnabled)
                     enemies.RemoveAt(i);
             }
+        }
+
+        public void ClearRuntimeState()
+        {
+            enemies.Clear();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
+
+            enemies.Clear();
         }
     }
 }

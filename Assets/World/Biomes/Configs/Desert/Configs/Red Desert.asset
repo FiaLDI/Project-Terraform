@@ -44,7 +44,7 @@ MonoBehaviour:
     minScale: 0
     maxScale: 5
     markAsResourceBlocker: 0
-  environmentDensity: 0.09
+  environmentDensity: 0.03
   possibleResources:
   - resourcePrefab: {fileID: 4655979638605053677, guid: c74fa15d9f2f5bc4086469124c5a058c, type: 3}
     spawnChance: 0.05
@@ -76,7 +76,7 @@ MonoBehaviour:
     distributionScale: 1
     distributionOffset: {x: 6, y: 8}
     allowedBiomes: 
-  resourceDensity: 0.00648
+  resourceDensity: 0.0032
   resourceSpawnYOffset: 0.3
   resourceEdgeFalloff: 1
   possibleQuests: []
@@ -93,7 +93,7 @@ MonoBehaviour:
     minHeight: -10
     maxHeight: 20
     alignToNormal: 1
-  enemyDensity: 0.03
+  enemyDensity: 0.012
   enemyRespawnDelay: 20
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
   skyTopColor: {r: 1, g: 1, b: 1, a: 1}
@@ -113,7 +113,7 @@ MonoBehaviour:
   dustPrefab: {fileID: 0}
   firefliesPrefab: {fileID: 0}
   weatherIntensity: 1
-  useWater: 1
+  useWater: 0
   waterType: 1
   seaLevel: 5
   waterMaterial: {fileID: 7091788780726334870, guid: d3502a446f5605a419bad87b1a54982b, type: 3}

@@ -40,7 +40,10 @@ namespace Features.Enemy.Presentation.LOD
             if (!active) return;
             active = false;
 
-            // mesh сбрасываем чтобы пересчитать при следующем входе
+            var lod0 = view.GetLODObject(0);
+            if (lod0 != null)
+                lod0.SetActive(true);
+                
             mesh = null;
             mat = null;
         }

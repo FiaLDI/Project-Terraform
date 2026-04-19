@@ -44,7 +44,7 @@ MonoBehaviour:
     minScale: 0.6
     maxScale: 3
     markAsResourceBlocker: 1
-  environmentDensity: 0.05
+  environmentDensity: 0.01
   possibleResources:
   - resourcePrefab: {fileID: 4655979638605053677, guid: c74fa15d9f2f5bc4086469124c5a058c, type: 3}
     spawnChance: 0.06
@@ -106,7 +106,7 @@ MonoBehaviour:
     distributionScale: 0.5
     distributionOffset: {x: 11, y: 4}
     allowedBiomes:
-  resourceDensity: 0.004
+  resourceDensity: 0.0025
   resourceSpawnYOffset: 0.35
   resourceEdgeFalloff: 1
   possibleQuests: []
@@ -123,7 +123,7 @@ MonoBehaviour:
     minHeight: -20
     maxHeight: 30
     alignToNormal: 1
-  enemyDensity: 0.02
+  enemyDensity: 0.001
   enemyRespawnDelay: 28
   skyboxMaterial: {fileID: 2100000, guid: 859d475e7535c2142b4f5c61bcde86e5, type: 2}
   skyTopColor: {r: 0.86, g: 0.56, b: 0.36, a: 1}

@@ -231,6 +231,7 @@ GameObject:
   - component: {fileID: -3421877017634375112}
   - component: {fileID: 4545127908142641363}
   - component: {fileID: -6083213034349871330}
+  - component: {fileID: -7510390193506819156}
   m_Layer: 7
   m_Name: DynoECS
   m_TagString: Enemy
@@ -308,7 +309,7 @@ MonoBehaviour:
   - {fileID: 6798121071620844925}
   - {fileID: -6394603796330078313}
   - {fileID: -3025476531782380607}
-  - {fileID: 0}
+  - {fileID: -6083213034349871330}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -319,7 +320,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584263568032334999
+  _initializedTimestamp: -8584250279462543980
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -415,6 +416,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 8
+  despawnDistance: 80
 --- !u!114 &2477525584403044842
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -643,10 +645,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fe657eeecaeb6b4584bd11793ec29a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
+  _componentIndexCache: 9
+  _addedNetworkObject: {fileID: 5928809208972985904}
+  _networkObjectCache: {fileID: 5928809208972985904}
+  lerpRate: 15
+--- !u!114 &-7510390193506819156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5739330300266458567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c70612df4d1e2644c90d44d72cf778a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerGamePhase
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 5928809208972985904}
   _networkObjectCache: {fileID: 0}
-  lerpRate: 15
 --- !u!1 &5882816248013448756
 GameObject:
   m_ObjectHideFlags: 0

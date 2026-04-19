@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using FishNet;
+using FishNet.Object;
 using UnityEngine;
 
 namespace Biomes.Application
@@ -48,12 +50,7 @@ namespace Biomes.Application
             unloadBuffer.AddRange(list);
 
             foreach (var go in unloadBuffer)
-            {
-                if (go == null)
-                    continue;
-
-                Object.Destroy(go);
-            }
+                DestroyOrDespawn(go);
 
             storage.Remove(coord);
             runtimeChunks.Remove(coord);
@@ -64,14 +61,12 @@ namespace Biomes.Application
             foreach (var kv in storage)
             {
                 foreach (var go in kv.Value)
-                {
-                    if (go != null)
-                        Object.Destroy(go);
-                }
+                    DestroyOrDespawn(go);
             }
 
             storage.Clear();
             runtimeChunks.Clear();
+            unloadBuffer.Clear();
         }
 
         public static void FillActiveChunks(List<Vector2Int> coords, List<ChunkRuntimeData> outList)
@@ -92,6 +87,30 @@ namespace Biomes.Application
         public static List<GameObject> GetObjects(Vector2Int coord)
         {
             return storage.TryGetValue(coord, out var list) ? list : null;
+        }
+
+        private static void DestroyOrDespawn(GameObject go)
+        {
+            if (go == null)
+                return;
+
+            var networkObject = go.GetComponent<NetworkObject>();
+            if (networkObject != null &&
+                InstanceFinder.IsServerStarted &&
+                InstanceFinder.ServerManager != null &&
+                networkObject.IsSpawned)
+            {
+                InstanceFinder.ServerManager.Despawn(networkObject);
+                return;
+            }
+
+            Object.Destroy(go);
+        }
+
+        public static void EnsureChunk(Vector2Int coord)
+        {
+            if (!runtimeChunks.ContainsKey(coord))
+                runtimeChunks[coord] = new ChunkRuntimeData(coord);
         }
     }
 }

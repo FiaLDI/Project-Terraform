@@ -33,6 +33,7 @@ GameObject:
   - component: {fileID: 7626525101563991224}
   - component: {fileID: 7425200048692619748}
   - component: {fileID: 8569907388489037013}
+  - component: {fileID: 8859364740036527172}
   m_Layer: 7
   m_Name: Enemy 1
   m_TagString: Enemy
@@ -149,6 +150,7 @@ MonoBehaviour:
   - {fileID: 8352056275576124434}
   - {fileID: 6692272926936445375}
   - {fileID: 8569907388489037013}
+  - {fileID: 8859364740036527172}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -159,7 +161,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584263547674656985
+  _initializedTimestamp: -8584250257068491935
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -174,7 +176,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 7
+  <PrefabId>k__BackingField: 10
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 8267521181958873596
   SceneId: 0
@@ -263,6 +265,16 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 3238053155987908212}
   moveSpeed: 3
   rotationSpeed: 8
+  jumpForce: 6
+  highJumpForce: 8.5
+  jumpForwardBoost: 1.25
+  jumpCooldownTime: 0.75
+  jumpObstacleHeight: 0.9
+  highJumpObstacleHeight: 1.6
+  groundCheckDistance: 0.35
+  detourDistance: 2.5
+  detourProbeDistance: 2
+  detourAngle: 55
   orbitStrength: 0.6
   avoidDistance: 1.5
   sideAvoidDistance: 1.2
@@ -294,6 +306,10 @@ MonoBehaviour:
   - {fileID: 8493830333041242141}
   - {fileID: 5924634030405376384}
   - {fileID: 6732167346314672252}
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 72
+  despawnDistance: 80
 --- !u!114 &1812578576095524838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -309,6 +325,7 @@ MonoBehaviour:
   _componentIndexCache: 6
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
+  animator: {fileID: 0}
 --- !u!114 &8352056275576124434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -420,6 +437,7 @@ MonoBehaviour:
     coneAngle: 0
     coneDistance: 0
     selectClosest: 1
+    impactFxId: 
     prefabId: 
     lifetime: 0
     useSourcePosition: 0
@@ -509,6 +527,21 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3238053155987908212}
   _networkObjectCache: {fileID: 3238053155987908212}
   lerpRate: 15
+--- !u!114 &8859364740036527172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604374280082702520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c70612df4d1e2644c90d44d72cf778a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerGamePhase
+  _componentIndexCache: 10
+  _addedNetworkObject: {fileID: 3238053155987908212}
+  _networkObjectCache: {fileID: 3238053155987908212}
 --- !u!1 &2552993529211192160
 GameObject:
   m_ObjectHideFlags: 0

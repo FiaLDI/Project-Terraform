@@ -54,6 +54,11 @@ namespace Biomes.Application
             catch { return 0; }
         }
 
+        public static void ClearAll()
+        {
+            map.Clear();
+        }
+
         private static void Cleanup(List<EnemyInstanceTracker> list)
         {
             for (int i = list.Count - 1; i >= 0; i--)

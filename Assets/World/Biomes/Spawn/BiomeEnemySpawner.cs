@@ -6,6 +6,7 @@ using FishNet.Connection;
 using Biomes.Data;
 using Biomes.Application;
 using Features.Player.UnityIntegration;
+using Features.Enemy.Presentation.LOD;
 
 namespace Biomes.UnityIntegration
 {
@@ -159,6 +160,10 @@ namespace Biomes.UnityIntegration
                 binder.SetDespawnDistance(despawnDistance);
             }
 
+            var lod = go.GetComponent<EnemyDistanceLODSystem>();
+            if (lod != null)
+                lod.SetConfig(config);
+
             var rb = go.GetComponent<Rigidbody>();
             if (rb != null)
             {
@@ -214,6 +219,9 @@ namespace Biomes.UnityIntegration
                     ~0,
                     QueryTriggerInteraction.Ignore))
                 {
+                    if (hit.collider != null && hit.collider.GetComponentInParent<NetworkObject>() != null)
+                        continue;
+
                     result = hit;
                     return true;
                 }
@@ -340,10 +348,23 @@ namespace Biomes.UnityIntegration
             if (entry == null || entry.config == null || entry.config.prefab == null)
                 return false;
 
-            if (slope < entry.minSlope || slope > entry.maxSlope)
+            float minSlope = entry.minSlope;
+            float maxSlope = entry.maxSlope;
+            if (Mathf.Approximately(minSlope, 0f) && Mathf.Approximately(maxSlope, 0f))
+                maxSlope = 90f;
+
+            float minHeight = entry.minHeight;
+            float maxHeight = entry.maxHeight;
+            if (Mathf.Approximately(minHeight, 0f) && Mathf.Approximately(maxHeight, 0f))
+            {
+                minHeight = float.NegativeInfinity;
+                maxHeight = float.PositiveInfinity;
+            }
+
+            if (slope < minSlope || slope > maxSlope)
                 return false;
 
-            if (height < entry.minHeight || height > entry.maxHeight)
+            if (height < minHeight || height > maxHeight)
                 return false;
 
             return true;

@@ -60,20 +60,36 @@ namespace Biomes.Application
         {
             Vector3 origin = pos + Vector3.up * 10f;
 
-            if (Physics.Raycast(
-                    origin,
-                    Vector3.down,
-                    out RaycastHit hit,
-                    200f,
-                    Physics.DefaultRaycastLayers,
-                    QueryTriggerInteraction.Ignore))
+            RaycastHit[] hits = Physics.RaycastAll(
+                origin,
+                Vector3.down,
+                200f,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore);
+
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            for (int i = 0; i < hits.Length; i++)
             {
+                var hit = hits[i];
+                if (!IsGroundSnapCandidate(hit))
+                    continue;
+
                 pos = hit.point;
                 Vector3 n = hit.normal.sqrMagnitude > 0.0001f ? hit.normal : Vector3.up;
                 float yaw = rot.eulerAngles.y;
                 Quaternion basis = Quaternion.FromToRotation(Vector3.up, n);
                 rot = basis * Quaternion.Euler(0f, yaw, 0f);
+                return;
             }
+        }
+
+        private static bool IsGroundSnapCandidate(RaycastHit hit)
+        {
+            if (hit.collider == null)
+                return false;
+
+            return hit.collider.GetComponentInParent<NetworkObject>() == null;
         }
 
     }

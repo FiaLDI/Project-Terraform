@@ -52,10 +52,13 @@ namespace Features.Enemy.Presentation.LOD
                 return;
             }
 
-            lod = Mathf.Clamp(lod, 0, instances.Length - 1); // ✅ FIX
+            lod = Mathf.Clamp(lod, 0, instances.Length - 1);
 
             for (int i = 0; i < instances.Length; i++)
                 instances[i].SetActive(i == lod);
+            
+            if (!instances[lod].activeSelf)
+                instances[lod].SetActive(true);
 
             var obj = instances[lod];
 

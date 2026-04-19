@@ -1,0 +1,2902 @@
+using Unity.Burst;
+using Unity.Entities;
+
+[BurstCompile]
+public partial struct EnemyAggroSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (damageBuffer, entity) in SystemAPI
+            .Query<DynamicBuffer<DamageEvent>>()
+            .WithEntityAccess())
+        {
+            if (!SystemAPI.HasBuffer<EnemyAggroElement>(entity))
+                continue;
+
+            var aggroBuffer = SystemAPI.GetBuffer<EnemyAggroElement>(entity);
+
+            for (int i = 0; i < damageBuffer.Length; i++)
+            {
+                var dmg = damageBuffer[i];
+                bool found = false;
+
+                for (int j = 0; j < aggroBuffer.Length; j++)
+                {
+                    var entry = aggroBuffer[j];
+
+                    if (entry.Target == dmg.Source)
+                    {
+                        entry.Value += dmg.Value;
+                        aggroBuffer[j] = entry;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    aggroBuffer.Add(new EnemyAggroElement
+                    {
+                        Target = dmg.Source,
+                        Value = dmg.Value
+                    });
+                }
+            }
+
+            damageBuffer.Clear();
+        }
+    }
+}
+using Unity.Entities;
+
+public static class EnemyAggroUtility
+{
+    public static void AddAggro(EntityManager em, Entity enemy, Entity source, float value)
+    {
+        if (!em.Exists(enemy)) return;
+        if (!em.HasBuffer<EnemyAggroElement>(enemy)) return;
+
+        var buffer = em.GetBuffer<EnemyAggroElement>(enemy);
+
+        for (int i = 0; i < buffer.Length; i++)
+        {
+            if (buffer[i].Target == source)
+            {
+                var a = buffer[i];
+                a.Value += value;
+                buffer[i] = a;
+                return;
+            }
+        }
+
+        buffer.Add(new EnemyAggroElement
+        {
+            Target = source,
+            Value = value
+        });
+    }
+}
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+
+[BurstCompile]
+[WithNone(typeof(EnemyInactive))]
+public partial struct EnemyAIJob : IJobEntity
+{
+    public float DeltaTime;
+
+    [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
+    [ReadOnly] public ComponentLookup<PlayerTag> PlayerTagLookup;
+
+    void Execute(
+        ref EnemyState aiState,
+        ref EnemyPatrolState patrolState,
+        ref EnemyAggroState aggro,
+        ref EnemyLastKnownPosition lastKnown,
+        ref EnemyTargetPosition target,
+        ref EnemyAttackState attackState,
+
+        in EnemyAI ai,
+        in EnemyPatrolSettings settings,
+        in LocalTransform transform,
+        in EnemyTarget enemyTarget,
+        in EnemyHasLineOfSight lineOfSight,
+        in DynamicBuffer<EnemyPatrolPoint> patrolPoints
+    )
+    {
+        float3 pos = transform.Position;
+
+        float3 posXZ = pos;
+        posXZ.y = 0f;
+
+        // ================= TARGET =================
+        bool hasTarget = false;
+        float3 playerPos = default;
+
+        if (enemyTarget.Value != Entity.Null &&
+            TransformLookup.HasComponent(enemyTarget.Value) &&
+            PlayerTagLookup.HasComponent(enemyTarget.Value))
+        {
+            hasTarget = true;
+            playerPos = TransformLookup[enemyTarget.Value].Position;
+        }
+
+        float3 playerXZ = playerPos;
+        playerXZ.y = 0f;
+
+        float3 flatToPlayer = hasTarget ? (playerXZ - posXZ) : float3.zero;
+        float distToPlayer = hasTarget ? math.length(flatToPlayer) : 9999f;
+
+        bool hasValidLos = !ai.RequireLOS || lineOfSight.Value;
+
+        float attackEnterDistance = math.max(0f, ai.AttackRange - ai.AttackEnterOffset);
+        float attackExitDistance = ai.AttackRange + ai.AttackExitOffset;
+
+        // ================= COOLDOWN =================
+        if (attackState.Cooldown > 0f)
+            attackState.Cooldown -= DeltaTime;
+
+        // ================= PATROL =================
+        if (aiState.Value == EnemyAIState.Patrol)
+        {
+            bool waitingNow = patrolState.IsWaiting;
+
+            if (patrolPoints.Length > 0)
+            {
+                int index = patrolState.CurrentIndex;
+                float3 patrolPoint = patrolPoints[index].Position;
+
+                float3 patrolXZ = patrolPoint;
+                patrolXZ.y = 0f;
+
+                float patrolDist = math.distance(posXZ, patrolXZ);
+
+                if (waitingNow)
+                {
+                    patrolState.WaitTimer += DeltaTime;
+
+                    if (patrolState.WaitTimer >= patrolState.CurrentWaitDuration)
+                    {
+                        patrolState.IsWaiting = false;
+                        patrolState.WaitTimer = 0f;
+                        patrolState.CurrentIndex = (index + 1) % patrolPoints.Length;
+                        waitingNow = false;
+                    }
+                }
+
+                if (!waitingNow)
+                {
+                    target.Value = patrolPoint;
+
+                    if (patrolDist <= settings.ReachDistance)
+                    {
+                        patrolState.IsWaiting = true;
+                        patrolState.CurrentWaitDuration =
+                            settings.RandomPatrol
+                                ? Unity.Mathematics.Random.CreateFromIndex((uint)(index + 1) * 1234)
+                                    .NextFloat(settings.MinWaitTime, settings.MaxWaitTime)
+                                : settings.MinWaitTime;
+                    }
+                }
+            }
+
+            if (hasTarget && hasValidLos && distToPlayer <= ai.VisionRange)
+            {
+                aggro.Timer += DeltaTime;
+
+                if (aggro.Timer > 0.3f)
+                {
+                    aiState.Value = EnemyAIState.Chase;
+                    attackState.Timer = 0f;
+                }
+            }
+            else
+            {
+                aggro.Timer = 0f;
+            }
+
+            return;
+        }
+
+        // ================= CHASE =================
+        if (aiState.Value == EnemyAIState.Chase)
+        {
+            if (!hasTarget)
+            {
+                aiState.Value = EnemyAIState.Return;
+                attackState.Timer = 0f;
+                return;
+            }
+
+            lastKnown.Value = playerPos;
+
+            float3 dir = math.normalizesafe(flatToPlayer);
+            float stopDistance = ai.AttackRange * ai.StopDistanceMultiplier;
+            float3 desiredPos = playerPos - dir * stopDistance;
+
+            target.Value = desiredPos;
+
+            if (hasValidLos && distToPlayer <= attackEnterDistance)
+            {
+                aiState.Value = EnemyAIState.Attack;
+                attackState.Timer = 0f;
+            }
+            else if (distToPlayer > ai.LoseAggroRadius)
+            {
+                aiState.Value = EnemyAIState.Return;
+                attackState.Timer = 0f;
+            }
+
+            return;
+        }
+
+        // ================= ATTACK =================
+        if (aiState.Value == EnemyAIState.Attack)
+        {
+            if (!hasTarget)
+            {
+                aiState.Value = EnemyAIState.Return;
+                attackState.DoAttack = false;
+                attackState.Timer = 0f;
+                return;
+            }
+
+            lastKnown.Value = playerPos;
+
+            float3 dir = math.normalizesafe(flatToPlayer);
+            float stopDistance = ai.AttackRange * ai.StopDistanceMultiplier;
+            float3 desiredPos = playerPos - dir * stopDistance;
+
+            if (distToPlayer > stopDistance + 0.15f)
+                target.Value = desiredPos;
+            else
+                target.Value = pos;
+
+            if (!hasValidLos)
+                attackState.Timer += DeltaTime;
+            else
+                attackState.Timer = 0f;
+
+            if (attackState.Timer > 0.25f || distToPlayer > attackExitDistance)
+            {
+                aiState.Value = EnemyAIState.Chase;
+                target.Value = desiredPos;
+                attackState.DoAttack = false;
+                attackState.Timer = 0f;
+                return;
+            }
+
+            if (distToPlayer <= ai.AttackRange && attackState.Cooldown <= 0f)
+            {
+                attackState.Cooldown = ai.AttackCooldown;
+                attackState.DoAttack = true;
+            }
+
+            return;
+        }
+
+        // ================= RETURN =================
+        if (aiState.Value == EnemyAIState.Return)
+        {
+            if (hasTarget)
+            {
+                lastKnown.Value = playerPos;
+
+                float3 dir = math.normalizesafe(flatToPlayer);
+                float stopDistance = ai.AttackRange * ai.StopDistanceMultiplier;
+                float3 desiredPos = playerPos - dir * stopDistance;
+
+                target.Value = desiredPos;
+
+                if (hasValidLos && distToPlayer <= attackEnterDistance)
+                {
+                    aiState.Value = EnemyAIState.Attack;
+                    attackState.Timer = 0f;
+                    return;
+                }
+
+                if (distToPlayer <= ai.LoseAggroRadius)
+                {
+                    aiState.Value = EnemyAIState.Chase;
+                    attackState.Timer = 0f;
+                    return;
+                }
+            }
+
+            float3 returnPos = lastKnown.Value;
+
+            float3 returnXZ = returnPos;
+            returnXZ.y = 0f;
+
+            float distToReturn = math.distance(posXZ, returnXZ);
+
+            target.Value = returnPos;
+
+            if (distToReturn < 1f)
+            {
+                aiState.Value = EnemyAIState.Patrol;
+                aggro.Timer = 0f;
+                attackState.Timer = 0f;
+                attackState.DoAttack = false;
+            }
+        }
+    }
+}
+using Unity.Entities;
+using Unity.Transforms;
+
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(EnemyLOSSystemECS))]
+public partial struct EnemyAISystem : ISystem
+{
+    private ComponentLookup<LocalTransform> transformLookup;
+    private ComponentLookup<PlayerTag> playerTagLookup;
+
+    public void OnCreate(ref SystemState state)
+    {
+        transformLookup = state.GetComponentLookup<LocalTransform>(true);
+        playerTagLookup = state.GetComponentLookup<PlayerTag>(true);
+    }
+
+    public void OnUpdate(ref SystemState state)
+    {
+        transformLookup.Update(ref state);
+        playerTagLookup.Update(ref state);
+
+        new EnemyAIJob
+        {
+            DeltaTime = SystemAPI.Time.DeltaTime,
+            TransformLookup = transformLookup,
+            PlayerTagLookup = playerTagLookup
+        }.ScheduleParallel();
+    }
+}
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Collections;
+
+[BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(EnemyDespawnSystem))]
+public partial struct EnemyDespawnCleanupSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        var ecb = new EntityCommandBuffer(Allocator.Temp);
+
+        foreach (var (_, entity) in SystemAPI
+                     .Query<RefRO<EnemyMarkedForDespawn>>()
+                     .WithEntityAccess())
+        {
+            
+        }
+
+        ecb.Playback(state.EntityManager);
+        ecb.Dispose();
+    }
+}
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Collections;
+using Unity.Mathematics;
+using Unity.Transforms;
+
+[BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+public partial struct EnemyDespawnSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        var ecb = new EntityCommandBuffer(Allocator.Temp);
+
+        foreach (var (enemyTransform, despawn, entity) in SystemAPI.Query<
+                     RefRO<LocalTransform>,
+                     RefRO<EnemyDespawnDistance>>()
+                 .WithAll<EnemyTag>()
+                 .WithEntityAccess())
+        {
+            float3 enemyPos = enemyTransform.ValueRO.Position;
+
+            bool shouldDespawn = true;
+
+            foreach (var (playerTransform, _) in SystemAPI
+                         .Query<RefRO<LocalTransform>>()
+                         .WithAll<PlayerTag>()
+                         .WithEntityAccess())
+            {
+                float dist = math.distance(enemyPos, playerTransform.ValueRO.Position);
+
+                if (dist <= despawn.ValueRO.Value)
+                {
+                    shouldDespawn = false;
+                    break;
+                }
+            }
+
+            if (shouldDespawn)
+            {
+                if (!SystemAPI.HasComponent<EnemyMarkedForDespawn>(entity))
+                {
+                    ecb.AddComponent<EnemyMarkedForDespawn>(entity);
+                }
+            }
+        }
+
+        ecb.Playback(state.EntityManager);
+        ecb.Dispose();
+    }
+}
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateBefore(typeof(EnemyLOSSystemECS))]
+public partial struct EnemyTargetingSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (transform, target, aggroBuffer, ai) in SystemAPI.Query<
+                     RefRO<LocalTransform>,
+                     RefRW<EnemyTarget>,
+                     DynamicBuffer<EnemyAggroElement>,
+                     RefRO<EnemyAI>>())
+        {
+            float3 pos = transform.ValueRO.Position;
+            float3 posXZ = pos;
+            posXZ.y = 0f;
+
+            Entity currentTarget = target.ValueRO.Value;
+            Entity bestTarget = Entity.Null;
+            float bestScore = float.MinValue;
+
+            // 1) Приоритет: цели из aggro buffer
+            for (int i = 0; i < aggroBuffer.Length; i++)
+            {
+                var entry = aggroBuffer[i];
+
+                if (!SystemAPI.Exists(entry.Target) ||
+                    !SystemAPI.HasComponent<LocalTransform>(entry.Target) ||
+                    !SystemAPI.HasComponent<PlayerTag>(entry.Target))
+                    continue;
+
+                float3 targetPos = SystemAPI.GetComponent<LocalTransform>(entry.Target).Position;
+                float3 targetXZ = targetPos;
+                targetXZ.y = 0f;
+
+                float dist = math.distance(posXZ, targetXZ);
+                if (dist > ai.ValueRO.LoseAggroRadius)
+                    continue;
+
+                float score = entry.Value - dist * 0.5f;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestTarget = entry.Target;
+                }
+            }
+
+            // 2) Если текущая цель ещё валидна — держим её, чтобы не дёргать переключения
+            if (bestTarget == Entity.Null &&
+                currentTarget != Entity.Null &&
+                SystemAPI.Exists(currentTarget) &&
+                SystemAPI.HasComponent<LocalTransform>(currentTarget) &&
+                SystemAPI.HasComponent<PlayerTag>(currentTarget))
+            {
+                float3 currentPos = SystemAPI.GetComponent<LocalTransform>(currentTarget).Position;
+                float3 currentXZ = currentPos;
+                currentXZ.y = 0f;
+
+                float currentDist = math.distance(posXZ, currentXZ);
+                if (currentDist <= ai.ValueRO.LoseAggroRadius)
+                    bestTarget = currentTarget;
+            }
+
+            // 3) Если цели всё ещё нет — ищем ближайшего игрока в aggro radius
+            if (bestTarget == Entity.Null)
+            {
+                float nearestDist = float.MaxValue;
+
+                foreach (var (playerTransform, playerEntity) in SystemAPI
+                         .Query<RefRO<LocalTransform>>()
+                         .WithAll<PlayerTag>()
+                         .WithEntityAccess())
+                {
+                    float3 playerPos = playerTransform.ValueRO.Position;
+                    float3 playerXZ = playerPos;
+                    playerXZ.y = 0f;
+
+                    float dist = math.distance(posXZ, playerXZ);
+                    if (dist > ai.ValueRO.AggroRadius || dist >= nearestDist)
+                        continue;
+
+                    nearestDist = dist;
+                    bestTarget = playerEntity;
+                }
+            }
+
+            target.ValueRW.Value = bestTarget;
+        }
+    }
+}
+using UnityEngine;
+
+namespace Features.Enemy.Data
+{
+    [CreateAssetMenu(menuName = "Enemies/AI Config")]
+    public class EnemyAIConfigSO : ScriptableObject
+    {
+        [Header("Aggro")]
+        public float aggroRadius = 12f;
+        public float loseAggroRadius = 18f;
+
+        [Header("Movement")]
+        public float moveSpeed = 3f;
+        public float rotationSpeed = 8f;
+
+        [Header("Vision")]
+        [Range(10, 180)]
+        public float visionAngle = 120f;
+        public float visionRange = 12f;
+        public bool requireLineOfSight = true;
+
+        [Header("Steering Weights")]
+        public float seekWeight = 1f;
+        public float avoidWeight = 2f;
+        public float separationWeight = 1.5f;
+        public float orbitWeight = 0.8f;
+
+        [Header("Steering Distances")]
+        public float avoidDistance = 1.5f;
+        public float sideAvoidDistance = 1.2f;
+        public float separationRadius = 2f;
+
+        [Header("Movement Feel")]
+        public float orbitStrength = 0.6f;
+
+        [Header("Behavior")]
+        public bool enableSeparation = true;
+        public bool enableAvoidance = true;
+        public bool enableOrbit = true;
+    }
+}
+using UnityEngine;
+
+namespace Features.Enemy.Data
+{
+    [CreateAssetMenu(menuName = "Enemies/Combat Config")]
+    public class EnemyCombatConfigSO : ScriptableObject
+    {
+        [Header("Attack")]
+        public float attackRange = 2f;
+        public float attackDamage = 10f;
+        public float attackCooldown = 1.2f;
+
+        [Header("Behavior")]
+        public float attackEnterOffset = 0.5f;
+        public float attackExitOffset = 1.0f;
+        public float stopDistanceMultiplier = 0.7f;
+    }
+}
+using UnityEngine;
+
+namespace Features.Enemy.Data
+{
+    [CreateAssetMenu(menuName = "Enemies/Enemy Config")]
+    public class EnemyConfigSO : ScriptableObject
+    {
+        [Header("ID")]
+        public string enemyId;
+        public string displayName;
+
+        [Header("Prefabs")]
+        public GameObject prefab;
+
+        [Header("Configs")]
+        public EnemyAIConfigSO ai;
+        public EnemyRenderConfigSO render;
+        public EnemyCombatConfigSO combat;
+        public EnemyStatsPresetSO stats;
+    }
+}
+using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Features.Enemy.Data
+{
+    [CreateAssetMenu(menuName = "Enemies/EnemyDatabase")]
+    public class EnemyDatabaseSO : ScriptableObject
+    {
+        public EnemyConfigSO[] enemies;
+
+        private Dictionary<string, EnemyConfigSO> _map;
+
+        private void OnValidate()
+        {
+            ValidateUniqueIds();
+        }
+
+        public void ValidateUniqueIds()
+        {
+            if (enemies == null) return;
+
+            var duplicates = enemies
+                .Where(e => e != null)
+                .GroupBy(e => e.enemyId)
+                .Where(g => g.Count() > 1)
+                .ToList();
+
+            if (duplicates.Count > 0)
+            {
+                foreach (var dup in duplicates)
+                {
+                    Debug.LogError(
+                        $"[EnemyDatabase] Duplicate EnemyId found: {dup.Key}",
+                        this
+                    );
+                }
+            }
+        }
+
+        public EnemyConfigSO GetById(string id)
+        {
+            _map ??= enemies?
+                .Where(e => e != null)
+                .ToDictionary(e => e.enemyId, e => e);
+
+            if (_map == null || !_map.TryGetValue(id, out var cfg))
+                return null;
+
+            return cfg;
+        }
+
+        public string[] GetAllIds()
+        {
+            if (enemies == null)
+                return new string[0];
+
+            return enemies
+                .Where(e => e != null)
+                .Select(e => e.enemyId)
+                .ToArray();
+        }
+    }
+}
+using UnityEngine;
+
+namespace Features.Enemy.Data
+{
+    [CreateAssetMenu(menuName = "Enemies/Render Config")]
+    public class EnemyRenderConfigSO : ScriptableObject
+    {
+        [Header("LOD Prefabs")]
+        public GameObject lod0Prefab;
+        public GameObject lod1Prefab;
+        public GameObject lod2Prefab;
+
+        [Header("LOD Distances")]
+        public float lod0Distance = 15f;
+        public float lod1Distance = 40f;
+        public float lod2Distance = 80f;
+
+        [Header("Canvas")]
+        public GameObject worldCanvasPrefab;
+        public float canvasHideDistance = 30f;
+
+        [Header("GPU Instancing")]
+        public bool useGPUInstancing = true;
+        public float instancingDistance = 120f;
+
+        [Header("Animation")]
+        public RuntimeAnimatorController animatorController;
+    }
+}
+using UnityEngine;
+
+namespace Features.Enemies
+{
+    /// <summary>
+    /// Минимальный базовый контроллер врага.
+    /// Может быть пустым, spawner просто проверяет его наличие.
+    /// </summary>
+    public class EnemyBehavior : MonoBehaviour
+    {
+    }
+}
+using Unity.Entities;
+using Unity.Mathematics;
+using UnityEngine;
+
+// =========================
+// BASE AI
+// =========================
+public struct EnemyAI : IComponentData
+{
+    public float MoveSpeed;
+    public float AggroRadius;
+    public float LoseAggroRadius;
+
+    public float AttackRange;
+    public float AttackCooldown;
+
+    public float AttackEnterOffset;
+    public float AttackExitOffset;
+    public float StopDistanceMultiplier;
+
+    public float VisionAngle;
+    public float VisionRange;
+    public bool RequireLOS;
+
+    public int ObstacleMask;
+}
+
+public struct EnemyTarget : IComponentData
+{
+    public Entity Value;
+}
+
+public struct EnemyAggroSettings : IComponentData
+{
+    public float SwitchDistance;
+    public float LoseDistance; 
+}
+
+public struct EnemyAggroElement : IBufferElementData
+{
+    public Entity Target;
+    public float Value;
+}
+
+public struct DamageEvent : IBufferElementData
+{
+    public Entity Source;
+    public float Value;
+}
+
+public struct EnemyHasLineOfSight : IComponentData
+{
+    public bool Value;
+}
+
+public struct EnemyState : IComponentData
+{
+    public EnemyAIState Value;
+}
+
+public enum EnemyAIState : byte
+{
+    Patrol,
+    Attack,
+    Chase,
+    Return,
+}
+
+// =========================
+// TARGETING
+// =========================
+public struct EnemyTargetPosition : IComponentData
+{
+    public float3 Value;
+}
+
+public struct EnemyLastKnownPosition : IComponentData
+{
+    public float3 Value;
+}
+
+// =========================
+// AGGRO
+// =========================
+public struct EnemyAggroState : IComponentData
+{
+    public float Timer;
+}
+
+// =========================
+// ATTACK
+// =========================
+public struct EnemyAttackState : IComponentData
+{
+    public bool DoAttack;
+    public bool IsAttacking;
+
+    public float Cooldown;
+    public float Timer;
+
+    public EnemyAttackType Type;
+}
+
+// =========================
+// PATROL
+// =========================
+public struct EnemyPatrolPoint : IBufferElementData
+{
+    public float3 Position;
+}
+
+public struct EnemyPatrolState : IComponentData
+{
+    public int CurrentIndex;
+
+    public float WaitTimer;
+    public float CurrentWaitDuration;
+
+    public bool IsWaiting;
+}
+
+public struct EnemyInactive : IComponentData {}
+
+public struct EnemyPatrolSettings : IComponentData
+{
+    public float ReachDistance;
+
+    public float MinWaitTime;
+    public float MaxWaitTime;
+
+    public bool RandomPatrol;
+}
+
+public struct EnemyAttackSettings : IComponentData
+{
+    public float MeleeRange;
+    public float RangedRange;
+
+    public float MeleeCooldown;
+    public float RangedCooldown;
+}
+
+
+public class EnemyChunkLink : MonoBehaviour
+{
+    public Vector2Int chunkCoord;
+}
+
+public enum EnemyAttackType : byte
+{
+    None,
+    Melee,
+    Ranged
+}
+
+// =========================
+// OTHER
+// =========================
+public struct EnemyBlocked : IComponentData
+{
+    public bool Value;
+}
+
+public struct EnemyRadius : IComponentData
+{
+    public float Value;
+}
+
+public struct EnemySteeringData : IComponentData
+{
+    public float seekWeight;
+    public float avoidWeight;
+    public float separationWeight;
+    public float orbitWeight;
+
+    public float avoidDistance;
+    public float sideAvoidDistance;
+    public float separationRadius;
+
+    public float rotationSpeed;
+    public float orbitStrength;
+
+    public bool enableSeparation;
+    public bool enableAvoidance;
+    public bool enableOrbit;
+}
+
+public struct EnemyTag : IComponentData { }
+public struct PlayerTag : IComponentData { }
+using Unity.Entities;
+
+public struct EnemyDespawnDistance : IComponentData
+{
+    public float Value;
+}
+
+public struct EnemyMarkedForDespawn : IComponentData {}#if UNITY_EDITOR
+using UnityEngine;
+using UnityEditor;
+using Features.Enemy.Data;
+using System;
+
+namespace Features.Enemy.Editor
+{
+    [CustomEditor(typeof(EnemyDatabaseSO))]
+    public class EnemyDatabaseEditor : UnityEditor.Editor
+    {
+        private EnemyDatabaseSO db;
+
+        private void OnEnable()
+        {
+            db = (EnemyDatabaseSO)target;
+        }
+
+        public override void OnInspectorGUI()
+        {
+            serializedObject.Update();
+
+            EditorGUILayout.LabelField("ENEMY DATABASE", EditorStyles.boldLabel);
+            EditorGUILayout.Space(5);
+
+            DrawAddEnemyButton();
+            EditorGUILayout.Space(10);
+
+            if (db.enemies == null || db.enemies.Length == 0)
+            {
+                EditorGUILayout.HelpBox("Database is empty. Add enemies using the button above.", MessageType.Info);
+            }
+            else
+            {
+                DrawEnemyList();
+            }
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        // ===========================================================
+        // UI: Button "Add enemy"
+        // ===========================================================
+        private void DrawAddEnemyButton()
+        {
+            if (GUILayout.Button("➕ Add Enemy"))
+            {
+                Undo.RecordObject(db, "Add Enemy");
+
+                Array.Resize(ref db.enemies, (db.enemies?.Length ?? 0) + 1);
+
+                var newConfig = CreateEnemyConfigSO();
+                db.enemies[db.enemies.Length - 1] = newConfig;
+
+                EditorUtility.SetDirty(db);
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        // ===========================================================
+        // UI: List of enemies
+        // ===========================================================
+        private void DrawEnemyList()
+        {
+            for (int i = 0; i < db.enemies.Length; i++)
+            {
+                var cfg = db.enemies[i];
+
+                if (cfg == null)
+                {
+                    EditorGUILayout.HelpBox($"Null entry #{i}. Remove or replace.", MessageType.Warning);
+                    continue;
+                }
+
+                EditorGUILayout.BeginVertical("box");
+
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField($"{i + 1}. {cfg.enemyId}", EditorStyles.boldLabel);
+
+                if (GUILayout.Button("Open", GUILayout.Width(50)))
+                    Selection.activeObject = cfg;
+
+                if (GUILayout.Button("X", GUILayout.Width(25)))
+                {
+                    RemoveEnemy(i);
+                    return;
+                }
+                EditorGUILayout.EndHorizontal();
+
+                // Draw config reference
+                db.enemies[i] = (EnemyConfigSO)EditorGUILayout.ObjectField("Config", cfg, typeof(EnemyConfigSO), false);
+
+                // Draw ID field
+                string newId = EditorGUILayout.TextField("Enemy ID", cfg.enemyId);
+
+                if (newId != cfg.enemyId)
+                {
+                    Undo.RecordObject(cfg, "Change EnemyId");
+                    cfg.enemyId = newId;
+                    EditorUtility.SetDirty(cfg);
+                }
+
+                // Duplicate check
+                if (HasDuplicateId(cfg, i))
+                {
+                    EditorGUILayout.HelpBox($"Duplicate ID: {cfg.enemyId}", MessageType.Error);
+                }
+
+                EditorGUILayout.EndVertical();
+            }
+        }
+
+        private bool HasDuplicateId(EnemyConfigSO cfg, int index)
+        {
+            if (string.IsNullOrWhiteSpace(cfg.enemyId))
+                return false;
+
+            for (int j = 0; j < db.enemies.Length; j++)
+            {
+                if (j == index) continue;
+                if (db.enemies[j] != null && db.enemies[j].enemyId == cfg.enemyId)
+                    return true;
+            }
+            return false;
+        }
+
+        // ===========================================================
+        // Remove enemy entry
+        // ===========================================================
+        private void RemoveEnemy(int index)
+        {
+            Undo.RecordObject(db, "Remove Enemy");
+
+            for (int i = index; i < db.enemies.Length - 1; i++)
+                db.enemies[i] = db.enemies[i + 1];
+
+            Array.Resize(ref db.enemies, db.enemies.Length - 1);
+
+            EditorUtility.SetDirty(db);
+            AssetDatabase.SaveAssets();
+        }
+
+        // ===========================================================
+        // Create new EnemyConfigSO with autogenerated ID
+        // ===========================================================
+        private EnemyConfigSO CreateEnemyConfigSO()
+        {
+            string guid = Guid.NewGuid().ToString("N").Substring(0, 6);
+            string id = $"enemy_{guid}";
+
+            var cfg = ScriptableObject.CreateInstance<EnemyConfigSO>();
+            cfg.enemyId = id;
+            cfg.displayName = $"Enemy {guid}";
+
+            // Save SO next to database
+            string dbPath = AssetDatabase.GetAssetPath(db);
+            string folder = System.IO.Path.GetDirectoryName(dbPath);
+            string assetPath = $"{folder}/Enemy_{guid}.asset";
+
+            AssetDatabase.CreateAsset(cfg, assetPath);
+            AssetDatabase.SaveAssets();
+
+            return cfg;
+        }
+    }
+}
+#endif
+using UnityEngine;
+using Unity.Entities;
+using FishNet;
+using FishNet.Object;
+
+public class EnemyDespawnBridge : MonoBehaviour
+{
+    private EnemyEcsRuntimeBinder binder;
+    private NetworkObject networkObject;
+    private Entity entity;
+    private EntityManager em;
+    private bool despawnRequested;
+
+    private void Awake()
+    {
+        binder = GetComponent<EnemyEcsRuntimeBinder>();
+        networkObject = GetComponent<NetworkObject>();
+    }
+
+    private void Update()
+    {
+        if (!InstanceFinder.IsServer)
+            return;
+
+        if (despawnRequested)
+            return;
+
+        if (!TryResolveEntity())
+            return;
+
+        if (!em.HasComponent<EnemyMarkedForDespawn>(entity))
+            return;
+
+        despawnRequested = true;
+
+        if (networkObject != null && networkObject.IsSpawned)
+        {
+            InstanceFinder.ServerManager.Despawn(networkObject);
+            return;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private bool TryResolveEntity()
+    {
+        if (em == default && World.DefaultGameObjectInjectionWorld != null)
+            em = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        if (em == default || binder == null)
+            return false;
+
+        if (entity != Entity.Null && em.Exists(entity))
+            return true;
+
+        if (binder.Entity == Entity.Null || !em.Exists(binder.Entity))
+            return false;
+
+        entity = binder.Entity;
+        return true;
+    }
+}
+﻿using FishNet.Object;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine;
+
+public sealed class EnemyEcsMoveBridge : NetworkBehaviour
+{
+    [Header("Movement")]
+    public float moveSpeed = 3f;
+    public float rotationSpeed = 8f;
+
+    [Header("Jump")]
+    public float jumpForce = 6f;
+    public float highJumpForce = 8.5f;
+    public float jumpForwardBoost = 1.25f;
+    public float jumpCooldownTime = 0.75f;
+    public float jumpObstacleHeight = 0.9f;
+    public float highJumpObstacleHeight = 1.6f;
+    public float groundCheckDistance = 0.35f;
+
+    [Header("Detour")]
+    public float detourDistance = 2.5f;
+    public float detourProbeDistance = 2f;
+    public float detourAngle = 55f;
+
+    [Header("Steering")]
+    public float orbitStrength = 0.6f;
+    public float avoidDistance = 1.5f;
+    public float sideAvoidDistance = 1.2f;
+    public float separationRadius = 1.5f;
+
+    [Header("Layers")]
+    [SerializeField] private LayerMask obstacleMask;
+    [SerializeField] private LayerMask groundMask;
+
+    private Vector3 smoothDir;
+    private float jumpCooldown;
+
+    private Entity entity;
+    private EntityManager em;
+    private Rigidbody rb;
+    private bool initialized;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+
+        if (obstacleMask.value == 0)
+            obstacleMask = ~0;
+
+        if (groundMask.value == 0)
+            groundMask = ~0;
+
+        rb.constraints =
+            RigidbodyConstraints.FreezeRotationX |
+            RigidbodyConstraints.FreezeRotationZ;
+
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null)
+            em = world.EntityManager;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        if (!IsServer && rb != null)
+            rb.isKinematic = true; // ❗ клиент не симулирует физику
+    }
+
+    private void TryInit()
+    {
+        if (initialized) return;
+
+        var binder = GetComponent<EnemyEcsRuntimeBinder>();
+        if (binder == null || binder.Entity == Entity.Null) return;
+
+        if (!em.Exists(binder.Entity)) return;
+
+        entity = binder.Entity;
+        initialized = true;
+    }
+
+    private void FixedUpdate()
+    {
+        if (!IsServer) return;
+
+        if (jumpCooldown > 0f)
+            jumpCooldown -= Time.fixedDeltaTime;
+
+        TryInit();
+        if (!initialized) return;
+
+        if (!em.Exists(entity))
+        {
+            enabled = false;
+            return;
+        }
+
+        var targetData = em.GetComponentData<EnemyTargetPosition>(entity);
+        var ai = em.GetComponentData<EnemyAI>(entity);
+        var enemyState = em.GetComponentData<EnemyState>(entity);
+        var steering = em.GetComponentData<EnemySteeringData>(entity);
+
+        Vector3 pos = rb.position;
+        Vector3 target = targetData.Value;
+        Vector3 moveTarget = target;
+
+        Vector3 flatTarget = new Vector3(moveTarget.x, pos.y, moveTarget.z);
+        Vector3 toTarget = flatTarget - pos;
+
+        float dist = toTarget.magnitude;
+
+        if (dist < 0.1f)
+        {
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+            return;
+        }
+
+        Vector3 forward = toTarget.normalized;
+        float attackEnterDistance = Mathf.Max(0f, ai.AttackRange - ai.AttackEnterOffset);
+        bool isCombatState =
+            enemyState.Value == EnemyAIState.Chase ||
+            enemyState.Value == EnemyAIState.Attack;
+        bool forceCloseApproach = isCombatState && dist <= attackEnterDistance + 0.35f;
+
+        // ===== ORBIT =====
+        Vector3 orbit = Vector3.zero;
+        bool allowOrbit =
+            steering.enableOrbit &&
+            enemyState.Value == EnemyAIState.Attack &&
+            dist <= ai.AttackRange &&
+            !forceCloseApproach;
+
+        if (allowOrbit)
+        {
+            Vector3 right = new Vector3(-forward.z, 0, forward.x);
+            orbit = right * steering.orbitStrength;
+        }
+
+        // ===== AVOID =====
+        Vector3 avoid = Vector3.zero;
+        Vector3 origin = pos + Vector3.up * 0.5f;
+        bool forwardBlocked = false;
+
+        Vector3 left = Quaternion.Euler(0, -30, 0) * forward;
+        Vector3 rightDir = Quaternion.Euler(0, 30, 0) * forward;
+
+        if (Physics.Raycast(origin, forward, out var hitF, avoidDistance, obstacleMask))
+        {
+            avoid += hitF.normal;
+            forwardBlocked = true;
+        }
+
+        if (Physics.Raycast(origin, left, out var hitL, sideAvoidDistance, obstacleMask))
+            avoid += hitL.normal;
+
+        if (Physics.Raycast(origin, rightDir, out var hitR, sideAvoidDistance, obstacleMask))
+            avoid += hitR.normal;
+
+        // ===== SEPARATION =====
+        Vector3 separation = Vector3.zero;
+
+        var neighbors = Physics.OverlapSphere(pos, separationRadius);
+
+        foreach (var col in neighbors)
+        {
+            if (col.attachedRigidbody == rb) continue;
+            if (!col.CompareTag("Enemy")) continue;
+
+            Vector3 diff = pos - col.transform.position;
+            diff.y = 0;
+
+            float d = diff.magnitude;
+            if (d > 0.001f)
+                separation += diff.normalized / d;
+        }
+
+        if (!steering.enableAvoidance)
+            avoid = Vector3.zero;
+
+        if (!steering.enableSeparation)
+            separation = Vector3.zero;
+
+        if (forceCloseApproach)
+        {
+            orbit = Vector3.zero;
+            avoid *= 0.5f;
+            separation *= 0.25f;
+        }
+
+        // ===== FINAL DIR =====
+        Vector3 desiredDir =
+            forward * steering.seekWeight +
+            orbit * steering.orbitWeight +
+            avoid * steering.avoidWeight +
+            separation * steering.separationWeight;
+
+        desiredDir.y = 0;
+
+        if (desiredDir.sqrMagnitude > 0.001f)
+            desiredDir.Normalize();
+
+        smoothDir = Vector3.Lerp(
+            smoothDir,
+            desiredDir,
+            8f * Time.fixedDeltaTime
+        );
+
+        Vector3 finalDir = smoothDir.normalized;
+
+        bool canDoNormalJump =
+            forwardBlocked &&
+            jumpCooldown <= 0f &&
+            IsGrounded(pos) &&
+            HasJumpClearance(pos, finalDir);
+
+        bool canDoHighJump =
+            forwardBlocked &&
+            !canDoNormalJump &&
+            jumpCooldown <= 0f &&
+            IsGrounded(pos) &&
+            HasHighJumpClearance(pos, finalDir);
+
+        if (forwardBlocked && !canDoNormalJump && !canDoHighJump)
+        {
+            moveTarget = GetDetourTarget(pos, target, forward);
+            flatTarget = new Vector3(moveTarget.x, pos.y, moveTarget.z);
+            toTarget = flatTarget - pos;
+            dist = toTarget.magnitude;
+
+            if (dist >= 0.1f)
+            {
+                forward = toTarget.normalized;
+
+                Vector3 detourDesiredDir = forward +
+                                           orbit * steering.orbitWeight +
+                                           avoid * steering.avoidWeight +
+                                           separation * steering.separationWeight;
+
+                detourDesiredDir.y = 0f;
+
+                if (detourDesiredDir.sqrMagnitude > 0.001f)
+                    detourDesiredDir.Normalize();
+
+                smoothDir = Vector3.Lerp(
+                    smoothDir,
+                    detourDesiredDir,
+                    8f * Time.fixedDeltaTime
+                );
+
+                finalDir = smoothDir.normalized;
+            }
+        }
+
+        // ===== MOVE =====
+        float speed = ai.MoveSpeed > 0f ? ai.MoveSpeed : moveSpeed;
+
+        if (dist < 1.5f)
+            speed *= dist / 1.5f;
+
+        Vector3 vel = finalDir * speed;
+
+        if (canDoNormalJump || canDoHighJump)
+        {
+            jumpCooldown = jumpCooldownTime;
+            vel += finalDir * jumpForwardBoost;
+        }
+
+        rb.linearVelocity = new Vector3(
+            vel.x,
+            canDoHighJump
+                ? Mathf.Max(rb.linearVelocity.y, highJumpForce)
+                : canDoNormalJump
+                    ? Mathf.Max(rb.linearVelocity.y, jumpForce)
+                    : rb.linearVelocity.y,
+            vel.z
+        );
+
+        // ===== ROTATION =====
+        if (finalDir.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(finalDir);
+
+            rb.MoveRotation(Quaternion.Slerp(
+                rb.rotation,
+                targetRot,
+                rotationSpeed * Time.fixedDeltaTime
+            ));
+        }
+
+        // ===== ECS SYNC =====
+        var t = em.GetComponentData<LocalTransform>(entity);
+        t.Position = rb.position;
+        t.Rotation = rb.rotation;
+        em.SetComponentData(entity, t);
+    }
+
+    private bool IsGrounded(Vector3 pos)
+    {
+        Vector3 origin = pos + Vector3.up * 0.1f;
+        return Physics.Raycast(
+            origin,
+            Vector3.down,
+            groundCheckDistance,
+            groundMask,
+            QueryTriggerInteraction.Ignore
+        );
+    }
+
+    private bool HasJumpClearance(Vector3 pos, Vector3 direction)
+    {
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+
+        Vector3 lowOrigin = pos + Vector3.up * 0.2f;
+        Vector3 highOrigin = pos + Vector3.up * jumpObstacleHeight;
+
+        bool lowBlocked = Physics.Raycast(
+            lowOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (!lowBlocked)
+            return false;
+
+        bool highBlocked = Physics.Raycast(
+            highOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        return !highBlocked;
+    }
+
+    private bool HasHighJumpClearance(Vector3 pos, Vector3 direction)
+    {
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+
+        Vector3 lowOrigin = pos + Vector3.up * (jumpObstacleHeight * 0.5f);
+        Vector3 highOrigin = pos + Vector3.up * highJumpObstacleHeight;
+
+        bool lowBlocked = Physics.Raycast(
+            lowOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (!lowBlocked)
+            return false;
+
+        bool highBlocked = Physics.Raycast(
+            highOrigin,
+            direction,
+            avoidDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        return !highBlocked;
+    }
+
+    private Vector3 GetDetourTarget(Vector3 pos, Vector3 originalTarget, Vector3 forward)
+    {
+        if (forward.sqrMagnitude < 0.001f)
+            return originalTarget;
+
+        Vector3 leftDir = Quaternion.Euler(0f, -detourAngle, 0f) * forward;
+        Vector3 rightDir = Quaternion.Euler(0f, detourAngle, 0f) * forward;
+
+        bool leftBlocked = Physics.Raycast(
+            pos + Vector3.up * 0.5f,
+            leftDir,
+            detourProbeDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        bool rightBlocked = Physics.Raycast(
+            pos + Vector3.up * 0.5f,
+            rightDir,
+            detourProbeDistance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        Vector3 detourDir;
+        if (leftBlocked && !rightBlocked)
+            detourDir = rightDir;
+        else if (rightBlocked && !leftBlocked)
+            detourDir = leftDir;
+        else
+            detourDir = leftDir;
+
+        detourDir.y = 0f;
+        detourDir.Normalize();
+
+        return pos + detourDir * detourDistance;
+    }
+}
+using UnityEngine;
+using Unity.Entities;
+using Unity.Transforms;
+using FishNet.Object;
+using Features.Enemy.Data;
+
+public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
+{
+    private Entity entity;
+    public Entity Entity => entity;
+
+    [SerializeField] private EnemyConfigSO config;
+    [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] private LayerMask obstacleMask;
+    [SerializeField] private float despawnDistance = 80f;
+
+    private EntityManager GetEM()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        return world != null ? world.EntityManager : default;
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        Init();
+    }
+
+    public void SetConfig(EnemyConfigSO cfg)
+    {
+        config = cfg;
+    }
+
+    public void SetDespawnDistance(float distance)
+    {
+        despawnDistance = Mathf.Max(1f, distance);
+
+        var em = GetEM();
+        if (em == default)
+            return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+            return;
+
+        if (em.HasComponent<EnemyDespawnDistance>(entity))
+        {
+            em.SetComponentData(entity, new EnemyDespawnDistance
+            {
+                Value = despawnDistance
+            });
+        }
+    }
+
+    public void ForceInit()
+    {
+        if (!IsServer) return;
+        Init();
+    }
+
+    private void Init()
+    {
+        var em = GetEM();
+        if (em == default || config == null)
+            return;
+
+        if (entity != Entity.Null && em.Exists(entity))
+            return;
+
+        entity = em.CreateEntity(
+            typeof(LocalTransform),
+            typeof(EnemyTag),
+            typeof(EnemyAI),
+            typeof(EnemyState),
+            typeof(EnemyTargetPosition),
+            typeof(EnemyAttackState),
+            typeof(EnemyTarget),
+            typeof(EnemyHasLineOfSight),
+            typeof(EnemyRadius),
+            typeof(EnemySteeringData),
+            typeof(EnemyPatrolState),
+            typeof(EnemyPatrolSettings),
+            typeof(EnemyAggroState),
+            typeof(EnemyLastKnownPosition)
+        );
+
+        em.SetComponentData(entity, new EnemyLastKnownPosition
+        {
+            Value = transform.position
+        });
+
+        em.AddComponentData(entity, new EnemySteeringData
+        {
+            seekWeight = config.ai.seekWeight,
+            avoidWeight = config.ai.avoidWeight,
+            separationWeight = config.ai.separationWeight,
+            orbitWeight = config.ai.orbitWeight,
+
+            avoidDistance = config.ai.avoidDistance,
+            sideAvoidDistance = config.ai.sideAvoidDistance,
+            separationRadius = config.ai.separationRadius,
+
+            rotationSpeed = config.ai.rotationSpeed,
+            orbitStrength = config.ai.orbitStrength,
+
+            enableSeparation = config.ai.enableSeparation,
+            enableAvoidance = config.ai.enableAvoidance,
+            enableOrbit = config.ai.enableOrbit
+        });
+
+        em.AddComponentData(entity, new EnemyDespawnDistance
+        {
+            Value = despawnDistance
+        });
+
+        em.SetComponentData(entity, new EnemyPatrolState
+        {
+            CurrentIndex = 0,
+            IsWaiting = false,
+            WaitTimer = 0f,
+            CurrentWaitDuration = 0f
+        });
+
+        em.SetComponentData(entity, new EnemyPatrolSettings
+        {
+            ReachDistance = 0.5f,
+            MinWaitTime = 1f,
+            MaxWaitTime = 2f,
+            RandomPatrol = true
+        });
+
+        em.SetComponentData(entity, new EnemyAggroState
+        {
+            Timer = 0f
+        });
+
+        em.SetComponentData(entity,
+            LocalTransform.FromPositionRotation(
+                transform.position,
+                transform.rotation
+            ));
+
+        em.SetComponentData(entity, new EnemyTarget
+        {
+            Value = Entity.Null
+        });
+
+        em.SetComponentData(entity, new EnemyHasLineOfSight
+        {
+            Value = true
+        });
+
+        em.SetComponentData(entity, new EnemyRadius
+        {
+            Value = 0.6f
+        });
+
+        em.AddBuffer<EnemyAggroElement>(entity);
+
+        var buffer = em.AddBuffer<EnemyPatrolPoint>(entity);
+        foreach (var p in patrolPoints)
+        {
+            if (p == null) continue;
+
+            buffer.Add(new EnemyPatrolPoint
+            {
+                Position = p.position
+            });
+        }
+
+        ApplyConfig(em);
+    }
+
+    private void ApplyConfig(EntityManager em)
+    {
+        if (obstacleMask.value == 0)
+            obstacleMask = ~0;
+
+        em.SetComponentData(entity, new EnemyAI
+        {
+            MoveSpeed = config.ai.moveSpeed,
+            AggroRadius = config.ai.aggroRadius,
+            LoseAggroRadius = config.ai.loseAggroRadius,
+            AttackRange = config.combat.attackRange,
+            AttackCooldown = config.combat.attackCooldown,
+            AttackEnterOffset = config.combat.attackEnterOffset,
+            AttackExitOffset = config.combat.attackExitOffset,
+            StopDistanceMultiplier = config.combat.stopDistanceMultiplier,
+            VisionAngle = config.ai.visionAngle,
+            VisionRange = config.ai.visionRange,
+            RequireLOS = config.ai.requireLineOfSight,
+            ObstacleMask = obstacleMask.value
+        });
+
+        em.SetComponentData(entity, new EnemyState
+        {
+            Value = EnemyAIState.Patrol
+        });
+
+        em.SetComponentData(entity, new EnemyTargetPosition
+        {
+            Value = transform.position
+        });
+
+        em.SetComponentData(entity, new EnemyAttackState
+        {
+            DoAttack = false,
+            IsAttacking = false,
+            Cooldown = 0f,
+            Timer = 0f,
+            Type = EnemyAttackType.None
+        });
+    }
+
+    private void Update()
+    {
+        if (!IsServer) return;
+
+        var em = GetEM();
+        if (em == default) return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+            Init();
+    }
+
+    private void OnDestroy()
+    {
+        if (!IsServer) return;
+
+        var em = GetEM();
+        if (em == default) return;
+
+        if (em.Exists(entity))
+            em.DestroyEntity(entity);
+    }
+}
+using Unity.Entities;
+using Unity.Transforms;
+using UnityEngine;
+
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(EnemyTargetingSystem))]
+[UpdateBefore(typeof(EnemyAISystem))]
+public partial struct EnemyLOSSystemECS : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (transform, enemyTarget, ai, los) in SystemAPI.Query<
+                     RefRO<LocalTransform>,
+                     RefRO<EnemyTarget>,
+                     RefRO<EnemyAI>,
+                     RefRW<EnemyHasLineOfSight>>())
+        {
+            if (!ai.ValueRO.RequireLOS)
+            {
+                los.ValueRW.Value = true;
+                continue;
+            }
+
+            Entity targetEntity = enemyTarget.ValueRO.Value;
+
+            if (targetEntity == Entity.Null ||
+                !SystemAPI.Exists(targetEntity) ||
+                !SystemAPI.HasComponent<LocalTransform>(targetEntity) ||
+                !SystemAPI.HasComponent<PlayerTag>(targetEntity))
+            {
+                los.ValueRW.Value = false;
+                continue;
+            }
+
+            Vector3 origin = (Vector3)transform.ValueRO.Position + Vector3.up * 1.5f;
+            Vector3 destination = (Vector3)SystemAPI.GetComponent<LocalTransform>(targetEntity).Position + Vector3.up * 1.0f;
+
+            Vector3 dir = destination - origin;
+            float dist = dir.magnitude;
+
+            if (dist <= 0.001f)
+            {
+                los.ValueRW.Value = true;
+                continue;
+            }
+
+            dir /= dist;
+
+            bool blocked = Physics.Raycast(
+                origin,
+                dir,
+                dist,
+                ai.ValueRO.ObstacleMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+            los.ValueRW.Value = !blocked;
+        }
+    }
+}
+using UnityEngine;
+using System.Collections;
+using Features.Effects.Domain;
+using Features.Effects.Application;
+using Features.Buffs.Domain;
+using Unity.Entities;
+using Unity.Transforms;
+using Unity.Mathematics;
+
+public sealed class EnemyAttackHandler : MonoBehaviour
+{
+    [Header("Attack Timing")]
+    [SerializeField] private float attackDelay = 0.3f;
+
+    [Header("Effect")]
+    [SerializeField] private EffectDefinition effect;
+
+    private bool isAttacking;
+
+    private EntityManager em;
+    private EnemyEcsRuntimeBinder binder;
+
+    private void Awake()
+    {
+        binder = GetComponent<EnemyEcsRuntimeBinder>();
+
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null)
+            em = world.EntityManager;
+    }
+
+    public void TriggerAttack()
+    {
+        if (!isAttacking)
+            StartCoroutine(AttackRoutine());
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        isAttacking = true;
+
+        yield return new WaitForSeconds(attackDelay);
+
+        DealDamage();
+
+        yield return new WaitForSeconds(0.2f);
+
+        isAttacking = false;
+    }
+
+    private void DealDamage()
+    {
+        if (binder == null || binder.Entity == Entity.Null)
+            return;
+
+        if (!em.Exists(binder.Entity))
+            return;
+
+        if (!em.HasComponent<EnemyTarget>(binder.Entity))
+            return;
+
+        if (!em.HasComponent<EnemyAI>(binder.Entity) ||
+            !em.HasComponent<EnemyHasLineOfSight>(binder.Entity))
+            return;
+
+        var enemyTarget = em.GetComponentData<EnemyTarget>(binder.Entity);
+        var enemyAI = em.GetComponentData<EnemyAI>(binder.Entity);
+        var enemyLos = em.GetComponentData<EnemyHasLineOfSight>(binder.Entity);
+
+        if (enemyTarget.Value == Entity.Null)
+            return;
+
+        if (!em.HasComponent<LocalTransform>(enemyTarget.Value))
+            return;
+
+        float3 targetPos3 =
+            em.GetComponentData<LocalTransform>(enemyTarget.Value).Position;
+
+        Vector3 targetPos = targetPos3;
+
+        if (enemyAI.RequireLOS && !enemyLos.Value)
+            return;
+
+        Vector3 flatOffset = targetPos - transform.position;
+        flatOffset.y = 0f;
+
+        if (flatOffset.sqrMagnitude > enemyAI.AttackRange * enemyAI.AttackRange)
+            return;
+
+        Vector3 dir = targetPos - transform.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.001f)
+            return;
+
+        dir.Normalize();
+
+        Vector3 origin = transform.position + dir * 1.2f;
+
+        IBuffSource source = GetComponentInParent<IBuffSource>(); // 👈 проще
+
+        var ctx = new EffectContext(
+            source,
+            null,
+            origin,
+            dir
+        );
+
+        var targets = TargetResolver.Resolve(effect, ctx);
+
+        if (targets.Length == 0)
+            return;
+
+        var newCtx = new EffectContext(
+            ctx.Source,
+            targets,
+            ctx.Origin,
+            ctx.Direction
+        );
+
+        var effectInstance = EffectFactory.Create(effect);
+        effectInstance?.Apply(newCtx);
+    }
+}
+using UnityEngine;
+using Biomes.Data;
+using Biomes.Application;
+using Biomes.UnityIntegration;
+
+public class EnemyAutoUnregister : MonoBehaviour
+{
+    [HideInInspector] public BiomeConfig biome;
+    [HideInInspector] public EnemyInstanceTracker tracker;
+
+    private bool _unregistered = false;
+
+    private void OnDisable()
+    {
+        TryUnregister();
+    }
+
+    private void OnDestroy()
+    {
+        TryUnregister();
+    }
+
+    private void TryUnregister()
+    {
+        if (_unregistered) return;
+        if (tracker == null) return;
+
+        _unregistered = true;
+
+        EnemyWorldManager.Instance?.Unregister(tracker);
+
+        if (biome != null)
+            EnemyBiomeCounter.Unregister(biome, tracker);
+    }
+}
+using System.Collections.Generic;
+using UnityEngine;
+
+public struct EnemyInstance
+{
+    public Vector3 position;
+    public Quaternion rotation;
+    public float scale;
+    public Color color;
+}
+
+public class EnemyGPUInstancer : MonoBehaviour
+{
+    public static EnemyGPUInstancer Instance { get; private set; }
+
+    [Header("Batch Settings")]
+    public int batchSize = 1023;
+
+    private readonly Dictionary<Mesh, Dictionary<Material, List<(EnemyInstance inst,
+        UnityEngine.Rendering.ShadowCastingMode castShadows, bool receiveShadows, int layer)>>> _buckets
+        = new();
+
+    private Matrix4x4[] _matrices;
+
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        _matrices = new Matrix4x4[batchSize];
+    }
+
+    public void AddInstance(
+        Mesh mesh,
+        Material mat,
+        EnemyInstance inst,
+        UnityEngine.Rendering.ShadowCastingMode castShadows,
+        bool receiveShadows,
+        int layer)
+    {
+        if (mesh == null || mat == null)
+            return;
+
+        // если материал НЕ поддерживает instancing — просто выходим, без ошибок
+        if (!mat.enableInstancing)
+            return;
+
+        if (!_buckets.TryGetValue(mesh, out var matDict))
+        {
+            matDict = new Dictionary<Material, List<(EnemyInstance, UnityEngine.Rendering.ShadowCastingMode, bool, int)>>();
+            _buckets[mesh] = matDict;
+        }
+
+        if (!matDict.TryGetValue(mat, out var list))
+        {
+            list = new List<(EnemyInstance, UnityEngine.Rendering.ShadowCastingMode, bool, int)>(256);
+            matDict[mat] = list;
+        }
+
+        list.Add((inst, castShadows, receiveShadows, layer));
+    }
+
+    private void LateUpdate()
+    {
+        foreach (var meshKV in _buckets)
+        {
+            Mesh mesh = meshKV.Key;
+            var matDict = meshKV.Value;
+
+            foreach (var matKV in matDict)
+            {
+                Material mat = matKV.Key;
+                var list = matKV.Value;
+
+                if (!mat.enableInstancing)
+                {
+                    list.Clear();
+                    continue;
+                }
+
+                int total = list.Count;
+                int index = 0;
+
+                while (index < total)
+                {
+                    int count = Mathf.Min(batchSize, total - index);
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        var data = list[index + i];
+                        var inst = data.inst;
+                        _matrices[i] = Matrix4x4.TRS(
+                            inst.position,
+                            inst.rotation,
+                            Vector3.one * inst.scale
+                        );
+                    }
+
+                    // для простоты: одинаковые тени/слой внутри одного батча
+                    var first = list[index];
+
+                    Graphics.DrawMeshInstanced(
+                        mesh,
+                        0,
+                        mat,
+                        _matrices,
+                        count,
+                        null,
+                        first.castShadows,
+                        first.receiveShadows,
+                        first.layer
+                    );
+
+                    index += count;
+                }
+
+                list.Clear();
+            }
+        }
+    }
+}
+using System.Collections.Generic;
+using UnityEngine;
+using Features.Enemy.Data;
+using Biomes.UnityIntegration;
+
+public class EnemyInstanceTracker : MonoBehaviour
+{
+    public static readonly List<EnemyInstanceTracker> All = new();
+
+    public EnemyConfigSO config;
+
+    private void OnEnable()
+    {
+        if (!All.Contains(this))
+            All.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        All.Remove(this);
+
+        if (EnemyWorldManager.Instance != null)
+            EnemyWorldManager.Instance.Unregister(this);
+    }
+}
+using UnityEngine;
+using Unity.Entities;
+using Features.Enemy.UnityIntegration;
+
+namespace Features.Enemy.Integration.LOD
+{
+    public class EnemyLogicLODAdapter : MonoBehaviour
+    {
+        private EnemyEcsMoveBridge bridge;
+        private EnemyAttackHandler attack;
+        private EnemyEcsRuntimeBinder binder;
+
+        private Entity entity;
+        private EntityManager em;
+
+        private void Awake()
+        {
+            bridge = GetComponent<EnemyEcsMoveBridge>();
+            attack = GetComponent<EnemyAttackHandler>();
+            binder = GetComponent<EnemyEcsRuntimeBinder>();
+        }
+
+        public void ApplyLOD(int lod)
+        {
+            TryResolveEntity();
+
+            if (em != default && entity != Entity.Null && em.Exists(entity))
+            {
+                if (lod >= 2)
+                {
+                    if (!em.HasComponent<EnemyInactive>(entity))
+                        em.AddComponent<EnemyInactive>(entity);
+                }
+                else
+                {
+                    if (em.HasComponent<EnemyInactive>(entity))
+                        em.RemoveComponent<EnemyInactive>(entity);
+                }
+            }
+
+            if (bridge != null)
+                bridge.enabled = lod < 2;
+
+            if (attack != null)
+                attack.enabled = lod < 2;
+        }
+
+        private void TryResolveEntity()
+        {
+            if (em == default && World.DefaultGameObjectInjectionWorld != null)
+                em = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+            if (em == default || binder == null)
+                return;
+
+            if (entity != Entity.Null && em.Exists(entity))
+                return;
+
+            if (binder.Entity == Entity.Null || !em.Exists(binder.Entity))
+                return;
+
+            entity = binder.Entity;
+        }
+    }
+}
+using UnityEngine;
+using System;
+using Features.Enemy.Data;
+using Features.Stats.Domain;
+using Features.Stats.UnityIntegration;
+using Features.Buffs.Domain;
+using Features.Buffs.Application;
+using FishNet.Object;
+
+namespace Features.Enemy.UnityIntegration
+{
+    [RequireComponent(typeof(EnemyStats))]
+    [RequireComponent(typeof(BuffSystem))]
+    public sealed class EnemyActor :
+        NetworkBehaviour,
+        IBuffTarget
+    {
+        private EnemyStats enemyStats;
+        private BuffSystem buffSystem;
+
+        public event Action OnReady;
+
+        // =====================================================
+        // UNITY
+        // =====================================================
+
+        private void Awake()
+        {
+            enemyStats = GetComponent<EnemyStats>();
+            buffSystem = GetComponent<BuffSystem>();
+        }
+
+        private void Start()
+        {
+            if (IsServer)
+            {
+                if (enemyStats != null && enemyStats.IsReady)
+                    OnReady?.Invoke();
+            }
+            else
+            {
+                // клиент сразу готов (ждёт снапшот)
+                OnReady?.Invoke();
+            }
+        }
+
+        public IStatsFacade GetServerStats()
+        {
+            if (enemyStats == null || !enemyStats.IsReady)
+                return null;
+
+            return enemyStats.Facade;
+        }
+
+        // =====================================================
+        // IBuffTarget
+        // =====================================================
+
+        public BuffSystem BuffSystem => buffSystem;
+
+        public GameObject GameObject => gameObject;
+
+        public Transform Transform => transform;
+
+        public bool IsReady =>
+            IsServer
+                ? (enemyStats != null && enemyStats.IsReady)
+                : true;
+
+        public IBuffSource OwnerSource => null; // у врага нет владельца
+    }
+}
+using FishNet.Object;
+using UnityEngine;
+
+public class EnemyNetworkSync : NetworkBehaviour
+{
+    private Vector3 targetPos;
+    private Quaternion targetRot;
+
+    [SerializeField] private float lerpRate = 15f;
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        targetPos = transform.position;
+        targetRot = transform.rotation;
+    }
+
+    private void Update()
+    {
+        if (IsServer) return;
+
+        transform.position = Vector3.Lerp(
+            transform.position,
+            targetPos,
+            lerpRate * Time.deltaTime
+        );
+
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRot,
+            lerpRate * Time.deltaTime
+        );
+    }
+
+    private void FixedUpdate()
+    {
+        if (IsServer)
+        {
+            SendStateObserversRpc(transform.position, transform.rotation);
+        }
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void SendStateObserversRpc(Vector3 pos, Quaternion rot)
+    {
+        if (IsServer) return;
+
+        targetPos = pos;
+        targetRot = rot;
+    }
+}
+using Features.Camera.UnityIntegration;
+using Features.Stats.Adapter;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Features.Enemy
+{
+    [RequireComponent(typeof(Canvas))]
+    public sealed class EnemyHealthBarUI : MonoBehaviour
+    {
+        [Header("UI")]
+        [SerializeField] private Image fillImage;
+
+        [Header("Target")]
+        [SerializeField] private HealthStatsAdapter target;
+        [SerializeField] private Transform headAnchor;
+
+        private Canvas canvas;
+        private UnityEngine.Camera cam;
+
+        // =====================================================
+        // UNITY
+        // =====================================================
+
+        private void Awake()
+        {
+            canvas = GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+        }
+
+        private void OnEnable()
+        {
+            // Камера
+            if (CameraRegistry.Instance != null)
+            {
+                CameraRegistry.Instance.OnCameraChanged += HandleCameraChanged;
+
+                if (CameraRegistry.Instance.CurrentCamera != null)
+                    HandleCameraChanged(CameraRegistry.Instance.CurrentCamera);
+            }
+
+            // Target
+            if (target == null)
+                target = GetComponentInParent<HealthStatsAdapter>();
+
+            if (target != null)
+                target.OnHealthChanged += OnHealthChanged;
+        }
+
+        private void OnDisable()
+        {
+            if (CameraRegistry.Instance != null)
+                CameraRegistry.Instance.OnCameraChanged -= HandleCameraChanged;
+
+            if (target != null)
+                target.OnHealthChanged -= OnHealthChanged;
+        }
+
+        private void Start()
+        {
+            if (fillImage == null)
+            {
+                Debug.LogError("[EnemyHealthBarUI] FillImage missing", this);
+                enabled = false;
+                return;
+            }
+
+            if (target == null)
+            {
+                Debug.LogError("[EnemyHealthBarUI] HealthStatsAdapter not found", this);
+                enabled = false;
+                return;
+            }
+
+            if (target.IsReady)
+                OnHealthChanged(target.CurrentHp, target.MaxHp);
+        }
+
+        private void LateUpdate()
+        {
+            if (cam == null || headAnchor == null)
+                return;
+
+            transform.position = headAnchor.position;
+            transform.LookAt(cam.transform);
+        }
+
+        // =====================================================
+        // EVENT
+        // =====================================================
+
+        private void OnHealthChanged(float hp, float maxHp)
+        {
+            float fill = maxHp > 0f ? hp / maxHp : 0f;
+            fillImage.fillAmount = fill;
+
+            if (hp <= 0f)
+                Invoke(nameof(Hide), 1f);
+        }
+
+        // =====================================================
+        // HELPERS
+        // =====================================================
+
+        private void Hide()
+        {
+            gameObject.SetActive(false);
+        }
+
+        private void HandleCameraChanged(UnityEngine.Camera newCam)
+        {
+            cam = newCam;
+            canvas.worldCamera = cam;
+        }
+    }
+}using UnityEngine;
+using Unity.Entities;
+using FishNet.Object;
+using Features.Enemy.Presentation.LOD;
+
+public sealed class EnemyVisualController : NetworkBehaviour
+{
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int AttackHash = Animator.StringToHash("Attack");
+
+    public Animator animator;
+
+    private Entity entity;
+    private EntityManager em;
+
+    private EnemyAttackHandler attackHandler;
+    private EnemyLODView lodView;
+
+    private Vector3 lastPos;
+
+    private void Awake()
+    {
+        attackHandler = GetComponent<EnemyAttackHandler>();
+        lodView = GetComponent<EnemyLODView>();
+
+        em = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+        if (lodView != null)
+            lodView.OnModelChanged += OnModelChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (lodView != null)
+            lodView.OnModelChanged -= OnModelChanged;
+    }
+
+    // =========================================================
+    private void OnModelChanged(GameObject model)
+    {
+        if (model == null)
+            return;
+
+        animator = model.GetComponentInChildren<Animator>();
+
+        if (animator != null)
+            animator.applyRootMotion = false;
+    }
+
+    // =========================================================
+    private void Update()
+    {
+        if (animator == null)
+            return;
+
+        if (entity == Entity.Null || !em.Exists(entity))
+        {
+            var binder = GetComponent<EnemyEcsRuntimeBinder>();
+
+            if (binder != null && binder.Entity != Entity.Null && em.Exists(binder.Entity))
+                entity = binder.Entity;
+
+            return;
+        }
+
+        if (!em.HasComponent<EnemyAttackState>(entity))
+            return;
+
+        var attackState = em.GetComponentData<EnemyAttackState>(entity);
+
+        // ===== SPEED =====
+        float speed = (transform.position - lastPos).magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+        animator.SetFloat(SpeedHash, speed);
+
+        // ===== ATTACK =====
+        if (attackState.DoAttack)
+        {
+            attackState.DoAttack = false;
+            em.SetComponentData(entity, attackState);
+
+            PlayAttackRpc();
+
+            if (IsServer)
+                attackHandler?.TriggerAttack();
+        }
+
+        lastPos = transform.position;
+    }
+
+    // =========================================================
+    [ObserversRpc]
+    private void PlayAttackRpc()
+    {
+        if (animator != null)
+            animator.SetTrigger(AttackHash);
+    }
+}
+using UnityEngine;
+using Features.Player.UnityIntegration;
+using Features.Enemy.Data;
+using Features.Enemy.Integration.LOD;
+using Biomes.Application;
+
+namespace Features.Enemy.Presentation.LOD
+{
+    [RequireComponent(typeof(EnemyLODView))]
+    public class EnemyDistanceLODSystem : MonoBehaviour
+    {
+        [SerializeField] private EnemyConfigSO config;
+
+        private EnemyLODView view;
+        private EnemyInstancingController instancing;
+        private EnemyLogicLODAdapter logic;
+
+        private int currentLOD = -1;
+
+        private float nextUpdate;
+        private const float Interval = 0.08f;
+        public bool OffLod = false;
+
+        private void Awake()
+        {
+            view = GetComponent<EnemyLODView>();
+            instancing = GetComponent<EnemyInstancingController>();
+            logic = GetComponent<EnemyLogicLODAdapter>();
+
+            if (config != null)
+            {
+                view.Init(
+                    config.render.lod0Prefab,
+                    config.render.lod1Prefab,
+                    config.render.lod2Prefab
+                );
+
+                view.SetLOD(0);
+                currentLOD = 0;
+            }
+        }
+
+        public void SetConfig(EnemyConfigSO cfg)
+        {
+            config = cfg;
+
+            if (view == null)
+                view = GetComponent<EnemyLODView>();
+
+            if (config != null)
+            {
+                view.Init(
+                    config.render.lod0Prefab,
+                    config.render.lod1Prefab,
+                    config.render.lod2Prefab
+                );
+            }
+
+            enabled = HasValidLODConfig();
+        }
+
+        private bool HasValidLODConfig()
+        {
+            return config != null &&
+                config.render.lod0Prefab != null &&
+                config.render.lod1Prefab != null &&
+                config.render.lod2Prefab != null &&
+                !OffLod;
+        }
+
+        private void Update()
+        {
+            if (config == null) return;
+            if (Time.time < nextUpdate) return;
+            if (!HasValidLODConfig())
+                return;
+
+            nextUpdate = Time.time + Interval;
+
+            var player = PlayerRegistry.Instance?.LocalPlayer;
+            if (player == null) return;
+
+            float dist = Vector3.Distance(player.transform.position, transform.position);
+            float lodScale = EnemyPerformanceManager.Instance != null
+                ? Mathf.Max(0.25f, EnemyPerformanceManager.Instance.LodScale)
+                : 1f;
+
+            float lod0Distance = config.render.lod0Distance * lodScale;
+            float lod1Distance = config.render.lod1Distance * lodScale;
+            float instancingDistance = config.render.instancingDistance * lodScale;
+
+            bool useInstancing =
+                config.render.useGPUInstancing &&
+                dist > instancingDistance;
+
+            if (useInstancing)
+            {
+                instancing?.EnableInstancing();
+                return;
+            }
+
+            instancing?.DisableInstancing();
+
+            int lod =
+                dist <= lod0Distance ? 0 :
+                dist <= lod1Distance ? 1 : 2;
+
+            if (lod == currentLOD)
+                return;
+
+            currentLOD = lod;
+
+            view.SetLOD(lod);
+            logic?.ApplyLOD(lod);
+        }
+    }
+}
+using UnityEngine;
+
+namespace Features.Enemy.Presentation.LOD
+{
+    [RequireComponent(typeof(EnemyLODView))]
+    public class EnemyInstancingController : MonoBehaviour
+    {
+        private bool active;
+
+        private EnemyLODView view;
+
+        private Mesh mesh;
+        private Material mat;
+
+        private void Awake()
+        {
+            view = GetComponent<EnemyLODView>();
+        }
+
+        // =========================================================
+        // PUBLIC API
+        // =========================================================
+
+        public void EnableInstancing()
+        {
+            if (active) return;
+            active = true;
+
+            // выключаем все LOD объекты
+            for (int i = 0; i < 3; i++)
+            {
+                var obj = view.GetLODObject(i);
+                if (obj != null)
+                    obj.SetActive(false);
+            }
+        }
+
+        public void DisableInstancing()
+        {
+            if (!active) return;
+            active = false;
+
+            var lod0 = view.GetLODObject(0);
+            if (lod0 != null)
+                lod0.SetActive(true);
+                
+            mesh = null;
+            mat = null;
+        }
+
+        // =========================================================
+        // RENDER
+        // =========================================================
+
+        private void LateUpdate()
+        {
+            if (!active) return;
+
+            // если ещё не получили mesh/material — пробуем
+            if (mesh == null || mat == null)
+            {
+                if (!TryResolveMesh())
+                    return;
+            }
+
+            if (mesh == null || mat == null)
+                return;
+
+            // ❗ instancing должен быть включен в материале
+            if (!mat.enableInstancing)
+                return;
+
+            EnemyGPUInstancer.Instance?.AddInstance(
+                mesh,
+                mat,
+                new EnemyInstance
+                {
+                    position = transform.position,
+                    rotation = transform.rotation,
+                    scale = transform.lossyScale.x,
+                    color = Color.white
+                },
+                UnityEngine.Rendering.ShadowCastingMode.On,
+                true,
+                gameObject.layer
+            );
+        }
+
+        // =========================================================
+        // INTERNAL
+        // =========================================================
+
+        private bool TryResolveMesh()
+        {
+            var obj = view.GetLODObject(2); // LOD2 = instancing
+            if (obj == null)
+                return false;
+
+            var renderer = obj.GetComponentInChildren<Renderer>();
+            if (renderer == null)
+                return false;
+
+            // ===== MeshRenderer (обычный меш)
+            if (renderer is MeshRenderer)
+            {
+                var mf = renderer.GetComponent<MeshFilter>();
+                if (mf == null || mf.sharedMesh == null)
+                {
+                    Debug.LogWarning("[Instancing] MeshFilter missing on LOD2", this);
+                    return false;
+                }
+
+                mesh = mf.sharedMesh;
+            }
+            // ===== SkinnedMeshRenderer (fallback)
+            else if (renderer is SkinnedMeshRenderer skinned)
+            {
+                if (skinned.sharedMesh == null)
+                {
+                    Debug.LogWarning("[Instancing] Skinned mesh is null", this);
+                    return false;
+                }
+
+                mesh = skinned.sharedMesh;
+            }
+            else
+            {
+                Debug.LogWarning("[Instancing] Unsupported renderer type", this);
+                return false;
+            }
+
+            mat = renderer.sharedMaterial;
+
+            if (mesh == null || mat == null)
+            {
+                Debug.LogWarning("[Instancing] Failed to resolve mesh/material", this);
+                return false;
+            }
+
+            return true;
+        }
+    }
+}
+using UnityEngine;
+using System;
+
+namespace Features.Enemy.Presentation.LOD
+{
+    public class EnemyLODView : MonoBehaviour
+    {
+        [SerializeField] private Transform anchor;
+        [SerializeField] private GameObject[] lodPrefabs;
+
+        private GameObject[] instances;
+        private Animator animator;
+
+        public event Action<GameObject> OnModelChanged;
+
+        private void Awake()
+        {
+            if (anchor == null)
+            {
+                anchor = new GameObject("Anchor").transform;
+                anchor.SetParent(transform);
+                anchor.localPosition = Vector3.zero;
+                anchor.localRotation = Quaternion.identity;
+            }
+        }
+
+        public void Init(GameObject lod0, GameObject lod1, GameObject lod2)
+        {
+            if (lod0 == null || lod1 == null || lod2 == null)
+            {
+                Debug.LogWarning("[LOD] Invalid config, disabling LOD", this);
+                enabled = false;
+                return;
+            }
+
+            lodPrefabs = new[] { lod0, lod1, lod2 };
+
+            instances = new GameObject[lodPrefabs.Length];
+
+            for (int i = 0; i < lodPrefabs.Length; i++)
+            {
+                instances[i] = Instantiate(lodPrefabs[i], anchor);
+                instances[i].SetActive(false);
+            }
+        }
+
+        public void SetLOD(int lod)
+        {
+            if (instances == null || instances.Length == 0)
+            {
+                Debug.LogError("[LOD] No instances!", this);
+                return;
+            }
+
+            lod = Mathf.Clamp(lod, 0, instances.Length - 1);
+
+            for (int i = 0; i < instances.Length; i++)
+                instances[i].SetActive(i == lod);
+            
+            if (!instances[lod].activeSelf)
+                instances[lod].SetActive(true);
+
+            var obj = instances[lod];
+
+            if (obj == null)
+            {
+                Debug.LogError($"[LOD] Instance {lod} is null", this);
+                return;
+            }
+
+            animator = obj.GetComponentInChildren<Animator>();
+
+            OnModelChanged?.Invoke(obj);
+        }
+
+        public Animator GetAnimator() => animator;
+
+        public GameObject GetLODObject(int lod) => instances[lod];
+    }
+}

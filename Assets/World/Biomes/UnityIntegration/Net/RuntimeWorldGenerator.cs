@@ -45,6 +45,7 @@ namespace Biomes.UnityIntegration
         public override void OnStartServer()
         {
             base.OnStartServer();
+            ResetRuntimeState(clearManagers: false);
             StartCoroutine(ServerFlow());
         }
 
@@ -70,6 +71,7 @@ namespace Biomes.UnityIntegration
                 return;
             }
 
+            ResetRuntimeState(clearManagers: false);
             StartCoroutine(ClientFlow());
         }
 
@@ -117,6 +119,7 @@ namespace Biomes.UnityIntegration
         private void OnDestroy()
         {
             PlayerRegistry.UnsubscribeLocalPlayerReady(OnLocalPlayerReady);
+            ResetRuntimeState(clearManagers: true);
         }
 
         private IEnumerator WaitForWorldProvider()
@@ -339,6 +342,31 @@ namespace Biomes.UnityIntegration
             }
 
             return null;
+        }
+
+        private void ResetRuntimeState(bool clearManagers)
+        {
+            if (clearManagers)
+            {
+                serverManager?.ClearAll();
+                clientManager?.ClearAll();
+            }
+
+            serverManager = null;
+            clientManager = null;
+            trackedPlayer = null;
+            worldProvider = null;
+            customPrefabSpawned = false;
+            serverStreamingTargets.Clear();
+
+            World = null;
+
+            ChunkedGameObjectStorage.ClearAll();
+            BiomeRuntimeDatabase.Dispose();
+            EnemyBiomeCounter.ClearAll();
+            EnemyWorldManager.Instance?.ClearRuntimeState();
+            ChunkedInstanceLODSystem.Instance?.ClearRuntimeState();
+            InstancedSpawnerSystem.Instance?.ClearRuntimeState();
         }
     }
 }

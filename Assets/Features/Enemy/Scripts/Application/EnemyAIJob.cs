@@ -12,6 +12,7 @@ public partial struct EnemyAIJob : IJobEntity
 
     [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
     [ReadOnly] public ComponentLookup<PlayerTag> PlayerTagLookup;
+    [ReadOnly] public ComponentLookup<PlayerDead> deadLookup;
 
     void Execute(
         ref EnemyState aiState,
@@ -39,8 +40,8 @@ public partial struct EnemyAIJob : IJobEntity
         float3 playerPos = default;
 
         if (enemyTarget.Value != Entity.Null &&
-            TransformLookup.HasComponent(enemyTarget.Value) &&
-            PlayerTagLookup.HasComponent(enemyTarget.Value))
+            TransformLookup.HasComponent(enemyTarget.Value)
+            && !deadLookup.HasComponent(enemyTarget.Value))
         {
             hasTarget = true;
             playerPos = TransformLookup[enemyTarget.Value].Position;
@@ -163,6 +164,7 @@ public partial struct EnemyAIJob : IJobEntity
                 aiState.Value = EnemyAIState.Return;
                 attackState.DoAttack = false;
                 attackState.Timer = 0f;
+                attackState.Cooldown = 0f;
                 return;
             }
 

@@ -29,10 +29,17 @@ namespace Biomes.UnityIntegration
         private readonly Dictionary<int, Material[]> _matCache = new();
         private readonly Dictionary<int, Matrix4x4> _localMatrixCache = new();
         private readonly Dictionary<int, Vector3> _rootScaleCache = new();
+        private readonly Dictionary<int, float> _groundOffsetCache = new();
         private readonly Dictionary<int, Material> _ownedInstancedMaterials = new();
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
@@ -91,7 +98,8 @@ namespace Biomes.UnityIntegration
                         out Mesh mesh,
                         out Material[] mats,
                         out Matrix4x4 localMatrix,
-                        out Vector3 rootScale))
+                        out Vector3 rootScale,
+                        out float groundOffset))
                     continue;
 
                 var mat = (mats != null && mats.Length > 0) ? mats[0] : null;
@@ -112,10 +120,13 @@ namespace Biomes.UnityIntegration
                         ? Quaternion.FromToRotation(Vector3.up, inst.normal)
                         : Quaternion.identity;
 
+                    Vector3 finalScale = Vector3.Scale(rootScale, Vector3.one * inst.scale);
+                    Vector3 renderPos = inst.position + (rot * Vector3.up) * (-groundOffset * finalScale.y);
+
                     Matrix4x4 rootMatrix = Matrix4x4.TRS(
-                        inst.position,
+                        renderPos,
                         rot,
-                        Vector3.Scale(rootScale, Vector3.one * inst.scale)
+                        finalScale
                     );
                     Matrix4x4 m = rootMatrix * localMatrix;
 
@@ -170,12 +181,14 @@ namespace Biomes.UnityIntegration
             out Mesh mesh,
             out Material[] mats,
             out Matrix4x4 localMatrix,
-            out Vector3 rootScale)
+            out Vector3 rootScale,
+            out float groundOffset)
         {
             if (_meshCache.TryGetValue(id, out mesh) &&
                 _matCache.TryGetValue(id, out mats) &&
                 _localMatrixCache.TryGetValue(id, out localMatrix) &&
-                _rootScaleCache.TryGetValue(id, out rootScale))
+                _rootScaleCache.TryGetValue(id, out rootScale) &&
+                _groundOffsetCache.TryGetValue(id, out groundOffset))
                 return true;
 
             if (InstanceRegistry.TryGetInstancedRenderData(
@@ -183,7 +196,8 @@ namespace Biomes.UnityIntegration
                     out mesh,
                     out mats,
                     out localMatrix,
-                    out rootScale))
+                    out rootScale,
+                    out groundOffset))
             {
                 var mat = (mats != null && mats.Length > 0) ? mats[0] : null;
                 var ensured = EnsureInstancedMaterial(id, mat);
@@ -193,11 +207,13 @@ namespace Biomes.UnityIntegration
                 _matCache[id] = mats;
                 _localMatrixCache[id] = localMatrix;
                 _rootScaleCache[id] = rootScale;
+                _groundOffsetCache[id] = groundOffset;
                 return true;
             }
 
             localMatrix = Matrix4x4.identity;
             rootScale = Vector3.one;
+            groundOffset = 0f;
             return false;
         }
 
@@ -224,6 +240,22 @@ namespace Biomes.UnityIntegration
                 $"Created instanced copy '{instanced.name}'.");
 
             return instanced;
+        }
+
+        public void ClearRuntimeState()
+        {
+            foreach (var kv in _ownedInstancedMaterials)
+            {
+                if (kv.Value != null)
+                    Destroy(kv.Value);
+            }
+
+            _ownedInstancedMaterials.Clear();
+            _meshCache.Clear();
+            _matCache.Clear();
+            _localMatrixCache.Clear();
+            _rootScaleCache.Clear();
+            _groundOffsetCache.Clear();
         }
     }
 }
