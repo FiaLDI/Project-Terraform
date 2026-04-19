@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DefaultPrefabObjects
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Managing.Object.DefaultPrefabObjects
   _prefabs:
+  - {fileID: 6311823513652316802, guid: 183439e94ff5e2b47ba4afbf933a7f53, type: 3}
   - {fileID: 7718143006086609763, guid: 0a4ac0ffeaf8fa3428b08ae2abe9c4fa, type: 3}
   - {fileID: 4728381325381486342, guid: ef926a9d8b8d277429a27e39b80fd891, type: 3}
   - {fileID: 7688760262762765644, guid: 16dbbc4255edc3047a8473829f9d07ae, type: 3}
@@ -24,7 +25,6 @@ MonoBehaviour:
   - {fileID: 6493021074193023021, guid: c74fa15d9f2f5bc4086469124c5a058c, type: 3}
   - {fileID: 8530069077275815002, guid: bfadffa03237966499d95fb886e5523d, type: 3}
   - {fileID: 3238053155987908212, guid: be6e72fcfdb963e4ca65277fbd550c07, type: 3}
-  - {fileID: 6123895787757850465, guid: 08e53e380611a644e8b89fd0f25f787f, type: 3}
   - {fileID: 2882224313153694913, guid: 04178389ab887ad4a9dd2dfcd2b0160b, type: 3}
   - {fileID: 6055935766141965224, guid: 947621783752f0a41822c6773055d624, type: 3}
   - {fileID: 7509231539837928143, guid: de2bd9ba3719fac48b8cfe90b3fb8aa1, type: 3}
@@ -35,10 +35,10 @@ MonoBehaviour:
   - {fileID: 6411755174998683069, guid: c85416abe625f114a8e7bcaaee3b48e6, type: 3}
   - {fileID: 570478251995708191, guid: c60a8f2ce1f159e449345186e7525e36, type: 3}
   - {fileID: 7348829560662059472, guid: 95054df61e4e5f94dadbb76e2c0d4227, type: 3}
-  - {fileID: 6311823513652316802, guid: 183439e94ff5e2b47ba4afbf933a7f53, type: 3}
   - {fileID: 7281519894632746162, guid: 5ecd79518866a664194b6b727d51d4c6, type: 3}
   - {fileID: 5928809208972985904, guid: f98c2f15af069a04b8ffe0ee9c6a8f59, type: 3}
   - {fileID: 1581520994249745498, guid: 04002336f2ed94d4195783f082b21383, type: 3}
   - {fileID: 1211870844886773830, guid: d46dd5c2f3b343840bd691582e0c05db, type: 3}
+  - {fileID: 6123895787757850465, guid: 08e53e380611a644e8b89fd0f25f787f, type: 3}
   - {fileID: 5495814805613166294, guid: e642c8d4f93759844a71048a2f64ff8c, type: 3}
   - {fileID: 1995209839685572857, guid: 1a264c8b09d311049b9443265c5077b5, type: 3}

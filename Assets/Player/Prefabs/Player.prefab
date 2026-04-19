@@ -461,7 +461,9 @@ MonoBehaviour:
   spawnInterval: 0.4
   spawnRadiusMin: 15
   spawnRadiusMax: 35
+  despawnDistance: 80
   maxPerPlayer: 12
+  maxPerBiome: 24
   maxGlobal: 120
 --- !u!114 &2556438216558507215
 MonoBehaviour:
@@ -641,6 +643,7 @@ MonoBehaviour:
   unifiedStatsUpdateSystem: {fileID: 0}
   playerCameraController: {fileID: 0}
   respawnDelay: 4
+  aiSpawnProtectionDuration: 2.5
 --- !u!114 &6311823513652316802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -700,7 +703,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584251095129409074
+  _initializedTimestamp: -8584250254089262212
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -715,9 +718,9 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 23
+  <PrefabId>k__BackingField: 22
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 14987090137305175387
+  <AssetPathHash>k__BackingField: 586967149677953548
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 5.198681, y: 0.50000095, z: -1.1699247}
