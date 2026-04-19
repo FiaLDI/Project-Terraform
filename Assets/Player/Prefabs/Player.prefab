@@ -557,8 +557,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerVisualController
   visualLibrary: {fileID: 11400000, guid: 92992d9b3b0baee4aac268ab4ac09620, type: 2}
   modelRoot: {fileID: 5017748270277261448}
-  deathBurstLifetime: 3
-  deathBurstForce: 4.5
+  deathBurstLifetime: 6
+  deathBurstForce: 2.5
   deathBurstUpwardForce: 1.5
   deathBurstInheritedVelocityFactor: 0.35
   deathBurstRandomTorque: 12
@@ -703,7 +703,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584250254089262212
+  _initializedTimestamp: -8584250187386066075
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -718,7 +718,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 22
+  <PrefabId>k__BackingField: 0
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 586967149677953548
   SceneId: 0
