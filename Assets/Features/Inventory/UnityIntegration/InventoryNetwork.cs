@@ -4,37 +4,74 @@ using UnityEngine;
 
 public class InventoryNetwork : NetworkBehaviour
 {
-    private InventoryManager inventory;
+    private bool sent;
 
-    private void Awake()
+    public void SendInitialInventoryToServer()
     {
-        inventory = GetComponent<InventoryManager>();
-    }
-
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-
-        if (!IsOwner)
+        if (!IsOwner || sent)
             return;
 
         var progress = PlayerProgressService.Instance;
-        var character = progress?.GetActiveCharacter();
-
-        if (character?.characterInventoryData != null)
+        if (progress == null)
         {
-            SendInventoryToServer(character.characterInventoryData);
+            Debug.LogWarning("[Inventory] No progress service yet");
+            return;
         }
+
+        var character = progress.GetActiveCharacter();
+        var data = character?.characterInventoryData;
+
+        if (data == null)
+        {
+            Debug.LogWarning("[Inventory] No save data");
+            return;
+        }
+
+        sent = true;
+
+        Debug.Log("[Inventory] Sending initial inventory to server");
+
+        SendInventoryToServer(data);
     }
 
     [ServerRpc]
     private void SendInventoryToServer(InventorySaveData data)
     {
-        if (inventory == null)
-            inventory = GetComponent<InventoryManager>();
+        var state = GetComponent<InventoryStateNetwork>();
+        if (state == null)
+            return;
 
-        inventory.LoadFromSave(data);
+        if (data == null)
+        {
+            Debug.LogWarning("[Inventory] NULL data ignored");
+            return;
+        }
 
-        GetComponent<InventoryStateNetwork>()?.ForceSync();
+        // 🔥 FIX: безопасная проверка
+        bool isEmpty =
+            (data.bag == null || data.bag.Count == 0) &&
+            data.leftHand == null &&
+            data.rightHand == null;
+
+        if (isEmpty)
+        {
+            Debug.LogWarning("[Inventory] Empty initial data ignored");
+            return;
+        }
+
+        var root = ServerCompositionRoot.I;
+        var session = root?.Sessions?.GetSessionByClient(Owner.ClientId);
+
+        if (session == null)
+            return;
+
+        // 🔥 источник истины = session
+        if (!session.HasInventory)
+        {
+            session.SetInventory(data);
+        }
+
+        // 🔥 применяем напрямую
+        state.ApplyInitialInventory(data);
     }
 }

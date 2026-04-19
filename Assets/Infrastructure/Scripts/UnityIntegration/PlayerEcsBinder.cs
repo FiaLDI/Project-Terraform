@@ -17,19 +17,27 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
         base.OnStartServer();
 
         netId = Owner.ClientId;
-        Init();
+        InitOrReuse();
     }
 
-    private void Init()
+    private void InitOrReuse()
     {
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null) return;
 
         em = world.EntityManager;
 
-        if (entity != Entity.Null && em.Exists(entity))
-            return;
+        // 🔥 ПЫТАЕМСЯ ПЕРЕИСПОЛЬЗОВАТЬ
+        if (PlayerRegistryECS.TryGet(netId, out var existing))
+        {
+            if (em.Exists(existing))
+            {
+                entity = existing;
+                return;
+            }
+        }
 
+        // 🔥 СОЗДАЕМ НОВЫЙ
         entity = em.CreateEntity(
             typeof(LocalTransform),
             typeof(PlayerTag)
@@ -50,10 +58,7 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
         if (em == default) return;
 
         if (entity == Entity.Null || !em.Exists(entity))
-        {
-            Init();
             return;
-        }
 
         em.SetComponentData(entity,
             LocalTransform.FromPositionRotation(
@@ -66,9 +71,10 @@ public sealed class PlayerEcsBinder : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        if (em != default && em.Exists(entity))
-            em.DestroyEntity(entity);
+        // ❌ НЕ УДАЛЯЕМ ENTITY
+        // ❌ НЕ ДЕЛАЕМ Unregister
 
-        PlayerRegistryECS.Unregister(netId);
+        // только лог
+        // Debug.Log("[ECS] Binder destroyed but entity kept");
     }
 }

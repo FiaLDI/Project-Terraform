@@ -1,22 +1,23 @@
-﻿using FishNet.Object;
+﻿using System.Collections;
+using FishNet.Object;
 using FishNet.Connection;
 using UnityEngine;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
 using Features.Items.Domain;
-using System.Collections;
-using Features.Equipment.UnityIntegration;
 using Features.Items.Data;
+using Features.Equipment.UnityIntegration;
+using Multiplayer.Domain;
 
 public sealed class InventoryStateNetwork : NetworkBehaviour
 {
     private InventoryManager inventory;
+
     private bool syncing;
-    private int applyCount;
+    private bool requestedInitial;
+    private bool initialized;
 
     private InventoryCommandRouter router;
-
-    private const string LOG = "[Inventory]";
 
     // ======================================================
     // LIFECYCLE
@@ -40,41 +41,18 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
 
         BuildPipelines();
 
-        StartCoroutine(InitialSnapshotRoutine());
-    }
+        var root = ServerCompositionRoot.I;
+        var session = root?.Sessions?.GetSessionByClient(Owner.ClientId);
 
-    private void BuildPipelines()
-    {
-        router = new InventoryCommandRouter();
-
-        // ========= COMMON =========
-        InventoryCommandPipeline CreateBase(System.Action<InventoryCommandContext> handler)
+        // 🔥 ГЛАВНЫЙ FIX
+        if (session != null && session.HasInventory)
         {
-            var p = new InventoryCommandPipeline();
-
-            p.Add(new InventoryLoggingMiddleware());
-            p.Add(new InventoryValidationMiddleware());
-            p.Add(new InventoryRateLimitMiddleware());
-
-            p.Add(new InventoryCommandHandlerMiddleware(handler));
-
-            return p;
+            ApplyInventoryFromSession(session);
+            initialized = true; // ❗ важно
+            return;
         }
 
-        // ========= REGISTER =========
-        router.Register(InventoryCommand.PickupWorldItem, CreateBase(ctx => HandlePickup(ctx.Command)));
-        router.Register(InventoryCommand.MoveItem,        CreateBase(ctx => HandleMove(ctx.Command)));
-        router.Register(InventoryCommand.DropFromSlot,    CreateBase(ctx => HandleDrop(ctx.Command)));
-        router.Register(InventoryCommand.UpgradeItem,     CreateBase(ctx => HandleUpgrade(ctx.Command)));
-        router.Register(InventoryCommand.CraftRecipe,     CreateBase(ctx => HandleCraft(ctx.Command)));
-        router.Register(InventoryCommand.GiveReward,      CreateBase(ctx => HandleGiveReward(ctx.Command)));
-    }
-
-    [Server]
-    private IEnumerator InitialSnapshotRoutine()
-    {
-        yield return null;
-        ServerOnInventoryChanged();
+        StartCoroutine(InitialRequestRoutine());
     }
 
     public override void OnStopServer()
@@ -97,12 +75,106 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     }
 
     // ======================================================
+    // INITIAL SYNC
+    // ======================================================
+
+    private IEnumerator InitialRequestRoutine()
+    {
+        yield return null;
+
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (!initialized && elapsed < timeout)
+        {
+            if (!requestedInitial && Owner != null)
+            {
+                TargetRequestInitialInventory(Owner);
+                requestedInitial = true;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // fallback
+        if (!initialized)
+        {
+            Debug.LogWarning("[Inventory] No initial data received, fallback sync");
+            ServerOnInventoryChanged();
+        }
+    }
+
+    [TargetRpc]
+    private void TargetRequestInitialInventory(NetworkConnection conn)
+    {
+        var net = GetComponent<InventoryNetwork>();
+        net?.SendInitialInventoryToServer();
+    }
+
+    // ======================================================
+    // APPLY
+    // ======================================================
+
+    [Server]
+    public void ApplyInitialInventory(InventorySaveData data)
+    {
+        // 🔥 FIX — защита от перезаписи
+        if (initialized)
+            return;
+
+        if (inventory == null)
+            inventory = GetComponent<InventoryManager>();
+
+        if (inventory == null)
+            return;
+
+        if (data == null)
+            return;
+
+        inventory.LoadFromSave(data);
+
+        initialized = true;
+
+        ServerOnInventoryChanged();
+    }
+
+    [Server]
+    public void ApplyInventoryFromSession(PlayerSession session)
+    {
+        if (initialized) // 🔥 КЛЮЧЕВОЙ FIX
+            return;
+
+        if (session == null)
+            return;
+
+        var data = session.InventoryData;
+        if (data == null)
+            return;
+
+        if (inventory == null)
+            inventory = GetComponent<InventoryManager>();
+
+        if (inventory == null)
+            return;
+
+        inventory.LoadFromSave(data);
+
+        initialized = true;
+
+        ServerOnInventoryChanged();
+    }
+
+    // ======================================================
     // COMMAND ENTRY
     // ======================================================
 
     [ServerRpc(RequireOwnership = true)]
     public void RequestInventoryCommand(InventoryCommandData cmd)
     {
+        if (inventory == null || router == null)
+            return;
+
         var ctx = new InventoryCommandContext
         {
             Command = cmd,
@@ -121,7 +193,7 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     }
 
     // ======================================================
-    // SERVER → CLIENT SYNC
+    // SYNC
     // ======================================================
 
     [Server]
@@ -134,17 +206,27 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
 
         try
         {
+            var root = ServerCompositionRoot.I;
+            var session = root?.Sessions?.GetSessionByClient(Owner.ClientId);
+
+            // 🔥 СОХРАНЕНИЕ В SESSION
+            if (session != null)
+            {
+                session.SetInventory(inventory.BuildSaveData());
+            }
+
             var m = inventory.Model;
 
-            var owner = Owner;
-            if (owner != null)
+            if (Owner != null)
             {
                 var bag = new InventorySlotNet[m.main.Count];
 
                 for (int i = 0; i < m.main.Count; i++)
                     bag[i] = ToNet(m.main[i].item);
 
-                TargetReceiveInventoryState(owner, bag,
+                TargetReceiveInventoryState(
+                    Owner,
+                    bag,
                     ToNet(m.leftHand.item),
                     ToNet(m.rightHand.item));
             }
@@ -160,7 +242,11 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     }
 
     [TargetRpc]
-    private void TargetReceiveInventoryState(NetworkConnection _, InventorySlotNet[] bag, InventorySlotNet left, InventorySlotNet right)
+    private void TargetReceiveInventoryState(
+        NetworkConnection _,
+        InventorySlotNet[] bag,
+        InventorySlotNet left,
+        InventorySlotNet right)
     {
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
@@ -173,7 +259,6 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         try
         {
             inventory.ApplyNetState(bag, left, right);
-
             GetComponent<EquipmentManager>()?.EquipFromInventory();
         }
         finally
@@ -183,7 +268,9 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     }
 
     [ObserversRpc(BufferLast = true)]
-    private void ObserversReceiveHands(InventorySlotNet left, InventorySlotNet right)
+    private void ObserversReceiveHands(
+        InventorySlotNet left,
+        InventorySlotNet right)
     {
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
@@ -208,14 +295,37 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     // HANDLERS
     // ======================================================
 
+    private void BuildPipelines()
+    {
+        router = new InventoryCommandRouter();
+
+        InventoryCommandPipeline CreateBase(System.Action<InventoryCommandContext> handler)
+        {
+            var p = new InventoryCommandPipeline();
+
+            p.Add(new InventoryLoggingMiddleware());
+            p.Add(new InventoryValidationMiddleware());
+            p.Add(new InventoryRateLimitMiddleware());
+            p.Add(new InventoryCommandHandlerMiddleware(handler));
+
+            return p;
+        }
+
+        router.Register(InventoryCommand.PickupWorldItem, CreateBase(ctx => HandlePickup(ctx.Command)));
+        router.Register(InventoryCommand.MoveItem,        CreateBase(ctx => HandleMove(ctx.Command)));
+        router.Register(InventoryCommand.DropFromSlot,    CreateBase(ctx => HandleDrop(ctx.Command)));
+        router.Register(InventoryCommand.UpgradeItem,     CreateBase(ctx => HandleUpgrade(ctx.Command)));
+        router.Register(InventoryCommand.CraftRecipe,     CreateBase(ctx => HandleCraft(ctx.Command)));
+        router.Register(InventoryCommand.GiveReward,      CreateBase(ctx => HandleGiveReward(ctx.Command)));
+    }
+
     private void HandleGiveReward(InventoryCommandData cmd)
     {
         if (!TryGetItemDef(cmd.RewardItemId, out var def))
             return;
 
         inventory.Service.AddItem(
-            new ItemInstance(def, cmd.RewardAmount, cmd.RewardLevel)
-        );
+            new ItemInstance(def, cmd.RewardAmount, cmd.RewardLevel));
     }
 
     private void HandleMove(InventoryCommandData cmd)
@@ -256,17 +366,11 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     {
         if (!NetworkManager.ServerManager.Objects.Spawned
             .TryGetValue((int)cmd.WorldItemNetId, out var netObj))
-        {
-            Debug.LogWarning("[Pickup] WorldItem not found");
             return;
-        }
 
         var worldItem = netObj.GetComponent<WorldItemNetwork>();
         if (worldItem == null)
-        {
-            Debug.LogWarning("[Pickup] No WorldItemNetwork");
             return;
-        }
 
         var def = ItemRegistrySO.Instance?.Get(worldItem.ItemId);
         if (def == null)
@@ -275,11 +379,8 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         var inst = new ItemInstance(def, worldItem.Quantity, worldItem.Level);
 
         if (!inventory.Service.AddItem(inst))
-        {
-            Debug.LogWarning("[Pickup] Inventory full");
             return;
-        }
-        
+
         worldItem.ServerConsume();
     }
 
@@ -334,20 +435,17 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     [Server]
     public void ExecuteCommandServer(InventoryCommandData cmd)
     {
+        if (inventory == null || router == null)
+            return;
+
         var ctx = new InventoryCommandContext
         {
             Command = cmd,
             Inventory = inventory,
-            Sender = Owner, // или null если системный вызов
+            Sender = Owner,
             Owner = this
         };
 
         router.Execute(ctx);
-    }
-
-    [Server]
-    public void ForceSync()
-    {
-        ServerOnInventoryChanged();
     }
 }

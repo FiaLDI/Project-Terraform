@@ -19,17 +19,19 @@ namespace Features.Inventory.UnityIntegration
         public event Action OnInventoryChanged;
         public event Action<ItemInstance> OnItemAddedInstance;
         public event Action OnReady;
-        private bool receivedFirstSync;
 
         [SerializeField] private int bagSize = 12;
 
         private EquipmentManager equipment;
 
-        private float saveTimer;
+        private bool isLoading;
+        private bool receivedFirstSync;
 
         public bool IsReady { get; private set; }
 
-        private bool isLoading;
+        // ======================================================
+        // INIT
+        // ======================================================
 
         private void Awake()
         {
@@ -41,20 +43,6 @@ namespace Features.Inventory.UnityIntegration
 
             IsReady = true;
             OnReady?.Invoke();
-        }
-
-        private void Start()
-        {
-            if (!IsLocalClient())
-                return;
-
-            var progress = PlayerProgressService.Instance;
-            var character = progress?.GetActiveCharacter();
-
-            if (character?.characterInventoryData != null)
-            {
-                LoadFromSave(character.characterInventoryData);
-            }
         }
 
         private void OnDestroy()
@@ -89,66 +77,43 @@ namespace Features.Inventory.UnityIntegration
         private void HandleInventoryChanged()
         {
             OnInventoryChanged?.Invoke();
-
-            if (IsLocalClient() && !isLoading)
-            {
-                SaveInventory();
-            }
-
         }
 
         // ======================================================
-        // SAVE
-        // ======================================================
-
-        private void SaveInventory()
-        {
-            if (!receivedFirstSync)
-                return;
-
-            if (isLoading)
-                return;
-
-            var progress = PlayerProgressService.Instance;
-            if (progress == null) return;
-
-            var character = progress.GetActiveCharacter();
-            if (character == null) return;
-
-            character.characterInventoryData = BuildSaveData();
-            progress.Save();
-        }
-
-        // ======================================================
-        // LOAD
+        // LOAD (FIXED)
         // ======================================================
 
         public void LoadFromSave(InventorySaveData data)
         {
+            // 🔥 КРИТИЧЕСКИЙ ФИКС
+            if (data == null)
+                data = new InventorySaveData();
+
+            if (data.bag == null)
+                data.bag = new List<ItemSaveData>();
+
             isLoading = true;
+
             Model.main.Clear();
 
-            // фиксированный размер
             for (int i = 0; i < bagSize; i++)
                 Model.main.Add(new InventorySlot());
 
-            if (data?.bag != null)
+            for (int i = 0; i < data.bag.Count && i < bagSize; i++)
             {
-                for (int i = 0; i < data.bag.Count && i < bagSize; i++)
-                {
-                    var item = data.bag[i];
-                    var def = ItemRegistrySO.Instance.Get(item.itemId);
+                var item = data.bag[i];
+                if (item == null) continue;
 
-                    if (def != null)
-                    {
-                        Model.main[i].item =
-                            new ItemInstance(def, item.quantity, item.level);
-                    }
+                var def = ItemRegistrySO.Instance?.Get(item.itemId);
+                if (def != null)
+                {
+                    Model.main[i].item =
+                        new ItemInstance(def, item.quantity, item.level);
                 }
             }
 
-            Model.leftHand.item  = FromSave(data?.leftHand);
-            Model.rightHand.item = FromSave(data?.rightHand);
+            Model.leftHand.item  = FromSave(data.leftHand);
+            Model.rightHand.item = FromSave(data.rightHand);
 
             isLoading = false;
 
@@ -160,22 +125,23 @@ namespace Features.Inventory.UnityIntegration
             if (data == null)
                 return ItemInstance.Empty;
 
-            var def = ItemRegistrySO.Instance.Get(data.itemId);
+            var def = ItemRegistrySO.Instance?.Get(data.itemId);
             if (def == null)
                 return ItemInstance.Empty;
 
             return new ItemInstance(def, data.quantity, data.level);
         }
 
+        // ======================================================
+        // BUILD SAVE (использует сервер)
+        // ======================================================
+
         public InventorySaveData BuildSaveData()
         {
             var data = new InventorySaveData();
 
             for (int i = 0; i < Model.main.Count; i++)
-            {
-                var slot = Model.main[i];
-                data.bag.Add(ToSave(slot.item));
-            }
+                data.bag.Add(ToSave(Model.main[i].item));
 
             data.leftHand  = ToSave(Model.leftHand.item);
             data.rightHand = ToSave(Model.rightHand.item);
@@ -223,6 +189,10 @@ namespace Features.Inventory.UnityIntegration
             return Service.GetItemCount(def);
         }
 
+        // ======================================================
+        // NET APPLY
+        // ======================================================
+
         public void ApplyNetState(
             IReadOnlyList<InventorySlotNet> bagNet,
             InventorySlotNet left,
@@ -235,7 +205,6 @@ namespace Features.Inventory.UnityIntegration
             ApplySlot(Model.rightHand, right);
 
             isLoading = false;
-
             receivedFirstSync = true;
 
             OnInventoryChanged?.Invoke();
@@ -249,9 +218,7 @@ namespace Features.Inventory.UnityIntegration
             OnInventoryChanged?.Invoke();
         }
 
-        private void ApplySection(
-            IList<InventorySlot> slots,
-            IReadOnlyList<InventorySlotNet> net)
+        private void ApplySection(IList<InventorySlot> slots, IReadOnlyList<InventorySlotNet> net)
         {
             int count = Mathf.Min(slots.Count, net.Count);
 
@@ -267,14 +234,6 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
-            if (!slot.item.IsEmpty &&
-                slot.item.itemDefinition.id == net.itemId &&
-                slot.item.level == net.level)
-            {
-                slot.item.quantity = net.quantity;
-                return;
-            }
-
             var def = ItemRegistrySO.Instance?.Get(net.itemId);
             if (def == null)
             {
@@ -283,12 +242,6 @@ namespace Features.Inventory.UnityIntegration
             }
 
             slot.item = new ItemInstance(def, net.quantity, net.level);
-        }
-
-        private bool IsLocalClient()
-        {
-            var net = GetComponent<NetworkObject>();
-            return net != null && net.IsOwner;
         }
 
         private ItemInstance FromNet(InventorySlotNet net)
