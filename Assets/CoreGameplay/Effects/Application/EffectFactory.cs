@@ -73,8 +73,33 @@ namespace Features.Effects.Application
                         def.impactFxId
                     ),
 
+                EffectType.PlaySound =>
+                    new PlaySoundEffect(def),
+
                 _ => null
             };
+        }
+    }
+
+    public sealed class PlaySoundEffect : IEffect
+    {
+        private readonly EffectDefinition definition;
+
+        public PlaySoundEffect(EffectDefinition definition)
+        {
+            this.definition = definition;
+        }
+
+        public void Apply(EffectContext context)
+        {
+            if (definition.soundConfig == null)
+                return;
+
+            var position = context != null
+                ? context.Origin
+                : default;
+
+            ImpactFxDispatcher.Instance?.ServerPlaySound(definition.soundConfig, position);
         }
     }
 }

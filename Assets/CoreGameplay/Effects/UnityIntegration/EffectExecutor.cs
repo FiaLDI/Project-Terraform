@@ -36,6 +36,7 @@ namespace Features.Effects.Application
                 EffectType.SpawnPrefab => false,
                 EffectType.SpawnImpact => false,
                 EffectType.SpawnProjectile => false,
+                EffectType.PlaySound => false,
                 _ => true
             };
 

@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5895fb423188eca4d809f15f9ab25376, type: 3}
-  m_Name: New Quest Asset
+  m_Name: First Blood
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.Data.QuestAsset
-  questId: quest_quest_772134
-  questName: "\u043B\u0448\u0434\u0444\u044B\u0432"
-  description: "\u0444\u044B\u0432\u0444\u0432\u044B\u0432\u0444\u044B"
-  scope: 1
+  questId: quest_combat_first_blood
+  questName: First Blood
+  description: Eliminate a single crystal crawler to secure the landing zone.
+  scope: 0
   killEnemies:
   - enemyId: enemy_3ee078
-    requiredKills: 8
+    requiredKills: 1
   collectItems: []
   haveItems: []
   reachPointId: 
   rewards:
-  - itemId: 2
-    amount: 100
+  - itemId: 4
+    amount: 6

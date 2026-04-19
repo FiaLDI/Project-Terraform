@@ -10,15 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5895fb423188eca4d809f15f9ab25376, type: 3}
-  m_Name: enemy 1
+  m_Name: Crystal Cache
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.Data.QuestAsset
-  questId: quest_quest_1f4418
-  questName: asdada
-  description: adadadd
+  questId: quest_gathering_crystal_cache
+  questName: Crystal Cache
+  description: Recover three refined crystal units for the quartermaster.
   scope: 0
-  killEnemies:
-  - enemyId: enemy_3ee078
-    requiredKills: 5
-  collectItems: []
+  killEnemies: []
+  collectItems:
+  - itemId: 2
+    requiredAmount: 3
+  haveItems: []
   reachPointId: 
-  rewards: []
+  rewards:
+  - itemId: 4
+    amount: 8

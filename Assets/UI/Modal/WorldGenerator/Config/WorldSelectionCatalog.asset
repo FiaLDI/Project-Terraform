@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c7c8253af9dd1469c32fe1295d8b7c, type: 3}
+  m_Name: WorldSelectionCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::WorldSelectionCatalog
+  entries:
+  - worldConfig: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
+    displayName: Dust Frontier
+    description: Red sand flats with dust fronts, mineral routes, and a harsh frontier
+      atmosphere.
+    position: {x: -230, y: 120}
+    size: {x: 220, y: 255}
+    rotation: 0
+    regionSprite: {fileID: 21300000, guid: 1ff36d74c3f23794fae31503561f7b95, type: 3}
+    idleColor: {r: 0.58, g: 0.6, b: 0.76, a: 0.26}
+    selectedColor: {r: 0.75, g: 0.8, b: 0.95, a: 0.4}
+    lockedColor: {r: 0, g: 0, b: 0, a: 0}
+    availableQuests:
+    - {fileID: 11400000, guid: 7a0fd488b836ede4392c146652727ea0, type: 2}
+    - {fileID: 11400000, guid: f88681f73985baf4ca33f4f09a6e055f, type: 2}
+    availableChains:
+    - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}
+  - worldConfig: {fileID: 11400000, guid: 2a94bd5fd5cf4ac2a6d8623911aa5105, type: 2}
+    displayName: Crater Fields
+    description: Deep craters, broken terrain, and poor visibility. Built for hard
+      expeditions and rare vein hunting.
+    position: {x: -30, y: 140}
+    size: {x: 160, y: 260}
+    rotation: 0
+    regionSprite: {fileID: 21300000, guid: e93bae593755eb54c937e3ee0f2be60c, type: 3}
+    idleColor: {r: 0.2, g: 0.18, b: 0.72, a: 0.24}
+    selectedColor: {r: 0.42, g: 0.4, b: 1, a: 0.38}
+    lockedColor: {r: 0, g: 0, b: 0, a: 0}
+    availableQuests:
+    - {fileID: 11400000, guid: f764e69a9b22cf94d95eee67e3c3e0e6, type: 2}
+    - {fileID: 11400000, guid: 032b84c2ac2f89c4c854da26ee622d7e, type: 2}
+    availableChains:
+    - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}
+  - worldConfig: {fileID: 11400000, guid: 6a7f437d1a3c48b78f4e680a51cfd107, type: 2}
+    displayName: Toxic Mire
+    description: Flooded toxic lowlands with a green fog profile and a survival loop
+      centered on organics.
+    position: {x: -255, y: -130}
+    size: {x: 230, y: 230}
+    rotation: 0
+    regionSprite: {fileID: 21300000, guid: e93bae593755eb54c937e3ee0f2be60c, type: 3}
+    idleColor: {r: 0.082496434, g: 0.3584906, b: 0, a: 0.3}
+    selectedColor: {r: 0.48219383, g: 0.9607843, b: 0.3882353, a: 0.42}
+    lockedColor: {r: 0, g: 0, b: 0, a: 0}
+    availableQuests:
+    - {fileID: 11400000, guid: f88681f73985baf4ca33f4f09a6e055f, type: 2}
+    - {fileID: 11400000, guid: aa1f0e7c4b684c4ea9fdb15f1e0a9001, type: 2}
+    availableChains:
+    - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}
+  - worldConfig: {fileID: 11400000, guid: 4d2d8670f02a4486987c77b644e6c106, type: 2}
+    displayName: Crystal Hollows
+    description: Crystal fractures and a cold underground tone. Best for greedier
+      resource routes.
+    position: {x: -10, y: -155}
+    size: {x: 330, y: 150}
+    rotation: 0
+    regionSprite: {fileID: 21300000, guid: e93bae593755eb54c937e3ee0f2be60c, type: 3}
+    idleColor: {r: 0.18039216, g: 0.72156864, b: 0.68043345, a: 0.28}
+    selectedColor: {r: 0.5169882, g: 0.9547169, b: 0.9504871, a: 0.42}
+    lockedColor: {r: 0, g: 0, b: 0, a: 0}
+    availableQuests:
+    - {fileID: 11400000, guid: f88681f73985baf4ca33f4f09a6e055f, type: 2}
+    - {fileID: 11400000, guid: aa1f0e7c4b684c4ea9fdb15f1e0a9001, type: 2}
+    availableChains:
+    - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}
+  - worldConfig: {fileID: 11400000, guid: 8c2bced8450e4637a35fb4b8e9239108, type: 2}
+    displayName: Ruined Expanse
+    description: Ruins, plateaus, and ancient traces of civilization. Strong for
+      combat runs and rare material recovery.
+    position: {x: 235, y: 0}
+    size: {x: 325, y: 255}
+    rotation: 0
+    regionSprite: {fileID: 21300000, guid: 1ff36d74c3f23794fae31503561f7b95, type: 3}
+    idleColor: {r: 0.82, g: 0.84, b: 0.86, a: 0.2}
+    selectedColor: {r: 0.98, g: 0.99, b: 1, a: 0.34}
+    lockedColor: {r: 0, g: 0, b: 0, a: 0}
+    availableQuests:
+    - {fileID: 11400000, guid: f764e69a9b22cf94d95eee67e3c3e0e6, type: 2}
+    - {fileID: 11400000, guid: fda4d22d481ccaf4b9e422a08ecdb472, type: 2}
+    - {fileID: 11400000, guid: bb2f1e8d5c794d5fabce2610a1b29002, type: 2}
+    availableChains:
+    - {fileID: 11400000, guid: 8d6ee95f56441e048a4dbeca1b8ba181, type: 2}

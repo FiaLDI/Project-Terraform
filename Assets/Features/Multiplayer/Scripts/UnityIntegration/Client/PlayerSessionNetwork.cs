@@ -36,6 +36,12 @@ public class PlayerSessionNetwork : NetworkBehaviour
     [ServerRpc]
     public void RequestWorldServerRpc(string worldConfigId, List<string> questIds, List<string> chainIds)
     {
+        if (SceneTransitionService.IsTransitionPendingFor(SceneTransitionService.NameWorldScene))
+        {
+            Debug.LogWarning("[PlayerSessionNetwork] Duplicate world request ignored.");
+            return;
+        }
+
         int seed = Random.Range(int.MinValue, int.MaxValue);
 
         ServerWorldSession.PendingSeed = seed;

@@ -5,6 +5,7 @@ using Features.Items.UnityIntegration;
 using Features.Buffs.Domain;
 using Features.Player.UnityIntegration;
 using Features.Equipment.UnityIntegration;
+using Features.Effects.Application;
 using Features.Effects.Domain;
 using Features.Weapons.Domain;
 using Features.Items.Data;
@@ -185,10 +186,8 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
                 return;
 
             var config = GetCurrentProjectileConfig(action);
-            if (config == null)
-                return;
-
-            ServerNotifyShot(fireOrigin, finalHitPoint);
+            if (config != null)
+                ServerNotifyShot(fireOrigin, finalHitPoint, action);
         };
 
         activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
@@ -307,7 +306,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     // ======================================================
 
     [ObserversRpc]
-    private void RpcPlayWorldFx(Vector3 spawnPos, Vector3 hitPoint, string itemId)
+    private void RpcPlayWorldFx(Vector3 spawnPos, Vector3 hitPoint, string itemId, ItemActionType actionType)
     {
         if (IsOwner)
             return;
@@ -316,7 +315,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         if (item == null)
             return;
 
-        var config = ExtractProjectileConfig(item);
+        var config = ExtractProjectileConfig(item, actionType);
         if (config == null)
             return;
 
@@ -324,14 +323,14 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     }
 
     [Server]
-    public void ServerNotifyShot(Vector3 spawnPos, Vector3 hitPoint)
+    public void ServerNotifyShot(Vector3 spawnPos, Vector3 hitPoint, ItemActionType actionType)
     {
         string itemId = rightHandInstance?.itemDefinition?.id;
 
         if (string.IsNullOrEmpty(itemId))
             return;
 
-        RpcPlayWorldFx(spawnPos, hitPoint, itemId);
+        RpcPlayWorldFx(spawnPos, hitPoint, itemId, actionType);
     }
 
     // ======================================================
@@ -419,6 +418,21 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private ProjectileConfig GetCurrentProjectileConfig(ItemActionType actionType)
     {
+        var action = GetCurrentActionDefinition(actionType);
+        if (action?.effects == null)
+            return null;
+
+        foreach (var effect in action.effects)
+        {
+            if (effect.type == EffectType.SpawnProjectile)
+                return effect.projectileConfig;
+        }
+
+        return null;
+    }
+
+    private ItemActionDefinition GetCurrentActionDefinition(ItemActionType actionType)
+    {
         var equip = GetComponent<EquipmentManager>();
         var right = equip?.GetRightHandObject();
 
@@ -426,41 +440,42 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             ? right.GetComponent<ItemRuntimeHolder>()
             : null;
 
-        var item = holder?.Instance?.itemDefinition;
+        return FindActionDefinition(holder?.Instance?.itemDefinition, actionType);
+    }
 
-        if (item?.actions == null)
+    private static ProjectileConfig ExtractProjectileConfig(Item item, ItemActionType actionType)
+    {
+        var action = FindActionDefinition(item, actionType);
+        if (action?.effects == null)
             return null;
 
-        foreach (var action in item.actions)
+        foreach (var effect in action.effects)
         {
-            if (action.actionType != actionType)
-                continue;
-
-            foreach (var effect in action.effects)
-            {
-                if (effect.type == EffectType.SpawnProjectile)
-                    return effect.projectileConfig;
-            }
+            if (effect.type == EffectType.SpawnProjectile)
+                return effect.projectileConfig;
         }
 
         return null;
     }
 
-    private ProjectileConfig ExtractProjectileConfig(Item item)
+    private static ItemActionDefinition FindActionDefinition(Item item, ItemActionType actionType)
     {
         if (item?.actions == null)
             return null;
 
         foreach (var action in item.actions)
         {
-            foreach (var effect in action.effects)
-            {
-                if (effect.type == EffectType.SpawnProjectile)
-                    return effect.projectileConfig;
-            }
+            if (action.actionType == actionType)
+                return action;
         }
 
         return null;
+    }
+
+    [Server]
+    public void ServerNotifyShot(Vector3 spawnPos, Vector3 hitPoint)
+    {
+        ServerNotifyShot(spawnPos, hitPoint, ItemActionType.Primary);
     }
 
     // ======================================================

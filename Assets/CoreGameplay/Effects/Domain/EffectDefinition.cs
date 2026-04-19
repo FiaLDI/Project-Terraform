@@ -20,7 +20,8 @@ namespace Features.Effects.Domain
         MeleeDamage,
         HitscanDamage,
         ScanResourceEffect,
-        SpawnImpact
+        SpawnImpact,
+        PlaySound
     }
 
     public enum OwnershipFilter
@@ -84,6 +85,9 @@ namespace Features.Effects.Domain
 
         public ProjectileConfig projectileConfig;
         public EffectDefinition[] childEffects;
+
+        [Header("Sound")]
+        public SoundEffectConfig soundConfig;
         
         public EffectDefinition Build()
         {

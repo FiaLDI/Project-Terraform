@@ -10,16 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5895fb423188eca4d809f15f9ab25376, type: 3}
-  m_Name: Reach
+  m_Name: Break the Nest
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.Data.QuestAsset
-  questId: 
-  questName: 
-  description: 
-  behaviourType: 2
-  enemyDatabase: {fileID: 0}
-  enemyId: 
-  requiredKills: 5
-  itemRequirements: []
-  pointId: 
-  requiredStayTime: 2
-  rewards: []
+  questId: quest_combat_break_the_nest
+  questName: Break the Nest
+  description: Destroy the deeper crawler cluster before it reaches the extraction
+    line.
+  scope: 1
+  killEnemies:
+  - enemyId: enemy_3ee078
+    requiredKills: 8
+  collectItems: []
+  haveItems: []
+  reachPointId: 
+  rewards:
+  - itemId: 2
+    amount: 25
