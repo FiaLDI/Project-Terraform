@@ -211,7 +211,7 @@ public sealed class ProgressionTreeUI : PlayerBoundUIView, IUIScreen
         PlayerProgressService.Instance.Save();
 
         var net = BoundPlayer.GetComponent<PlayerStateNetAdapter>();
-        net.RefreshPassives();
+        net.ApplyClientProgressionServerRpc(state.passives.ToArray());
 
         Build(currentClass);
     }
@@ -231,7 +231,7 @@ public sealed class ProgressionTreeUI : PlayerBoundUIView, IUIScreen
         PlayerProgressService.Instance.Save();
 
         var net = BoundPlayer.GetComponent<PlayerStateNetAdapter>();
-        net.RefreshPassives();
+        net.ApplyClientProgressionServerRpc(state.passives.ToArray());
 
         Build(currentClass);
     }
@@ -246,7 +246,7 @@ public sealed class ProgressionTreeUI : PlayerBoundUIView, IUIScreen
         PlayerProgressService.Instance.Save();
 
         var net = BoundPlayer.GetComponent<PlayerStateNetAdapter>();
-        net.RefreshPassives();
+       net.ApplyClientProgressionServerRpc(state.passives.ToArray());
 
         Build(currentClass);
     }

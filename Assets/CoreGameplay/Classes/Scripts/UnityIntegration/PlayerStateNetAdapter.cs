@@ -254,6 +254,27 @@ namespace Features.Class.Net
             RpcApplyAbilities(ids);
         }
 
+        [ServerRpc]
+        public void RequestRefreshPassivesServerRpc()
+        {
+            RefreshPassives();
+        }
+
+        [ServerRpc]
+        public void ApplyClientProgressionServerRpc(string[] passiveIds)
+        {
+            var state = PlayerProgressService.Instance.GetActiveCharacter();
+
+            state.passives.Clear();
+
+            foreach (var id in passiveIds)
+                state.passives.Add(id);
+
+            RefreshPassives();
+
+            Debug.Log($"[SERVER] Progression synced ({passiveIds.Length} passives)", this);
+        }
+
         // =====================================================
         // CLIENT VIEW ONLY
         // =====================================================
