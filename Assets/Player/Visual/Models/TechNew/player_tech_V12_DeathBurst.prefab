@@ -7100,10 +7100,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3004373105224849649}
-  - component: {fileID: 4927895119280592629}
-  - component: {fileID: 6874733871809106053}
   m_Layer: 0
-  m_Name: player_tech_V12
+  m_Name: player_tech_V12_DeathBurst
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7125,43 +7123,6 @@ Transform:
   - {fileID: 6387103337691134988}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!95 &4927895119280592629
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7259729968499645700}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: edcf6c4b25ead3e4f9adc405508ac897, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 1
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
---- !u!114 &6874733871809106053
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7259729968499645700}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80afbabf016604142b94ec94979a9c20, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSockets
-  rightHandSocket: {fileID: 7453307004495209840}
-  leftHandSocket: {fileID: 8564223388957905159}
-  head: {fileID: 3346920035198210636}
 --- !u!1 &7306533461441669757
 GameObject:
   m_ObjectHideFlags: 0

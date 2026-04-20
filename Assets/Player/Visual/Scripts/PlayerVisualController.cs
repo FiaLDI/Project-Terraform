@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using Features.Equipment.UnityIntegration;
 using Features.Player.UnityIntegration;
 using UnityEngine;
@@ -15,10 +17,12 @@ public class PlayerVisualController : MonoBehaviour
     [SerializeField] private float deathBurstRandomTorque = 12f;
     [SerializeField] private float deathBurstDrag = 0.15f;
     [SerializeField] private float deathBurstAngularDrag = 0.05f;
+    [SerializeField, Min(0)] private int maxDeathBurstFragments = 32;
 
     private GameObject _spawnedModel;
     private Animator _animator;
     private GameObject activeDeathBurst;
+    private Coroutine deathBurstCleanupRoutine;
     private RobotVisualPresetSO currentPreset;
     private bool deathBurstPlayed;
 
@@ -34,6 +38,16 @@ public class PlayerVisualController : MonoBehaviour
     private void Start()
     {
         Debug.Log("[PSN-PVC] Start (READY)", this);
+    }
+
+    private void OnDisable()
+    {
+        ClearActiveDeathBurst();
+    }
+
+    private void OnDestroy()
+    {
+        ClearActiveDeathBurst();
     }
 
     public void SetLocal(bool value)
@@ -96,6 +110,8 @@ public class PlayerVisualController : MonoBehaviour
         if (_spawnedModel == null || deathBurstPlayed)
             return;
 
+        ClearActiveDeathBurst();
+
         var sourceRenderers = _spawnedModel.GetComponentsInChildren<Renderer>(true);
         if (sourceRenderers.Length == 0)
             return;
@@ -111,50 +127,78 @@ public class PlayerVisualController : MonoBehaviour
             return;
         }
 
-        var burstClone = Instantiate(burstSource, _spawnedModel.transform.position, _spawnedModel.transform.rotation);
-        burstClone.name = $"{burstSource.name}_DeathBurstClone";
-        burstClone.transform.localScale = _spawnedModel.transform.lossyScale;
-
-        CopyPoseRecursive(_spawnedModel.transform, burstClone.transform);
-        ApplyLayer(burstClone);
-
-        foreach (var animator in burstClone.GetComponentsInChildren<Animator>(true))
-            animator.enabled = false;
-
-        var burstRenderers = burstClone.GetComponentsInChildren<Renderer>(true);
-        foreach (var renderer in burstRenderers)
-            renderer.enabled = true;
-
         var burstRoot = new GameObject($"{name}_DeathBurst");
         burstRoot.transform.SetPositionAndRotation(_spawnedModel.transform.position, Quaternion.identity);
         burstRoot.transform.localScale = Vector3.one;
 
-        foreach (var renderer in burstRenderers)
-        {
-            if (renderer == null)
-                continue;
+        var burstClone = Instantiate(burstSource, _spawnedModel.transform.position, _spawnedModel.transform.rotation);
+        burstClone.name = $"{burstSource.name}_DeathBurstClone";
+        burstClone.transform.localScale = _spawnedModel.transform.lossyScale;
 
-            renderer.transform.SetParent(burstRoot.transform, true);
-            PrepareFragment(renderer, burstRoot.transform.position, inheritedVelocity);
+        try
+        {
+            CopyPoseRecursive(_spawnedModel.transform, burstClone.transform);
+            ApplyLayer(burstClone);
+
+            foreach (var animator in burstClone.GetComponentsInChildren<Animator>(true))
+                animator.enabled = false;
+
+            var burstRenderers = SelectDeathBurstRenderers(burstClone.GetComponentsInChildren<Renderer>(true));
+            foreach (var renderer in burstRenderers)
+            {
+                if (renderer == null)
+                    continue;
+
+                renderer.enabled = true;
+                renderer.transform.SetParent(burstRoot.transform, true);
+                PrepareFragment(renderer, burstRoot.transform.position, inheritedVelocity);
+            }
+        }
+        finally
+        {
+            Destroy(burstClone);
         }
 
-        Destroy(burstClone);
-
         activeDeathBurst = burstRoot;
-        Destroy(activeDeathBurst, deathBurstLifetime);
+        deathBurstCleanupRoutine = StartCoroutine(DestroyDeathBurstAfterDelay(burstRoot, deathBurstLifetime));
     }
 
     public void ResetDeathVisualState()
     {
         deathBurstPlayed = false;
 
+        ClearActiveDeathBurst();
+
+        SetModelRenderersVisible(true);
+    }
+
+    private void ClearActiveDeathBurst()
+    {
+        if (deathBurstCleanupRoutine != null)
+        {
+            StopCoroutine(deathBurstCleanupRoutine);
+            deathBurstCleanupRoutine = null;
+        }
+
         if (activeDeathBurst != null)
         {
             Destroy(activeDeathBurst);
             activeDeathBurst = null;
         }
+    }
 
-        SetModelRenderersVisible(true);
+    private IEnumerator DestroyDeathBurstAfterDelay(GameObject burstRoot, float lifetime)
+    {
+        if (lifetime > 0f)
+            yield return new WaitForSeconds(lifetime);
+
+        if (burstRoot != null)
+            Destroy(burstRoot);
+
+        if (activeDeathBurst == burstRoot)
+            activeDeathBurst = null;
+
+        deathBurstCleanupRoutine = null;
     }
 
     private void ApplyLayer(GameObject _spawnedModel)
@@ -199,16 +243,16 @@ public class PlayerVisualController : MonoBehaviour
 
         Vector3 forceDirection = renderer.bounds.center - burstOrigin;
         if (forceDirection.sqrMagnitude < 0.0001f)
-            forceDirection = Random.onUnitSphere;
+            forceDirection = UnityEngine.Random.onUnitSphere;
 
-        forceDirection = (forceDirection.normalized + Random.insideUnitSphere * 0.35f).normalized;
+        forceDirection = (forceDirection.normalized + UnityEngine.Random.insideUnitSphere * 0.35f).normalized;
 
         Vector3 burstVelocity =
             forceDirection * deathBurstForce +
             Vector3.up * deathBurstUpwardForce;
 
         rigidbody.AddForce(burstVelocity, ForceMode.VelocityChange);
-        rigidbody.AddTorque(Random.insideUnitSphere * deathBurstRandomTorque, ForceMode.VelocityChange);
+        rigidbody.AddTorque(UnityEngine.Random.insideUnitSphere * deathBurstRandomTorque, ForceMode.VelocityChange);
     }
 
     private GameObject ResolveDeathBurstSource()
@@ -289,6 +333,30 @@ public class PlayerVisualController : MonoBehaviour
         sphereCollider.center = renderer.transform.InverseTransformPoint(renderer.bounds.center);
         sphereCollider.radius = Mathf.Max(renderer.bounds.extents.x, renderer.bounds.extents.y, renderer.bounds.extents.z);
         return sphereCollider;
+    }
+
+    private Renderer[] SelectDeathBurstRenderers(Renderer[] renderers)
+    {
+        if (maxDeathBurstFragments <= 0)
+            return new Renderer[0];
+
+        if (renderers.Length <= maxDeathBurstFragments)
+            return renderers;
+
+        Array.Sort(renderers, (a, b) => GetRendererVolume(b).CompareTo(GetRendererVolume(a)));
+
+        var selected = new Renderer[maxDeathBurstFragments];
+        Array.Copy(renderers, selected, selected.Length);
+        return selected;
+    }
+
+    private static float GetRendererVolume(Renderer renderer)
+    {
+        if (renderer == null)
+            return 0f;
+
+        var size = renderer.bounds.size;
+        return size.x * size.y * size.z;
     }
 
     private void SetModelRenderersVisible(bool visible)

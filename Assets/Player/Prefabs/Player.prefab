@@ -564,6 +564,7 @@ MonoBehaviour:
   deathBurstRandomTorque: 12
   deathBurstDrag: 0.15
   deathBurstAngularDrag: 0.05
+  maxDeathBurstFragments: 32
 --- !u!114 &5530530445021933545
 MonoBehaviour:
   m_ObjectHideFlags: 0
