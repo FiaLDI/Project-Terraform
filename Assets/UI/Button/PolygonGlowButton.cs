@@ -28,7 +28,6 @@ public class PolygonGlowButton : MonoBehaviour,
     [Header("State")]
     public bool startLocked = false;
 
-    // 🔹 НОВОЕ
     [SerializeField] private bool interactable = true;
 
     private Material mat;
@@ -50,6 +49,7 @@ public class PolygonGlowButton : MonoBehaviour,
         {
             mat = Instantiate(glowImage.material);
             glowImage.material = mat;
+
         }
 
         ApplySpriteToShader();
@@ -70,7 +70,7 @@ public class PolygonGlowButton : MonoBehaviour,
             fadeSpeed * Time.unscaledDeltaTime
         );
 
-        mat.SetFloat(HighlightID, currentHighlight);
+        mat.SetFloat(HighlightID, currentHighlight);        
     }
 
     public void SetGroup(PolygonGlowButtonGroup g)

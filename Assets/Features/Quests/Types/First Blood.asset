@@ -19,7 +19,9 @@ MonoBehaviour:
   killEnemies:
   - enemyId: enemy_3ee078
     requiredKills: 1
-  collectItems: []
+  collectItems:
+  - itemId: 7
+    requiredAmount: 5
   haveItems: []
   reachPointId: 
   rewards:
