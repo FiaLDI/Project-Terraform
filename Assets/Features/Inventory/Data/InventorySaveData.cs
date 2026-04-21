@@ -6,8 +6,11 @@ public class InventorySaveData
 {
     public List<ItemSaveData> bag = new();
 
-    public ItemSaveData leftHand;
-    public ItemSaveData rightHand;
+    public ItemSaveData activeSlot0;
+    public ItemSaveData activeSlot1;
+    public ItemSaveData activeSlot2;
+
+    public int activeSlotIndex;
 }
 
 [Serializable]

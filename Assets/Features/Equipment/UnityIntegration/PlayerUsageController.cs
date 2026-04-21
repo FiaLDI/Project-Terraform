@@ -1,22 +1,28 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Features.Player;
+using Features.Input;
 using Features.Game;
+using Features.Player;
 using Features.Player.UnityIntegration;
+using Features.Inventory.Domain;
+using Features.Inventory.UnityIntegration;
 
 namespace Features.Equipment.UnityIntegration
 {
     /// <summary>
-    /// Читает input и прокидывает действия предметов в PlayerUsageNetAdapter.
+    /// Reads local input and forwards item action commands to PlayerUsageNetAdapter.
     /// </summary>
     public class PlayerUsageController : MonoBehaviour, IInputContextConsumer
     {
+        [SerializeField] private float scrollSwitchCooldown = 0.08f;
+
         private PlayerInputContext input;
 
         private bool usingPrimary;
         private bool usingSecondary;
 
         private bool bound;
+        private float lastScrollSwitchTime;
 
         // ======================================================
         // LOCAL NET ADAPTER
@@ -30,6 +36,18 @@ namespace Features.Equipment.UnityIntegration
 
                 return player != null
                     ? player.GetComponent<PlayerUsageNetAdapter>()
+                    : null;
+            }
+        }
+
+        private InventoryStateNetwork InventoryNet
+        {
+            get
+            {
+                var player = BootstrapRoot.I?.LocalPlayer;
+
+                return player != null
+                    ? player.GetComponent<InventoryStateNetwork>()
                     : null;
             }
         }
@@ -86,7 +104,7 @@ namespace Features.Equipment.UnityIntegration
         {
             var p = input.Actions.Player;
 
-            Enable(p, "Use", "SecondaryUse", "Reload");
+            Enable(p, "Use", "SecondaryUse", "Reload", "Scroll");
 
             p.FindAction("Use").performed += OnPrimaryStart;
             p.FindAction("Use").canceled += OnPrimaryStop;
@@ -95,6 +113,7 @@ namespace Features.Equipment.UnityIntegration
             p.FindAction("SecondaryUse").canceled += OnSecondaryStop;
 
             p.FindAction("Reload").performed += OnReload;
+            p.FindAction("Scroll").performed += OnScroll;
         }
 
         private void UnbindActions()
@@ -111,8 +130,9 @@ namespace Features.Equipment.UnityIntegration
             p.FindAction("SecondaryUse").canceled -= OnSecondaryStop;
 
             p.FindAction("Reload").performed -= OnReload;
+            p.FindAction("Scroll").performed -= OnScroll;
 
-            Disable(p, "Use", "SecondaryUse", "Reload");
+            Disable(p, "Use", "SecondaryUse", "Reload", "Scroll");
         }
 
         // ======================================================
@@ -153,9 +173,7 @@ namespace Features.Equipment.UnityIntegration
             var camera = PlayerCamera;
 
             if (camera != null && net != null && net.HasWeapon())
-            {
                 camera.SetAiming(true);
-            }
 
             if (net != null)
                 net.ActionStart(ItemActionType.Secondary);
@@ -169,9 +187,7 @@ namespace Features.Equipment.UnityIntegration
             var camera = PlayerCamera;
 
             if (camera != null)
-            {
                 camera.SetAiming(false);
-            }
 
             if (net != null)
                 net.ActionStop(ItemActionType.Secondary);
@@ -187,6 +203,41 @@ namespace Features.Equipment.UnityIntegration
 
             if (net != null)
                 net.ActionStart(ItemActionType.Reload);
+        }
+
+        // ======================================================
+        // ACTIVE SLOT SWITCH
+        // ======================================================
+
+        private void OnScroll(InputAction.CallbackContext ctx)
+        {
+            if (InputModeManager.I != null && InputModeManager.I.CurrentMode != InputMode.Gameplay)
+                return;
+
+            if (Time.time < lastScrollSwitchTime + scrollSwitchCooldown)
+                return;
+
+            var delta = ctx.ReadValue<Vector2>();
+            if (Mathf.Abs(delta.y) < 0.01f)
+                return;
+
+            var inv = LocalPlayerContext.Inventory;
+            var net = InventoryNet;
+
+            if (inv == null || inv.Model == null || net == null)
+                return;
+
+            int direction = delta.y > 0f ? 1 : -1;
+            int current = inv.Model.ActiveSlotIndex;
+            int next = (current + direction + InventoryModel.ActiveSlotCount) % InventoryModel.ActiveSlotCount;
+
+            net.RequestInventoryCommand(new InventoryCommandData
+            {
+                Command = InventoryCommand.SetActiveSlot,
+                ActiveSlotIndex = next
+            });
+
+            lastScrollSwitchTime = Time.time;
         }
 
         // ======================================================
@@ -206,3 +257,4 @@ namespace Features.Equipment.UnityIntegration
         }
     }
 }
+

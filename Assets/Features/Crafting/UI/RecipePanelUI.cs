@@ -222,8 +222,9 @@ public class RecipePanelUI : MonoBehaviour
         InventorySlot slot = slotRef.Section switch
         {
             InventorySection.Bag       => invMgr.Model.main[slotRef.Index],
-            InventorySection.LeftHand  => invMgr.Model.leftHand,
-            InventorySection.RightHand => invMgr.Model.rightHand,
+            InventorySection.ActiveSlot0 => invMgr.Model.activeSlot0,
+            InventorySection.ActiveSlot1 => invMgr.Model.activeSlot1,
+            InventorySection.ActiveSlot2 => invMgr.Model.activeSlot2,
             _ => null
         };
 

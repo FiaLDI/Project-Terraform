@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using FishNet.Object;
 using UnityEngine;
 using Features.Items.Domain;
@@ -9,7 +10,6 @@ using Features.Effects.Application;
 using Features.Effects.Domain;
 using Features.Weapons.Domain;
 using Features.Items.Data;
-using System.Collections.Generic;
 using Features.Camera.UnityIntegration;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
@@ -23,7 +23,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private float nextAimSendTime;
 
     private EquipmentRuntime equipmentRuntime;
-    private ItemInstance rightHandInstance;
+    private ItemInstance activeItemInstance;
     private ItemRuntimeContext activeRuntime;
 
     private IBuffSource source;
@@ -35,7 +35,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private PlayerCameraController camController;
 
     private readonly Dictionary<GameObject, IProjectileVisual> visualCache = new();
-    private Vector3 lastHitPoint;
 
     private void Awake()
     {
@@ -56,16 +55,30 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         viewMuzzle = view;
     }
 
-    public void OnHandsUpdated(GameObject left, GameObject right, bool twoHanded)
+    public void OnEquippedItemUpdated(GameObject equipped)
     {
-        rightHandInstance = null;
+        ItemInstance nextInstance = null;
 
-        if (right != null)
+        if (equipped != null)
         {
-            var holder = right.GetComponent<ItemRuntimeHolder>();
+            var holder = equipped.GetComponent<ItemRuntimeHolder>();
             if (holder != null)
-                rightHandInstance = holder.Instance;
+                nextInstance = holder.Instance;
         }
+
+        if (ReferenceEquals(activeItemInstance, nextInstance))
+            return;
+
+        if (activeRuntime != null)
+        {
+            activeRuntime.StopUse();
+            activeRuntime = null;
+        }
+
+        if (activeItemInstance != null && !activeItemInstance.IsEmpty)
+            equipmentRuntime.Remove(activeItemInstance);
+
+        activeItemInstance = nextInstance;
     }
 
     public bool TryGetServerAim(out Ray ray)
@@ -117,10 +130,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             return;
 
         if (TryGetAimData(out _, out _, out var hitPoint))
-        {
-            lastHitPoint = hitPoint;
             PlayLocalShot(action, hitPoint);
-        }
 
         if (IsServerInitialized)
         {
@@ -139,37 +149,21 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private void ExecuteAction(ItemActionType action)
     {
-        if (rightHandInstance == null || rightHandInstance.IsEmpty)
+        if (activeItemInstance == null || activeItemInstance.IsEmpty)
             return;
 
         if (!TryGetServerAim(out var ray))
             return;
 
         Vector3 hitPoint;
-        Vector3 hitNormal;
 
         if (Physics.Raycast(ray, out var hit, 1000f))
-        {
             hitPoint = hit.point;
-            hitNormal = hit.normal; // 🔥 ВОТ ЭТО НОВОЕ
-        }
         else
-        {
             hitPoint = ray.origin + ray.direction * 1000f;
-            hitNormal = -ray.direction;
-        }
-
-        var effectContext = new HitEffectContext(
-            source,
-            null,               // targets (если нет — ок)
-            ray.origin,
-            ray.direction,
-            hitPoint,
-            hitNormal
-        );
 
         activeRuntime = equipmentRuntime.GetRuntime(
-            rightHandInstance,
+            activeItemInstance,
             action,
             null
         );
@@ -242,10 +236,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             else if (IsOwner)
             {
                 if (TryGetAimData(out var origin, out _, out var hitPoint))
-                {
-                    lastHitPoint = hitPoint;
                     activeRuntime.UpdateAim(origin, hitPoint, true);
-                }
             }
         }
 
@@ -325,7 +316,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     [Server]
     public void ServerNotifyShot(Vector3 spawnPos, Vector3 hitPoint, ItemActionType actionType)
     {
-        string itemId = rightHandInstance?.itemDefinition?.id;
+        string itemId = activeItemInstance?.itemDefinition?.id;
 
         if (string.IsNullOrEmpty(itemId))
             return;
@@ -357,8 +348,6 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
             return;
         }
 
-        bool isFPS = camController != null && camController.IsFPS();
-
         Quaternion rot = config.visualType == ProjectileVisualType.Projectile
             ? Quaternion.LookRotation((hitPoint - spawnPos).normalized)
             : Quaternion.identity;
@@ -376,13 +365,9 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
         }
 
         if (visual != null)
-        {
             visual.Init(spawnPos, hitPoint, config.lifetime);
-        }
         else
-        {
             Debug.LogError("NO IProjectileVisual ON PREFAB");
-        }
     }
 
     private Vector3 GetVisualSpawnPosition()
@@ -434,10 +419,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private ItemActionDefinition GetCurrentActionDefinition(ItemActionType actionType)
     {
         var equip = GetComponent<EquipmentManager>();
-        var right = equip?.GetRightHandObject();
+        var equipped = equip?.GetEquippedObject();
 
-        var holder = right != null
-            ? right.GetComponent<ItemRuntimeHolder>()
+        var holder = equipped != null
+            ? equipped.GetComponent<ItemRuntimeHolder>()
             : null;
 
         return FindActionDefinition(holder?.Instance?.itemDefinition, actionType);
@@ -504,6 +489,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     public bool HasWeapon()
     {
-        return rightHandInstance != null && !rightHandInstance.IsEmpty;
+        return activeItemInstance != null && !activeItemInstance.IsEmpty;
     }
 }
+

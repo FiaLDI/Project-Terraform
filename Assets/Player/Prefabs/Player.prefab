@@ -580,8 +580,7 @@ MonoBehaviour:
   _componentIndexCache: 7
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
-  rightHandTransform: {fileID: 7222833214983773515}
-  leftHandTransform: {fileID: 5728575651840416725}
+  activeItemSocket: {fileID: 7222833214983773515}
 --- !u!114 &217312396618154767
 MonoBehaviour:
   m_ObjectHideFlags: 0

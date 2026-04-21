@@ -13,9 +13,13 @@ namespace Features.Inventory.UI
         IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
     {
         [Header("UI")]
+        [SerializeField] private Image background;
         [SerializeField] private Image icon;
         [SerializeField] private TextMeshProUGUI amountText;
         [SerializeField] private GameObject highlight;
+        [SerializeField] private Image activeFrameImage;
+        [SerializeField] private Sprite activeFrameSprite;
+        [SerializeField] private Color selectedBackgroundColor = new(0.12f, 0.62f, 1f, 0.55f);
 
         public InventorySlot BoundSlot => boundSlot;
         public InventorySection Section { get; private set; }
@@ -24,6 +28,25 @@ namespace Features.Inventory.UI
         private InventorySlot boundSlot;
         private InventoryDragController drag;
         private bool isPointerOver;
+        private bool selected;
+        private Color defaultBackgroundColor = Color.white;
+
+        private void Awake()
+        {
+            if (background == null)
+                background = GetComponent<Image>();
+
+            if (background != null)
+                defaultBackgroundColor = background.color;
+
+            if (activeFrameImage != null)
+            {
+                if (activeFrameSprite != null)
+                    activeFrameImage.sprite = activeFrameSprite;
+
+                activeFrameImage.enabled = false;
+            }
+        }
 
         // =====================================================
         // BIND
@@ -68,6 +91,12 @@ namespace Features.Inventory.UI
         {
             if (highlight != null)
                 highlight.SetActive(value);
+        }
+
+        public void SetSelected(bool value)
+        {
+            selected = value;
+            RefreshSelectionVisual();
         }
 
         // =====================================================
@@ -124,6 +153,24 @@ namespace Features.Inventory.UI
         private void OnDisable()
         {
             TooltipController.Instance?.Hide();
+        }
+
+        private void RefreshSelectionVisual()
+        {
+            if (activeFrameImage != null)
+            {
+                if (activeFrameSprite != null)
+                    activeFrameImage.sprite = activeFrameSprite;
+
+                activeFrameImage.enabled = selected;
+            }
+
+            if (background == null)
+                return;
+
+            background.color = selected
+                ? selectedBackgroundColor
+                : defaultBackgroundColor;
         }
 
         // =====================================================

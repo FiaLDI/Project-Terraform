@@ -288,9 +288,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 1593957823624890683}
   amountText: {fileID: 5018302580305503477}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &203254979364340279
 GameObject:
   m_ObjectHideFlags: 0
@@ -1094,9 +1098,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -0.005996704, y: 65}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1688.8, y: 130}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!1 &467660604097663600
 GameObject:
   m_ObjectHideFlags: 0
@@ -1485,9 +1489,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7382651164859814597}
-  - {fileID: 6756025716481981522}
   - {fileID: 4030713215012328075}
   - {fileID: 5452653052565394756}
+  - {fileID: 6756025716481981522}
   m_Father: {fileID: 7177690015187552400}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1608,8 +1612,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventoryUIView
   bagWindow: {fileID: 7989995605447708159}
-  leftHandWindow: {fileID: 4624530530833970730}
-  rightHandWindow: {fileID: 1350503770934117510}
+  activeSlotsWindow: {fileID: 7905117022758463631}
   bagSlots:
   - {fileID: 877018819028988790}
   - {fileID: 6303745378789849142}
@@ -1623,9 +1626,9 @@ MonoBehaviour:
   - {fileID: 5848079931535081638}
   - {fileID: 1994108113773139138}
   - {fileID: 8433262453340298880}
-  - {fileID: 8198122165828025357}
-  leftHandSlot: {fileID: 2616253479953918566}
-  rightHandSlot: {fileID: 2735017754305288789}
+  activeSlot0Slot: {fileID: 2616253479953918566}
+  activeSlot1Slot: {fileID: 2735017754305288789}
+  activeSlot2Slot: {fileID: 8198122165828025357}
   inventoryInput: {fileID: 7461453766968472451}
 --- !u!114 &8569830652582562370
 MonoBehaviour:
@@ -2527,7 +2530,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -0.00000453, y: 0}
+  m_AnchoredPosition: {x: -0, y: -7.7}
   m_SizeDelta: {x: 128, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2280816000990156369
@@ -3594,6 +3597,7 @@ RectTransform:
   m_LocalScale: {x: 0.8000001, y: 0.8000001, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 6991789799401384999}
   - {fileID: 4233452165730355503}
   - {fileID: 1130425255286643779}
   - {fileID: 6978883204802333519}
@@ -3654,9 +3658,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 2816114858065249966}
   amountText: {fileID: 7473712496817876705}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 6031146724082959480}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &1357613767131970488
 GameObject:
   m_ObjectHideFlags: 0
@@ -3930,7 +3938,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -7.7}
   m_SizeDelta: {x: 128, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5058234680707953637
@@ -4900,9 +4908,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 4372920268830156472}
   amountText: {fileID: 1613318480116048727}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &1699674823647692761
 GameObject:
   m_ObjectHideFlags: 0
@@ -5958,7 +5970,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -7.7}
   m_SizeDelta: {x: 128, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &8656379122543649808
@@ -6514,6 +6526,7 @@ RectTransform:
   m_LocalScale: {x: 0.8000001, y: 0.8000001, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 173052982541812402}
   - {fileID: 5861982421166223558}
   - {fileID: 680964421602040971}
   - {fileID: 1175281878238976167}
@@ -6574,9 +6587,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 8795119874056565155}
   amountText: {fileID: 151038925396991902}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 3720149983615290343}
+  activeFrameSprite: {fileID: 21300000, guid: c10f77d9ae671fe4e943b88cdc143660, type: 3}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &2386889495553476622
 GameObject:
   m_ObjectHideFlags: 0
@@ -6819,9 +6836,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 2140232827516514688}
   amountText: {fileID: 3264657016144821702}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &2461885076815535435
 GameObject:
   m_ObjectHideFlags: 0
@@ -6912,9 +6933,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 4917877469564440514}
   amountText: {fileID: 5872322609436587340}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &2579416873207369399
 GameObject:
   m_ObjectHideFlags: 0
@@ -7600,7 +7625,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 600, y: 80}
+  m_SizeDelta: {x: 500, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5023612446717684219
 CanvasRenderer:
@@ -7660,8 +7685,8 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 54, y: 54}
-  m_Spacing: {x: 50, y: 50}
+  m_CellSize: {x: 40, y: 40}
+  m_Spacing: {x: 40, y: 40}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!114 &4016147408075090063
@@ -7925,9 +7950,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 6496199800895054936}
   amountText: {fileID: 3424037492170247277}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &3001025873253652268
 GameObject:
   m_ObjectHideFlags: 0
@@ -8487,9 +8516,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 7495947707179052017}
   amountText: {fileID: 1397330703916526679}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &3271297588474789455
 GameObject:
   m_ObjectHideFlags: 0
@@ -11596,7 +11629,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -7.7}
   m_SizeDelta: {x: 128, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5902383889346807702
@@ -12162,9 +12195,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 764245476621029358}
-  - {fileID: 6317056710456899017}
   - {fileID: 6271658987682590262}
   - {fileID: 6062676077598597904}
+  - {fileID: 6317056710456899017}
   m_Father: {fileID: 7177690015187552400}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -12355,9 +12388,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 9158700081705960260}
   amountText: {fileID: 779505603965528107}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &4403228392143750709
 GameObject:
   m_ObjectHideFlags: 0
@@ -12971,6 +13008,7 @@ RectTransform:
   m_LocalScale: {x: 0.8000001, y: 0.8000001, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 4556515404063993504}
   - {fileID: 7102754474748875006}
   - {fileID: 4294196810925049737}
   - {fileID: 9122912023328473323}
@@ -13031,9 +13069,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 6850043586377616381}
   amountText: {fileID: 5348676092161877029}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 1256440760219536341}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &4633908343354744821
 GameObject:
   m_ObjectHideFlags: 0
@@ -14266,6 +14308,81 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &5171024977720492646
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4556515404063993504}
+  - component: {fileID: 438920405151910302}
+  - component: {fileID: 1256440760219536341}
+  m_Layer: 0
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &4556515404063993504
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5171024977720492646}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2841619480323643609}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &438920405151910302
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5171024977720492646}
+  m_CullTransparentMesh: 1
+--- !u!114 &1256440760219536341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5171024977720492646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.3998499, g: 1, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: c10f77d9ae671fe4e943b88cdc143660, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &5201276973653513236
 GameObject:
   m_ObjectHideFlags: 0
@@ -15187,9 +15304,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 1707816769068621406}
   amountText: {fileID: 1615313333782591253}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &5484466425670929030
 GameObject:
   m_ObjectHideFlags: 0
@@ -16048,9 +16169,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 5131840320746619736}
   amountText: {fileID: 8095660814832704003}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &5753154624786451308
 GameObject:
   m_ObjectHideFlags: 0
@@ -17176,9 +17301,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 7948843120890061541}
   amountText: {fileID: 6885410795698570426}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &6007517433426116150
 GameObject:
   m_ObjectHideFlags: 0
@@ -17761,9 +17890,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 8839028311940499426}
   amountText: {fileID: 2779138030315749066}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &6109624376053295155
 GameObject:
   m_ObjectHideFlags: 0
@@ -19416,9 +19549,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8b64e9e923b61c49b81281060652df8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Inventory.UI.InventorySlotUI
+  background: {fileID: 0}
   icon: {fileID: 4541360915953514079}
   amountText: {fileID: 8567347729938187853}
   highlight: {fileID: 0}
+  activeFrameImage: {fileID: 0}
+  activeFrameSprite: {fileID: 0}
+  selectedBackgroundColor: {r: 0.12, g: 0.62, b: 1, a: 0.55}
 --- !u!1 &7048116941853608056
 GameObject:
   m_ObjectHideFlags: 0
@@ -20576,6 +20713,81 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 0}
   m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!1 &7282848207881607366
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 173052982541812402}
+  - component: {fileID: 2611775080308692592}
+  - component: {fileID: 3720149983615290343}
+  m_Layer: 0
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &173052982541812402
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7282848207881607366}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6786455707642138587}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2611775080308692592
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7282848207881607366}
+  m_CullTransparentMesh: 1
+--- !u!114 &3720149983615290343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7282848207881607366}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.3998499, g: 1, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: c10f77d9ae671fe4e943b88cdc143660, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -23397,11 +23609,11 @@ RectTransform:
   - {fileID: 6786455707642138587}
   m_Father: {fileID: 3728452664005581087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -572.2, y: 0}
-  m_SizeDelta: {x: 544.4, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 325.1139, y: 100}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &6912544885440411862
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24908,7 +25120,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -7.7}
   m_SizeDelta: {x: 128, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1078794713497420081
@@ -25042,11 +25254,11 @@ RectTransform:
   m_Children:
   - {fileID: 2365644325084560811}
   - {fileID: 3798778112194001892}
+  - {fileID: 4812632368925774684}
   - {fileID: 1678948322195348794}
   - {fileID: 2800308262179378154}
   - {fileID: 5829093206913954996}
   - {fileID: 756211731494738656}
-  - {fileID: 4812632368925774684}
   - {fileID: 5710021274338988982}
   - {fileID: 6829415755184004581}
   - {fileID: 4814919190818339455}
@@ -26240,9 +26452,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5620151352127696867}
-  - {fileID: 2212721760127071747}
   - {fileID: 4236354348449572479}
   - {fileID: 2756291696298684071}
+  - {fileID: 2212721760127071747}
   m_Father: {fileID: 7177690015187552400}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -26762,6 +26974,81 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af370f44d457c5c4dbc2435ca04e534e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CraftingProcessor
+--- !u!1 &9146411323334652103
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6991789799401384999}
+  - component: {fileID: 4883346995084041295}
+  - component: {fileID: 6031146724082959480}
+  m_Layer: 0
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6991789799401384999
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9146411323334652103}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3091878128046490847}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4883346995084041295
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9146411323334652103}
+  m_CullTransparentMesh: 1
+--- !u!114 &6031146724082959480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9146411323334652103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.3998499, g: 1, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: c10f77d9ae671fe4e943b88cdc143660, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &9156673928217211464
 GameObject:
   m_ObjectHideFlags: 0

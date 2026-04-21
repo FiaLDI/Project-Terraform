@@ -1,11 +1,11 @@
-﻿using System.Collections;
-using FishNet.Object;
+using System.Collections;
 using FishNet.Connection;
+using FishNet.Object;
 using UnityEngine;
 using Features.Inventory.Domain;
 using Features.Inventory.UnityIntegration;
-using Features.Items.Domain;
 using Features.Items.Data;
+using Features.Items.Domain;
 using Features.Equipment.UnityIntegration;
 using Multiplayer.Domain;
 
@@ -44,11 +44,10 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         var root = ServerCompositionRoot.I;
         var session = root?.Sessions?.GetSessionByClient(Owner.ClientId);
 
-        // 🔥 ГЛАВНЫЙ FIX
         if (session != null && session.HasInventory)
         {
             ApplyInventoryFromSession(session);
-            initialized = true; // ❗ важно
+            initialized = true;
             return;
         }
 
@@ -97,7 +96,6 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             yield return null;
         }
 
-        // fallback
         if (!initialized)
         {
             Debug.LogWarning("[Inventory] No initial data received, fallback sync");
@@ -119,33 +117,25 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     [Server]
     public void ApplyInitialInventory(InventorySaveData data)
     {
-        // 🔥 FIX — защита от перезаписи
         if (initialized)
             return;
 
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
 
-        if (inventory == null)
-            return;
-
-        if (data == null)
+        if (inventory == null || data == null)
             return;
 
         inventory.LoadFromSave(data);
 
         initialized = true;
-
         ServerOnInventoryChanged();
     }
 
     [Server]
     public void ApplyInventoryFromSession(PlayerSession session)
     {
-        if (initialized) // 🔥 КЛЮЧЕВОЙ FIX
-            return;
-
-        if (session == null)
+        if (initialized || session == null)
             return;
 
         var data = session.InventoryData;
@@ -161,7 +151,6 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         inventory.LoadFromSave(data);
 
         initialized = true;
-
         ServerOnInventoryChanged();
     }
 
@@ -209,11 +198,8 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             var root = ServerCompositionRoot.I;
             var session = root?.Sessions?.GetSessionByClient(Owner.ClientId);
 
-            // 🔥 СОХРАНЕНИЕ В SESSION
             if (session != null)
-            {
                 session.SetInventory(inventory.BuildSaveData());
-            }
 
             var m = inventory.Model;
 
@@ -227,13 +213,19 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
                 TargetReceiveInventoryState(
                     Owner,
                     bag,
-                    ToNet(m.leftHand.item),
-                    ToNet(m.rightHand.item));
+                    ToNet(m.activeSlot0.item),
+                    ToNet(m.activeSlot1.item),
+                    ToNet(m.activeSlot2.item),
+                    m.ActiveSlotIndex
+                );
             }
 
-            ObserversReceiveHands(
-                ToNet(m.leftHand.item),
-                ToNet(m.rightHand.item));
+            ObserversReceiveActiveSlots(
+                ToNet(m.activeSlot0.item),
+                ToNet(m.activeSlot1.item),
+                ToNet(m.activeSlot2.item),
+                m.ActiveSlotIndex
+            );
         }
         finally
         {
@@ -245,8 +237,10 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     private void TargetReceiveInventoryState(
         NetworkConnection _,
         InventorySlotNet[] bag,
-        InventorySlotNet left,
-        InventorySlotNet right)
+        InventorySlotNet active0,
+        InventorySlotNet active1,
+        InventorySlotNet active2,
+        int activeSlotIndex)
     {
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
@@ -258,7 +252,7 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
 
         try
         {
-            inventory.ApplyNetState(bag, left, right);
+            inventory.ApplyNetState(bag, active0, active1, active2, activeSlotIndex);
             GetComponent<EquipmentManager>()?.EquipFromInventory();
         }
         finally
@@ -268,9 +262,11 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
     }
 
     [ObserversRpc(BufferLast = true)]
-    private void ObserversReceiveHands(
-        InventorySlotNet left,
-        InventorySlotNet right)
+    private void ObserversReceiveActiveSlots(
+        InventorySlotNet active0,
+        InventorySlotNet active1,
+        InventorySlotNet active2,
+        int activeSlotIndex)
     {
         if (inventory == null)
             inventory = GetComponent<InventoryManager>();
@@ -282,7 +278,7 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
 
         try
         {
-            inventory.ApplyHandsNetState(left, right);
+            inventory.ApplyActiveSlotsNetState(active0, active1, active2, activeSlotIndex);
             GetComponent<EquipmentManager>()?.EquipFromInventory();
         }
         finally
@@ -312,11 +308,12 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         }
 
         router.Register(InventoryCommand.PickupWorldItem, CreateBase(ctx => HandlePickup(ctx.Command)));
-        router.Register(InventoryCommand.MoveItem,        CreateBase(ctx => HandleMove(ctx.Command)));
-        router.Register(InventoryCommand.DropFromSlot,    CreateBase(ctx => HandleDrop(ctx.Command)));
-        router.Register(InventoryCommand.UpgradeItem,     CreateBase(ctx => HandleUpgrade(ctx.Command)));
-        router.Register(InventoryCommand.CraftRecipe,     CreateBase(ctx => HandleCraft(ctx.Command)));
-        router.Register(InventoryCommand.GiveReward,      CreateBase(ctx => HandleGiveReward(ctx.Command)));
+        router.Register(InventoryCommand.MoveItem, CreateBase(ctx => HandleMove(ctx.Command)));
+        router.Register(InventoryCommand.SetActiveSlot, CreateBase(ctx => HandleSetActiveSlot(ctx.Command)));
+        router.Register(InventoryCommand.DropFromSlot, CreateBase(ctx => HandleDrop(ctx.Command)));
+        router.Register(InventoryCommand.UpgradeItem, CreateBase(ctx => HandleUpgrade(ctx.Command)));
+        router.Register(InventoryCommand.CraftRecipe, CreateBase(ctx => HandleCraft(ctx.Command)));
+        router.Register(InventoryCommand.GiveReward, CreateBase(ctx => HandleGiveReward(ctx.Command)));
     }
 
     private void HandleGiveReward(InventoryCommandData cmd)
@@ -325,47 +322,67 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
             return;
 
         inventory.Service.AddItem(
-            new ItemInstance(def, cmd.RewardAmount, cmd.RewardLevel));
+            new ItemInstance(def, cmd.RewardAmount, cmd.RewardLevel)
+        );
     }
 
     private void HandleMove(InventoryCommandData cmd)
     {
         inventory.Service.MoveItem(
-            cmd.FromIndex, cmd.FromSection,
-            cmd.ToIndex, cmd.ToSection);
+            cmd.FromIndex,
+            cmd.FromSection,
+            cmd.ToIndex,
+            cmd.ToSection
+        );
+    }
+
+    private void HandleSetActiveSlot(InventoryCommandData cmd)
+    {
+        if (inventory == null)
+            return;
+
+        int clamped = InventoryModel.ClampActiveSlotIndex(cmd.ActiveSlotIndex);
+        inventory.SetActiveSlotIndex(clamped);
     }
 
     private void HandleUpgrade(InventoryCommandData cmd)
     {
         var recipe = RecipeDatabase.Instance?.GetRecipeById(cmd.RecipeId);
-        if (recipe == null) return;
+        if (recipe == null)
+            return;
 
-        if (!inventory.Service.HasIngredients(recipe.ingredients)) return;
+        if (!inventory.Service.HasIngredients(recipe.ingredients))
+            return;
 
         inventory.Service.ConsumeIngredients(recipe.ingredients);
 
         var slot = GetSlot(cmd.Section, cmd.Index);
         if (slot != null && !slot.item.IsEmpty)
+        {
             slot.item.level++;
+            inventory.MarkDirty();
+        }
     }
 
     private void HandleCraft(InventoryCommandData cmd)
     {
         var recipe = RecipeDatabase.Instance?.GetRecipeById(cmd.RecipeId);
-        if (recipe == null) return;
+        if (recipe == null)
+            return;
 
-        if (!inventory.Service.HasIngredients(recipe.ingredients)) return;
+        if (!inventory.Service.HasIngredients(recipe.ingredients))
+            return;
 
         inventory.Service.ConsumeIngredients(recipe.ingredients);
 
         inventory.Service.AddItem(
-            new ItemInstance(recipe.outputItem, recipe.outputAmount));
+            new ItemInstance(recipe.outputItem, recipe.outputAmount)
+        );
     }
 
     private void HandlePickup(InventoryCommandData cmd)
     {
-        if (!NetworkManager.ServerManager.Objects.Spawned
-            .TryGetValue((int)cmd.WorldItemNetId, out var netObj))
+        if (!NetworkManager.ServerManager.Objects.Spawned.TryGetValue((int)cmd.WorldItemNetId, out var netObj))
             return;
 
         var worldItem = netObj.GetComponent<WorldItemNetwork>();
@@ -426,8 +443,9 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         return section switch
         {
             InventorySection.Bag => inventory.Model.main[index],
-            InventorySection.LeftHand => inventory.Model.leftHand,
-            InventorySection.RightHand => inventory.Model.rightHand,
+            InventorySection.ActiveSlot0 => inventory.Model.activeSlot0,
+            InventorySection.ActiveSlot1 => inventory.Model.activeSlot1,
+            InventorySection.ActiveSlot2 => inventory.Model.activeSlot2,
             _ => null
         };
     }
@@ -449,3 +467,4 @@ public sealed class InventoryStateNetwork : NetworkBehaviour
         router.Execute(ctx);
     }
 }
+

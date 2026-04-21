@@ -45,15 +45,22 @@ public sealed class UpgradeCandidateBuilder
         }
 
         AddCandidate(
-            inventory.Model.leftHand.item,
-            new InventorySlotRef(InventorySection.LeftHand, 0),
+            inventory.Model.activeSlot0.item,
+            new InventorySlotRef(InventorySection.ActiveSlot0, 0),
             recipesByItemId,
             seen,
             candidates);
 
         AddCandidate(
-            inventory.Model.rightHand.item,
-            new InventorySlotRef(InventorySection.RightHand, 0),
+            inventory.Model.activeSlot1.item,
+            new InventorySlotRef(InventorySection.ActiveSlot1, 0),
+            recipesByItemId,
+            seen,
+            candidates);
+
+        AddCandidate(
+            inventory.Model.activeSlot2.item,
+            new InventorySlotRef(InventorySection.ActiveSlot2, 0),
             recipesByItemId,
             seen,
             candidates);

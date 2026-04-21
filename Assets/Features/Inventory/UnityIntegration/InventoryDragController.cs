@@ -17,6 +17,7 @@ namespace Features.Inventory.UnityIntegration
         private InventorySlot draggedSlot;
         private InventorySlotUI highlightedSlot;
         private bool droppedOnSlot;
+        private readonly List<RaycastResult> raycastResults = new();
         public InventorySlotUI HoveredSlot { get; private set; }
         public InventorySlotUI LastInteractedSlot { get; private set; }
 
@@ -130,7 +131,10 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
-            if (!droppedOnSlot && !TrySnapToSlot(eventData))
+            if (!droppedOnSlot &&
+                !TryDropByRaycast(eventData) &&
+                !TryDropByBounds(eventData) &&
+                !TrySnapToSlot(eventData))
                 RequestDropToWorld();
 
             ClearDrag();
@@ -184,6 +188,64 @@ namespace Features.Inventory.UnityIntegration
             return true;
         }
 
+        private bool TryDropByRaycast(PointerEventData eventData)
+        {
+            var eventSystem = EventSystem.current;
+            if (eventSystem == null || eventData == null)
+                return false;
+
+            raycastResults.Clear();
+            eventSystem.RaycastAll(eventData, raycastResults);
+
+            for (int i = 0; i < raycastResults.Count; i++)
+            {
+                var slotUI = raycastResults[i]
+                    .gameObject
+                    .GetComponentInParent<InventorySlotUI>();
+
+                if (slotUI == null ||
+                    !slotUI.isActiveAndEnabled ||
+                    slotUI == draggedUI)
+                    continue;
+
+                droppedOnSlot = true;
+                SendMoveCommand(draggedUI, slotUI);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryDropByBounds(PointerEventData eventData)
+        {
+            if (eventData == null)
+                return false;
+
+            var camera = eventData.pressEventCamera ?? eventData.enterEventCamera;
+
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var slotUI = slots[i];
+                if (slotUI == null ||
+                    !slotUI.isActiveAndEnabled ||
+                    slotUI == draggedUI ||
+                    slotUI.transform is not RectTransform rt)
+                    continue;
+
+                if (!RectTransformUtility.RectangleContainsScreenPoint(
+                        rt,
+                        eventData.position,
+                        camera))
+                    continue;
+
+                droppedOnSlot = true;
+                SendMoveCommand(draggedUI, slotUI);
+                return true;
+            }
+
+            return false;
+        }
+
         public void SetHovered(InventorySlotUI slot)
         {
             HoveredSlot = slot;
@@ -210,15 +272,11 @@ namespace Features.Inventory.UnityIntegration
                 if (!slot.isActiveAndEnabled)
                     continue;
 
-                if (draggedSlot?.item?.itemDefinition?.isTwoHanded == true &&
-                    slot.Section == InventorySection.LeftHand)
-                    continue;
-
                 if (slot.transform is not RectTransform rt)
                     continue;
 
                 Vector2 pos = RectTransformUtility.WorldToScreenPoint(
-                    eventData.pressEventCamera,
+                    eventData.pressEventCamera ?? eventData.enterEventCamera,
                     rt.position);
 
                 float dist = Vector2.Distance(pos, eventData.position);
@@ -286,7 +344,8 @@ namespace Features.Inventory.UnityIntegration
         {
             return ui.Section switch
             {
-                InventorySection.LeftHand or InventorySection.RightHand => 0,
+                InventorySection.ActiveSlot0 or InventorySection.ActiveSlot1 or
+                InventorySection.ActiveSlot2 => 0,
                 _ => ui.Index
             };
         }

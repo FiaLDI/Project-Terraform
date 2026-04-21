@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Features.Equipment.UnityIntegration;
 using Features.Inventory.Domain;
@@ -6,8 +6,8 @@ using Features.Items.Data;
 using Features.Items.Domain;
 using Features.Quests.Application;
 using Features.Quests.Domain;
-using UnityEngine;
 using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -23,9 +23,7 @@ namespace Features.Inventory.UnityIntegration
         [SerializeField] private int bagSize = 12;
 
         private EquipmentManager equipment;
-
-        private bool isLoading;
-        private bool receivedFirstSync;
+        private NetworkObject networkObject;
 
         public bool IsReady { get; private set; }
 
@@ -35,6 +33,7 @@ namespace Features.Inventory.UnityIntegration
 
         private void Awake()
         {
+            networkObject = GetComponent<NetworkObject>();
             CreateModel();
             CreateService();
             InitEquipment();
@@ -76,23 +75,20 @@ namespace Features.Inventory.UnityIntegration
 
         private void HandleInventoryChanged()
         {
-            OnInventoryChanged?.Invoke();
+            NotifyInventoryChanged();
         }
 
         // ======================================================
-        // LOAD (FIXED)
+        // LOAD
         // ======================================================
 
         public void LoadFromSave(InventorySaveData data)
         {
-            // 🔥 КРИТИЧЕСКИЙ ФИКС
             if (data == null)
                 data = new InventorySaveData();
 
             if (data.bag == null)
                 data.bag = new List<ItemSaveData>();
-
-            isLoading = true;
 
             Model.main.Clear();
 
@@ -102,22 +98,20 @@ namespace Features.Inventory.UnityIntegration
             for (int i = 0; i < data.bag.Count && i < bagSize; i++)
             {
                 var item = data.bag[i];
-                if (item == null) continue;
+                if (item == null)
+                    continue;
 
                 var def = ItemRegistrySO.Instance?.Get(item.itemId);
                 if (def != null)
-                {
-                    Model.main[i].item =
-                        new ItemInstance(def, item.quantity, item.level);
-                }
+                    Model.main[i].item = new ItemInstance(def, item.quantity, item.level);
             }
 
-            Model.leftHand.item  = FromSave(data.leftHand);
-            Model.rightHand.item = FromSave(data.rightHand);
+            Model.activeSlot0.item = FromSave(data.activeSlot0);
+            Model.activeSlot1.item = FromSave(data.activeSlot1);
+            Model.activeSlot2.item = FromSave(data.activeSlot2);
+            Model.SetActiveSlotIndex(data.activeSlotIndex);
 
-            isLoading = false;
-
-            OnInventoryChanged?.Invoke();
+            NotifyInventoryChanged();
         }
 
         private ItemInstance FromSave(ItemSaveData data)
@@ -133,7 +127,7 @@ namespace Features.Inventory.UnityIntegration
         }
 
         // ======================================================
-        // BUILD SAVE (использует сервер)
+        // BUILD SAVE
         // ======================================================
 
         public InventorySaveData BuildSaveData()
@@ -143,8 +137,10 @@ namespace Features.Inventory.UnityIntegration
             for (int i = 0; i < Model.main.Count; i++)
                 data.bag.Add(ToSave(Model.main[i].item));
 
-            data.leftHand  = ToSave(Model.leftHand.item);
-            data.rightHand = ToSave(Model.rightHand.item);
+            data.activeSlot0 = ToSave(Model.activeSlot0.item);
+            data.activeSlot1 = ToSave(Model.activeSlot1.item);
+            data.activeSlot2 = ToSave(Model.activeSlot2.item);
+            data.activeSlotIndex = Model.ActiveSlotIndex;
 
             return data;
         }
@@ -189,33 +185,52 @@ namespace Features.Inventory.UnityIntegration
             return Service.GetItemCount(def);
         }
 
+        public bool SetActiveSlotIndex(int index)
+        {
+            if (!Model.SetActiveSlotIndex(index))
+                return false;
+
+            NotifyInventoryChanged();
+            return true;
+        }
+
+        public void MarkDirty()
+        {
+            NotifyInventoryChanged();
+        }
+
         // ======================================================
         // NET APPLY
         // ======================================================
 
         public void ApplyNetState(
             IReadOnlyList<InventorySlotNet> bagNet,
-            InventorySlotNet left,
-            InventorySlotNet right)
+            InventorySlotNet active0,
+            InventorySlotNet active1,
+            InventorySlotNet active2,
+            int activeSlotIndex)
         {
-            isLoading = true;
-
             ApplySection(Model.main, bagNet);
-            ApplySlot(Model.leftHand, left);
-            ApplySlot(Model.rightHand, right);
+            ApplySlot(Model.activeSlot0, active0);
+            ApplySlot(Model.activeSlot1, active1);
+            ApplySlot(Model.activeSlot2, active2);
+            Model.SetActiveSlotIndex(activeSlotIndex);
 
-            isLoading = false;
-            receivedFirstSync = true;
-
-            OnInventoryChanged?.Invoke();
+            NotifyInventoryChanged();
         }
 
-        public void ApplyHandsNetState(InventorySlotNet left, InventorySlotNet right)
+        public void ApplyActiveSlotsNetState(
+            InventorySlotNet active0,
+            InventorySlotNet active1,
+            InventorySlotNet active2,
+            int activeSlotIndex)
         {
-            Model.leftHand.item = FromNet(left);
-            Model.rightHand.item = FromNet(right);
+            Model.activeSlot0.item = FromNet(active0);
+            Model.activeSlot1.item = FromNet(active1);
+            Model.activeSlot2.item = FromNet(active2);
+            Model.SetActiveSlotIndex(activeSlotIndex);
 
-            OnInventoryChanged?.Invoke();
+            NotifyInventoryChanged();
         }
 
         private void ApplySection(IList<InventorySlot> slots, IReadOnlyList<InventorySlotNet> net)
@@ -273,5 +288,30 @@ namespace Features.Inventory.UnityIntegration
                 )
             );
         }
+
+        private void NotifyInventoryChanged()
+        {
+            TryPersistInventory();
+            OnInventoryChanged?.Invoke();
+        }
+
+        private void TryPersistInventory()
+        {
+            var progress = PlayerProgressService.Instance;
+            if (progress == null || progress.Data == null)
+                return;
+
+            var activeCharacter = progress.GetActiveCharacter();
+            if (activeCharacter == null)
+                return;
+
+            // Save only local-owner inventory in multiplayer.
+            if (networkObject != null && networkObject.IsSpawned && !networkObject.IsOwner)
+                return;
+
+            activeCharacter.characterInventoryData = BuildSaveData();
+            progress.Save();
+        }
     }
 }
+

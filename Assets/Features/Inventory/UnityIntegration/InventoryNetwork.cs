@@ -50,8 +50,9 @@ public class InventoryNetwork : NetworkBehaviour
         // 🔥 FIX: безопасная проверка
         bool isEmpty =
             (data.bag == null || data.bag.Count == 0) &&
-            data.leftHand == null &&
-            data.rightHand == null;
+            data.activeSlot0 == null &&
+            data.activeSlot1 == null &&
+            data.activeSlot2 == null;
 
         if (isEmpty)
         {

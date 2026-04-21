@@ -212,6 +212,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Scroll",
+                    "type": "Value",
+                    "id": "8b695f9f-edc5-4be0-963e-a0ad4e858f27",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -762,6 +771,17 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "ToggleStats",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "201eadbb-399e-4225-8b09-9328c7e2ed84",
+                    "path": "<Mouse>/scroll",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Scroll",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -196,6 +196,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0066e41d35fdd5f4d9a8b22e83d0d254, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Equipment.UnityIntegration.PlayerUsageController
+  scrollSwitchCooldown: 0.08
 --- !u!114 &4908646979383403430
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1001,6 +1002,7 @@ MonoBehaviour:
   sceneCamera: {fileID: 8847762079162880258}
   viewModelRoot: {fileID: 613850900866179295}
   fpsArmsPrefab: {fileID: 3336567114018706152, guid: ee9a6b4d5b2f9004a8c0e8c3d20daf92, type: 3}
+  fpsArmsOneHandPrefab: {fileID: 1439877039070399546, guid: 55ec036d74e79744b9d2ed55c5bc0f4b, type: 3}
 --- !u!114 &8783910559989064746
 MonoBehaviour:
   m_ObjectHideFlags: 0
