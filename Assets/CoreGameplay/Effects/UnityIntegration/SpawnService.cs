@@ -15,6 +15,12 @@ namespace Features.Effects.Application
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
@@ -23,7 +29,7 @@ namespace Features.Effects.Application
             string prefabId,
             float lifetime,
             bool useSourcePosition,
-            EffectContext ctx)
+            EffectContext effectContext)
         {
             if (!InstanceFinder.IsServer)
             {
@@ -31,24 +37,38 @@ namespace Features.Effects.Application
                 return;
             }
 
-
             var prefab = registry.Get(prefabId);
             if (prefab == null)
+            {
+                Debug.LogError($"Spawn failed: prefab '{prefabId}' not found");
                 return;
+            }
 
             Vector3 pos = useSourcePosition
-                ? ResolveSourcePosition(ctx.Source)
-                : ctx.Origin;
+                ? ResolveSourcePosition(effectContext.Source)
+                : effectContext.Origin;
 
             var go = Instantiate(prefab, pos, Quaternion.identity);
 
-            if (go.TryGetComponent(out NetworkObject netObj))
+            var spawnedContext = go.GetComponent<SpawnedObjectContext>();
+            if (spawnedContext != null)
             {
-                InstanceFinder.ServerManager.Spawn(
-                    netObj.gameObject,
-                    ResolveOwner(ctx.Source)
-                );
+                spawnedContext.Source = ResolveSourceGameObject(effectContext.Source);
+                spawnedContext.Target = ResolveFirstTargetGameObject(effectContext.Targets);
+                spawnedContext.Lifetime = lifetime;
             }
+
+            if (!go.TryGetComponent(out NetworkObject netObj))
+            {
+                Debug.LogError($"Spawn failed: prefab '{prefabId}' has no NetworkObject");
+                Destroy(go);
+                return;
+            }
+
+            InstanceFinder.ServerManager.Spawn(
+                netObj.gameObject,
+                ResolveOwner(effectContext.Source)
+            );
 
             if (lifetime > 0f)
             {
@@ -62,7 +82,7 @@ namespace Features.Effects.Application
 
             if (netObj != null && netObj.IsSpawned)
             {
-                netObj.Despawn();
+                InstanceFinder.ServerManager.Despawn(netObj);
             }
         }
 
@@ -74,10 +94,28 @@ namespace Features.Effects.Application
             return Vector3.zero;
         }
 
+        private static GameObject ResolveSourceGameObject(IBuffSource source)
+        {
+            if (source is Component c)
+                return c.gameObject;
+
+            return null;
+        }
+
+        private static GameObject ResolveFirstTargetGameObject(IBuffTarget[] targets)
+        {
+            if (targets == null || targets.Length == 0)
+                return null;
+
+            if (targets[0] is Component c)
+                return c.gameObject;
+
+            return null;
+        }
+
         private static NetworkConnection ResolveOwner(IBuffSource source)
         {
-            if (source is Component c &&
-                c.TryGetComponent(out NetworkObject no))
+            if (source is Component c && c.TryGetComponent(out NetworkObject no))
                 return no.Owner;
 
             return null;
@@ -98,16 +136,25 @@ namespace Features.Effects.Application
 
             var prefab = registry.Get(prefabId);
             if (prefab == null)
+            {
+                Debug.LogError($"Spawn failed: prefab '{prefabId}' not found");
                 return;
+            }
 
             var go = Instantiate(prefab, position, rotation);
 
-            if (go.TryGetComponent(out NetworkObject netObj))
+            if (!go.TryGetComponent(out NetworkObject netObj))
             {
-                InstanceFinder.ServerManager.Spawn(go, owner);
+                Debug.LogError($"Spawn failed: prefab '{prefabId}' has no NetworkObject");
+                Destroy(go);
+                return;
+            }
 
-                if (lifetime > 0f)
-                    StartCoroutine(DespawnAfter(netObj, lifetime));
+            InstanceFinder.ServerManager.Spawn(netObj.gameObject, owner);
+
+            if (lifetime > 0f)
+            {
+                StartCoroutine(DespawnAfter(netObj, lifetime));
             }
         }
     }

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76f8409636586b74dba51f34126689a8, type: 3}
   m_Name: Tureet
   m_EditorClassIdentifier: Assembly-CSharp::TurretPresetSO
-  baseDamageMultiplier: 1
+  baseDamageMultiplier: 5
   baseHp: 150
   baseRegen: 0
   rotationSpeed: 10
-  baseFireRate: 1
+  baseFireRate: 3

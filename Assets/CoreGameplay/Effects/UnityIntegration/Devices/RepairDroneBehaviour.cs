@@ -1,35 +1,43 @@
 using UnityEngine;
-using System.Collections.Generic;
-using Features.Buffs.Domain;
-using Features.Buffs.Application;
-using Features.Player.UnityIntegration;
+using FishNet.Object;
+using Features.Effects.Application;
 
 namespace Features.Combat.Devices
 {
-    public sealed class RepairDroneBehaviour : MonoBehaviour
+    public sealed class RepairDroneBehaviour : NetworkBehaviour
     {
-        private Transform followTarget;
-        private float speed;
+        [SerializeField] private float speed = 5f;
+        [SerializeField] private Vector3 offset = new Vector3(2f, 3f, 0f);
 
-        public void Init(GameObject owner, float lifetime, float speed)
+        private Transform followTarget;
+
+        private void Start()
         {
-            this.followTarget = owner.transform;
-            this.speed = speed;
-            Destroy(gameObject, lifetime);
+            if (!IsServerInitialized)
+                return;
+
+            var ctx = GetComponent<SpawnedObjectContext>();
+            if (ctx != null && ctx.Source != null)
+            {
+                followTarget = ctx.Source.transform;
+            }
         }
 
         private void Update()
         {
-            if (!followTarget)
+            if (!IsServerInitialized)
                 return;
 
-            Vector3 target = followTarget.position + new Vector3(2f, 3f, 0);
-            transform.position = Vector3.Lerp(
+            if (followTarget == null)
+                return;
+
+            Vector3 target = followTarget.position + offset;
+
+            transform.position = Vector3.MoveTowards(
                 transform.position,
                 target,
-                Time.deltaTime * speed
+                speed * Time.deltaTime
             );
         }
     }
-
 }
