@@ -1627,8 +1627,8 @@ MonoBehaviour:
   - {fileID: 1994108113773139138}
   - {fileID: 8433262453340298880}
   activeSlot0Slot: {fileID: 2616253479953918566}
-  activeSlot1Slot: {fileID: 2735017754305288789}
-  activeSlot2Slot: {fileID: 8198122165828025357}
+  activeSlot1Slot: {fileID: 8198122165828025357}
+  activeSlot2Slot: {fileID: 2735017754305288789}
   inventoryInput: {fileID: 7461453766968472451}
 --- !u!114 &8569830652582562370
 MonoBehaviour:
