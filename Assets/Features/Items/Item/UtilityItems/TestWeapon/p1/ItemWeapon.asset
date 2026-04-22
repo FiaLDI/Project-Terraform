@@ -113,4 +113,4 @@ MonoBehaviour:
       duration: 0
       projectileConfig: {fileID: 0}
       childEffects: []
-      soundConfig: {fileID: 11400000, guid: 9d362a1ea8c11b045b95978fc134d9e4, type: 2}
+      soundConfig: {fileID: 11400000, guid: dd2a16a708d8ae44b8b5ab7fe98e830e, type: 2}
