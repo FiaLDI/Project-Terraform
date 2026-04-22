@@ -6,6 +6,8 @@ public class ImpactFxDispatcher : NetworkBehaviour
 {
     public static ImpactFxDispatcher Instance;
 
+    private static Material chainMaterial;
+
     private void Awake()
     {
         Instance = this;
@@ -30,6 +32,12 @@ public class ImpactFxDispatcher : NetworkBehaviour
         }
 
         RpcPlaySound(pos, config.id);
+    }
+
+    [Server]
+    public void ServerSpawnChain(Vector3 start, Vector3 end, float lifetime = 0.12f)
+    {
+        RpcSpawnChain(start, end, lifetime);
     }
 
     [ObserversRpc]
@@ -65,5 +73,48 @@ public class ImpactFxDispatcher : NetworkBehaviour
             pos,
             $"{soundId}:{pos}"
         );
+    }
+
+    [ObserversRpc]
+    private void RpcSpawnChain(Vector3 start, Vector3 end, float lifetime)
+    {
+        var go = new GameObject("ChainLightningFx");
+        var line = go.AddComponent<LineRenderer>();
+
+        line.useWorldSpace = true;
+        line.positionCount = 6;
+        for (int i = 0; i < line.positionCount; i++)
+        {
+            float t = i / (float)(line.positionCount - 1);
+            Vector3 pos = Vector3.Lerp(start, end, t);
+
+            if (i > 0 && i < line.positionCount - 1)
+                pos += Random.insideUnitSphere * 0.18f;
+
+            line.SetPosition(i, pos);
+        }
+
+        line.startWidth = 0.08f;
+        line.endWidth = 0.025f;
+        line.numCapVertices = 3;
+        line.material = GetChainMaterial();
+        line.startColor = new Color(0.35f, 0.95f, 1f, 1f);
+        line.endColor = new Color(0.95f, 1f, 1f, 0.35f);
+
+        Destroy(go, Mathf.Max(0.02f, lifetime));
+    }
+
+    private static Material GetChainMaterial()
+    {
+        if (chainMaterial != null)
+            return chainMaterial;
+
+        var shader =
+            Shader.Find("Sprites/Default") ??
+            Shader.Find("Universal Render Pipeline/Unlit") ??
+            Shader.Find("Hidden/Internal-Colored");
+
+        chainMaterial = new Material(shader);
+        return chainMaterial;
     }
 }

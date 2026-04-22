@@ -88,6 +88,12 @@ namespace Features.Effects.Application
             Vector3 origin,
             Vector3 dir)
         {
+            if (_config.projectilePrefab == null)
+            {
+                Debug.LogError("[SpawnProjectileEffect] Server projectile prefab is null.");
+                return;
+            }
+
             var go = Object.Instantiate(
                 _config.projectilePrefab,
                 origin,
@@ -95,6 +101,12 @@ namespace Features.Effects.Application
             );
 
             var net = go.GetComponent<NetworkObject>();
+            if (net == null)
+            {
+                Debug.LogError("[SpawnProjectileEffect] Server projectile prefab has no NetworkObject.", go);
+                Object.Destroy(go);
+                return;
+            }
 
             var owner = (context.Source as Component)
                 ?.GetComponentInParent<NetworkObject>();
@@ -102,6 +114,13 @@ namespace Features.Effects.Application
             InstanceFinder.ServerManager.Spawn(net, owner?.Owner);
 
             var proj = go.GetComponent<ProjectileNetwork>();
+            if (proj == null)
+            {
+                Debug.LogError("[SpawnProjectileEffect] Server projectile prefab has no ProjectileNetwork.", go);
+                net.Despawn();
+                return;
+            }
+
             proj.InitServer(_config, owner, dir);
         }
     }

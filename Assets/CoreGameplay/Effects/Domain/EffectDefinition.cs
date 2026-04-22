@@ -21,7 +21,8 @@ namespace Features.Effects.Domain
         HitscanDamage,
         ScanResourceEffect,
         SpawnImpact,
-        PlaySound
+        PlaySound,
+        ChainDamage
     }
 
     public enum OwnershipFilter
@@ -88,6 +89,12 @@ namespace Features.Effects.Domain
 
         [Header("Sound")]
         public SoundEffectConfig soundConfig;
+
+        [Header("Chain")]
+        public int chainCount;
+        public float chainRadius;
+        [Range(0f, 1f)]
+        public float chainDamageFalloff;
         
         public EffectDefinition Build()
         {

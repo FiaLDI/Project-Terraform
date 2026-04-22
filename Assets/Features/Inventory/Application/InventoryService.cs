@@ -250,6 +250,35 @@ namespace Features.Inventory.Domain
             return ItemInstance.Empty;
         }
 
+        public bool ConsumeActiveItem(int amount = 1, object source = null)
+        {
+            if (amount <= 0)
+                return false;
+
+            var slot = model.GetActiveSlot(model.ActiveSlotIndex);
+            if (slot == null || slot.item.IsEmpty)
+                return false;
+
+            var item = slot.item;
+            var def = item.itemDefinition;
+            int consumed = Math.Min(amount, item.quantity);
+
+            item.quantity -= consumed;
+            if (item.quantity <= 0)
+                slot.item = ItemInstance.Empty;
+
+            OnChanged?.Invoke();
+
+            if (source is UnityEngine.GameObject go && def != null)
+            {
+                QuestEventBus.Publish(
+                    new ItemRemovedEvent(go, def.id, consumed)
+                );
+            }
+
+            return true;
+        }
+
         // =====================================================
         // INGREDIENTS
         // =====================================================

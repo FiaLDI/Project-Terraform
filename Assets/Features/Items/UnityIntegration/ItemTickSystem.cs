@@ -8,6 +8,7 @@ public sealed class ItemTickSystem : NetworkBehaviour
     private static ItemTickSystem instance;
 
     private readonly HashSet<IItemTickable> items = new();
+    private readonly List<IItemTickable> tickBuffer = new();
 
     public static void Register(IItemTickable item)
     {
@@ -38,7 +39,17 @@ public sealed class ItemTickSystem : NetworkBehaviour
     {
         float dt = (float)TimeManager.TickDelta;
 
-        foreach (var item in items)
+        tickBuffer.Clear();
+        tickBuffer.AddRange(items);
+
+        foreach (var item in tickBuffer)
+        {
+            if (!items.Contains(item))
+                continue;
+
             item.ServerTick(dt);
+        }
+
+        tickBuffer.Clear();
     }
 }

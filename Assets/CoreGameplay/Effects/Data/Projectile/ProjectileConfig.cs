@@ -37,5 +37,12 @@ namespace Features.Weapons.Domain
 
         [Header("FX")]
         public GameObject hitEffect;
+
+        [Header("Explosion")]
+        public float explosionRadius;
+        public LayerMask explosionLayerMask;
+        public OwnershipFilter explosionOwnership = OwnershipFilter.DifferentOwner;
+        public string explosionImpactFxId;
+        public SoundEffectConfig explosionSound;
     }
 }

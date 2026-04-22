@@ -29,6 +29,7 @@ public class ItemActionDefinition
 
     [Header("Optional States")]
     public float windupTime;
+    public bool fireOnRelease;
     public float reloadTime;
 
     [Header("Burst")]

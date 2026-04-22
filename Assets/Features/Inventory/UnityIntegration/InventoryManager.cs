@@ -180,6 +180,14 @@ namespace Features.Inventory.UnityIntegration
             return Service.TryRemove(def, amount);
         }
 
+        public bool ConsumeActiveItem(int amount = 1)
+        {
+            if (Service == null)
+                return false;
+
+            return Service.ConsumeActiveItem(amount, gameObject);
+        }
+
         public int GetItemCount(Item def)
         {
             return Service.GetItemCount(def);

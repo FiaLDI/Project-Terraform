@@ -11,6 +11,7 @@ using Features.Effects.Domain;
 using Features.Weapons.Domain;
 using Features.Items.Data;
 using Features.Camera.UnityIntegration;
+using Features.Inventory.UnityIntegration;
 
 public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 {
@@ -173,6 +174,8 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
         Vector3 finalHitPoint = hitPoint;
         Vector3 fireOrigin = GetFireOrigin(ray.origin);
+        bool consumeOnFirstFire = activeItemInstance.itemDefinition.isConsumable;
+        bool consumed = false;
 
         activeRuntime.OnFire = (_, _) =>
         {
@@ -180,8 +183,14 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
                 return;
 
             var config = GetCurrentProjectileConfig(action);
-            if (config != null)
+            if (ShouldSpawnClientProjectileVisual(config))
                 ServerNotifyShot(fireOrigin, finalHitPoint, action);
+
+            if (consumeOnFirstFire && !consumed)
+            {
+                consumed = true;
+                ConsumeActiveItem();
+            }
         };
 
         activeRuntime.UpdateAim(fireOrigin, hitPoint, true);
@@ -204,7 +213,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     private void PlayLocalShot(ItemActionType action, Vector3 hitPoint)
     {
         var config = GetCurrentProjectileConfig(action);
-        if (config == null)
+        if (!ShouldSpawnClientProjectileVisual(config))
             return;
 
         SpawnVisual(hitPoint, config, true);
@@ -330,7 +339,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private void SpawnVisual(Vector3 hitPoint, ProjectileConfig config, bool isOwner)
     {
-        if (config == null || config.clientProjectilePrefab == null)
+        if (!ShouldSpawnClientProjectileVisual(config))
             return;
 
         Vector3 spawnPos = GetVisualSpawnPosition();
@@ -339,7 +348,7 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private void SpawnVisual(Vector3 spawnPos, Vector3 hitPoint, ProjectileConfig config)
     {
-        if (config == null || config.clientProjectilePrefab == null)
+        if (!ShouldSpawnClientProjectileVisual(config))
             return;
 
         if (ProjectilePool.Instance == null)
@@ -418,14 +427,14 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
 
     private ItemActionDefinition GetCurrentActionDefinition(ItemActionType actionType)
     {
-        var equip = GetComponent<EquipmentManager>();
-        var equipped = equip?.GetEquippedObject();
+        return FindActionDefinition(activeItemInstance?.itemDefinition, actionType);
+    }
 
-        var holder = equipped != null
-            ? equipped.GetComponent<ItemRuntimeHolder>()
-            : null;
-
-        return FindActionDefinition(holder?.Instance?.itemDefinition, actionType);
+    private static bool ShouldSpawnClientProjectileVisual(ProjectileConfig config)
+    {
+        return config != null &&
+               !config.useServerProjectile &&
+               config.clientProjectilePrefab != null;
     }
 
     private static ProjectileConfig ExtractProjectileConfig(Item item, ItemActionType actionType)
@@ -491,5 +500,10 @@ public sealed class PlayerUsageNetAdapter : NetworkBehaviour
     {
         return activeItemInstance != null && !activeItemInstance.IsEmpty;
     }
-}
 
+    private void ConsumeActiveItem()
+    {
+        var inventory = GetComponent<InventoryManager>();
+        inventory?.ConsumeActiveItem(1);
+    }
+}

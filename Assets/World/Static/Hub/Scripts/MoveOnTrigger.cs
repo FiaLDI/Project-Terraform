@@ -17,7 +17,6 @@ public class MoveOnTrigger : NetworkBehaviour
     {
         if (objectToMove == null)
         {
-            Debug.LogError("[MoveOnTrigger] objectToMove is NULL");
             return;
         }
 
@@ -27,45 +26,32 @@ public class MoveOnTrigger : NetworkBehaviour
             objectToMove.transform.TransformDirection(localMoveDirection.normalized);
 
         _openPosition = _closedPosition + worldDirection * moveDistance;
-
-        Debug.Log($"[MoveOnTrigger] Object={objectToMove.name}");
-        Debug.Log($"[MoveOnTrigger] Closed={_closedPosition}");
-        Debug.Log($"[MoveOnTrigger] Open={_openPosition}");
-        Debug.Log($"[MoveOnTrigger] WorldDirection={worldDirection}");
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log($"[Trigger Enter] {other.name}, tag={other.tag}");
-
         if (!other.CompareTag("Player"))
             return;
 
         if (!IsServerInitialized)
         {
-            Debug.Log("[Trigger Enter] ignored, not server");
             return;
         }
 
         _shouldOpen = true;
-        Debug.Log("[Server] Door OPEN");
     }
 
     private void OnTriggerExit(Collider other)
     {
-        Debug.Log($"[Trigger Exit] {other.name}, tag={other.tag}");
-
         if (!other.CompareTag("Player"))
             return;
 
         if (!IsServerInitialized)
         {
-            Debug.Log("[Trigger Exit] ignored, not server");
             return;
         }
 
         _shouldOpen = false;
-        Debug.Log("[Server] Door CLOSE");
     }
 
     private void FixedUpdate()
@@ -80,7 +66,6 @@ public class MoveOnTrigger : NetworkBehaviour
         if ((current - target).sqrMagnitude > 0.0001f)
         {
             objectToMove.MovePosition(next);
-            Debug.Log($"[Server Move] current={current} target={target} next={next}");
         }
     }
 }
