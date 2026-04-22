@@ -1,7 +1,8 @@
+using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using UnityEngine.Events;
 
 public enum ButtonState { Idle, Hover, Selected, Locked }
 
@@ -11,11 +12,18 @@ public class PolygonGlowButton : MonoBehaviour,
     [Header("Images")]
     public Image baseImage;
     public Image glowImage;
+    public Image Icon;
+
+    [Header("Label")]
+    [SerializeField] private TMP_Text Label;
 
     [Header("Colors")]
     public Color idleColor = Color.white;
+    public Color hoverColor = new Color(0.85f, 0.95f, 1f, 1f);
     public Color selectedColor = new Color(0.7f, 1f, 1f, 1f);
     public Color lockedColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+    public Color idleLabelColor = Color.white;
+    public Color hoverLabelColor = new Color(0.7f, 1f, 1f, 1f);
 
     [Header("Glow")]
     public float hoverHighlight = 1f;
@@ -37,8 +45,8 @@ public class PolygonGlowButton : MonoBehaviour,
     private PolygonGlowButtonGroup group;
     private ButtonState state = ButtonState.Idle;
 
-    private static readonly int HighlightID = Shader.PropertyToID("_Highlight");
-    private static readonly int MainSpriteID = Shader.PropertyToID("_MainSprite");
+    private static readonly int HighlightID = Shader.PropertyToID("Highlight");
+    private static readonly int MainSpriteID = Shader.PropertyToID("MainSprite");
 
     public bool IsLocked => state == ButtonState.Locked;
     public bool Interactable => interactable && state != ButtonState.Locked;
@@ -49,7 +57,7 @@ public class PolygonGlowButton : MonoBehaviour,
         {
             mat = Instantiate(glowImage.material);
             glowImage.material = mat;
-
+            mat.SetFloat(HighlightID, 0f);
         }
 
         ApplySpriteToShader();
@@ -70,7 +78,7 @@ public class PolygonGlowButton : MonoBehaviour,
             fadeSpeed * Time.unscaledDeltaTime
         );
 
-        mat.SetFloat(HighlightID, currentHighlight);        
+        mat.SetFloat(HighlightID, currentHighlight);
     }
 
     public void SetGroup(PolygonGlowButtonGroup g)
@@ -146,11 +154,19 @@ public class PolygonGlowButton : MonoBehaviour,
             case ButtonState.Idle:
                 baseImage.color = interactable ? idleColor : lockedColor;
                 targetHighlight = 0f;
+                if (Icon != null)
+                    Icon.color = interactable ? idleColor : lockedColor;
+                if (Label != null)
+                    Label.color = idleLabelColor;
                 break;
 
             case ButtonState.Hover:
-                baseImage.color = idleColor;
+                baseImage.color = hoverColor;
                 targetHighlight = hoverHighlight;
+                if (Icon != null)
+                    Icon.color = hoverColor;
+                if (Label != null)
+                    Label.color = hoverLabelColor;
                 break;
 
             case ButtonState.Selected:

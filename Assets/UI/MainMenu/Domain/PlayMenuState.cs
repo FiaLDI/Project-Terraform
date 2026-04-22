@@ -5,5 +5,8 @@ public class PlayMenuState : IMainMenuState
         MainMenuUIManager.Instance.Show(MainMenuStateId.Play);
     }
 
-    public void Exit() {}
+    public void Exit()
+    {
+        MainMenuUIManager.Instance.playPanel.SetActive(false);
+    }
 }
