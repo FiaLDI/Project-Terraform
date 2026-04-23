@@ -30,6 +30,11 @@ public class PlayerSessionNetwork : NetworkBehaviour
     [ServerRpc]
     public void RequestReturnToHubServerRpc()
     {
+        GetComponent<PlayerQuestComponent>()?.ClearAll();
+
+        var session = ServerCompositionRoot.I?.Sessions?.GetSessionByClient(Owner.ClientId);
+        session?.SetPendingWorldQuestBootstrap(null, null);
+
         SceneTransitionService.LoadHubScene();
     }
 
@@ -43,11 +48,22 @@ public class PlayerSessionNetwork : NetworkBehaviour
         }
 
         int seed = Random.Range(int.MinValue, int.MaxValue);
+        var session = ServerCompositionRoot.I?.Sessions?.GetSessionByClient(Owner.ClientId);
 
         ServerWorldSession.PendingSeed = seed;
         ServerWorldSession.PendingWorldConfigId = worldConfigId;
-        ServerWorldSession.PendingQuestIds = questIds;
-        ServerWorldSession.PendingChainIds = chainIds;
+
+        if (session != null)
+        {
+            session.SetPendingWorldQuestBootstrap(questIds, chainIds);
+            ServerWorldSession.PendingQuestIds.Clear();
+            ServerWorldSession.PendingChainIds.Clear();
+        }
+        else
+        {
+            ServerWorldSession.PendingQuestIds = questIds ?? new List<string>();
+            ServerWorldSession.PendingChainIds = chainIds ?? new List<string>();
+        }
 
         Debug.Log($"[PlayerSessionNetwork] Generated world seed {seed} for '{worldConfigId}'.");
         SceneTransitionService.LoadWorldScene();

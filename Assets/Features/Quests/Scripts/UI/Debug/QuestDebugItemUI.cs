@@ -25,22 +25,14 @@ public class QuestDebugItemUI : MonoBehaviour
 
         var def = questDatabase.GetDefinition(id);
 
-        // =========================
-        // TITLE
-        // =========================
         title.text = def != null ? def.Name : id;
-
-        // =========================
-        // PROGRESS (MULTI-CONDITION)
-        // =========================
         progress.text = BuildProgressText(state, def);
 
-        if (state.completed)
-            progress.text += " ✅";
+        if (state.state == QuestState.Completed)
+            progress.text += " (Done)";
+        else if (state.state == QuestState.Failed)
+            progress.text += " (Failed)";
 
-        // =========================
-        // BUTTONS
-        // =========================
         advanceBtn.onClick.RemoveAllListeners();
         completeBtn.onClick.RemoveAllListeners();
         failBtn.onClick.RemoveAllListeners();
@@ -55,10 +47,6 @@ public class QuestDebugItemUI : MonoBehaviour
             net.DebugFailQuestServerRpc(questId));
     }
 
-    // =========================================================
-    // BUILD TEXT
-    // =========================================================
-
     private string BuildProgressText(QuestNetState state, QuestDefinition def)
     {
         if (state.conditions == null || state.conditions.Length == 0)
@@ -71,12 +59,8 @@ public class QuestDebugItemUI : MonoBehaviour
             var c = state.conditions[i];
 
             string desc = $"Condition {i + 1}";
-
-            // если есть дефиниция — берем описание
             if (def != null && i < def.Conditions.Count)
-            {
                 desc = def.Conditions[i].GetDescription();
-            }
 
             lines.AppendLine($"{desc}: {c.progress}/{c.target}");
         }

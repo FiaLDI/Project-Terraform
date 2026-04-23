@@ -64,7 +64,11 @@ public class PauseMenu : MonoBehaviour, IUIScreen
     private void OnSettings()
     {
         if (SettingsMenu.I != null)
+        {
+            SettingsMenu.I.Show();
             SettingsMenu.I.Open();
+        }
+            
     }
 
     private void OnExit()

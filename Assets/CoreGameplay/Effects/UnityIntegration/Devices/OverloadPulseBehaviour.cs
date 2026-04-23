@@ -69,7 +69,7 @@ public class OverloadPulseBehaviour : MonoBehaviour
         if (followOwner && _owner != null && ShouldDriveFollow())
         {
             Vector3 pos = _owner.position;
-            pos.y = transform.position.y;
+            
             transform.position = pos;
         }
 

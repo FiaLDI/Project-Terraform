@@ -1,13 +1,17 @@
-using UnityEngine;
 using System.Collections.Generic;
 using Features.Quests.Data;
-using FishNet.Object.Synchronizing;
-using Features.Quests.UnityIntegration;
 using Features.Quests.Domain;
+using Features.Quests.UnityIntegration;
 using Features.UI;
+using FishNet.Object.Synchronizing;
+using UnityEngine;
 
 public class QuestUIRuntime : PlayerBoundUIView
 {
+    private static readonly Color CompletedColor = Color.green;
+    private static readonly Color FailedColor = Color.red;
+    private static readonly Color DefaultColor = Color.white;
+
     [Header("HUD")]
     [SerializeField] private Transform hudContainer;
     [SerializeField] private QuestItemUI hudEntryTemplate;
@@ -36,7 +40,6 @@ public class QuestUIRuntime : PlayerBoundUIView
         }
 
         questComponent.Quests.OnChange += OnQuestChanged;
-
         RestoreExisting();
     }
 
@@ -66,9 +69,6 @@ public class QuestUIRuntime : PlayerBoundUIView
         QuestNetState value,
         bool asServer)
     {
-        if (asServer)
-            return;
-
         switch (op)
         {
             case SyncDictionaryOperation.Add:
@@ -82,6 +82,10 @@ public class QuestUIRuntime : PlayerBoundUIView
             case SyncDictionaryOperation.Remove:
                 RemoveQuestUI(key);
                 break;
+
+            case SyncDictionaryOperation.Clear:
+                ClearAllEntries();
+                break;
         }
     }
 
@@ -91,8 +95,8 @@ public class QuestUIRuntime : PlayerBoundUIView
         if (def == null)
             return;
 
-        CreateEntryIfMissing(state, def, hudEntries, hudEntryTemplate, hudContainer);
-        CreateEntryIfMissing(state, def, journalEntries, journalEntryTemplate, listParent);
+        CreateHudEntryIfMissing(state, def);
+        CreateJournalEntryIfMissing(state, def);
     }
 
     private void UpdateQuestUI(QuestNetState state)
@@ -101,40 +105,57 @@ public class QuestUIRuntime : PlayerBoundUIView
         if (def == null)
             return;
 
-        UpdateEntryIfExists(state, def, hudEntries);
-        UpdateEntryIfExists(state, def, journalEntries);
+        UpdateHudEntryIfExists(state, def);
+        UpdateJournalEntryIfExists(state, def);
     }
 
     private void RemoveQuestUI(string id)
     {
         RemoveEntry(id, hudEntries);
         RemoveEntry(id, journalEntries);
+        journalScreen?.RemoveEntry(id);
     }
 
-    private void CreateEntryIfMissing(
-        QuestNetState state,
-        QuestDefinition def,
-        Dictionary<string, QuestItemUI> entries,
-        QuestItemUI template,
-        Transform parent)
+    private void CreateHudEntryIfMissing(QuestNetState state, QuestDefinition def)
     {
-        if (entries.ContainsKey(state.questId))
+        if (hudEntries.ContainsKey(state.questId))
             return;
 
-        var entry = Instantiate(template, parent);
-        ApplyEntryVisual(entry, state, def);
-        entries[state.questId] = entry;
+        if (hudEntryTemplate == null || hudContainer == null)
+            return;
+
+        var entry = Instantiate(hudEntryTemplate, hudContainer);
+        ApplyHudEntryVisual(entry, state, def);
+        hudEntries[state.questId] = entry;
     }
 
-    private void UpdateEntryIfExists(
-        QuestNetState state,
-        QuestDefinition def,
-        Dictionary<string, QuestItemUI> entries)
+    private void CreateJournalEntryIfMissing(QuestNetState state, QuestDefinition def)
     {
-        if (!entries.TryGetValue(state.questId, out var entry))
+        if (journalEntries.ContainsKey(state.questId))
             return;
 
-        ApplyEntryVisual(entry, state, def);
+        if (journalEntryTemplate == null || listParent == null || journalScreen == null)
+            return;
+
+        var entry = Instantiate(journalEntryTemplate, listParent);
+        journalEntries[state.questId] = entry;
+        journalScreen.RegisterOrUpdateEntry(entry, state, def);
+    }
+
+    private void UpdateHudEntryIfExists(QuestNetState state, QuestDefinition def)
+    {
+        if (!hudEntries.TryGetValue(state.questId, out var entry))
+            return;
+
+        ApplyHudEntryVisual(entry, state, def);
+    }
+
+    private void UpdateJournalEntryIfExists(QuestNetState state, QuestDefinition def)
+    {
+        if (!journalEntries.TryGetValue(state.questId, out var entry) || journalScreen == null)
+            return;
+
+        journalScreen.RegisterOrUpdateEntry(entry, state, def);
     }
 
     private void RemoveEntry(string id, Dictionary<string, QuestItemUI> entries)
@@ -150,6 +171,7 @@ public class QuestUIRuntime : PlayerBoundUIView
     {
         ClearEntries(hudEntries);
         ClearEntries(journalEntries);
+        journalScreen?.ClearEntries();
     }
 
     private void ClearEntries(Dictionary<string, QuestItemUI> entries)
@@ -163,27 +185,39 @@ public class QuestUIRuntime : PlayerBoundUIView
         entries.Clear();
     }
 
-    private void ApplyEntryVisual(QuestItemUI entry, QuestNetState state, QuestDefinition def)
+    private void ApplyHudEntryVisual(QuestItemUI entry, QuestNetState state, QuestDefinition def)
     {
         entry.Title.text = BuildTitleText(state, def);
         entry.Conditions.text = BuildConditionsText(state, def);
 
-        var color = state.completed ? Color.green : Color.white;
+        var color = state.state switch
+        {
+            QuestState.Completed => CompletedColor,
+            QuestState.Failed => FailedColor,
+            _ => DefaultColor
+        };
+
         entry.Title.color = color;
         entry.Conditions.color = color;
     }
 
     private string BuildTitleText(QuestNetState state, QuestDefinition def)
     {
-        return state.completed
-            ? $"{def.Name} ✓"
-            : def.Name;
+        return state.state switch
+        {
+            QuestState.Completed => $"{def.Name} (Done)",
+            QuestState.Failed => $"{def.Name} (Failed)",
+            _ => def.Name
+        };
     }
 
     private string BuildConditionsText(QuestNetState state, QuestDefinition def)
     {
-        if (state.completed)
+        if (state.state == QuestState.Completed)
             return string.Empty;
+
+        if (state.state == QuestState.Failed)
+            return "Quest failed";
 
         if (state.conditions == null || def.Conditions == null)
             return string.Empty;

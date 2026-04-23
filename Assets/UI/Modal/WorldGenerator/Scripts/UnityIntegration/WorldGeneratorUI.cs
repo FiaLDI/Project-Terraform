@@ -414,15 +414,9 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
 
     private List<string> GetSelectedChainIds()
     {
-        WorldSelectionEntry entry = GetSelectedEntry();
-        if (entry == null || entry.availableChains == null)
-            return new List<string>();
-
-        return entry.availableChains
-            .Where(IsValidChain)
-            .Select(chain => chain.chainId)
-            .Distinct()
-            .ToList();
+        // World selection currently has no explicit chain picker, so auto-starting
+        // every chain from the selected region creates hidden extra quests.
+        return new List<string>();
     }
 
     private string GetSelectedWorldConfigId()

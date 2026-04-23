@@ -22,6 +22,7 @@ MonoBehaviour:
     requiredAmount: 3
   haveItems: []
   reachPointId: 
+  experienceReward: 50
   rewards:
   - itemId: 4
     amount: 8

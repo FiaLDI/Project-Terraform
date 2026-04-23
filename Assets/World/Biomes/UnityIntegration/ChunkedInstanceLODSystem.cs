@@ -116,9 +116,10 @@ namespace Biomes.UnityIntegration
                     if (d2 > lod2Sqr)
                         continue;
 
-                    Quaternion rot = inst.normal.sqrMagnitude > 0.0001f
-                        ? Quaternion.FromToRotation(Vector3.up, inst.normal)
-                        : Quaternion.identity;
+                    Quaternion rot = BuildRotation(
+                        inst.normal,
+                        inst.alignToNormal,
+                        inst.yRotationDegrees);
 
                     Vector3 finalScale = Vector3.Scale(rootScale, Vector3.one * inst.scale);
                     Vector3 renderPos = inst.position + (rot * Vector3.up) * (-groundOffset * finalScale.y);
@@ -139,6 +140,27 @@ namespace Biomes.UnityIntegration
                 DrawBatch(mesh, mat, lod1);
                 DrawBatch(mesh, mat, lod2);
             }
+        }
+
+        private static Quaternion BuildRotation(Vector3 normal, bool alignToNormal, float yRotationDegrees)
+        {
+            Vector3 up = Vector3.up;
+            Quaternion basis = Quaternion.identity;
+
+            if (alignToNormal && normal.sqrMagnitude > 0.0001f)
+            {
+                up = normal.normalized;
+                basis = Quaternion.FromToRotation(Vector3.up, up);
+            }
+
+            if (!float.IsNaN(yRotationDegrees) &&
+                !float.IsInfinity(yRotationDegrees) &&
+                Mathf.Abs(yRotationDegrees) > 0.001f)
+            {
+                basis = Quaternion.AngleAxis(yRotationDegrees, up) * basis;
+            }
+
+            return basis;
         }
 
         private void DrawBatch(Mesh mesh, Material mat, List<(Matrix4x4, float)> list)

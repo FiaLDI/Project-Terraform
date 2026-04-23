@@ -17,15 +17,12 @@ public class SettingsMenu : MonoBehaviour, IUIScreen
 
     private SettingsMenuController controller;
 
-    private MainMenuFSM mainMenuFSM;
-
     private void Awake()
     {
         I = this;
 
         panel.SetActive(false);
         controller = GetComponent<SettingsMenuController>();
-        mainMenuFSM = GetComponentInParent<MainMenuFSM>();
 
         backButton.onClick.AddListener(OnBack);
         applyButton.onClick.AddListener(OnApply);
@@ -61,8 +58,8 @@ public class SettingsMenu : MonoBehaviour, IUIScreen
 
     private void OnBack()
     {
-        if(mainMenuFSM != null) { 
-            UIStackManager.I.Pop(mainMenuFSM);
+        if(MainMenuFSM.Instance != null) { 
+            UIStackManager.I.Pop(MainMenuFSM.Instance);
         } else { 
             UIStackManager.I.Pop();
         }
@@ -77,8 +74,8 @@ public class SettingsMenu : MonoBehaviour, IUIScreen
         var player = bootstrap?.LocalPlayer;
         player?.GetComponent<PlayerCameraController>()?.RefreshSensitivity();
 
-        if (mainMenuFSM != null)
-            UIStackManager.I.Pop(mainMenuFSM);
+        if (MainMenuFSM.Instance != null)
+            UIStackManager.I.Pop(MainMenuFSM.Instance);
         else
             UIStackManager.I.Pop();
     }

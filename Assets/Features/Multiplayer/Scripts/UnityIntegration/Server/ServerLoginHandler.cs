@@ -44,12 +44,13 @@ public sealed class ServerLoginHandler : MonoBehaviour
         string persistentId,
         string characterId,
         string classId,
-        int level)
+        int level,
+        int experience)
     {
         Debug.Log($"[SERVER] Received classId = {classId}");
         var session = sessions.HandleLogin(conn.ClientId, persistentId);
 
-        session.SetCharacterData(characterId, classId, level);
+        session.SetCharacterData(characterId, classId, level, experience);
         Debug.Log($"[SESSION] Stored classId = {session.ClassId}");
 
         if (flow.CurrentState == ServerGameState.Running)

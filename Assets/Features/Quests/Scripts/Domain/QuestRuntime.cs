@@ -78,6 +78,20 @@ namespace Features.Quests.Domain
             NotifyUpdated();
         }
 
+        public void RestoreConditionState(IQuestCondition condition, int progressValue, int targetValue)
+        {
+            if (condition == null)
+                return;
+
+            targets[condition] = Math.Max(0, targetValue);
+            progress[condition] = Math.Max(0, progressValue);
+        }
+
+        public void RestoreState(QuestState state)
+        {
+            State = state;
+        }
+
         private void EvaluateCompletion()
         {
             if (State != QuestState.Active)

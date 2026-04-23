@@ -136,6 +136,11 @@ namespace Biomes.UnityIntegration
                 if (slope < r.minSlope || slope > r.maxSlope) continue;
 
                 float scale = math.lerp(r.minScale, r.maxScale, rng.NextFloat());
+                int flags = 0;
+                if (r.alignToNormal != 0)
+                    flags |= SpawnInstanceFlags.AlignToNormal;
+                if (r.randomYRotation != 0)
+                    flags |= SpawnInstanceFlags.RandomYRotation;
 
                 output.AddNoResize(new SpawnInstance
                 {
@@ -144,6 +149,7 @@ namespace Biomes.UnityIntegration
                     prefabIndex = r.prefabIndex,
                     biomeId     = biome.biomeId,
                     scale       = scale,
+                    extraData   = flags,
                     spawnType   = (int)SpawnKind.EnvironmentInstanced,
                     random01    = rng.NextFloat()
                 });

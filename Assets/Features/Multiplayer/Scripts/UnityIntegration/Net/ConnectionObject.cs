@@ -13,14 +13,28 @@ public sealed class ConnectionObject : NetworkBehaviour
 
         string pid = PersistentIdProvider.GetOrCreate();
 
-        var active = PlayerProgressService.Instance.GetActiveCharacter();
+        var progress = PlayerProgressService.Instance;
+        if (progress == null)
+        {
+            Debug.LogError("[LOGIN] PlayerProgressService is missing");
+            return;
+        }
+
+        var active = progress.GetActiveCharacter();
+        if (active == null)
+        {
+            Debug.LogError("[LOGIN] Active character not found");
+            return;
+        }
+
         Debug.Log($"[LOGIN] Sending classId = {active.classId}");
         
         SendLoginServerRpc(
             pid,
             active.characterId,
             active.classId,
-            active.level);
+            active.level,
+            active.experience);
     }
 
     [ServerRpc]
@@ -29,6 +43,7 @@ public sealed class ConnectionObject : NetworkBehaviour
         string characterId,
         string classId,
         int level,
+        int experience,
         NetworkConnection sender = null)
     {
         
@@ -40,6 +55,7 @@ public sealed class ConnectionObject : NetworkBehaviour
             persistentId,
             characterId,
             classId,
-            level);
+            level,
+            experience);
     }
 }

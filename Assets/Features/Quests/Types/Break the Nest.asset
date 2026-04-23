@@ -23,6 +23,7 @@ MonoBehaviour:
   collectItems: []
   haveItems: []
   reachPointId: 
+  experienceReward: 50
   rewards:
   - itemId: 2
     amount: 25

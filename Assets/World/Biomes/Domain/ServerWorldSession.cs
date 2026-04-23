@@ -20,4 +20,17 @@ public static class ServerWorldSession
 
         return result;
     }
+
+    public static (List<string> questIds, List<string> chainIds) ConsumeQuestBootstrap()
+    {
+        var result = (
+            new List<string>(PendingQuestIds),
+            new List<string>(PendingChainIds)
+        );
+
+        PendingQuestIds.Clear();
+        PendingChainIds.Clear();
+
+        return result;
+    }
 }

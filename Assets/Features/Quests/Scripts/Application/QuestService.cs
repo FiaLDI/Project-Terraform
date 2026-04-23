@@ -59,6 +59,39 @@ namespace Features.Quests.Domain
             return runtime;
         }
 
+        public QuestRuntime RestoreQuest(
+            QuestDefinition def,
+            QuestConditionNetState[] conditions,
+            QuestState state)
+        {
+            if (_active.TryGetValue(def.Id, out var existing))
+                return existing;
+
+            var runtime = new QuestRuntime(def, owner);
+            _active.Add(def.Id, runtime);
+
+            foreach (var cond in def.Conditions)
+                cond.OnStart(runtime);
+
+            if (conditions != null)
+            {
+                int count = Math.Min(def.Conditions.Count, conditions.Length);
+                for (int i = 0; i < count; i++)
+                {
+                    var net = conditions[i];
+                    runtime.RestoreConditionState(def.Conditions[i], net.progress, net.target);
+                }
+            }
+
+            runtime.RestoreState(state);
+            runtime.OnUpdated += HandleQuestUpdated;
+
+            if (state == QuestState.Completed)
+                _completed.Add(runtime);
+
+            return runtime;
+        }
+
         // ----------------------------------------------------------
         // PROCESS EVENT
         // ----------------------------------------------------------
@@ -150,6 +183,7 @@ namespace Features.Quests.Domain
                 return;
 
             quest.Reset();
+            _completed.Remove(quest);
 
             quest.OnUpdated -= HandleQuestUpdated;
 
@@ -177,6 +211,7 @@ namespace Features.Quests.Domain
             if (!_active.TryGetValue(id, out var quest))
                 return;
 
+            _completed.Remove(quest);
             quest.SetState(QuestState.Failed);
 
             Debug.Log($"[QuestService] Quest failed: {id}");

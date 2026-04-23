@@ -718,6 +718,7 @@ GameObject:
   - component: {fileID: 3127127081630111513}
   - component: {fileID: -2609504964404914139}
   - component: {fileID: 7350075856022002700}
+  - component: {fileID: 5699725923122192925}
   m_Layer: 10
   m_Name: TurretPrefab
   m_TagString: Untagged
@@ -759,12 +760,12 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 3127127081630111513}
   turretHead: {fileID: 3241219567218010373}
   muzzlePoint: {fileID: 6145001486089969691}
-  projectileConfig: {fileID: 11400000, guid: 265d0ff5bb274454eb8d304cf0d05ce6, type: 2}
+  projectileConfig: {fileID: 11400000, guid: 69e890ea759f4d76a847aaf844d01b1f, type: 2}
   baseRange: 15
   lifetime: 25
   targetMask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 384
 --- !u!114 &2094240665213674160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -949,6 +950,21 @@ MonoBehaviour:
   _componentIndexCache: 4
   _addedNetworkObject: {fileID: 3127127081630111513}
   _networkObjectCache: {fileID: 3127127081630111513}
+--- !u!114 &5699725923122192925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5885013346192204236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c70612df4d1e2644c90d44d72cf778a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ServerGamePhase
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3127127081630111513}
+  _networkObjectCache: {fileID: 0}
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0

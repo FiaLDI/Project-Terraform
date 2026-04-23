@@ -30,6 +30,9 @@ namespace Features.Quests.Data
 
         [Header("Rewards")]
 
+        [Min(0)]
+        public int experienceReward;
+
         public RewardItemConfig[] rewards;
 
         public QuestDefinition ToDefinition()
@@ -109,11 +112,16 @@ namespace Features.Quests.Data
                 }
             }
 
+            int resolvedExperienceReward = experienceReward > 0
+                ? experienceReward
+                : Mathf.Max(1, conditions.Count) * 50;
+
             return new QuestDefinition(
                 new QuestId(questId),
                 questName,
                 description,
                 scope,
+                resolvedExperienceReward,
                 conditions,
                 rewardsDomain
             );

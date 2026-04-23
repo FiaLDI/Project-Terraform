@@ -5,9 +5,11 @@ using Features.Player.UI;
 using Features.Quests.Application;
 using Features.Quests.Data;
 using Features.Quests.Domain;
+using Features.Stats.UnityIntegration;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using Multiplayer.Domain;
 using UnityEngine;
 
 public class PlayerQuestComponent : NetworkBehaviour
@@ -32,16 +34,20 @@ public class PlayerQuestComponent : NetworkBehaviour
         service = new QuestService(gameObject);
         chainService = new QuestChainService(service);
 
+        RestoreOrBootstrapQuests(ResolveSession());
+
         service.OnQuestAdded += OnQuestAdded;
         service.OnQuestUpdated += OnQuestUpdated;
         service.OnQuestRemoved += OnQuestRemoved;
 
         SubscribeEvents();
-        GiveInitialQuests();
+        EnqueueAllQuestStates();
+        FlushBatch();
     }
 
     public override void OnStopServer()
     {
+        SaveQuestDataToSession();
         UnsubscribeEvents();
 
         if (service != null)
@@ -82,36 +88,22 @@ public class PlayerQuestComponent : NetworkBehaviour
 
     private void OnQuestAdded(QuestRuntime quest)
     {
-        var id = quest.Definition.Id.Value;
-
-        var state = new QuestNetState(
-            id,
-            BuildConditions(quest),
-            quest.State == QuestState.Completed
-        );
-
-        pendingUpdates.Add(state);
+        QueueQuestState(quest);
+        SaveQuestDataToSession();
     }
 
     private void OnQuestUpdated(QuestRuntime quest)
     {
-        var id = quest.Definition.Id.Value;
-
-        var state = new QuestNetState(
-            id,
-            BuildConditions(quest),
-            quest.State == QuestState.Completed
-        );
-
-        pendingUpdates.Add(state);
-
         TryAdvanceChain(quest);
         TryGiveRewards(quest);
+        QueueQuestState(quest);
+        SaveQuestDataToSession();
     }
 
     private void OnQuestRemoved(QuestRuntime quest)
     {
         Quests.Remove(quest.Definition.Id.Value);
+        SaveQuestDataToSession();
     }
 
     // =============================
@@ -167,13 +159,41 @@ public class PlayerQuestComponent : NetworkBehaviour
         return GetComponentInParent<PlayerUIRoot>();
     }
 
+    private QuestNetState BuildNetState(QuestRuntime quest)
+    {
+        return new QuestNetState(
+            quest.Definition.Id.Value,
+            BuildConditions(quest),
+            quest.State
+        );
+    }
+
+    private void QueueQuestState(QuestRuntime quest)
+    {
+        if (quest == null)
+            return;
+
+        pendingUpdates.Add(BuildNetState(quest));
+    }
+
+    private void EnqueueAllQuestStates()
+    {
+        pendingUpdates.Clear();
+
+        if (service == null)
+            return;
+
+        foreach (var quest in service.ActiveQuests)
+            QueueQuestState(quest);
+    }
+
     // =============================
     // Initial quests
     // =============================
 
-    private void GiveInitialQuests()
+    private void GiveInitialQuests(IEnumerable<string> questIds, IEnumerable<string> chainIds)
     {
-        foreach (var id in ServerWorldSession.PendingQuestIds)
+        foreach (var id in questIds ?? Enumerable.Empty<string>())
         {
             var def = questDatabase.GetDefinition(id);
 
@@ -181,13 +201,137 @@ public class PlayerQuestComponent : NetworkBehaviour
                 service.StartQuest(def);
         }
 
-        foreach (var id in ServerWorldSession.PendingChainIds)
+        foreach (var id in chainIds ?? Enumerable.Empty<string>())
         {
             var chain = chainDatabase.GetDefinition(id);
 
             if (chain != null)
                 chainService.StartChain(chain);
         }
+    }
+
+    private bool TryConsumeBootstrapSelection(
+        PlayerSession session,
+        out List<string> questIds,
+        out List<string> chainIds)
+    {
+        if (session != null && session.HasPendingWorldQuestBootstrap)
+        {
+            (questIds, chainIds) = session.ConsumePendingWorldQuestBootstrap();
+            return true;
+        }
+
+        if (ServerWorldSession.PendingQuestIds.Count > 0 || ServerWorldSession.PendingChainIds.Count > 0)
+        {
+            (questIds, chainIds) = ServerWorldSession.ConsumeQuestBootstrap();
+            return true;
+        }
+
+        questIds = null;
+        chainIds = null;
+        return false;
+    }
+
+    private void RestoreOrBootstrapQuests(PlayerSession session)
+    {
+        rewarded.Clear();
+        advancedChains.Clear();
+        chainService?.Clear();
+
+        if (TryConsumeBootstrapSelection(session, out var questIds, out var chainIds))
+        {
+            GiveInitialQuests(questIds, chainIds);
+            SaveQuestDataToSession(session);
+            return;
+        }
+
+        if (session != null && session.HasQuestData)
+        {
+            RestoreFromSession(session.QuestData);
+            return;
+        }
+
+        GiveInitialQuests(Enumerable.Empty<string>(), Enumerable.Empty<string>());
+        SaveQuestDataToSession(session);
+    }
+
+    private void RestoreFromSession(QuestPersistenceState persisted)
+    {
+        if (persisted == null)
+            return;
+
+        foreach (var id in persisted.RewardedQuestIds)
+            rewarded.Add(id);
+
+        foreach (var id in persisted.AdvancedQuestIds)
+            advancedChains.Add(id);
+
+        foreach (var snapshot in persisted.Quests)
+        {
+            if (snapshot == null || string.IsNullOrEmpty(snapshot.QuestId))
+                continue;
+
+            var def = questDatabase.GetDefinition(snapshot.QuestId);
+            if (def == null)
+                continue;
+
+            service.RestoreQuest(def, snapshot.Conditions, snapshot.State);
+        }
+
+        foreach (var snapshot in persisted.Chains)
+        {
+            if (snapshot == null || string.IsNullOrEmpty(snapshot.ChainId))
+                continue;
+
+            var def = chainDatabase.GetDefinition(snapshot.ChainId);
+            if (def == null)
+                continue;
+
+            chainService.RestoreChain(def, snapshot.Index);
+        }
+    }
+
+    private PlayerSession ResolveSession()
+    {
+        if (!IsServer || Owner == null)
+            return null;
+
+        var root = ServerCompositionRoot.I;
+        return root?.Sessions?.GetSessionByClient(Owner.ClientId);
+    }
+
+    private void SaveQuestDataToSession(PlayerSession explicitSession = null)
+    {
+        if (!IsServer || service == null || chainService == null)
+            return;
+
+        var session = explicitSession ?? ResolveSession();
+        if (session == null)
+            return;
+
+        var persisted = new QuestPersistenceState
+        {
+            Initialized = true
+        };
+
+        foreach (var quest in service.ActiveQuests)
+        {
+            persisted.Quests.Add(new QuestStateSnapshot(
+                quest.Definition.Id.Value,
+                BuildConditions(quest),
+                quest.State));
+        }
+
+        foreach (var chain in chainService.GetSnapshots())
+            persisted.Chains.Add(chain);
+
+        foreach (var id in rewarded)
+            persisted.RewardedQuestIds.Add(id);
+
+        foreach (var id in advancedChains)
+            persisted.AdvancedQuestIds.Add(id);
+
+        session.SetQuestData(persisted);
     }
 
     private void TryGiveRewards(QuestRuntime quest)
@@ -203,7 +347,7 @@ public class PlayerQuestComponent : NetworkBehaviour
         rewarded.Add(id);
 
         GiveRewards(quest);
-        TargetLevelUp(Owner);
+        GiveExperience(quest);
     }
 
     private void TryAdvanceChain(QuestRuntime quest)
@@ -220,22 +364,48 @@ public class PlayerQuestComponent : NetworkBehaviour
         chainService?.Advance(quest.Definition.Id);
     }
 
+    private void GiveExperience(QuestRuntime quest)
+    {
+        int gainedExperience = quest.Definition.ExperienceReward;
+        if (gainedExperience <= 0)
+            return;
+
+        var session = ResolveSession();
+
+        int nextLevel = session != null ? session.Level : 1;
+        int nextExperience = session != null ? session.Experience : 0;
+
+        PlayerProgressionRules.ApplyExperience(ref nextLevel, ref nextExperience, gainedExperience);
+
+        session?.SetProgression(nextLevel, nextExperience);
+
+        var stats = GetComponent<PlayerStats>();
+        if (stats != null)
+            stats.SetLevel(nextLevel);
+
+        TargetApplyQuestExperience(Owner, nextLevel, nextExperience, gainedExperience);
+    }
+
     [TargetRpc]
-    private void TargetLevelUp(NetworkConnection conn)
+    private void TargetApplyQuestExperience(
+        NetworkConnection conn,
+        int level,
+        int experience,
+        int gainedExperience)
     {
         var progress = PlayerProgressService.Instance;
         if (progress == null)
             return;
 
-        var character = progress.GetActiveCharacter();
-        if (character == null)
-            return;
+        var active = progress.GetActiveCharacter();
+        int previousLevel = active != null ? active.level : level;
 
-        character.level += 1;
+        progress.SetActiveCharacterProgress(level, experience);
 
-        Debug.Log($"[LEVEL] Level UP → {character.level}");
-
-        progress.Save();
+        if (level > previousLevel)
+            Debug.Log($"[LEVEL] Level up -> {level} (+{gainedExperience} XP)");
+        else
+            Debug.Log($"[LEVEL] Quest XP -> +{gainedExperience} XP ({experience}/{PlayerProgressionRules.GetRequiredExperienceForLevel(level)})");
     }
 
     private void GiveRewards(QuestRuntime quest)
@@ -281,12 +451,20 @@ public class PlayerQuestComponent : NetworkBehaviour
     [Server]
     public void ClearAll()
     {
+        rewarded.Clear();
+        advancedChains.Clear();
+        pendingUpdates.Clear();
+        chainService?.Clear();
+
         var active = service.ActiveQuests.ToList();
 
         foreach (var quest in active)
         {
             service.ResetQuest(quest.Definition.Id);
         }
+
+        Quests.Clear();
+        SaveQuestDataToSession();
     }
 
     [Server]
