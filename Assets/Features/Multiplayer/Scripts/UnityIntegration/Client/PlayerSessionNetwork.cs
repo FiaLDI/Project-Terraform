@@ -30,10 +30,25 @@ public class PlayerSessionNetwork : NetworkBehaviour
     [ServerRpc]
     public void RequestReturnToHubServerRpc()
     {
-        GetComponent<PlayerQuestComponent>()?.ClearAll();
+        var sessions = ServerCompositionRoot.I?.Sessions;
 
-        var session = ServerCompositionRoot.I?.Sessions?.GetSessionByClient(Owner.ClientId);
-        session?.SetPendingWorldQuestBootstrap(null, null);
+        if (sessions != null)
+        {
+            foreach (var onlineSession in sessions.GetOnlineSessions())
+            {
+                onlineSession.SetPendingWorldQuestBootstrap(null, null);
+                onlineSession.PlayerObject?.GetComponent<PlayerQuestComponent>()?.ClearAll();
+            }
+        }
+        else
+        {
+            GetComponent<PlayerQuestComponent>()?.ClearAll();
+        }
+
+        ServerWorldSession.PendingSeed = 0;
+        ServerWorldSession.PendingWorldConfigId = string.Empty;
+        ServerWorldSession.PendingQuestIds.Clear();
+        ServerWorldSession.PendingChainIds.Clear();
 
         SceneTransitionService.LoadHubScene();
     }
@@ -48,14 +63,16 @@ public class PlayerSessionNetwork : NetworkBehaviour
         }
 
         int seed = Random.Range(int.MinValue, int.MaxValue);
-        var session = ServerCompositionRoot.I?.Sessions?.GetSessionByClient(Owner.ClientId);
+        var sessions = ServerCompositionRoot.I?.Sessions;
 
         ServerWorldSession.PendingSeed = seed;
         ServerWorldSession.PendingWorldConfigId = worldConfigId;
 
-        if (session != null)
+        if (sessions != null)
         {
-            session.SetPendingWorldQuestBootstrap(questIds, chainIds);
+            foreach (var onlineSession in sessions.GetOnlineSessions())
+                onlineSession.SetPendingWorldQuestBootstrap(questIds, chainIds);
+
             ServerWorldSession.PendingQuestIds.Clear();
             ServerWorldSession.PendingChainIds.Clear();
         }
