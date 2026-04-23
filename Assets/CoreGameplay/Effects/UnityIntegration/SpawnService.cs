@@ -51,12 +51,12 @@ namespace Features.Effects.Application
             var go = Instantiate(prefab, pos, Quaternion.identity);
 
             var spawnedContext = go.GetComponent<SpawnedObjectContext>();
-            if (spawnedContext != null)
-            {
-                spawnedContext.Source = ResolveSourceGameObject(effectContext.Source);
-                spawnedContext.Target = ResolveFirstTargetGameObject(effectContext.Targets);
-                spawnedContext.Lifetime = lifetime;
-            }
+            if (spawnedContext == null)
+                spawnedContext = go.AddComponent<SpawnedObjectContext>();
+
+            spawnedContext.Source = ResolveSourceGameObject(effectContext.Source);
+            spawnedContext.Target = ResolveFirstTargetGameObject(effectContext.Targets);
+            spawnedContext.Lifetime = lifetime;
 
             if (!go.TryGetComponent(out NetworkObject netObj))
             {

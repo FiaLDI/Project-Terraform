@@ -16,4 +16,4 @@ MonoBehaviour:
   targetMask:
     serializedVersion: 2
     m_Bits: 256
-  buff: {fileID: 11400000, guid: 8c8dd56d33ee0b04e90579b74060ba22, type: 2}
+  buff: {fileID: 11400000, guid: 8bfdb8e9fd96b7c42aeffee5156a9a3d, type: 2}

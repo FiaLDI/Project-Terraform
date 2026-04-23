@@ -6,7 +6,6 @@ using UnityEngine.UI;
 public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image background;
-    [SerializeField] private Image lockIcon;
 
     [Header("Node Art")]
     [SerializeField] private Sprite unlockedSprite;
@@ -124,9 +123,6 @@ public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, I
         background.preserveAspect = true;
         background.color = GetNodeColor(selected);
         background.raycastTarget = true;
-
-        if (lockIcon != null)
-            lockIcon.gameObject.SetActive(!isUnlocked && !isAvailable);
     }
 
     private Color GetNodeColor(bool selected)
