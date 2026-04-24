@@ -24,7 +24,7 @@ public static class SettingsStorage
     public static float MusicVolume    { get => PlayerPrefs.GetFloat(MUSIC_VOL, 1f);  set => PlayerPrefs.SetFloat(MUSIC_VOL, value); }
     public static float SFXVolume      { get => PlayerPrefs.GetFloat(SFX_VOL, 1f);    set => PlayerPrefs.SetFloat(SFX_VOL, value); }
 
-    public static int ResolutionIndex  { get => PlayerPrefs.GetInt(RESOLUTION, 0);    set => PlayerPrefs.SetInt(RESOLUTION, value); }
+    public static int ResolutionIndex  { get => PlayerPrefs.GetInt(RESOLUTION, -1);    set => PlayerPrefs.SetInt(RESOLUTION, value); }
     public static bool Fullscreen      { get => PlayerPrefs.GetInt(FULLSCREEN, 1)==1; set => PlayerPrefs.SetInt(FULLSCREEN, value?1:0); }
     public static int Quality          { get => PlayerPrefs.GetInt(QUALITY, 2);       set => PlayerPrefs.SetInt(QUALITY, value); }
     public static bool VSync           { get => PlayerPrefs.GetInt(VSYNC, 1)==1;      set => PlayerPrefs.SetInt(VSYNC, value?1:0 ); }
@@ -47,7 +47,7 @@ public static class SettingsStorage
         Fullscreen   = true;
         VSync        = true;
         Quality      = 2;
-        ResolutionIndex = 0;
+        ResolutionIndex = -1;
 
         Sensitivity  = 1f;
         ScreenMode = 1;
