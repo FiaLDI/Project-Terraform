@@ -28,6 +28,9 @@ public sealed class ConnectionObject : NetworkBehaviour
         }
 
         Debug.Log($"[LOGIN] Sending classId = {active.classId}");
+
+        ClientConnectionController.I?.GetFlow()?.NotifyLoginSent();
+        LoadingScreenService.SetMessage("Entering hub", "Preparing player session...");
         
         SendLoginServerRpc(
             pid,

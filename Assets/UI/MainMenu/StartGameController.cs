@@ -21,6 +21,7 @@ public sealed class StartGameController : MonoBehaviour
         if (!ushort.TryParse(portField.text, out ushort port))
             return;
 
+        LoadingScreenService.ShowHub("Launching server and loading hub...");
         appMode.StartServerAndClient(port);
     }
 
@@ -29,6 +30,7 @@ public sealed class StartGameController : MonoBehaviour
         if (!ushort.TryParse(portField.text, out ushort port))
             return;
 
+        LoadingScreenService.ShowHub("Connecting to hub...");
         ClientConnectionController.I.Connect(ipField.text, port);
     }
 

@@ -24,8 +24,8 @@ namespace Biomes.UnityIntegration
         public int    sampleStep;
         public int    vertsPerLine;
         public float3 chunkOffset;
-    
-        public float safeRadius;
+        public float2 safeCenter;
+        public float safeFlatRadius;
         public float safeBlendRadius;
 
         private static bool IsFinite(float3 v) =>
@@ -87,6 +87,22 @@ namespace Biomes.UnityIntegration
             return math.degrees(math.acos(dot));
         }
 
+        private float ComputeSafeFactor(float2 worldXZ)
+        {
+            float flatRadius = math.max(0f, safeFlatRadius);
+            float blendRadius = math.max(flatRadius, safeBlendRadius);
+            float dist = math.distance(worldXZ, safeCenter);
+
+            if (dist < flatRadius)
+                return 0f;
+
+            if (dist >= blendRadius || blendRadius <= flatRadius)
+                return 1f;
+
+            float t = (dist - flatRadius) / (blendRadius - flatRadius);
+            return t * t * (3f - 2f * t);
+        }
+
         // ==============================
         // MAIN
         // ==============================
@@ -110,20 +126,9 @@ namespace Biomes.UnityIntegration
             float  slope  = ComputeSlope(normal);
 
             float3 worldBasePos = localPos + chunkOffset;
-
-            float dist = math.length(worldBasePos.xz);
-
-            float safeFactor = 1f;
-
-            if (dist < safeRadius)
-            {
-                safeFactor = 0f;
-            }
-            else if (dist < safeBlendRadius)
-            {
-                float t = (dist - safeRadius) / (safeBlendRadius - safeRadius);
-                safeFactor = t * t * (3f - 2f * t); // smoothstep
-            }
+            float safeFactor = ComputeSafeFactor(worldBasePos.xz);
+            if (safeFactor <= 0f)
+                return;
 
             // ---------------------------------
             // ENVIRONMENT INSTANCED
@@ -161,7 +166,7 @@ namespace Biomes.UnityIntegration
             for (int i = 0; i < biome.resRuleCount; i++)
             {
                 var r = resRules[biome.resRuleStart + i];
-                SpawnResource(ref rng, r, localPos, normal, slope);
+                SpawnResource(ref rng, r, localPos, normal, slope, safeFactor);
             }
 
             // ---------------------------------
@@ -215,9 +220,10 @@ namespace Biomes.UnityIntegration
             ResourceRule r,
             float3 localBasePos,
             float3 baseNormal,
-            float slope)
+            float slope,
+            float safeFactor)
         {
-            if (rng.NextFloat() > r.spawnChance) return;
+            if (rng.NextFloat() > r.spawnChance * safeFactor) return;
             if (slope < r.minSlope || slope > r.maxSlope) return;
 
             int count =
@@ -258,6 +264,8 @@ namespace Biomes.UnityIntegration
                     scale = 1f;
 
                 float3 worldP = localP + chunkOffset;
+                if (ComputeSafeFactor(worldP.xz) <= 0f)
+                    continue;
 
                 output.AddNoResize(new SpawnInstance
                 {

@@ -20,6 +20,8 @@ public sealed class AppModeController : MonoBehaviour
 
     public void StartServerAndClient(ushort port)
     {
+        ClientConnectionController.I?.GetFlow()?.StartConnect();
+
         // Устанавливаем порт
         networkManager.TransportManager.Transport.SetPort(port);
 

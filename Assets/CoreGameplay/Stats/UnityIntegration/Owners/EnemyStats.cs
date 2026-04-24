@@ -1,5 +1,7 @@
 using Features.Buffs.Domain;
 using Features.Enemy.Data;
+using Features.Items.UnityIntegration;
+using Features.Player.UnityIntegration;
 using Features.Quests.Application;
 using Features.Quests.Domain;
 using FishNet;
@@ -118,7 +120,7 @@ namespace Features.Stats.UnityIntegration
 
             Debug.Log("[Enemy] Died");
 
-            var attackerGO = (lastAttacker as Component)?.gameObject;
+            var attackerGO = ResolveQuestSource(lastAttacker);
 
             if (attackerGO == null)
             {
@@ -146,6 +148,65 @@ namespace Features.Stats.UnityIntegration
                     Destroy(gameObject); // fallback
                 }
             }
+        }
+
+        private static GameObject ResolveQuestSource(IBuffSource source, int depth = 0)
+        {
+            if (source == null || depth > 8)
+                return null;
+
+            if (source is StatsBuffTarget target)
+            {
+                var owner = target.OwnerSource;
+                if (owner != null && !ReferenceEquals(owner, source))
+                {
+                    var resolvedOwner = ResolveQuestSource(owner, depth + 1);
+                    if (resolvedOwner != null)
+                        return resolvedOwner;
+                }
+
+                return ResolvePlayerRoot(target.gameObject);
+            }
+
+            if (source is ItemRuntimeSource itemSource)
+            {
+                var owner = itemSource.OwnerSource;
+                if (owner != null && !ReferenceEquals(owner, source))
+                {
+                    var resolvedOwner = ResolveQuestSource(owner, depth + 1);
+                    if (resolvedOwner != null)
+                        return resolvedOwner;
+                }
+
+                return ResolvePlayerRoot(itemSource.gameObject);
+            }
+
+            if (source is RuntimeBuffSource runtimeSource)
+            {
+                if (runtimeSource.Owner is IBuffSource ownerSource)
+                {
+                    var resolvedOwner = ResolveQuestSource(ownerSource, depth + 1);
+                    if (resolvedOwner != null)
+                        return resolvedOwner;
+                }
+
+                if (runtimeSource.Owner is Component ownerComponent)
+                    return ResolvePlayerRoot(ownerComponent.gameObject);
+            }
+
+            if (source is Component component)
+                return ResolvePlayerRoot(component.gameObject);
+
+            return null;
+        }
+
+        private static GameObject ResolvePlayerRoot(GameObject source)
+        {
+            if (source == null)
+                return null;
+
+            var player = source.GetComponentInParent<NetworkPlayer>();
+            return player != null ? player.gameObject : source;
         }
     }
 }

@@ -6,6 +6,7 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
     public static PlayerSpawnRegistry I { get; private set; }
 
     private readonly List<IPlayerSpawnProvider> providers = new();
+    private readonly Dictionary<int, PlayerSpawnOverride> playerOverrides = new();
 
     public event System.Action OnProviderRegistered;
     public event System.Action OnProviderUnregistered;
@@ -89,5 +90,45 @@ public sealed class PlayerSpawnRegistry : MonoBehaviour
             return false;
 
         return provider.TryGetSpawnPoint(out pos, out rot);
+    }
+
+    public void SetPlayerSpawnPoint(int clientId, Vector3 pos, Quaternion rot)
+    {
+        playerOverrides[clientId] = new PlayerSpawnOverride(pos, rot);
+        Debug.Log($"[SpawnRegistry] Player {clientId} checkpoint set at {pos}");
+    }
+
+    public void ClearPlayerSpawnPoint(int clientId)
+    {
+        playerOverrides.Remove(clientId);
+    }
+
+    public void ClearPlayerSpawnPoints()
+    {
+        playerOverrides.Clear();
+    }
+
+    public bool TryGetSpawnPoint(int clientId, out Vector3 pos, out Quaternion rot)
+    {
+        if (playerOverrides.TryGetValue(clientId, out var spawn))
+        {
+            pos = spawn.Position;
+            rot = spawn.Rotation;
+            return true;
+        }
+
+        return TryGetSpawnPoint(out pos, out rot);
+    }
+
+    private readonly struct PlayerSpawnOverride
+    {
+        public readonly Vector3 Position;
+        public readonly Quaternion Rotation;
+
+        public PlayerSpawnOverride(Vector3 position, Quaternion rotation)
+        {
+            Position = position;
+            Rotation = rotation;
+        }
     }
 }

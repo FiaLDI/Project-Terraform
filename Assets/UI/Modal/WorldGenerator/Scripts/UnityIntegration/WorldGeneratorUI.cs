@@ -126,6 +126,11 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         if (generateWorldButton != null)
             generateWorldButton.interactable = false;
 
+        WorldSelectionEntry selectedEntry = GetSelectedEntry();
+        LoadingScreenService.ShowWorld(
+            selectedEntry != null ? selectedEntry.worldConfig : null,
+            "Generating procedural world...");
+
         string worldConfigId = GetSelectedWorldConfigId();
         List<string> questIds = GetSelectedQuestIds();
         List<string> chainIds = GetSelectedChainIds();
@@ -151,6 +156,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             return;
 
         initialized = true;
+        RegisterLoadingBackgrounds();
 
         if (generateWorldButton != null)
         {
@@ -178,6 +184,15 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         }
 
         RebuildWorldButtons();
+    }
+
+    private void RegisterLoadingBackgrounds()
+    {
+        if (worldSelectionCatalog?.entries == null)
+            return;
+
+        foreach (var entry in worldSelectionCatalog.entries)
+            LoadingScreenService.RegisterWorldBackground(entry?.worldConfig);
     }
 
     private void RefreshAll()

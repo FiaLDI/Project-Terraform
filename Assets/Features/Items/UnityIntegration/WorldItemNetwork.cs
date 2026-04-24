@@ -12,6 +12,7 @@ public sealed class WorldItemNetwork : NetworkBehaviour
     private readonly SyncVar<string> itemId = new();
     private readonly SyncVar<int> quantity = new();
     private readonly SyncVar<int> level = new();
+    private readonly SyncVar<bool> staticWorldSpawn = new();
 
     private ItemRuntimeHolder runtimeHolder;
     private bool runtimeApplied;
@@ -27,6 +28,13 @@ public sealed class WorldItemNetwork : NetworkBehaviour
     public int Level => level.Value;
 
     public ItemInstance GetCachedInstance() => cachedInstance;
+
+    [Server]
+    public void SetStaticWorldSpawn()
+    {
+        staticWorldSpawn.Value = true;
+        ApplyStaticPhysics();
+    }
 
     // ================= SERVER INIT =================
 
@@ -56,8 +64,10 @@ public sealed class WorldItemNetwork : NetworkBehaviour
         itemId.OnChange   += OnChanged;
         quantity.OnChange += OnChanged;
         level.OnChange    += OnChanged;
+        staticWorldSpawn.OnChange += OnStaticWorldSpawnChanged;
 
         TryApplyRuntime();
+        ApplyStaticWorldSpawnIfNeeded();
     }
 
     public override void OnStopClient()
@@ -65,10 +75,12 @@ public sealed class WorldItemNetwork : NetworkBehaviour
         itemId.OnChange   -= OnChanged;
         quantity.OnChange -= OnChanged;
         level.OnChange    -= OnChanged;
+        staticWorldSpawn.OnChange -= OnStaticWorldSpawnChanged;
     }
 
     private void OnChanged(string _, string __, bool ___) => TryApplyRuntime();
     private void OnChanged(int _, int __, bool ___)       => TryApplyRuntime();
+    private void OnStaticWorldSpawnChanged(bool _, bool __, bool ___) => ApplyStaticWorldSpawnIfNeeded();
 
     private void TryApplyRuntime()
     {
@@ -94,6 +106,29 @@ public sealed class WorldItemNetwork : NetworkBehaviour
         );
 
         runtimeApplied = true;
+    }
+
+    private void ApplyStaticWorldSpawnIfNeeded()
+    {
+        if (!staticWorldSpawn.Value)
+            return;
+
+        ApplyStaticPhysics();
+    }
+
+    private void ApplyStaticPhysics()
+    {
+        var bodies = GetComponentsInChildren<Rigidbody>(true);
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            var rb = bodies[i];
+            if (rb == null)
+                continue;
+
+            rb.useGravity = false;
+            rb.isKinematic = true;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+        }
     }
 
     // ================= SERVER CONSUME =================

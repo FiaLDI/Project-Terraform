@@ -9,6 +9,7 @@ using FishNet.Object;
 public sealed class ServerBootstrap : MonoBehaviour
 {
     [SerializeField] private string hubSceneName = "NetHubScene";
+    [SerializeField] private Sprite hubLoadingBackground;
     [SerializeField] private NetworkObject connectionObjectPrefab;
 
     private NetworkManager net;
@@ -16,6 +17,7 @@ public sealed class ServerBootstrap : MonoBehaviour
     private void Awake()
     {
         net = InstanceFinder.NetworkManager;
+        LoadingScreenService.SetHubBackground(hubLoadingBackground);
 
         net.ServerManager.OnServerConnectionState += OnServerState;
         net.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;

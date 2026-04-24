@@ -37,6 +37,29 @@ public static class SceneTransitionService
                string.Equals(activeSceneName, sceneName, StringComparison.Ordinal);
     }
 
+    public static void ReturnAllPlayersToHub()
+    {
+        var sessions = ServerCompositionRoot.I?.Sessions;
+
+        if (sessions != null)
+        {
+            foreach (var onlineSession in sessions.GetOnlineSessions())
+            {
+                onlineSession.SetPendingWorldQuestBootstrap(null, null);
+                onlineSession.PlayerObject?.GetComponent<PlayerSessionNetwork>()?.ShowHubLoadingObserversRpc();
+                onlineSession.PlayerObject?.GetComponent<PlayerQuestComponent>()?.ClearAll();
+            }
+        }
+
+        ServerWorldSession.PendingSeed = 0;
+        ServerWorldSession.PendingWorldConfigId = string.Empty;
+        ServerWorldSession.PendingQuestIds.Clear();
+        ServerWorldSession.PendingChainIds.Clear();
+        PlayerSpawnRegistry.I?.ClearPlayerSpawnPoints();
+
+        LoadHubScene();
+    }
+
     public static void LoadScene(string sceneName)
     {
         var nm = InstanceFinder.NetworkManager;
@@ -53,6 +76,11 @@ public static class SceneTransitionService
         }
 
         queuedSceneName = sceneName;
+
+        if (sceneName == NameHubScene)
+            LoadingScreenService.ShowHub("Returning players to hub...");
+        else
+            LoadingScreenService.Show("Loading world", "Synchronizing scene...");
 
         Debug.Log($"[SceneTransition] Requested load '{sceneName}'");
 
@@ -189,6 +217,7 @@ public static class SceneTransitionService
         
         PlayerRegistryECS.Clear();
         PlayerSpatialGrid.Clear();
+        PlayerSpawnRegistry.I?.ClearPlayerSpawnPoints();
 
         // 👉 сюда можно добавлять другие системы
         // ChunkManager?.ClearAll();

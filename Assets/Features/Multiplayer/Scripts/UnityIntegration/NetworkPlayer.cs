@@ -192,6 +192,8 @@ namespace Features.Player.UnityIntegration
 
             registry.SetLocalPlayer(gameObject);
             OnLocalPlayerSpawned?.Invoke(this);
+            ClientConnectionController.I?.GetFlow()?.NotifyPlayerSpawned();
+            LoadingScreenService.Hide();
 
             Debug.Log($"[NetworkPlayer] Set as LOCAL player: {name}", this);
         }

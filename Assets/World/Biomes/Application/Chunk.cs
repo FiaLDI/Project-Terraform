@@ -322,8 +322,9 @@ public class Chunk
             sampleStep   = sampleStep,
             vertsPerLine = chunkSize + 1,
             chunkOffset  = chunkOffset,
-            safeRadius = 25f,
-            safeBlendRadius = 60f,
+            safeCenter   = world.GetSafeSpawnCenter(),
+            safeFlatRadius = world.safeSpawnFlatRadius,
+            safeBlendRadius = world.safeSpawnBlendRadius,
         };
 
         JobHandle handle = job.Schedule(vertCount, 64);

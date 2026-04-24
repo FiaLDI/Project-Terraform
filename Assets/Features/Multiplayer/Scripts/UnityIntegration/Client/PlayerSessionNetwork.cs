@@ -8,7 +8,10 @@ public class PlayerSessionNetwork : NetworkBehaviour
     [ServerRpc]
     public void RequestReturnToSpawnServerRpc()
     {
-        if (!PlayerSpawnRegistry.I.TryGetSpawnPoint(out var pos, out var rot))
+        int clientId = Owner != null ? Owner.ClientId : -1;
+        var registry = PlayerSpawnRegistry.I;
+
+        if (clientId < 0 || registry == null || !registry.TryGetSpawnPoint(clientId, out var pos, out var rot))
             return;
 
         var movement = GetComponent<DeterministicMovement>();
@@ -30,27 +33,8 @@ public class PlayerSessionNetwork : NetworkBehaviour
     [ServerRpc]
     public void RequestReturnToHubServerRpc()
     {
-        var sessions = ServerCompositionRoot.I?.Sessions;
-
-        if (sessions != null)
-        {
-            foreach (var onlineSession in sessions.GetOnlineSessions())
-            {
-                onlineSession.SetPendingWorldQuestBootstrap(null, null);
-                onlineSession.PlayerObject?.GetComponent<PlayerQuestComponent>()?.ClearAll();
-            }
-        }
-        else
-        {
-            GetComponent<PlayerQuestComponent>()?.ClearAll();
-        }
-
-        ServerWorldSession.PendingSeed = 0;
-        ServerWorldSession.PendingWorldConfigId = string.Empty;
-        ServerWorldSession.PendingQuestIds.Clear();
-        ServerWorldSession.PendingChainIds.Clear();
-
-        SceneTransitionService.LoadHubScene();
+        ShowHubLoadingObserversRpc();
+        SceneTransitionService.ReturnAllPlayersToHub();
     }
 
     [ServerRpc]
@@ -82,7 +66,21 @@ public class PlayerSessionNetwork : NetworkBehaviour
             ServerWorldSession.PendingChainIds = chainIds ?? new List<string>();
         }
 
+        ShowWorldLoadingObserversRpc(worldConfigId);
+
         Debug.Log($"[PlayerSessionNetwork] Generated world seed {seed} for '{worldConfigId}'.");
         SceneTransitionService.LoadWorldScene();
+    }
+
+    [ObserversRpc]
+    public void ShowHubLoadingObserversRpc()
+    {
+        LoadingScreenService.ShowHub("Returning players to hub...");
+    }
+
+    [ObserversRpc]
+    public void ShowWorldLoadingObserversRpc(string worldConfigId)
+    {
+        LoadingScreenService.ShowWorld(worldConfigId, "Generating procedural world...");
     }
 }

@@ -45,6 +45,9 @@ namespace Biomes.Application
             if (parent != null)
                 go.transform.SetParent(parent, true);
 
+            if ((SpawnKind)inst.spawnType == SpawnKind.ResourceGameObject)
+                ConfigureStaticWorldResource(go);
+
             var nobPrefab = prefab.GetComponent<NetworkObject>();
 
             if (nobPrefab != null)
@@ -54,6 +57,16 @@ namespace Biomes.Application
             }
 
             ChunkedGameObjectStorage.Register(chunk, go);
+        }
+
+        private static void ConfigureStaticWorldResource(GameObject go)
+        {
+            if (go == null)
+                return;
+
+            var worldItem = go.GetComponent<WorldItemNetwork>();
+            if (worldItem != null)
+                worldItem.SetStaticWorldSpawn();
         }
 
         private static void SnapToGround(ref Vector3 pos, ref Quaternion rot)

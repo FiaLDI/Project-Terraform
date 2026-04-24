@@ -36,5 +36,6 @@ public sealed class WorldReadyStatic : NetworkBehaviour
         Debug.Log("[fix-net] Static world RUNNING");
 
         root.Spawner.RespawnAllOnline();
+        LoadingScreenService.Hide();
     }
 }

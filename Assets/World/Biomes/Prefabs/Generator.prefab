@@ -64,6 +64,15 @@ MonoBehaviour:
   spawnPointCount: 4
   spawnRadius: 15
   customPrefab: {fileID: 5502989716011450611, guid: 12b39b97c144da94682c029abc2ff1a4, type: 3}
+  spawnExitBeacon: 1
+  exitBeaconPrefab: {fileID: 9179591387364473893, guid: c34d4edcc30db2d4d83d86a43373dd48, type: 3}
+  exitBeaconMinDistance: 90
+  exitBeaconMaxDistance: 160
+  exitBeaconTriggerRadius: 5
+  exitBeaconPlacementAttempts: 64
+  spawnCheckpointOnBeaconRoute: 1
+  checkpointRouteT: 0.45
+  checkpointTriggerRadius: 4
   loadDistance: 5
   unloadDistance: 8
   spawnHeightCheck: 20
@@ -172,7 +181,9 @@ MonoBehaviour:
   spawnInterval: 1.2
   spawnRadiusMin: 20
   spawnRadiusMax: 40
+  despawnDistance: 80
   maxPerPlayer: 12
+  maxPerBiome: 24
   maxGlobal: 120
 --- !u!1 &1710447925271196028
 GameObject:

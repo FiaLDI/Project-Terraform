@@ -7,6 +7,7 @@ using Biomes.Data;
 using Biomes.Application;
 using Features.Player.UnityIntegration;
 using Features.Enemy.Presentation.LOD;
+using Unity.Mathematics;
 
 namespace Biomes.UnityIntegration
 {
@@ -84,6 +85,9 @@ namespace Biomes.UnityIntegration
             if (activeWorld == null)
                 return;
 
+            if (IsInsideSafeZone(activeWorld, player.position))
+                return;
+
             int id = client.ClientId;
 
             if (!playerEnemies.TryGetValue(id, out var state))
@@ -122,7 +126,7 @@ namespace Biomes.UnityIntegration
                 return;
             }
 
-            if (!TryGetSpawnHit(player, out var hit))
+            if (!TryGetSpawnHit(activeWorld, player, out var hit))
             {
                 state.NextSpawnTime = Time.time + spawnInterval;
                 return;
@@ -198,12 +202,12 @@ namespace Biomes.UnityIntegration
             return true;
         }
 
-        private bool TryGetSpawnHit(Transform player, out RaycastHit result)
+        private bool TryGetSpawnHit(WorldConfig activeWorld, Transform player, out RaycastHit result)
         {
             for (int i = 0; i < 8; i++)
             {
-                float r = Random.Range(spawnRadiusMin, spawnRadiusMax);
-                Vector2 dir = Random.insideUnitCircle.normalized * r;
+                float r = UnityEngine.Random.Range(spawnRadiusMin, spawnRadiusMax);
+                Vector2 dir = UnityEngine.Random.insideUnitCircle.normalized * r;
 
                 Vector3 pos = player.position + new Vector3(dir.x, 0f, dir.y);
 
@@ -222,6 +226,9 @@ namespace Biomes.UnityIntegration
                     if (hit.collider != null && hit.collider.GetComponentInParent<NetworkObject>() != null)
                         continue;
 
+                    if (IsInsideSafeZone(activeWorld, hit.point))
+                        continue;
+
                     result = hit;
                     return true;
                 }
@@ -229,6 +236,14 @@ namespace Biomes.UnityIntegration
 
             result = default;
             return false;
+        }
+
+        private static bool IsInsideSafeZone(WorldConfig activeWorld, Vector3 point)
+        {
+            if (activeWorld == null)
+                return false;
+
+            return activeWorld.GetSafeSpawnFactor(new float2(point.x, point.z)) <= 0f;
         }
 
         private BiomeConfig GetDominantBiome(WorldConfig activeWorld, Vector3 pos)
@@ -323,7 +338,7 @@ namespace Biomes.UnityIntegration
             if (totalWeight <= 0f)
                 return null;
 
-            float pick = Random.value * totalWeight;
+            float pick = UnityEngine.Random.value * totalWeight;
 
             for (int i = 0; i < table.Length; i++)
             {

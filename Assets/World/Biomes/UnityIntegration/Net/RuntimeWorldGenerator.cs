@@ -23,6 +23,17 @@ namespace Biomes.UnityIntegration
         [Header("Custom Prefab")]
         public GameObject customPrefab;
 
+        [Header("World Exit")]
+        [SerializeField] private bool spawnExitBeacon = true;
+        [SerializeField] private GameObject exitBeaconPrefab;
+        [SerializeField] private float exitBeaconMinDistance = 90f;
+        [SerializeField] private float exitBeaconMaxDistance = 160f;
+        [SerializeField] private float exitBeaconTriggerRadius = 5f;
+        [SerializeField] private int exitBeaconPlacementAttempts = 64;
+        [SerializeField] private bool spawnCheckpointOnBeaconRoute = true;
+        [SerializeField, Range(0.1f, 0.9f)] private float checkpointRouteT = 0.45f;
+        [SerializeField] private float checkpointTriggerRadius = 4f;
+
         [Header("Chunk Streaming")]
         public int loadDistance = 5;
         public int unloadDistance = 8;
@@ -38,6 +49,8 @@ namespace Biomes.UnityIntegration
         private string selectedWorldConfigId;
         private int groundMask;
         private bool customPrefabSpawned;
+        private GameObject exitBeaconObject;
+        private GameObject checkpointObject;
         private readonly List<Vector3> serverStreamingTargets = new();
 
         public static WorldConfig World { get; private set; }
@@ -83,6 +96,7 @@ namespace Biomes.UnityIntegration
 
             World = worldConfig;
             SpawnCustomPrefabIfNeeded();
+            SpawnExitBeaconIfNeeded(includeServerTriggers: false);
         }
 
         private IEnumerator ClientFlow()
@@ -161,6 +175,7 @@ namespace Biomes.UnityIntegration
             yield return null;
 
             SpawnCustomPrefabIfNeeded();
+            SpawnExitBeaconIfNeeded(includeServerTriggers: false);
 
             Debug.Log("[WorldGen] Client world ready");
         }
@@ -181,6 +196,8 @@ namespace Biomes.UnityIntegration
 
             if (spawnPointPrefab != null)
                 SpawnPlayerSpawnPoints();
+
+            SpawnExitBeaconIfNeeded(includeServerTriggers: true);
         }
 
         private void Update()
@@ -296,6 +313,147 @@ namespace Biomes.UnityIntegration
             customPrefabSpawned = true;
         }
 
+        private void SpawnExitBeaconIfNeeded(bool includeServerTriggers)
+        {
+            if (!spawnExitBeacon || worldConfig == null)
+                return;
+
+            if (exitBeaconObject != null)
+            {
+                if (includeServerTriggers)
+                {
+                    AttachBeaconTrigger(exitBeaconObject);
+
+                    if (checkpointObject != null)
+                        AttachCheckpointTrigger(checkpointObject);
+                }
+
+                return;
+            }
+
+            Vector3 center = GetWorldCenterSpawn();
+            if (!WorldPlacementService.TryFindReachablePoint(
+                    worldConfig,
+                    center,
+                    exitBeaconMinDistance,
+                    exitBeaconMaxDistance,
+                    exitBeaconPlacementAttempts,
+                    0x4B1D,
+                    out var beaconPosition))
+            {
+                Debug.LogWarning("[WorldGen] Failed to place exit beacon");
+                return;
+            }
+
+            exitBeaconObject = CreateBeaconObject(beaconPosition, includeServerTriggers);
+            Debug.Log($"[WorldGen] Exit beacon placed at {beaconPosition}", exitBeaconObject);
+
+            if (spawnCheckpointOnBeaconRoute)
+                checkpointObject = CreateCheckpointOnRoute(center, beaconPosition, includeServerTriggers);
+        }
+
+        private GameObject CreateBeaconObject(Vector3 position, bool includeServerTriggers)
+        {
+            var root = exitBeaconPrefab != null
+                ? Instantiate(exitBeaconPrefab, position, Quaternion.identity)
+                : new GameObject("WorldExitBeacon");
+
+            root.name = "WorldExitBeacon";
+            root.transform.position = position;
+            root.transform.SetParent(transform, true);
+
+            if (includeServerTriggers)
+                AttachBeaconTrigger(root);
+
+            if (exitBeaconPrefab != null)
+                return root;
+
+            var pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pillar.name = "BeaconPillar";
+            pillar.transform.SetParent(root.transform, false);
+            pillar.transform.localPosition = Vector3.up * 2.5f;
+            pillar.transform.localScale = new Vector3(1.4f, 2.5f, 1.4f);
+            RemoveCollider(pillar);
+
+            var signal = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            signal.name = "BeaconSignal";
+            signal.transform.SetParent(root.transform, false);
+            signal.transform.localPosition = Vector3.up * 5.4f;
+            signal.transform.localScale = Vector3.one * 2.2f;
+            RemoveCollider(signal);
+
+            return root;
+        }
+
+        private GameObject CreateCheckpointOnRoute(Vector3 center, Vector3 beaconPosition, bool includeServerTriggers)
+        {
+            Vector3 routePoint = Vector3.Lerp(center, beaconPosition, checkpointRouteT);
+            Vector3 position = WorldPlacementService.SnapToGround(worldConfig, routePoint, 0.08f);
+
+            var root = new GameObject("WorldCheckpoint");
+            root.transform.position = position;
+            root.transform.SetParent(transform, true);
+
+            if (includeServerTriggers)
+                AttachCheckpointTrigger(root);
+
+            var disk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            disk.name = "CheckpointMarker";
+            disk.transform.SetParent(root.transform, false);
+            disk.transform.localScale = new Vector3(3f, 0.08f, 3f);
+            RemoveCollider(disk);
+
+            return root;
+        }
+
+        private static void RemoveCollider(GameObject go)
+        {
+            var collider = go.GetComponent<Collider>();
+            if (collider != null)
+                UnityEngine.Object.Destroy(collider);
+        }
+
+        private void AttachBeaconTrigger(GameObject root)
+        {
+            EnsureKinematicTriggerBody(root);
+
+            if (root.GetComponent<WorldExitBeacon>() == null)
+                root.AddComponent<WorldExitBeacon>();
+
+            var trigger = root.GetComponent<SphereCollider>();
+            if (trigger == null)
+                trigger = root.AddComponent<SphereCollider>();
+
+            trigger.isTrigger = true;
+            trigger.radius = Mathf.Max(0.5f, exitBeaconTriggerRadius);
+        }
+
+        private void AttachCheckpointTrigger(GameObject root)
+        {
+            EnsureKinematicTriggerBody(root);
+
+            if (root.GetComponent<WorldCheckpointTrigger>() == null)
+                root.AddComponent<WorldCheckpointTrigger>();
+
+            var trigger = root.GetComponent<SphereCollider>();
+            if (trigger == null)
+                trigger = root.AddComponent<SphereCollider>();
+
+            trigger.isTrigger = true;
+            trigger.radius = Mathf.Max(0.5f, checkpointTriggerRadius);
+        }
+
+        private static void EnsureKinematicTriggerBody(GameObject root)
+        {
+            var body = root.GetComponent<Rigidbody>();
+            if (body == null)
+                body = root.AddComponent<Rigidbody>();
+
+            body.useGravity = false;
+            body.isKinematic = true;
+            body.constraints = RigidbodyConstraints.FreezeAll;
+        }
+
         private void ApplySelectedWorldConfig()
         {
             var resolved = ResolveWorldConfig(selectedWorldConfigId);
@@ -357,6 +515,15 @@ namespace Biomes.UnityIntegration
             trackedPlayer = null;
             worldProvider = null;
             customPrefabSpawned = false;
+
+            if (exitBeaconObject != null)
+                Destroy(exitBeaconObject);
+
+            if (checkpointObject != null)
+                Destroy(checkpointObject);
+
+            exitBeaconObject = null;
+            checkpointObject = null;
             serverStreamingTargets.Clear();
 
             World = null;
