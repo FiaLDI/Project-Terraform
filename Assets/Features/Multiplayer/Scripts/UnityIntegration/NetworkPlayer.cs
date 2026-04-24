@@ -403,7 +403,7 @@ namespace Features.Player.UnityIntegration
             if (!IsServerStarted)
                 return;
 
-            var world = World.DefaultGameObjectInjectionWorld;
+            var world = Unity.Entities.World.DefaultGameObjectInjectionWorld;
             if (world == null)
                 return;
 

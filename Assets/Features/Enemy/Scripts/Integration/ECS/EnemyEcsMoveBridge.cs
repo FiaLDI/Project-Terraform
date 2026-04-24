@@ -63,7 +63,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
     {
         base.OnStartServer();
 
-        var world = World.DefaultGameObjectInjectionWorld;
+        var world = Unity.Entities.World.DefaultGameObjectInjectionWorld;
         if (world != null)
             em = world.EntityManager;
 

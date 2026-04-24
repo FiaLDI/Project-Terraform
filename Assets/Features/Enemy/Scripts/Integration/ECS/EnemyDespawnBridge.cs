@@ -44,8 +44,8 @@ public class EnemyDespawnBridge : MonoBehaviour
 
     private bool TryResolveEntity()
     {
-        if (em == default && World.DefaultGameObjectInjectionWorld != null)
-            em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        if (em == default && Unity.Entities.World.DefaultGameObjectInjectionWorld != null)
+            em = Unity.Entities.World.DefaultGameObjectInjectionWorld.EntityManager;
 
         if (em == default || binder == null)
             return false;

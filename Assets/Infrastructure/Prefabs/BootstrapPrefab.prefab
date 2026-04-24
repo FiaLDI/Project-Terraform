@@ -18,7 +18,6 @@ GameObject:
   - component: {fileID: 5424365096335690830}
   - component: {fileID: 8655290277700952926}
   - component: {fileID: 3622763400669334575}
-  - component: {fileID: 7728110988054051029}
   - component: {fileID: 3166487864416577241}
   - component: {fileID: 4908646979383403430}
   - component: {fileID: 3573662119950025895}
@@ -172,18 +171,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0bd72e5556711c4787a09b1ab0fd5cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Quests.UnityIntegration.QuestJournalInputHandler
---- !u!114 &7728110988054051029
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 742051322264911869}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feaf1b3cdc716a54e9c9b2bb5abf7885, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractionController
 --- !u!114 &3166487864416577241
 MonoBehaviour:
   m_ObjectHideFlags: 0
