@@ -8,6 +8,7 @@ using Biomes.Domain;
 using Biomes.UnityIntegration;
 using Biomes.Data;
 using Biomes.Utility;
+using FishNet;
 
 public class Chunk
 {
@@ -308,6 +309,7 @@ public class Chunk
         uint finalSeed = baseSeed
                         ^ (uint)(coord.x * 73856093)
                         ^ (uint)(coord.y * 19349663);
+        bool spawnRuntimeGameObjects = InstanceFinder.IsServerStarted;
 
         var job = new MegaSpawnJob
         {
@@ -325,6 +327,9 @@ public class Chunk
             safeCenter   = world.GetSafeSpawnCenter(),
             safeFlatRadius = world.safeSpawnFlatRadius,
             safeBlendRadius = world.safeSpawnBlendRadius,
+            spawnResources = spawnRuntimeGameObjects ? 1 : 0,
+            spawnEnemies = spawnRuntimeGameObjects ? 1 : 0,
+            spawnQuests = spawnRuntimeGameObjects ? 1 : 0,
         };
 
         JobHandle handle = job.Schedule(vertCount, 64);

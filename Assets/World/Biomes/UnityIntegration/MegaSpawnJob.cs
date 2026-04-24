@@ -27,6 +27,9 @@ namespace Biomes.UnityIntegration
         public float2 safeCenter;
         public float safeFlatRadius;
         public float safeBlendRadius;
+        public int spawnResources;
+        public int spawnEnemies;
+        public int spawnQuests;
 
         private static bool IsFinite(float3 v) =>
             math.isfinite(v.x) && math.isfinite(v.y) && math.isfinite(v.z);
@@ -163,51 +166,60 @@ namespace Biomes.UnityIntegration
             // ---------------------------------
             // RESOURCES (clusters)
             // ---------------------------------
-            for (int i = 0; i < biome.resRuleCount; i++)
+            if (spawnResources != 0)
             {
-                var r = resRules[biome.resRuleStart + i];
-                SpawnResource(ref rng, r, localPos, normal, slope, safeFactor);
+                for (int i = 0; i < biome.resRuleCount; i++)
+                {
+                    var r = resRules[biome.resRuleStart + i];
+                    SpawnResource(ref rng, r, localPos, normal, slope, safeFactor);
+                }
             }
 
             // ---------------------------------
             // ENEMIES
             // ---------------------------------
-            for (int i = 0; i < biome.enemyRuleCount; i++)
+            if (spawnEnemies != 0)
             {
-                var r = enemyRules[biome.enemyRuleStart + i];
-
-                if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
-                if (slope < r.minSlope || slope > r.maxSlope) continue;
-
-                output.AddNoResize(new SpawnInstance
+                for (int i = 0; i < biome.enemyRuleCount; i++)
                 {
-                    position    = worldBasePos,
-                    normal      = normal,
-                    prefabIndex = r.prefabIndex,
-                    biomeId     = biome.biomeId,
-                    scale       = 1f,
-                    spawnType   = (int)SpawnKind.EnemyGameObject
-                });
+                    var r = enemyRules[biome.enemyRuleStart + i];
+
+                    if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
+                    if (slope < r.minSlope || slope > r.maxSlope) continue;
+
+                    output.AddNoResize(new SpawnInstance
+                    {
+                        position    = worldBasePos,
+                        normal      = normal,
+                        prefabIndex = r.prefabIndex,
+                        biomeId     = biome.biomeId,
+                        scale       = 1f,
+                        spawnType   = (int)SpawnKind.EnemyGameObject
+                    });
+                }
             }
 
             // ---------------------------------
             // QUESTS
             // ---------------------------------
-            for (int i = 0; i < biome.questRuleCount; i++)
+            if (spawnQuests != 0)
             {
-                var r = questRules[biome.questRuleStart + i];
-
-                if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
-
-                output.AddNoResize(new SpawnInstance
+                for (int i = 0; i < biome.questRuleCount; i++)
                 {
-                    position    = worldBasePos,
-                    normal      = normal,
-                    prefabIndex = r.prefabIndex,
-                    biomeId     = biome.biomeId,
-                    scale       = 1f,
-                    spawnType   = (int)SpawnKind.QuestGameObject
-                });
+                    var r = questRules[biome.questRuleStart + i];
+
+                    if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
+
+                    output.AddNoResize(new SpawnInstance
+                    {
+                        position    = worldBasePos,
+                        normal      = normal,
+                        prefabIndex = r.prefabIndex,
+                        biomeId     = biome.biomeId,
+                        scale       = 1f,
+                        spawnType   = (int)SpawnKind.QuestGameObject
+                    });
+                }
             }
         }
 

@@ -231,11 +231,7 @@ public class ItemRuntimeContext : IItemTickable
         if (hasTargetPoint)
         {
             dir = (targetPoint - fireOrigin).normalized;
-
-            if (Physics.Raycast(fireOrigin, dir, out var hit, 1.0f))
-            {
-                dir = (hit.point - fireOrigin).normalized;
-            }
+            TryAdjustDirectionForNearObstacle(fireOrigin, ref dir);
         }
         else
         {
@@ -273,5 +269,43 @@ public class ItemRuntimeContext : IItemTickable
     #endif
 
         OnFire?.Invoke(fireOrigin, dir);
+    }
+
+    private void TryAdjustDirectionForNearObstacle(Vector3 fireOrigin, ref Vector3 dir)
+    {
+        if (dir.sqrMagnitude <= 0.0001f)
+            return;
+
+        var hits = Physics.RaycastAll(
+            fireOrigin,
+            dir,
+            1.0f,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        var sourceComponent = source as Component;
+        Transform sourceRoot = sourceComponent != null ? sourceComponent.transform : null;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit.collider == null)
+                continue;
+
+            if (sourceRoot != null && hit.collider.transform.IsChildOf(sourceRoot))
+                continue;
+
+            Vector3 delta = hit.point - fireOrigin;
+            if (delta.sqrMagnitude <= 0.0001f)
+                continue;
+
+            dir = delta.normalized;
+            return;
+        }
     }
 }

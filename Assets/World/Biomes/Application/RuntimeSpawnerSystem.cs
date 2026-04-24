@@ -39,16 +39,15 @@ namespace Biomes.Application
 
             SnapToGround(ref pos, ref rotation);
 
+            var nobPrefab = prefab.GetComponent<NetworkObject>();
             GameObject go = Object.Instantiate(prefab, pos, rotation);
             go.transform.localScale = Vector3.Scale(prefab.transform.localScale, Vector3.one * safeScale);
 
-            if (parent != null)
+            if (nobPrefab == null && parent != null)
                 go.transform.SetParent(parent, true);
 
             if ((SpawnKind)inst.spawnType == SpawnKind.ResourceGameObject)
                 ConfigureStaticWorldResource(go);
-
-            var nobPrefab = prefab.GetComponent<NetworkObject>();
 
             if (nobPrefab != null)
             {
