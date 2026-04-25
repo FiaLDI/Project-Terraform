@@ -135,7 +135,6 @@ namespace Features.Buffs.Application
             if (!IsServer || !ready || inst == null)
                 return;
 
-            executor.Expire(inst);
             service.RemoveBuff(inst);
         }
 
@@ -231,11 +230,15 @@ namespace Features.Buffs.Application
         public void RemoveBySourceAndId(
             IBuffSource source,
             string buffId)
-            {
+        {
+            if (!IsServer || !ready || service == null || source == null || string.IsNullOrEmpty(buffId))
+                return;
+
             service.RemoveWhere(b =>
-                    b.Source == source &&
-                    b.Config.buffId == buffId);
-            }
+                b.Source == source &&
+                b.Config != null &&
+                b.Config.buffId == buffId);
+        }
 
 
 

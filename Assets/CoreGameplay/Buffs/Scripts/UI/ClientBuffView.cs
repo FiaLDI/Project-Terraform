@@ -48,8 +48,7 @@ namespace Features.Buffs.Client
             string ____,
             bool asServer)
         {
-            if (!asServer)
-                Rebuild();
+            Rebuild();
         }
 
         private void Rebuild()

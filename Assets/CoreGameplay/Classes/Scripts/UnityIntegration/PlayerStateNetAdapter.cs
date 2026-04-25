@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using FishNet.Object;
 using Features.Classes.Data;
@@ -33,6 +34,8 @@ namespace Features.Class.Net
         private bool hasAppliedClass;
         private string pendingClassId;
         private int abilitySyncVersion;
+
+        private readonly List<string> runtimePassiveIds = new();
 
         private void Awake()
         {
@@ -73,6 +76,21 @@ namespace Features.Class.Net
                     "[PlayerStateNetAdapter] IStatsOwner not found",
                     this
                 );
+            }
+        }
+
+        [Server]
+        public void PreInitProgression(IEnumerable<string> passiveIds)
+        {
+            runtimePassiveIds.Clear();
+
+            if (passiveIds == null)
+                return;
+
+            foreach (var id in passiveIds)
+            {
+                if (!string.IsNullOrWhiteSpace(id) && !runtimePassiveIds.Contains(id))
+                    runtimePassiveIds.Add(id);
             }
         }
 
@@ -150,20 +168,16 @@ namespace Features.Class.Net
         [Server]
         private PassiveSO[] BuildPassives(PlayerClassConfigSO cfg)
         {
-            var list = new System.Collections.Generic.List<PassiveSO>();
+            var list = new List<PassiveSO>();
 
             if (cfg.passives != null)
                 list.AddRange(cfg.passives);
 
-            var state = PlayerProgressService.Instance?.GetActiveCharacter();
-            if (state != null && state.passives != null)
+            foreach (var id in runtimePassiveIds)
             {
-                foreach (var id in state.passives)
-                {
-                    var p = Features.Passives.Data.PassiveRegistrySO.Instance.GetById(id);
-                    if (p != null)
-                        list.Add(p);
-                }
+                var p = Features.Passives.Data.PassiveRegistrySO.Instance.GetById(id);
+                if (p != null)
+                    list.Add(p);
             }
 
             return list.ToArray();
@@ -209,27 +223,35 @@ namespace Features.Class.Net
             RpcApplyAbilities(ids);
         }
 
-        [ServerRpc]
+        [ServerRpc(RequireOwnership = true)]
         public void RequestRefreshPassivesServerRpc()
         {
             RefreshPassives();
         }
 
-        [ServerRpc]
+        [ServerRpc(RequireOwnership = true)]
         public void ApplyClientProgressionServerRpc(string[] passiveIds)
         {
-            var state = PlayerProgressService.Instance?.GetActiveCharacter();
-            if (state == null)
-                return;
+            runtimePassiveIds.Clear();
 
-            state.passives.Clear();
+            if (passiveIds != null)
+            {
+                foreach (var id in passiveIds)
+                {
+                    if (!string.IsNullOrWhiteSpace(id) && !runtimePassiveIds.Contains(id))
+                        runtimePassiveIds.Add(id);
+                }
+            }
 
-            foreach (var id in passiveIds)
-                state.passives.Add(id);
+            var session = ServerCompositionRoot.I?.Sessions?.GetSessionByClient(Owner.ClientId);
+            session?.SetPassives(runtimePassiveIds);
 
             RefreshPassives();
 
-            Debug.Log($"[SERVER] Progression synced ({passiveIds.Length} passives)", this);
+            Debug.Log(
+                $"[SERVER] Progression synced for owner {Owner.ClientId} ({runtimePassiveIds.Count} passives)",
+                this
+            );
         }
 
         [ObserversRpc]
@@ -240,6 +262,7 @@ namespace Features.Class.Net
             var lib = UnityEngine.Resources.Load<AbilityLibrarySO>(
                 "Databases/AbilityLibrary"
             );
+
             if (lib == null)
             {
                 Debug.LogError(

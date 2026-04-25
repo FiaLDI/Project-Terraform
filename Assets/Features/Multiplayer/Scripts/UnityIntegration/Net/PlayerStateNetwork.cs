@@ -47,6 +47,7 @@ namespace Features.Player.UnityIntegration
         private PlayerClassLibrarySO classLibrary;
         private string preInitClassId;
         private int preInitLevel = 1;
+        private string[] preInitPassiveIds = System.Array.Empty<string>();
 
         // =====================================================
         // LIFECYCLE
@@ -73,10 +74,11 @@ namespace Features.Player.UnityIntegration
         /// <summary>
         /// Вызывается сервером ДО Spawn (NetworkPlayerService).
         /// </summary>
-       public void PreInit(string classId, int level)
+       public void PreInit(string classId, int level, string[] passiveIds)
         {
             preInitClassId = classId;
             preInitLevel = Mathf.Max(1, level);
+            preInitPassiveIds = passiveIds ?? System.Array.Empty<string>();
         }
 
         // =====================================================
@@ -102,10 +104,10 @@ namespace Features.Player.UnityIntegration
                 return;
             }
 
-            // 2️⃣ Записываем сетевое состояние
             _classId.Value = classId;
             _visualId.Value = cls.visualPreset.id;
 
+            netAdapter.PreInitProgression(preInitPassiveIds);
             netAdapter.ApplyClass(classId);
 
             var stats = GetComponent<PlayerStats>();

@@ -17,6 +17,7 @@ namespace Multiplayer.Domain
         public string ClassId { get; private set; }
         public int Level { get; private set; }
         public int Experience { get; private set; }
+        private readonly List<string> passiveIds = new();
         private readonly List<string> pendingWorldQuestIds = new();
         private readonly List<string> pendingWorldChainIds = new();
 
@@ -30,6 +31,8 @@ namespace Multiplayer.Domain
         public bool HasPendingWorldQuestBootstrap =>
             pendingWorldQuestIds.Count > 0 ||
             pendingWorldChainIds.Count > 0;
+
+        public IReadOnlyList<string> PassiveIds => passiveIds;
 
         public PlayerSession(string persistentId)
         {
@@ -64,6 +67,20 @@ namespace Multiplayer.Domain
         {
             Level = PlayerProgressionRules.NormalizeLevel(level);
             Experience = PlayerProgressionRules.NormalizeExperience(experience);
+        }
+
+        public void SetPassives(IEnumerable<string> ids)
+       {
+           passiveIds.Clear();
+
+           if (ids == null)
+                return;
+
+           foreach (var id in ids)
+           {
+                if (!string.IsNullOrWhiteSpace(id) && !passiveIds.Contains(id))
+                    passiveIds.Add(id);
+            }
         }
 
         public void SetInventory(InventorySaveData data)

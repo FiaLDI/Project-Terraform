@@ -8,6 +8,7 @@ using Multiplayer.Application;
 using Features.Class.Net;
 using Features.Stats.UnityIntegration;
 using Features.Player.UnityIntegration;
+using System.Linq;
 
 public sealed class SpawnService
 {
@@ -122,7 +123,7 @@ public sealed class SpawnService
 
         var playerObj = Object.Instantiate(playerPrefab, pos, rot);
         var state = playerObj.GetComponent<PlayerStateNetwork>();
-        state.PreInit(session.ClassId, session.Level);
+        state.PreInit(session.ClassId, session.Level, session.PassiveIds.ToArray());
 
         nm.ServerManager.Spawn(playerObj, conn);
 

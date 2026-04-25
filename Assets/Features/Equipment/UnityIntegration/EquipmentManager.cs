@@ -7,20 +7,24 @@ using Features.Inventory.UnityIntegration;
 using Features.Items.Domain;
 using Features.Items.UnityIntegration;
 using Features.Player.UnityIntegration;
+using Features.Stats.UnityIntegration;
 using FishNet.Object;
 using UnityEngine;
 
 namespace Features.Equipment.UnityIntegration
 {
-    public sealed class EquipmentManager : NetworkBehaviour
+    public sealed class EquipmentManager : NetworkBehaviour, IBuffSource
     {
         [Header("Sockets")]
         [SerializeField] private Transform activeItemSocket;
 
         private PlayerUsageNetAdapter usageNet;
+        private BuffSystem buffSystem;
+        private MovementStatsSync movementStatsSync;
 
         private GameObject currentEquippedObject;
         private GameObject currentViewWeapon;
+        private ItemInstance currentBuffedItem;
 
         private IInventoryContext inventory;
         private InventoryManager invManager;
@@ -34,6 +38,22 @@ namespace Features.Equipment.UnityIntegration
         private void Awake()
         {
             usageNet = GetComponent<PlayerUsageNetAdapter>();
+            buffSystem = GetComponent<BuffSystem>();
+            movementStatsSync = GetComponent<MovementStatsSync>();
+        }
+
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+
+            if (buffSystem != null)
+            {
+                buffSystem.OnServiceReady -= OnBuffSystemReady;
+                buffSystem.OnServiceReady += OnBuffSystemReady;
+
+                if (buffSystem.ServiceReady && initialized)
+                    EquipFromInventory();
+            }
         }
 
         public override void OnStartClient()
@@ -44,9 +64,21 @@ namespace Features.Equipment.UnityIntegration
                 EquipFromInventory();
         }
 
+        public override void OnStopServer()
+        {
+            if (buffSystem != null)
+                buffSystem.OnServiceReady -= OnBuffSystemReady;
+
+            base.OnStopServer();
+        }
+
         private void OnDestroy()
         {
             UnsubscribeInventory();
+
+            if (buffSystem != null)
+                buffSystem.OnServiceReady -= OnBuffSystemReady;
+
             ClearEquipped();
         }
 
@@ -68,6 +100,12 @@ namespace Features.Equipment.UnityIntegration
 
             initialized = true;
             EquipFromInventory();
+        }
+
+        private void OnBuffSystemReady()
+        {
+            if (initialized)
+                EquipFromInventory();
         }
 
         private void SubscribeInventory()
@@ -161,23 +199,22 @@ namespace Features.Equipment.UnityIntegration
             if (inst == null || inst.itemDefinition == null)
                 return;
 
+            ApplyItemBuffs(inst);
+
             var prefab = inst.itemDefinition.equippedPrefab;
-            if (prefab == null || activeItemSocket == null)
-                return;
+            if (prefab != null && activeItemSocket != null)
+            {
+                currentEquippedObject = Instantiate(prefab, activeItemSocket);
 
-            currentEquippedObject = Instantiate(prefab, activeItemSocket);
+                currentEquippedObject.transform.localPosition = Vector3.zero;
+                currentEquippedObject.transform.localRotation = Quaternion.identity;
 
-            currentEquippedObject.transform.localPosition = Vector3.zero;
-            currentEquippedObject.transform.localRotation = Quaternion.identity;
+                var holder =
+                    currentEquippedObject.GetComponent<ItemRuntimeHolder>() ??
+                    currentEquippedObject.AddComponent<ItemRuntimeHolder>();
 
-            var holder =
-                currentEquippedObject.GetComponent<ItemRuntimeHolder>() ??
-                currentEquippedObject.AddComponent<ItemRuntimeHolder>();
-
-            var owner = GetComponent<IBuffSource>();
-            holder.SetInstance(inst, owner);
-
-            ApplyItemBuffs(holder);
+                holder.SetInstance(inst, this);
+            }
 
             if (IsOwner)
                 SpawnViewModel(inst);
@@ -185,10 +222,11 @@ namespace Features.Equipment.UnityIntegration
 
         private void ClearEquipped()
         {
-            var holder = currentEquippedObject?.GetComponent<ItemRuntimeHolder>();
-
-            if (holder != null)
-                RemoveItemBuffs(holder);
+            if (currentBuffedItem != null && !currentBuffedItem.IsEmpty)
+            {
+                RemoveItemBuffs(currentBuffedItem);
+                currentBuffedItem = null;
+            }
 
             if (currentEquippedObject != null)
                 Destroy(currentEquippedObject);
@@ -230,8 +268,7 @@ namespace Features.Equipment.UnityIntegration
                 currentViewWeapon.GetComponent<ItemRuntimeHolder>() ??
                 currentViewWeapon.AddComponent<ItemRuntimeHolder>();
 
-            var owner = GetComponent<IBuffSource>();
-            holder.SetInstance(inst, owner);
+            holder.SetInstance(inst, this);
         }
 
         private bool ResolveIsFpsView()
@@ -261,52 +298,106 @@ namespace Features.Equipment.UnityIntegration
         // BUFFS
         // ======================================================
 
-        private void ApplyItemBuffs(ItemRuntimeHolder holder)
+        private void ApplyItemBuffs(ItemInstance inst)
         {
             if (!IsServerInitialized)
                 return;
 
-            var inst = holder.Instance;
-            var source = holder.Source;
-
             if (inst == null || inst.itemDefinition == null)
                 return;
 
-            var buffs = inst.itemDefinition.equippedBuffs;
-            if (buffs == null || buffs.Length == 0)
+            buffSystem ??= GetComponent<BuffSystem>();
+            if (buffSystem == null || !buffSystem.ServiceReady)
                 return;
 
-            var buffSystem = GetComponent<BuffSystem>();
+            currentBuffedItem = inst;
 
-            foreach (var buff in buffs)
+            bool changed = false;
+
+            var buffs = inst.itemDefinition.equippedBuffs;
+            if (buffs != null)
             {
-                buffSystem.Add(
-                    buff,
-                    source,
-                    BuffLifetimeMode.WhileSourceAlive
-                );
+                foreach (var buff in buffs)
+                {
+                    if (buff == null)
+                        continue;
+
+                    if (buffSystem.Add(buff, this, BuffLifetimeMode.WhileSourceAlive) != null)
+                        changed = true;
+                }
             }
+
+            if (inst.itemDefinition.upgrades != null &&
+                inst.level >= 0 &&
+                inst.level < inst.itemDefinition.upgrades.Length)
+            {
+                var upgrade = inst.itemDefinition.upgrades[inst.level];
+
+                if (upgrade?.levelBuffs != null)
+                {
+                    foreach (var buff in upgrade.levelBuffs)
+                    {
+                        if (buff == null)
+                            continue;
+
+                        if (buffSystem.Add(buff, this, BuffLifetimeMode.WhileSourceAlive) != null)
+                            changed = true;
+                    }
+                }
+            }
+
+            if (changed)
+                movementStatsSync?.SendSnapshot();
         }
 
-        private void RemoveItemBuffs(ItemRuntimeHolder holder)
+        private void RemoveItemBuffs(ItemInstance inst)
         {
             if (!IsServerInitialized)
                 return;
 
-            var inst = holder.Instance;
-            var source = holder.Source;
-
             if (inst == null || inst.itemDefinition == null)
                 return;
 
-            var buffs = inst.itemDefinition.equippedBuffs;
-            if (buffs == null || buffs.Length == 0)
+            buffSystem ??= GetComponent<BuffSystem>();
+            if (buffSystem == null || !buffSystem.ServiceReady)
                 return;
 
-            var buffSystem = GetComponent<BuffSystem>();
+            bool changed = false;
 
-            foreach (var buff in buffs)
-                buffSystem.RemoveBySourceAndId(source, buff.buffId);
+            var buffs = inst.itemDefinition.equippedBuffs;
+            if (buffs != null)
+            {
+                foreach (var buff in buffs)
+                {
+                    if (buff == null)
+                        continue;
+
+                    buffSystem.RemoveBySourceAndId(this, buff.buffId);
+                    changed = true;
+                }
+            }
+
+            if (inst.itemDefinition.upgrades != null &&
+                inst.level >= 0 &&
+                inst.level < inst.itemDefinition.upgrades.Length)
+            {
+                var upgrade = inst.itemDefinition.upgrades[inst.level];
+
+                if (upgrade?.levelBuffs != null)
+                {
+                    foreach (var buff in upgrade.levelBuffs)
+                    {
+                        if (buff == null)
+                            continue;
+
+                        buffSystem.RemoveBySourceAndId(this, buff.buffId);
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed)
+                movementStatsSync?.SendSnapshot();
         }
 
         // ======================================================
