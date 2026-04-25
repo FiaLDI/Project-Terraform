@@ -23,3 +23,9 @@ MonoBehaviour:
     prefab: {fileID: 7817172014945752216, guid: 95054df61e4e5f94dadbb76e2c0d4227, type: 3}
   - id: scan-item
     prefab: {fileID: 311603181526516735, guid: b4c76907bee5ede42abc08c97f05be0f, type: 3}
+  - id: miner-mine
+    prefab: {fileID: 452653106063237076, guid: 3f3d4ab2528f8b9479ebdc3cd2d88bac, type: 3}
+  - id: miner-detonator
+    prefab: {fileID: 2594855522746777021, guid: 68967d0532412be4fbc2587e49cbb01b, type: 3}
+  - id: miner-rig
+    prefab: {fileID: 6987047814894155801, guid: 74616ed8f9450f44ea4310b93901275c, type: 3}

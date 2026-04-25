@@ -16,7 +16,7 @@ namespace Features.Buffs.Application
 
         // ================= NETWORK =================
 
-        public readonly SyncList<string> ActiveBuffIds = new();
+        public readonly SyncList<string> ActiveBuffStates = new();
 
         // ================= RUNTIME =================
 
@@ -203,14 +203,29 @@ namespace Features.Buffs.Application
             if (!IsServer || service == null)
                 return;
 
-            var ids = new HashSet<string>();
+            var counts = new Dictionary<string, int>();
+            var orderedIds = new List<string>();
             foreach (var b in service.Active)
-                if (b?.Config != null)
-                    ids.Add(b.Config.buffId);
+            {
+                if (b?.Config == null)
+                    continue;
 
-            ActiveBuffIds.Clear();
-            foreach (var id in ids)
-                ActiveBuffIds.Add(id);
+                string id = b.Config.buffId;
+                if (string.IsNullOrEmpty(id))
+                    continue;
+
+                if (!counts.ContainsKey(id))
+                {
+                    counts[id] = 0;
+                    orderedIds.Add(id);
+                }
+
+                counts[id]++;
+            }
+
+            ActiveBuffStates.Clear();
+            foreach (var id in orderedIds)
+                ActiveBuffStates.Add(ActiveBuffSyncCodec.Encode(id, counts[id]));
         }
 
         public void RemoveBySourceAndId(

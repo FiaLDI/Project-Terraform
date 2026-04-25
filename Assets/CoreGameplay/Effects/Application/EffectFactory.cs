@@ -38,7 +38,11 @@ namespace Features.Effects.Application
                     new SpawnPrefabEffect(
                         def.prefabId,
                         def.lifetime,
-                        def.useSourcePosition
+                        def.useSourcePosition,
+                        def.spawnPositionMode,
+                        def.radius,
+                        def.layerMask,
+                        def.heightOffset
                     ),
 
                 EffectType.MineNetworkResource =>

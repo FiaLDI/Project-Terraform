@@ -40,6 +40,14 @@ namespace Features.Effects.Domain
         Explicit
     }
 
+    public enum SpawnPositionMode
+    {
+        Legacy,
+        Source,
+        TargetPoint,
+        SourceForwardGrounded
+    }
+
     [System.Serializable]
     public struct EffectDefinition
     {
@@ -75,6 +83,7 @@ namespace Features.Effects.Domain
         public string prefabId;
         public float lifetime;
         public bool useSourcePosition;
+        public SpawnPositionMode spawnPositionMode;
         [Header("Ownership")]
         public OwnershipFilter ownership;
         [Header("Mining")]

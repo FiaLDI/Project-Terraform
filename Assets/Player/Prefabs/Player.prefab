@@ -424,7 +424,7 @@ MonoBehaviour:
   abilityLibrary: {fileID: 0}
   groundMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 4294967295
   debugCooldown: 0
 --- !u!114 &2889153697471037876
 MonoBehaviour:
@@ -509,6 +509,7 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 6311823513652316802}
   _networkObjectCache: {fileID: 6311823513652316802}
   statsProfile: {fileID: 11400000, guid: 6a64a8acc954f83418ed819bcb59e741, type: 2}
+  defaultPreset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
 --- !u!114 &5136383045370552025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -703,7 +704,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584250187386066075
+  _initializedTimestamp: -8584244923658341261
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0

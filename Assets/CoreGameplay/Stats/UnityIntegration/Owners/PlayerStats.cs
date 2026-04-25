@@ -11,6 +11,9 @@ namespace Features.Stats.UnityIntegration
     [RequireComponent(typeof(StatsBuffTarget))]
     public sealed class PlayerStats : StatsOwnerBase
     {
+        [Header("Defaults")]
+        [SerializeField] private StatsPresetSO defaultPreset;
+
         public StatsFacadeAdapter Adapter { get; private set; }
 
         private ServerGamePhase phase;
@@ -28,14 +31,25 @@ namespace Features.Stats.UnityIntegration
             phase = GetComponent<ServerGamePhase>();
             Adapter = GetComponent<StatsFacadeAdapter>();
 
-            ApplyClassDefaults();
+            ApplyDefaultPreset();
             InitServerAdapters();
 
             Debug.Log("[PlayerStats] SERVER ready → StatsReady", this);
             phase.Reach(GamePhase.StatsReady);
         }
 
-        private void ApplyClassDefaults()
+        private void ApplyDefaultPreset()
+        {
+            if (defaultPreset != null)
+            {
+                ApplyPresetValues(defaultPreset);
+                return;
+            }
+
+            ApplyLegacyFallbackDefaults();
+        }
+
+        private void ApplyLegacyFallbackDefaults()
         {
             if (Facade.Health != null)
             {
@@ -55,8 +69,8 @@ namespace Features.Stats.UnityIntegration
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,
-                    recoil: 1f,
                     range: 100f,
+                    recoil: 1f,
                     magazineSize: 30,
                     critChance: 0.2f,
                     critMultiplier: 2f,
@@ -95,6 +109,78 @@ namespace Features.Stats.UnityIntegration
                     poisonResistance: 0f,
                     frostResistance: 0f,
                     acidResistance: 0f
+                );
+            }
+        }
+
+        private void ApplyPresetValues(StatsPresetSO preset)
+        {
+            if (preset == null)
+                return;
+
+            if (Facade.Health != null)
+            {
+                Facade.Health.ApplyBase(preset.health.baseHp);
+                Facade.Health.ApplyRegenBase(preset.health.baseRegen);
+            }
+
+            if (Facade.Energy != null)
+            {
+                Facade.Energy.ApplyBase(
+                    preset.energy.baseMaxEnergy,
+                    preset.energy.baseRegen
+                );
+            }
+
+            if (Facade.Combat != null)
+            {
+                Facade.Combat.ApplyBase(
+                    baseDamage: preset.combat.baseDamageMultiplier,
+                    fireRate: preset.combat.baseFireRate,
+                    spread: preset.combat.baseSpread,
+                    aimSpread: preset.combat.baseAimSpread,
+                    range: preset.combat.baseRange,
+                    recoil: preset.combat.baseRecoil,
+                    magazineSize: preset.combat.baseMagazineSize,
+                    critChance: 0.2f,
+                    critMultiplier: 2f,
+                    penetration: 0f
+                );
+            }
+
+            if (Facade.Movement != null)
+            {
+                Facade.Movement.ApplyBase(
+                    preset.movement.baseSpeed,
+                    preset.movement.walkSpeed,
+                    preset.movement.sprintSpeed,
+                    preset.movement.crouchSpeed,
+                    preset.movement.rotationSpeed,
+                    preset.movement.gravity,
+                    preset.movement.jumpHeight
+                );
+            }
+
+            if (Facade.Mining != null)
+            {
+                Facade.Mining.ApplyBase(
+                    preset.mining.baseMining
+                );
+            }
+
+            if (Facade.Protect != null)
+            {
+                Facade.Protect.ApplyBase(
+                    preset.protect.generic,
+                    preset.protect.explosion,
+                    preset.protect.energy,
+                    preset.protect.mining,
+                    preset.protect.melee,
+                    preset.protect.fire,
+                    preset.protect.electric,
+                    preset.protect.poison,
+                    preset.protect.frost,
+                    preset.protect.acid
                 );
             }
         }
@@ -166,7 +252,7 @@ namespace Features.Stats.UnityIntegration
                 return;
 
             Facade.ResetAll();
-            ApplyClassDefaults();
+            ApplyDefaultPreset();
         }
 
         [Server]
@@ -175,71 +261,7 @@ namespace Features.Stats.UnityIntegration
             if (!IsReady || preset == null)
                 return;
 
-            if (Facade.Health != null)
-            {
-                Facade.Health.ApplyBase(preset.health.baseHp);
-                Facade.Health.ApplyRegenBase(preset.health.baseRegen);
-            }
-
-            if (Facade.Energy != null)
-            {
-                Facade.Energy.ApplyBase(
-                    preset.energy.baseMaxEnergy,
-                    preset.energy.baseRegen
-                );
-            }
-
-            if (Facade.Combat != null)
-            {
-                Facade.Combat.ApplyBase(
-                    preset.combat.baseDamageMultiplier,
-                    preset.combat.baseFireRate, 
-                    preset.combat.baseRange,
-                    preset.combat.baseSpread,
-                    preset.combat.baseAimSpread,
-                    preset.combat.baseRecoil,
-                    preset.combat.baseMagazineSize,
-                    critChance: 0.2f,
-                    critMultiplier: 2f,
-                    penetration: 0f
-                );
-            }
-
-            if (Facade.Movement != null)
-            {
-                Facade.Movement.ApplyBase(
-                    preset.movement.baseSpeed,
-                    preset.movement.walkSpeed,
-                    preset.movement.sprintSpeed,
-                    preset.movement.crouchSpeed,
-                    preset.movement.rotationSpeed,
-                    preset.movement.gravity,
-                    preset.movement.jumpHeight
-                );
-            }
-
-            if (Facade.Mining != null)
-            {
-                Facade.Mining.ApplyBase(
-                    preset.mining.baseMining
-                );
-            }
-
-            if (Facade.Protect != null)
-            {
-                Facade.Protect.ApplyBase(
-                    preset.protect.generic,
-                    preset.protect.explosion,
-                    preset.protect.energy,
-                    preset.protect.mining,
-                    preset.protect.melee,
-                    preset.protect.fire,
-                    preset.protect.electric,
-                    preset.protect.poison,
-                    preset.protect.frost,
-                    preset.protect.acid
-                );
-            }
+            ApplyPresetValues(preset);
         }
     }
 }

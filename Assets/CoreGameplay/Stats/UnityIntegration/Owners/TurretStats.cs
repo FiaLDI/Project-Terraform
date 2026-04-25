@@ -33,31 +33,31 @@ namespace Features.Stats.UnityIntegration
 
         private void ApplyBaseStats()
         {
-            Debug.Log($"Combat exists: {Facade.Combat != null}");
-            
             if (preset == null)
             {
                 Debug.LogError("[TurretStats] Missing TurretPresetSO", this);
                 return;
             }
 
+            var combat = preset.combat ?? new TurretPresetSO.CombatBlock();
+
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    baseDamage: 1f,
-                    fireRate: 6f,
-                    spread: 2f,
-                    aimSpread: 0.5f,
-                    range: 100f,
-                    recoil: 1f,
-                    magazineSize: 30,
+                    baseDamage: combat.baseDamage,
+                    fireRate: combat.baseFireRate,
+                    spread: combat.baseSpread,
+                    aimSpread: combat.baseAimSpread,
+                    range: combat.baseRange,
+                    recoil: combat.baseRecoil,
+                    magazineSize: combat.baseMagazineSize,
                     critChance: 0.2f,
                     critMultiplier: 2f,
                     penetration: 0f
                 );
 
                 if (Facade.Combat is ITurretCombatStats tc)
-                    tc.ApplyFireRateBase(preset.baseFireRate);
+                    tc.ApplyFireRateBase(combat.baseFireRate);
             }
 
             if (Facade.Health != null)

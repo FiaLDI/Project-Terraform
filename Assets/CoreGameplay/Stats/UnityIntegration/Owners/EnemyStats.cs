@@ -44,6 +44,11 @@ namespace Features.Stats.UnityIntegration
                 return;
             }
 
+            ApplyFallbackDefaults();
+        }
+
+        private void ApplyFallbackDefaults()
+        {
             if (Facade.Health != null)
             {
                 Facade.Health.ApplyBase(100f);
@@ -53,12 +58,12 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    config.stats.combat.baseDamageMultiplier,
+                    baseDamage: 1f,
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,
-                    recoil: 1f,
                     range: 100f,
+                    recoil: 1f,
                     magazineSize: 30,
                     critChance: 0.2f,
                     critMultiplier: 2f,
@@ -69,6 +74,9 @@ namespace Features.Stats.UnityIntegration
 
         private void ApplyPreset(EnemyStatsPresetSO preset)
         {
+            if (preset == null)
+                return;
+
             if (Facade.Health != null)
             {
                 Facade.Health.ApplyBase(preset.health.baseHp);
@@ -78,13 +86,13 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    config.stats.combat.baseDamageMultiplier,
-                    fireRate: 6f,
-                    spread: 2f,
-                    aimSpread: 0.5f,
-                    recoil: 1f,
-                    range: 100f,
-                    magazineSize: 30,
+                    baseDamage: preset.combat.baseDamageMultiplier,
+                    fireRate: preset.combat.baseFireRate,
+                    spread: preset.combat.baseSpread,
+                    aimSpread: preset.combat.baseAimSpread,
+                    range: preset.combat.baseRange,
+                    recoil: preset.combat.baseRecoil,
+                    magazineSize: preset.combat.baseMagazineSize,
                     critChance: 0.2f,
                     critMultiplier: 2f,
                     penetration: 0f

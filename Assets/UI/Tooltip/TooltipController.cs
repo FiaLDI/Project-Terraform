@@ -266,7 +266,7 @@ namespace Features.Menu.Tooltip
         // BUFF TOOLTIP
         // =====================================================
 
-        public void ShowBuff(BuffSO cfg)
+        public void ShowBuff(BuffSO cfg, int stacks = 1)
         {
             if (cfg == null)
             {
@@ -285,6 +285,9 @@ namespace Features.Menu.Tooltip
 
             foreach (var effect in cfg.effects)
                 stats.text += "\n" + FormatEffect(effect);
+
+            if (stacks > 1)
+                stats.text += $"\nStacks: {stacks}";
 
             Show();
         }

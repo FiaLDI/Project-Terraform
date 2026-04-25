@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.Domain.BuffSO
   buffId: speed
   displayName: SuperSprint
-  description: 
+  description: y
   icon: {fileID: 21300000, guid: 0c5eedc99c4126040864b10b1ed81a1d, type: 3}
   isDebuff: 0
   effects:

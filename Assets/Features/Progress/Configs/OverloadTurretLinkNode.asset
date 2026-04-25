@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 749445612031d42459db886b1fdf6dfb, type: 3}
+  m_Name: OverloadTurretLink Node
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressionNodeSO
+  id: overload_turret_link-node
+  displayName: "Overload Pulse: Turret Link"
+  description: "Overload Pulse deploys a short-lived turret when activated."
+  requiredLevel: 5
+  passive: {fileID: 11400000, guid: 5d690cc5de4842329aef3a8653359823, type: 2}
+  position: {x: 520, y: -260}
+  uiSize: 76

@@ -143,8 +143,29 @@ namespace Features.Stats.Domain
 
         public void Reset()
         {
-            _speedAdd = _walkAdd = _sprintAdd = _crouchAdd = _rotationAdd = 0f;
-            _speedMult = _walkMult = _sprintMult = _crouchMult = _rotationMult = 1f;
+            _baseSpeed = 0f;
+            _baseWalk = 0f;
+            _baseSprint = 0f;
+            _baseCrouch = 0f;
+            _baseRotation = 0f;
+            _baseGravity = 0f;
+            _baseJumpHeight = 0f;
+
+            _speedAdd = 0f;
+            _walkAdd = 0f;
+            _sprintAdd = 0f;
+            _crouchAdd = 0f;
+            _rotationAdd = 0f;
+            _gravityAdd = 0f;
+            _jumpAdd = 0f;
+
+            _speedMult = 1f;
+            _walkMult = 1f;
+            _sprintMult = 1f;
+            _crouchMult = 1f;
+            _rotationMult = 1f;
+            _gravityMult = 1f;
+            _jumpMult = 1f;
         }
 
         public float Debug_BaseWalk => _baseWalk;

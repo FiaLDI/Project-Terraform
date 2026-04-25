@@ -886,6 +886,7 @@ MonoBehaviour:
   - {fileID: 6859820028838700850}
   - {fileID: -2609504964404914139}
   - {fileID: 7350075856022002700}
+  - {fileID: 5699725923122192925}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -896,7 +897,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584247111886717110
+  _initializedTimestamp: -8584244941146371619
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -911,7 +912,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 18
+  <PrefabId>k__BackingField: 21
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 12473250028732760479
   SceneId: 0
@@ -962,9 +963,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c70612df4d1e2644c90d44d72cf778a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ServerGamePhase
-  _componentIndexCache: 255
+  _componentIndexCache: 5
   _addedNetworkObject: {fileID: 3127127081630111513}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 3127127081630111513}
 --- !u!1 &7353283904813565304
 GameObject:
   m_ObjectHideFlags: 0

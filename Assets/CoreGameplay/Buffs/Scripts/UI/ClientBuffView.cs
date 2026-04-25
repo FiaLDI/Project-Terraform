@@ -29,19 +29,19 @@ namespace Features.Buffs.Client
             if (buffSystem == null)
                 return;
 
-            buffSystem.ActiveBuffIds.OnChange += OnBuffIdsChanged;
+            buffSystem.ActiveBuffStates.OnChange += OnBuffStatesChanged;
             Rebuild();
         }
 
         public void Unbind()
         {
             if (buffSystem != null)
-                buffSystem.ActiveBuffIds.OnChange -= OnBuffIdsChanged;
+                buffSystem.ActiveBuffStates.OnChange -= OnBuffStatesChanged;
 
             active.Clear();
         }
 
-        private void OnBuffIdsChanged(
+        private void OnBuffStatesChanged(
             SyncListOperation _,
             int __,
             string ___,
@@ -56,9 +56,12 @@ namespace Features.Buffs.Client
         {
             active.Clear();
 
-            foreach (var id in buffSystem.ActiveBuffIds)
+            foreach (var state in buffSystem.ActiveBuffStates)
             {
-                active.Add(new ActiveBuffView(id));
+                if (!ActiveBuffSyncCodec.TryDecode(state, out var buffId, out var stacks))
+                    continue;
+
+                active.Add(new ActiveBuffView(buffId, stacks));
             }
 
             BuffsChanged?.Invoke();

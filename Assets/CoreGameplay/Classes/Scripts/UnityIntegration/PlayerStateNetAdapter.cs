@@ -30,13 +30,9 @@ namespace Features.Class.Net
         [SerializeField]
         private PlayerClassLibrarySO classLibrary;
 
-        private bool classApplied;
-        private bool abilitiesSent;
+        private bool hasAppliedClass;
         private string pendingClassId;
-
-        // =====================================================
-        // LIFECYCLE
-        // =====================================================
+        private int abilitySyncVersion;
 
         private void Awake()
         {
@@ -72,20 +68,18 @@ namespace Features.Class.Net
             phase ??= GetComponent<ServerGamePhase>();
 
             if (statsOwner == null)
+            {
                 Debug.LogError(
                     "[PlayerStateNetAdapter] IStatsOwner not found",
                     this
                 );
+            }
         }
-
-        // =====================================================
-        // SERVER ENTRY POINT
-        // =====================================================
 
         [Server]
         public void ApplyClass(string classId)
         {
-            if (classApplied)
+            if (string.IsNullOrWhiteSpace(classId))
                 return;
 
             pendingClassId = classId;
@@ -94,26 +88,15 @@ namespace Features.Class.Net
                 ApplyClassInternal();
         }
 
-        // =====================================================
-        // PHASE
-        // =====================================================
-
         private void OnPhaseReached(GamePhase p)
         {
-            if (p == GamePhase.StatsReady && !classApplied)
+            if (p == GamePhase.StatsReady && !string.IsNullOrEmpty(pendingClassId))
                 ApplyClassInternal();
         }
-
-        // =====================================================
-        // PIPELINE
-        // =====================================================
 
         [Server]
         private void ApplyClassInternal()
         {
-            if (classApplied)
-                return;
-
             if (statsOwner == null || !statsOwner.IsReady)
             {
                 Debug.LogWarning(
@@ -142,58 +125,36 @@ namespace Features.Class.Net
                 return;
             }
 
-            classApplied = true;
-
-            // =====================================================
-            // 1️⃣ СТАТЫ
-            // =====================================================
+            hasAppliedClass = true;
 
             playerStats.ResetAndApplyDefaults();
             playerStats.ApplyPreset(cfg.preset);
 
-            // =====================================================
-            // 2️⃣ ПАССИВКИ (КЛЮЧЕВОЕ МЕСТО)
-            // =====================================================
-
             var finalPassives = BuildPassives(cfg);
-
             var net = GetComponent<PassiveNetAdapter>();
             net.ServerSetPassives(finalPassives);
-
-            // =====================================================
-            // 3️⃣ КЛАСС (абилки + базовая логика)
-            // =====================================================
 
             classController.ApplyClass(pendingClassId);
 
             GetComponent<MovementStatsSync>()?.SendSnapshot();
 
-            // =====================================================
-            // 4️⃣ ABILITIES → CLIENT
-            // =====================================================
-
-            StartCoroutine(SendAbilitiesOnce(cfg));
+            abilitySyncVersion++;
+            StartCoroutine(SendAbilities(cfg, abilitySyncVersion));
 
             Debug.Log(
-                $"[PlayerStateNetAdapter] ✅ Class '{pendingClassId}' applied",
+                $"[PlayerStateNetAdapter] Class '{pendingClassId}' applied",
                 this
             );
         }
-
-        // =====================================================
-        // BUILD PASSIVES FROM PROGRESSION
-        // =====================================================
 
         [Server]
         private PassiveSO[] BuildPassives(PlayerClassConfigSO cfg)
         {
             var list = new System.Collections.Generic.List<PassiveSO>();
 
-            // 1. базовые пассивки класса
             if (cfg.passives != null)
                 list.AddRange(cfg.passives);
 
-            // 2. прогрессия игрока
             var state = PlayerProgressService.Instance?.GetActiveCharacter();
             if (state != null && state.passives != null)
             {
@@ -211,7 +172,7 @@ namespace Features.Class.Net
         [Server]
         public void RefreshPassives()
         {
-            if (!classApplied)
+            if (!hasAppliedClass)
                 return;
 
             var cfg = classLibrary.FindById(pendingClassId);
@@ -223,23 +184,17 @@ namespace Features.Class.Net
             var net = GetComponent<PassiveNetAdapter>();
             net.ServerSetPassives(finalPassives);
 
-            Debug.Log("[PlayerStateNetAdapter] 🔄 Passives refreshed", this);
+            Debug.Log("[PlayerStateNetAdapter] Passives refreshed", this);
         }
 
-        // =====================================================
-        // ABILITIES SYNC (ONE-SHOT)
-        // =====================================================
-
         [Server]
-        private IEnumerator SendAbilitiesOnce(PlayerClassConfigSO cfg)
+        private IEnumerator SendAbilities(PlayerClassConfigSO cfg, int syncVersion)
         {
-            if (abilitiesSent)
+            yield return null;
+            yield return null;
+
+            if (syncVersion != abilitySyncVersion)
                 yield break;
-
-            abilitiesSent = true;
-
-            yield return null;
-            yield return null;
 
             if (cfg.abilities == null || cfg.abilities.Count == 0)
             {
@@ -263,7 +218,9 @@ namespace Features.Class.Net
         [ServerRpc]
         public void ApplyClientProgressionServerRpc(string[] passiveIds)
         {
-            var state = PlayerProgressService.Instance.GetActiveCharacter();
+            var state = PlayerProgressService.Instance?.GetActiveCharacter();
+            if (state == null)
+                return;
 
             state.passives.Clear();
 
@@ -274,10 +231,6 @@ namespace Features.Class.Net
 
             Debug.Log($"[SERVER] Progression synced ({passiveIds.Length} passives)", this);
         }
-
-        // =====================================================
-        // CLIENT VIEW ONLY
-        // =====================================================
 
         [ObserversRpc]
         private void RpcApplyAbilities(string[] abilityIds)
@@ -302,14 +255,10 @@ namespace Features.Class.Net
 
             var view = GetComponent<ClientAbilityView>();
             if (view != null)
-            {
                 view.SetAbilities(loaded);
-            }
 
             if (abilityCaster != null)
-            {
                 abilityCaster.SetAbilities(loaded);
-            }
         }
     }
 }

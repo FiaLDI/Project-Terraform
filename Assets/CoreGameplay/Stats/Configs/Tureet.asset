@@ -17,3 +17,12 @@ MonoBehaviour:
   baseRegen: 0
   rotationSpeed: 10
   baseFireRate: 3
+  combat:
+    baseDamage: 5
+    baseDamageMultiplier: 1
+    baseFireRate: 3
+    baseSpread: 2
+    baseAimSpread: 0.5
+    baseRange: 100
+    baseRecoil: 1
+    baseMagazineSize: 30
