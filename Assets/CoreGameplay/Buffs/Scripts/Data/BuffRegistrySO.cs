@@ -65,14 +65,91 @@ namespace Features.Buffs.Data
         }
 
 #if UNITY_EDITOR
-        [ContextMenu("Find All Buffs")]
+        [ContextMenu("Find All Buffs Unique")]
         public void FindAllBuffs()
         {
-            allBuffs = UnityEditor.AssetDatabase.FindAssets("t:BuffSO")
-                .Select(guid => UnityEditor.AssetDatabase.LoadAssetAtPath<BuffSO>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid)))
-                .Where(b => b != null)
+            RebuildFromProjectAssets(log: true);
+        }
+
+        public bool RebuildFromProjectAssets(bool log = false)
+        {
+            var guids = UnityEditor.AssetDatabase.FindAssets("t:BuffSO");
+
+            var byId = new Dictionary<string, BuffSO>();
+            var duplicates = new List<string>();
+
+            foreach (var guid in guids)
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var buff = UnityEditor.AssetDatabase.LoadAssetAtPath<BuffSO>(path);
+
+                if (buff == null)
+                    continue;
+
+                string id = GetEditorKey(buff);
+
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    Debug.LogWarning($"[BuffRegistry] Buff without id skipped: {path}", buff);
+                    continue;
+                }
+
+                if (byId.TryGetValue(id, out var existing))
+                {
+                    duplicates.Add(
+                        $"Duplicate buffId '{id}'\n" +
+                        $"Keeping: {UnityEditor.AssetDatabase.GetAssetPath(existing)}\n" +
+                        $"Skipped: {path}"
+                    );
+                    continue;
+                }
+
+                byId.Add(id, buff);
+            }
+
+            var rebuilt = byId
+                .OrderBy(x => x.Key)
+                .Select(x => x.Value)
                 .ToList();
+
+            bool changed =
+                allBuffs == null ||
+                allBuffs.Count != rebuilt.Count ||
+                !allBuffs.SequenceEqual(rebuilt);
+
+            if (!changed)
+            {
+                if (log)
+                    Debug.Log($"[BuffRegistry] Already up to date. Buffs: {rebuilt.Count}", this);
+
+                return false;
+            }
+
+            allBuffs = rebuilt;
+            BuildCache();
+
             UnityEditor.EditorUtility.SetDirty(this);
+
+            if (log)
+            {
+                Debug.Log($"[BuffRegistry] Rebuilt. Unique buffs: {allBuffs.Count}", this);
+
+                foreach (var duplicate in duplicates)
+                    Debug.LogWarning($"[BuffRegistry] {duplicate}", this);
+            }
+
+            return true;
+        }
+
+        private static string GetEditorKey(BuffSO buff)
+        {
+            if (buff == null)
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(buff.buffId))
+                return buff.buffId.Trim();
+
+            return buff.name;
         }
 #endif
     }
