@@ -4,6 +4,7 @@ using Features.Items.UnityIntegration;
 using Features.Player.UnityIntegration;
 using Features.Quests.Application;
 using Features.Quests.Domain;
+using Features.Stats.Domain;
 using FishNet;
 using FishNet.Object;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace Features.Stats.UnityIntegration
         [SerializeField] private EnemyConfigSO config;
         private IBuffSource lastAttacker;
         private bool isDead;
+        private bool runtimeScaleConfigured;
+        private bool runtimeScaleApplied;
+        private float runtimeStatScale = 1f;
 
         // =========================
         // SERVER
@@ -34,6 +38,7 @@ namespace Features.Stats.UnityIntegration
             }
 
             ApplyDefaultsFromConfig();
+            ApplyRuntimeScalingIfReady();
         }
 
         private void ApplyDefaultsFromConfig()
@@ -98,6 +103,24 @@ namespace Features.Stats.UnityIntegration
                     penetration: 0f
                 );
             }
+        }
+
+        [Server]
+        public void ConfigureRuntimeScaling(float scale)
+        {
+            runtimeScaleConfigured = true;
+            runtimeStatScale = Mathf.Max(0.1f, scale);
+            ApplyRuntimeScalingIfReady();
+        }
+
+        private void ApplyRuntimeScalingIfReady()
+        {
+            if (!runtimeScaleConfigured || runtimeScaleApplied || Facade == null)
+                return;
+
+            Facade.TryMultiply(StatKeys.MaxHp, runtimeStatScale);
+            Facade.TryMultiply(StatKeys.DamageMultiplier, runtimeStatScale);
+            runtimeScaleApplied = true;
         }
 
         public void RegisterAttacker(IBuffSource attacker)

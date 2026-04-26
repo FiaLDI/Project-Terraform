@@ -1,7 +1,9 @@
 using FishNet.Object;
+using FishNet.Connection;
 using UnityEngine;
 using System.Collections.Generic;
 using FishNet;
+using Features.Stats.UnityIntegration;
 
 public class PlayerSessionNetwork : NetworkBehaviour
 {
@@ -33,12 +35,23 @@ public class PlayerSessionNetwork : NetworkBehaviour
     [ServerRpc]
     public void RequestReturnToHubServerRpc()
     {
+        if (SceneTransitionService.IsLocalSceneActive(SceneTransitionService.NameHubScene) &&
+            !SceneTransitionService.IsTransitionPendingFor(SceneTransitionService.NameHubScene))
+        {
+            Debug.Log("[PlayerSessionNetwork] Return to hub ignored: already in hub.");
+            return;
+        }
+
         ShowHubLoadingObserversRpc();
         SceneTransitionService.ReturnAllPlayersToHub();
     }
 
     [ServerRpc]
-    public void RequestWorldServerRpc(string worldConfigId, List<string> questIds, List<string> chainIds)
+    public void RequestWorldServerRpc(
+        string worldConfigId,
+        int difficulty,
+        List<string> questIds,
+        List<string> chainIds)
     {
         if (SceneTransitionService.IsTransitionPendingFor(SceneTransitionService.NameWorldScene))
         {
@@ -48,17 +61,19 @@ public class PlayerSessionNetwork : NetworkBehaviour
 
         int seed = Random.Range(int.MinValue, int.MaxValue);
         var sessions = ServerCompositionRoot.I?.Sessions;
+        var requesterSession = sessions?.GetSessionByClient(Owner.ClientId);
+        int worldLevel = requesterSession != null ? requesterSession.Level : 1;
+        WorldRunConfig runConfig = WorldRunBalance.Create(worldConfigId, worldLevel, difficulty);
 
         ServerWorldSession.PendingSeed = seed;
-        ServerWorldSession.PendingWorldConfigId = worldConfigId;
+        ServerWorldSession.SetPendingRunConfig(runConfig);
 
         if (sessions != null)
         {
             foreach (var onlineSession in sessions.GetOnlineSessions())
                 onlineSession.SetPendingWorldQuestBootstrap(questIds, chainIds);
 
-            ServerWorldSession.PendingQuestIds.Clear();
-            ServerWorldSession.PendingChainIds.Clear();
+            ServerWorldSession.ResetPendingQuestBootstrap();
         }
         else
         {
@@ -68,7 +83,8 @@ public class PlayerSessionNetwork : NetworkBehaviour
 
         ShowWorldLoadingObserversRpc(worldConfigId);
 
-        Debug.Log($"[PlayerSessionNetwork] Generated world seed {seed} for '{worldConfigId}'.");
+        Debug.Log(
+            $"[PlayerSessionNetwork] Generated world seed {seed} for '{worldConfigId}' difficulty={runConfig.difficulty} level={runConfig.worldLevel}.");
         SceneTransitionService.LoadWorldScene();
     }
 
@@ -82,5 +98,42 @@ public class PlayerSessionNetwork : NetworkBehaviour
     public void ShowWorldLoadingObserversRpc(string worldConfigId)
     {
         LoadingScreenService.ShowWorld(worldConfigId, "Generating procedural world...");
+    }
+
+    [Server]
+    public void ServerApplyRunCompletionExperience(
+        int level,
+        int experience,
+        int gainedExperience)
+    {
+        var stats = GetComponent<PlayerStats>();
+        if (stats != null)
+            stats.SetLevel(level);
+
+        if (Owner != null)
+            TargetApplyRunCompletionExperience(Owner, level, experience, gainedExperience);
+    }
+
+    [TargetRpc]
+    private void TargetApplyRunCompletionExperience(
+        NetworkConnection conn,
+        int level,
+        int experience,
+        int gainedExperience)
+    {
+        var progress = PlayerProgressService.Instance;
+        if (progress == null)
+            return;
+
+        var active = progress.GetActiveCharacter();
+        int previousLevel = active != null ? active.level : level;
+
+        progress.SetActiveCharacterProgress(level, experience);
+
+        if (level > previousLevel)
+            Debug.Log($"[LEVEL] Run complete -> level {level} (+{gainedExperience} XP)");
+        else
+            Debug.Log(
+                $"[LEVEL] Run complete -> +{gainedExperience} XP ({experience}/{PlayerProgressionRules.GetRequiredExperienceForLevel(level)})");
     }
 }

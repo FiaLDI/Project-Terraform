@@ -6,11 +6,16 @@ using FishNet.Managing;
 using FishNet.Managing.Scened;
 using FishNet.Object;
 using UnityEngine;
+using UnitySceneManager = UnityEngine.SceneManagement.SceneManager;
+using UnityLoadSceneMode = UnityEngine.SceneManagement.LoadSceneMode;
+using UnityScene = UnityEngine.SceneManagement.Scene;
+using Features.Game;
 
 public static class SceneTransitionService
 {
     public const string NameWorldScene = "ProceduralWorld";
     public const string NameHubScene   = "NetHubScene";
+    public const string NameMainMenuScene   = "BootstrapScene";
 
     private sealed class Runner : MonoBehaviour
     {
@@ -20,16 +25,30 @@ public static class SceneTransitionService
     private static NetworkManager currentNetworkManager;
     private static bool sceneQueueBusy;
     private static bool transitionRoutineRunning;
+    private static bool returnToMainMenuRoutineRunning;
     private static string queuedSceneName;
     private static string activeSceneName;
 
     // ================= PUBLIC API =================
+
+    public static void LoadMainMenuScene()
+        => LoadScene(NameMainMenuScene);
 
     public static void LoadWorldScene()
         => LoadScene(NameWorldScene);
 
     public static void LoadHubScene()
         => LoadScene(NameHubScene);
+
+    public static bool IsReturnToMainMenuInProgress => returnToMainMenuRoutineRunning;
+
+    public static bool IsLocalSceneActive(string sceneName)
+    {
+        return string.Equals(
+            UnitySceneManager.GetActiveScene().name,
+            sceneName,
+            StringComparison.Ordinal);
+    }
 
     public static bool IsTransitionPendingFor(string sceneName)
     {
@@ -39,6 +58,12 @@ public static class SceneTransitionService
 
     public static void ReturnAllPlayersToHub()
     {
+        if (IsLocalSceneActive(NameHubScene) && !IsTransitionPendingFor(NameHubScene))
+        {
+            Debug.Log("[SceneTransition] Return to hub ignored: already in hub");
+            return;
+        }
+
         var sessions = ServerCompositionRoot.I?.Sessions;
 
         if (sessions != null)
@@ -51,10 +76,8 @@ public static class SceneTransitionService
             }
         }
 
-        ServerWorldSession.PendingSeed = 0;
-        ServerWorldSession.PendingWorldConfigId = string.Empty;
-        ServerWorldSession.PendingQuestIds.Clear();
-        ServerWorldSession.PendingChainIds.Clear();
+        ServerWorldSession.ResetPendingWorldBootstrap();
+        ServerWorldSession.ResetPendingQuestBootstrap();
         PlayerSpawnRegistry.I?.ClearPlayerSpawnPoints();
 
         LoadHubScene();
@@ -79,6 +102,8 @@ public static class SceneTransitionService
 
         if (sceneName == NameHubScene)
             LoadingScreenService.ShowHub("Returning players to hub...");
+        else if (sceneName == NameMainMenuScene)
+            LoadingScreenService.Show("Main menu", "Synchronizing scene...");
         else
             LoadingScreenService.Show("Loading world", "Synchronizing scene...");
 
@@ -90,16 +115,36 @@ public static class SceneTransitionService
         runner.StartCoroutine(ProcessQueuedTransition());
     }
 
+    public static void ReturnToMainMenu()
+    {
+        if (returnToMainMenuRoutineRunning)
+        {
+            Debug.Log("[SceneTransition] Return to main menu already in progress");
+            return;
+        }
+
+        EnsureRunnerExists();
+        runner.StartCoroutine(ReturnToMainMenuRoutine());
+    }
+
+    public static void LoadMainMenuSceneLocal()
+    {
+        ResetTransitionState();
+        BootstrapRoot.I?.ClearLocalPlayer();
+
+        UnityScene activeScene = UnitySceneManager.GetActiveScene();
+        if (string.Equals(activeScene.name, NameMainMenuScene, StringComparison.Ordinal))
+            return;
+
+        Debug.Log($"[SceneTransition] Loading local main menu scene '{NameMainMenuScene}'");
+        UnitySceneManager.LoadScene(NameMainMenuScene, UnityLoadSceneMode.Single);
+    }
+
     // ================= INTERNAL =================
 
     private static void EnsureInitialized(NetworkManager nm)
     {
-        if (runner == null)
-        {
-            var go = new GameObject(nameof(SceneTransitionService));
-            UnityEngine.Object.DontDestroyOnLoad(go);
-            runner = go.AddComponent<Runner>();
-        }
+        EnsureRunnerExists();
 
         if (currentNetworkManager == nm)
             return;
@@ -109,6 +154,16 @@ public static class SceneTransitionService
         currentNetworkManager = nm;
         currentNetworkManager.SceneManager.OnQueueStart += HandleQueueStart;
         currentNetworkManager.SceneManager.OnQueueEnd += HandleQueueEnd;
+    }
+
+    private static void EnsureRunnerExists()
+    {
+        if (runner != null)
+            return;
+
+        var go = new GameObject(nameof(SceneTransitionService));
+        UnityEngine.Object.DontDestroyOnLoad(go);
+        runner = go.AddComponent<Runner>();
     }
 
     private static IEnumerator ProcessQueuedTransition()
@@ -161,6 +216,46 @@ public static class SceneTransitionService
             runner.StartCoroutine(ProcessQueuedTransition());
     }
 
+    private static IEnumerator ReturnToMainMenuRoutine()
+    {
+        returnToMainMenuRoutineRunning = true;
+
+        Debug.Log("[SceneTransition] Returning to main menu");
+        LoadingScreenService.Show("Main menu", "Closing session...");
+
+        ResetTransitionState();
+        PreSceneCleanup();
+        BootstrapRoot.I?.ClearLocalPlayer();
+        ServerCompositionRoot.I?.ResetForMainMenu();
+
+        var nm = InstanceFinder.NetworkManager;
+
+        if (nm != null)
+        {
+            if (nm.ClientManager != null && nm.ClientManager.Started)
+                nm.ClientManager.StopConnection();
+
+            if (nm.ServerManager != null && nm.ServerManager.Started)
+                nm.ServerManager.StopConnection(true);
+
+            float deadline = Time.realtimeSinceStartup + 5f;
+
+            while (Time.realtimeSinceStartup < deadline)
+            {
+                bool clientStarted = nm.ClientManager != null && nm.ClientManager.Started;
+                bool serverStarted = nm.ServerManager != null && nm.ServerManager.Started;
+
+                if (!clientStarted && !serverStarted)
+                    break;
+
+                yield return null;
+            }
+        }
+
+        LoadMainMenuSceneLocal();
+        returnToMainMenuRoutineRunning = false;
+    }
+
     private static NetworkObject[] CollectMovedNetworkObjects(NetworkManager nm)
     {
         var result = new List<NetworkObject>();
@@ -209,6 +304,16 @@ public static class SceneTransitionService
 
         currentNetworkManager.SceneManager.OnQueueStart -= HandleQueueStart;
         currentNetworkManager.SceneManager.OnQueueEnd -= HandleQueueEnd;
+    }
+
+    private static void ResetTransitionState()
+    {
+        queuedSceneName = null;
+        activeSceneName = null;
+        sceneQueueBusy = false;
+        transitionRoutineRunning = false;
+        UnsubscribeFromSceneEvents();
+        currentNetworkManager = null;
     }
 
     private static void PreSceneCleanup()

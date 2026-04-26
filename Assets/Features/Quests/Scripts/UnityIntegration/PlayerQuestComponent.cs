@@ -5,7 +5,6 @@ using Features.Player.UI;
 using Features.Quests.Application;
 using Features.Quests.Data;
 using Features.Quests.Domain;
-using Features.Stats.UnityIntegration;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -347,7 +346,6 @@ public class PlayerQuestComponent : NetworkBehaviour
         rewarded.Add(id);
 
         GiveRewards(quest);
-        GiveExperience(quest);
     }
 
     private void TryAdvanceChain(QuestRuntime quest)
@@ -362,50 +360,6 @@ public class PlayerQuestComponent : NetworkBehaviour
 
         advancedChains.Add(id);
         chainService?.Advance(quest.Definition.Id);
-    }
-
-    private void GiveExperience(QuestRuntime quest)
-    {
-        int gainedExperience = quest.Definition.ExperienceReward;
-        if (gainedExperience <= 0)
-            return;
-
-        var session = ResolveSession();
-
-        int nextLevel = session != null ? session.Level : 1;
-        int nextExperience = session != null ? session.Experience : 0;
-
-        PlayerProgressionRules.ApplyExperience(ref nextLevel, ref nextExperience, gainedExperience);
-
-        session?.SetProgression(nextLevel, nextExperience);
-
-        var stats = GetComponent<PlayerStats>();
-        if (stats != null)
-            stats.SetLevel(nextLevel);
-
-        TargetApplyQuestExperience(Owner, nextLevel, nextExperience, gainedExperience);
-    }
-
-    [TargetRpc]
-    private void TargetApplyQuestExperience(
-        NetworkConnection conn,
-        int level,
-        int experience,
-        int gainedExperience)
-    {
-        var progress = PlayerProgressService.Instance;
-        if (progress == null)
-            return;
-
-        var active = progress.GetActiveCharacter();
-        int previousLevel = active != null ? active.level : level;
-
-        progress.SetActiveCharacterProgress(level, experience);
-
-        if (level > previousLevel)
-            Debug.Log($"[LEVEL] Level up -> {level} (+{gainedExperience} XP)");
-        else
-            Debug.Log($"[LEVEL] Quest XP -> +{gainedExperience} XP ({experience}/{PlayerProgressionRules.GetRequiredExperienceForLevel(level)})");
     }
 
     private void GiveRewards(QuestRuntime quest)
@@ -424,6 +378,24 @@ public class PlayerQuestComponent : NetworkBehaviour
                 RewardLevel = 0
             });
         }
+    }
+
+    [Server]
+    public bool AreAllStartedQuestsCompleted()
+    {
+        if (service == null)
+            return false;
+
+        foreach (var quest in service.ActiveQuests)
+        {
+            if (quest == null)
+                continue;
+
+            if (quest.State != QuestState.Completed)
+                return false;
+        }
+
+        return true;
     }
 
     [Server]

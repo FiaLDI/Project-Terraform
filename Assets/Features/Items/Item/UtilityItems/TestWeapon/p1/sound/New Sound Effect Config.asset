@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SoundEffectConfig
   id: testweapon-p1-shot
   clip: {fileID: 8300000, guid: cdcdec2678ae7ca459617e75e6a75629, type: 3}
-  volume: 0.3
+  volume: 0.02
   minInterval: 0.05
   pitchMin: 1
   pitchMax: 1

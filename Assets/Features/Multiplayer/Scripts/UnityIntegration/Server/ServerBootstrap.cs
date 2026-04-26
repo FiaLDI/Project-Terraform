@@ -58,12 +58,19 @@ public sealed class ServerBootstrap : MonoBehaviour
 
     private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
     {
-        if (args.ConnectionState != RemoteConnectionState.Started)
+        if (args.ConnectionState == RemoteConnectionState.Started)
+        {
+            Debug.Log($"[fix-net] Client connected: {conn.ClientId}");
+
+            StartCoroutine(SpawnConnectionObject(conn));
             return;
+        }
 
-        Debug.Log($"[fix-net] Client connected: {conn.ClientId}");
-
-        StartCoroutine(SpawnConnectionObject(conn));
+        if (args.ConnectionState == RemoteConnectionState.Stopped)
+        {
+            Debug.Log($"[fix-net] Client disconnected: {conn.ClientId}");
+            ServerCompositionRoot.I?.Sessions?.HandleDisconnect(conn.ClientId);
+        }
     }
 
     private System.Collections.IEnumerator SpawnConnectionObject(NetworkConnection conn)

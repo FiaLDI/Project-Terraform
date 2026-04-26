@@ -157,6 +157,10 @@ namespace Biomes.UnityIntegration
 
             var go = Instantiate(config.prefab, pos, Quaternion.identity);
 
+            var enemyStats = go.GetComponent<Features.Stats.UnityIntegration.EnemyStats>();
+            if (enemyStats != null)
+                enemyStats.ConfigureRuntimeScaling(GetRunEnemyStatScale());
+
             var binder = go.GetComponent<EnemyEcsRuntimeBinder>();
             if (binder != null)
             {
@@ -295,21 +299,33 @@ namespace Biomes.UnityIntegration
 
         private int GetScaledLimit(int baseLimit)
         {
-            float scale = EnemyPerformanceManager.Instance != null
+            float performanceScale = EnemyPerformanceManager.Instance != null
                 ? EnemyPerformanceManager.Instance.EnemyCountScale
                 : 1f;
+            float runScale = GetRunEnemySpawnScale();
 
-            return Mathf.Max(1, Mathf.RoundToInt(baseLimit * scale));
+            return Mathf.Max(1, Mathf.RoundToInt(baseLimit * performanceScale * runScale));
         }
 
         private float GetRespawnDelay(BiomeConfig biome)
         {
             float baseDelay = Mathf.Max(spawnInterval, biome != null ? biome.enemyRespawnDelay : spawnInterval);
-            float scale = EnemyPerformanceManager.Instance != null
+            float performanceScale = EnemyPerformanceManager.Instance != null
                 ? Mathf.Max(0.25f, EnemyPerformanceManager.Instance.EnemyCountScale)
                 : 1f;
+            float runScale = GetRunEnemySpawnScale();
 
-            return baseDelay / scale;
+            return baseDelay / (performanceScale * runScale);
+        }
+
+        private static float GetRunEnemyStatScale()
+        {
+            return Mathf.Max(0.1f, WorldRunContext.Current?.enemyStatScale ?? 1f);
+        }
+
+        private static float GetRunEnemySpawnScale()
+        {
+            return Mathf.Max(0.1f, WorldRunContext.Current?.enemySpawnScale ?? 1f);
         }
 
         private EnemySpawnEntry SelectEnemyEntry(BiomeConfig biome, RaycastHit hit)

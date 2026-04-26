@@ -112,9 +112,9 @@ namespace Features.Quests.Data
                 }
             }
 
-            int resolvedExperienceReward = experienceReward > 0
-                ? experienceReward
-                : Mathf.Max(1, conditions.Count) * 50;
+            // Quest XP is intentionally disabled so run completion controls
+            // the pacing of level progression.
+            int resolvedExperienceReward = 0;
 
             return new QuestDefinition(
                 new QuestId(questId),

@@ -7,6 +7,8 @@ public class MainMenuController : MonoBehaviour, IUIScreen
 
     private void Start()
     {
+        LoadingScreenService.Hide();
+
         var fsm = MainMenuFSM.Instance;
         var controller = Object.FindFirstObjectByType<CharacterSelectController>();
 

@@ -86,6 +86,9 @@ public sealed class ProjectileNetwork : NetworkBehaviour
         if (!IsServerInitialized || cfg == null)
             return;
 
+        if (ShouldIgnoreCollider(other))
+            return;
+
         if (TryExplodeOnContact(other, transform.position, ResolveFallbackNormal()))
             return;
 

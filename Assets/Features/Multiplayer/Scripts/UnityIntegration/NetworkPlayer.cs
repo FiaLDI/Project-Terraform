@@ -175,6 +175,9 @@ namespace Features.Player.UnityIntegration
             else
             {
                 Debug.Log("[fix-net] Ownership removed", this);
+                if (LocalPlayerController.I != null && LocalPlayerController.I.BoundPlayer == this)
+                    LocalPlayerController.I.Unbind(this);
+
                 DisableLocalComponents();
             }
 
@@ -200,6 +203,12 @@ namespace Features.Player.UnityIntegration
 
         public override void OnStopClient()
         {
+            if (LocalPlayerController.I != null && LocalPlayerController.I.BoundPlayer == this)
+                LocalPlayerController.I.Unbind(this);
+
+            DisableLocalComponents();
+            visual?.SetLocal(false);
+
             base.OnStopClient();
 
             var registry = PlayerRegistry.Instance;

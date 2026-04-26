@@ -47,6 +47,7 @@ namespace Biomes.UnityIntegration
         private Transform trackedPlayer;
         private int worldSeed;
         private string selectedWorldConfigId;
+        private WorldRunConfig runConfig;
         private int groundMask;
         private bool customPrefabSpawned;
         private GameObject exitBeaconObject;
@@ -147,7 +148,10 @@ namespace Biomes.UnityIntegration
                 {
                     worldSeed = worldProvider.Seed.Value;
                     selectedWorldConfigId = worldProvider.WorldConfigId.Value;
-                    Debug.Log($"[world-gen] seed='{worldSeed}'");
+                    runConfig = worldProvider.GetRunConfig();
+                    WorldRunContext.Set(runConfig);
+                    Debug.Log(
+                        $"[world-gen] seed='{worldSeed}' level='{runConfig.worldLevel}' difficulty='{runConfig.difficulty}'");
                     yield break;
                 }
 
@@ -514,6 +518,7 @@ namespace Biomes.UnityIntegration
             clientManager = null;
             trackedPlayer = null;
             worldProvider = null;
+            runConfig = null;
             customPrefabSpawned = false;
 
             if (exitBeaconObject != null)
@@ -527,6 +532,7 @@ namespace Biomes.UnityIntegration
             serverStreamingTargets.Clear();
 
             World = null;
+            WorldRunContext.Clear();
 
             ChunkedGameObjectStorage.ClearAll();
             BiomeRuntimeDatabase.Dispose();

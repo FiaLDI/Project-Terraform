@@ -49,7 +49,7 @@ namespace Multiplayer.Application
         }
 
 
-        private void ClearAll()
+        public void ResetAll()
         {
             sessions.Clear();
             clientToPersistent.Clear();

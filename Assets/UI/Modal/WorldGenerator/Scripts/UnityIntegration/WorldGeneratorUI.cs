@@ -49,6 +49,10 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
     [SerializeField] private Button worldConfigButton;
     [SerializeField] private TextMeshProUGUI worldConfigButtonLabel;
 
+    [Header("Difficulty")]
+    [SerializeField] private Button difficultyButton;
+    [SerializeField] private TextMeshProUGUI difficultyButtonLabel;
+
     public InputMode Mode => InputMode.Dialog;
 
     private readonly List<RegionRuntime> regionViews = new();
@@ -56,6 +60,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
 
     private PolygonGlowButtonGroup regionGroup;
     private int selectedWorldIndex;
+    private int selectedDifficulty = WorldRunBalance.DefaultDifficulty;
     private QuestAsset selectedQuest;
     private bool initialized;
     private bool isGeneratingWorld;
@@ -132,11 +137,12 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             "Generating procedural world...");
 
         string worldConfigId = GetSelectedWorldConfigId();
+        int difficulty = GetSelectedDifficulty();
         List<string> questIds = GetSelectedQuestIds();
         List<string> chainIds = GetSelectedChainIds();
 
         var net = BoundPlayer.GetComponent<PlayerSessionNetwork>();
-        net.RequestWorldServerRpc(worldConfigId, questIds, chainIds);
+        net.RequestWorldServerRpc(worldConfigId, difficulty, questIds, chainIds);
 
         UIStackManager.I?.Clear();
     }
@@ -150,6 +156,16 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         RefreshAll();
     }
 
+    public void OnCycleDifficultyClicked()
+    {
+        selectedDifficulty++;
+
+        if (selectedDifficulty > WorldRunBalance.MaxDifficulty)
+            selectedDifficulty = WorldRunBalance.MinDifficulty;
+
+        RefreshDifficultyLabel();
+    }
+
     private void Initialize()
     {
         if (initialized)
@@ -157,6 +173,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
 
         initialized = true;
         RegisterLoadingBackgrounds();
+        ResolveDifficultyUiReferences();
 
         if (generateWorldButton != null)
         {
@@ -176,6 +193,15 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             worldConfigButton.onClick.AddListener(OnCycleWorldConfigClicked);
         }
 
+        if (difficultyButton != null)
+        {
+            difficultyButton.onClick.RemoveListener(OnCycleDifficultyClicked);
+            difficultyButton.onClick.AddListener(OnCycleDifficultyClicked);
+        }
+
+        if (difficultyButtonLabel != null)
+            difficultyButtonLabel.raycastTarget = false;
+
         if (mapRegionsRoot != null)
         {
             regionGroup = mapRegionsRoot.GetComponent<PolygonGlowButtonGroup>();
@@ -184,6 +210,23 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         }
 
         RebuildWorldButtons();
+    }
+
+    private void ResolveDifficultyUiReferences()
+    {
+        if (difficultyButton == null)
+            return;
+
+        if (difficultyButtonLabel != null &&
+            difficultyButtonLabel.transform.IsChildOf(difficultyButton.transform))
+        {
+            return;
+        }
+
+        if (difficultyButtonLabel != null)
+            difficultyButtonLabel.gameObject.SetActive(false);
+
+        difficultyButtonLabel = difficultyButton.GetComponentInChildren<TextMeshProUGUI>(true);
     }
 
     private void RegisterLoadingBackgrounds()
@@ -198,6 +241,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
     private void RefreshAll()
     {
         RefreshFallbackWorldLabel();
+        RefreshDifficultyLabel();
 
         if (regionViews.Count == 0)
         {
@@ -351,6 +395,15 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         worldConfigButtonLabel.text = $"World: {GetSelectedWorldName()}";
     }
 
+    private void RefreshDifficultyLabel()
+    {
+        if (difficultyButtonLabel == null)
+            return;
+
+        difficultyButtonLabel.text =
+            $"Difficulty: {selectedDifficulty} - {WorldRunBalance.GetDifficultyLabel(selectedDifficulty)}";
+    }
+
     private void ShowNoWorldState()
     {
         if (selectedWorldTitle != null)
@@ -447,6 +500,11 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
     {
         WorldSelectionEntry entry = GetSelectedEntry();
         return entry != null ? GetWorldDisplayName(entry, selectedWorldIndex) : "Default";
+    }
+
+    private int GetSelectedDifficulty()
+    {
+        return WorldRunBalance.ClampDifficulty(selectedDifficulty);
     }
 
     private string GetWorldDisplayName(WorldSelectionEntry entry, int index)
