@@ -4,6 +4,7 @@ using Features.Player.UnityIntegration;
 using Features.Player;
 using Features.Player.UI;
 using Features.Interaction.UnityIntegration;
+using Features.Multiplayer.UI;
 using System;
 
 public sealed class LocalPlayerController : MonoBehaviour
@@ -23,6 +24,9 @@ public sealed class LocalPlayerController : MonoBehaviour
         }
 
         I = this;
+
+        if (GetComponent<OnlinePlayersInputHandler>() == null)
+            gameObject.AddComponent<OnlinePlayersInputHandler>();
 
         inputContext = GetComponent<PlayerInputContext>();
         if (inputContext == null)

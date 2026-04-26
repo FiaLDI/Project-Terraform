@@ -307,6 +307,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""OnlinePlayers"",
+                    ""type"": ""Button"",
+                    ""id"": ""ba31d121-a0aa-4b91-9508-a1c019b865bc"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -868,6 +877,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""Scroll"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d05c4391-bab0-4531-aa51-e4358cc34f83"",
+                    ""path"": ""<Keyboard>/o"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""OnlinePlayers"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1661,6 +1681,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_ToggleQuests = m_Player.FindAction("ToggleQuests", throwIfNotFound: true);
         m_Player_ToggleStats = m_Player.FindAction("ToggleStats", throwIfNotFound: true);
         m_Player_Scroll = m_Player.FindAction("Scroll", throwIfNotFound: true);
+        m_Player_OnlinePlayers = m_Player.FindAction("OnlinePlayers", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1786,6 +1807,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ToggleQuests;
     private readonly InputAction m_Player_ToggleStats;
     private readonly InputAction m_Player_Scroll;
+    private readonly InputAction m_Player_OnlinePlayers;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1894,6 +1916,10 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Scroll => m_Wrapper.m_Player_Scroll;
         /// <summary>
+        /// Provides access to the underlying input action "Player/OnlinePlayers".
+        /// </summary>
+        public InputAction @OnlinePlayers => m_Wrapper.m_Player_OnlinePlayers;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Player; }
@@ -1991,6 +2017,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Scroll.started += instance.OnScroll;
             @Scroll.performed += instance.OnScroll;
             @Scroll.canceled += instance.OnScroll;
+            @OnlinePlayers.started += instance.OnOnlinePlayers;
+            @OnlinePlayers.performed += instance.OnOnlinePlayers;
+            @OnlinePlayers.canceled += instance.OnOnlinePlayers;
         }
 
         /// <summary>
@@ -2074,6 +2103,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Scroll.started -= instance.OnScroll;
             @Scroll.performed -= instance.OnScroll;
             @Scroll.canceled -= instance.OnScroll;
+            @OnlinePlayers.started -= instance.OnOnlinePlayers;
+            @OnlinePlayers.performed -= instance.OnOnlinePlayers;
+            @OnlinePlayers.canceled -= instance.OnOnlinePlayers;
         }
 
         /// <summary>
@@ -2630,6 +2662,13 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnScroll(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "OnlinePlayers" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnOnlinePlayers(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

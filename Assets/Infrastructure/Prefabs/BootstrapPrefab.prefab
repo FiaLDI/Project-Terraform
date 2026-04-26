@@ -295,6 +295,7 @@ GameObject:
   - component: {fileID: 3573662119950025895}
   - component: {fileID: 6935516939186511060}
   - component: {fileID: 358204148754794650}
+  - component: {fileID: 2708706192262409797}
   m_Layer: 0
   m_Name: Input
   m_TagString: Untagged
@@ -504,6 +505,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80519efd0e22a4e47ad1468c9642913d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Stats.UnityIntegration.StatsInputHandler
+--- !u!114 &2708706192262409797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742051322264911869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6b0c0ac75460a14aa8197c15afd125f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Player.UnityIntegration.OnlinePlayersInputHandler
 --- !u!1 &1057123202320390765
 GameObject:
   m_ObjectHideFlags: 0

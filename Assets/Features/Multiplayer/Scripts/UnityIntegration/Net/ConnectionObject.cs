@@ -35,6 +35,7 @@ public sealed class ConnectionObject : NetworkBehaviour
         SendLoginServerRpc(
             pid,
             active.characterId,
+            active.nickname,
             active.classId,
             active.level,
             active.experience);
@@ -44,6 +45,7 @@ public sealed class ConnectionObject : NetworkBehaviour
     private void SendLoginServerRpc(
         string persistentId,
         string characterId,
+        string nickname,
         string classId,
         int level,
         int experience,
@@ -57,6 +59,7 @@ public sealed class ConnectionObject : NetworkBehaviour
             sender,
             persistentId,
             characterId,
+            nickname,
             classId,
             level,
             experience);

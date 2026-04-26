@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using FishNet;
 using Features.Stats.UnityIntegration;
+using System;
 
 public class PlayerSessionNetwork : NetworkBehaviour
 {
@@ -47,6 +48,34 @@ public class PlayerSessionNetwork : NetworkBehaviour
     }
 
     [ServerRpc]
+    public void RequestOnlinePlayersServerRpc()
+    {
+        var sessions = ServerCompositionRoot.I?.Sessions;
+
+        if (Owner == null)
+            return;
+
+        if (sessions == null)
+        {
+            TargetReceiveOnlinePlayers(Owner, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<int>());
+            return;
+        }
+
+        var nicknames = new List<string>();
+        var classIds = new List<string>();
+        var levels = new List<int>();
+
+        foreach (var session in sessions.GetOnlineSessions())
+        {
+            nicknames.Add(session.Nickname ?? string.Empty);
+            classIds.Add(session.ClassId ?? string.Empty);
+            levels.Add(session.Level);
+        }
+
+        TargetReceiveOnlinePlayers(Owner, nicknames.ToArray(), classIds.ToArray(), levels.ToArray());
+    }
+
+    [ServerRpc]
     public void RequestWorldServerRpc(
         string worldConfigId,
         int difficulty,
@@ -59,7 +88,7 @@ public class PlayerSessionNetwork : NetworkBehaviour
             return;
         }
 
-        int seed = Random.Range(int.MinValue, int.MaxValue);
+        int seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
         var sessions = ServerCompositionRoot.I?.Sessions;
         var requesterSession = sessions?.GetSessionByClient(Owner.ClientId);
         int worldLevel = requesterSession != null ? requesterSession.Level : 1;
@@ -98,6 +127,20 @@ public class PlayerSessionNetwork : NetworkBehaviour
     public void ShowWorldLoadingObserversRpc(string worldConfigId)
     {
         LoadingScreenService.ShowWorld(worldConfigId, "Generating procedural world...");
+    }
+
+    [TargetRpc]
+    private void TargetReceiveOnlinePlayers(
+        NetworkConnection conn,
+        string[] nicknames,
+        string[] classIds,
+        int[] levels)
+    {
+        var screen = Features.Multiplayer.UI.OnlinePlayersScreen.Resolve();
+        if (screen == null)
+            return;
+
+        screen.ApplySnapshot(nicknames, classIds, levels);
     }
 
     [Server]

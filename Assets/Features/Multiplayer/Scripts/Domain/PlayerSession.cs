@@ -14,6 +14,7 @@ namespace Multiplayer.Domain
         public InventorySaveData InventoryData { get; private set; }
         public QuestPersistenceState QuestData { get; private set; }
         public string CharacterId { get; private set; }
+        public string Nickname { get; private set; }
         public string ClassId { get; private set; }
         public int Level { get; private set; }
         public int Experience { get; private set; }
@@ -56,9 +57,10 @@ namespace Multiplayer.Domain
             PlayerObject = obj;
         }
 
-        public void SetCharacterData(string charId, string classId, int level, int experience)
+        public void SetCharacterData(string charId, string nickname, string classId, int level, int experience)
         {
             CharacterId = charId;
+            Nickname = nickname;
             ClassId = classId;
             SetProgression(level, experience);
         }
