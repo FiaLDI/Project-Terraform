@@ -33,12 +33,24 @@ namespace Features.Menu.Tooltip
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             Instance = this;
 
             rect = GetComponent<RectTransform>();
             canvas = GetComponentInParent<Canvas>();
 
             Hide(true);
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
         }
 
         private void Update()
