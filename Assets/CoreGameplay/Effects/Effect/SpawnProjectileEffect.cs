@@ -122,6 +122,9 @@ public sealed class SpawnProjectileEffect : IEffect
                 return;
             }
 
+            var owner = (context.Source as Component)
+                ?.GetComponentInParent<NetworkObject>();
+
             InstanceFinder.ServerManager.Spawn(net, owner?.Owner);
 
             var proj = go.GetComponent<ProjectileNetwork>();
