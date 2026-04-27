@@ -3,13 +3,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler
+public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] private Image background;
-    [SerializeField] private Image lockIcon;
-    [SerializeField] private TMP_Text levelText;
-    [SerializeField] private Button button;
-    [SerializeField] private Button removeButton;
+
     [Header("Node Art")]
     [SerializeField] private Sprite unlockedSprite;
     [SerializeField] private Sprite availableSprite;
@@ -24,6 +21,8 @@ public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, I
     private System.Action<ProgressionNodeSO> onSelected;
     private System.Action<ProgressionNodeSO> onUnlock;
     private System.Action<ProgressionNodeSO> onRemove;
+    private System.Action<ProgressionNodeSO, RectTransform> onHoverEnter;
+    private System.Action<ProgressionNodeSO> onHoverExit;
     private bool isUnlocked;
     private bool isAvailable;
 
@@ -39,19 +38,22 @@ public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, I
         bool selected,
         System.Action<ProgressionNodeSO> onSelected,
         System.Action<ProgressionNodeSO> onUnlock,
-        System.Action<ProgressionNodeSO> onRemove)
+        System.Action<ProgressionNodeSO> onRemove,
+        System.Action<ProgressionNodeSO, RectTransform> onHoverEnter,
+        System.Action<ProgressionNodeSO> onHoverExit)
     {
         this.node = node;
         this.onSelected = onSelected;
         this.onUnlock = onUnlock;
         this.onRemove = onRemove;
+        this.onHoverEnter = onHoverEnter;
+        this.onHoverExit = onHoverExit;
         isUnlocked = unlocked;
         isAvailable = available;
 
         if (rectTransform == null)
             rectTransform = transform as RectTransform;
 
-        PrepareStaticLayout();
         RefreshVisuals(selected);
     }
 
@@ -62,10 +64,18 @@ public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, I
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (node == null || rectTransform == null)
+            return;
+
+        onHoverEnter?.Invoke(node, rectTransform);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
         if (node == null)
             return;
 
-        onSelected?.Invoke(node);
+        onHoverExit?.Invoke(node);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -87,25 +97,6 @@ public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, I
             onUnlock?.Invoke(node);
     }
 
-    private void PrepareStaticLayout()
-    {
-        var layout = GetComponent<VerticalLayoutGroup>();
-        if (layout != null)
-            layout.enabled = false;
-
-        if (lockIcon != null)
-            lockIcon.gameObject.SetActive(false);
-
-        if (levelText != null)
-            levelText.gameObject.SetActive(false);
-
-        if (button != null)
-            button.gameObject.SetActive(false);
-
-        if (removeButton != null)
-            removeButton.gameObject.SetActive(false);
-    }
-
     private void RefreshVisuals(bool selected)
     {
         if (node == null || background == null || rectTransform == null)
@@ -117,18 +108,18 @@ public sealed class ProgressionNodeView : MonoBehaviour, IPointerEnterHandler, I
         rectTransform.sizeDelta = new Vector2(nodeSize, nodeSize);
         rectTransform.localScale = selected ? Vector3.one * 1.08f : Vector3.one;
 
-        var backgroundRect = background.rectTransform;
-        backgroundRect.anchorMin = new Vector2(0.5f, 0.5f);
-        backgroundRect.anchorMax = new Vector2(0.5f, 0.5f);
-        backgroundRect.pivot = new Vector2(0.5f, 0.5f);
-        backgroundRect.anchoredPosition = Vector2.zero;
-        backgroundRect.sizeDelta = new Vector2(nodeSize, nodeSize);
+        background.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        background.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        background.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        background.rectTransform.anchoredPosition = Vector2.zero;
+        background.rectTransform.sizeDelta = new Vector2(nodeSize, nodeSize);
 
         background.sprite = isUnlocked
             ? unlockedSprite
             : useLargeSprite
                 ? largeAvailableSprite
                 : availableSprite;
+
         background.preserveAspect = true;
         background.color = GetNodeColor(selected);
         background.raycastTarget = true;

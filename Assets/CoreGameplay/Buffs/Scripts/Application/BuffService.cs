@@ -30,6 +30,18 @@ namespace Features.Buffs.Application
             if (cfg == null || target == null)
                 return null;
 
+            if (!cfg.isStackable)
+            {
+                var existing = FindExisting(cfg, source);
+                if (existing != null)
+                {
+                    if (lifetimeMode == BuffLifetimeMode.Duration)
+                        existing.RefreshDuration();
+
+                    return existing;
+                }
+            }
+
             var inst = new BuffInstance(cfg, target, source, lifetimeMode);
             active.Add(inst);
 
@@ -92,6 +104,34 @@ namespace Features.Buffs.Application
                 if (predicate(active[i]))
                     RemoveBuff(active[i]);
             }
+        }
+
+        private BuffInstance FindExisting(BuffSO cfg, IBuffSource source)
+        {
+            for (int i = 0; i < active.Count; i++)
+            {
+                var inst = active[i];
+                if (inst == null || inst.Source != source || !SameBuff(inst.Config, cfg))
+                    continue;
+
+                return inst;
+            }
+
+            return null;
+        }
+
+        private static bool SameBuff(BuffSO left, BuffSO right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+
+            if (left == null || right == null)
+                return false;
+
+            if (string.IsNullOrEmpty(left.buffId) || string.IsNullOrEmpty(right.buffId))
+                return false;
+
+            return left.buffId == right.buffId;
         }
     }
 }

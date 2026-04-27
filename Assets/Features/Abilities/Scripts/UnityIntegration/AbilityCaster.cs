@@ -250,7 +250,8 @@ namespace Features.Abilities.Application
                 ? service.LastInstantContext
                 : service.LastChannelContext;
 
-            ExecuteWithModifiers(ability, ctx);
+            if (ability.castType == AbilityCastType.Instant)
+                ExecuteWithModifiers(ability, ctx);
 
             return true;
         }

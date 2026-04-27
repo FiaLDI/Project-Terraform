@@ -10,6 +10,7 @@ namespace Features.Inventory.Domain
 
         public InventorySection Section;
         public int Index;
+        public int ActiveSlotIndex;
 
         public InventorySection FromSection;
         public int FromIndex;

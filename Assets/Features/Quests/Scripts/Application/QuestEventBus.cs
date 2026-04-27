@@ -6,7 +6,13 @@ namespace Features.Quests.Application
 {
     public static class QuestEventBus
     {
-        private static readonly Dictionary<Type, List<Action<object, IQuestEvent>>> subscribers
+        private sealed class SubscriptionEntry
+        {
+            public Delegate Original;
+            public Action<object, IQuestEvent> Wrapped;
+        }
+
+        private static readonly Dictionary<Type, List<SubscriptionEntry>> subscribers
             = new();
 
         public static void Subscribe<T>(Action<object, T> handler)
@@ -16,11 +22,15 @@ namespace Features.Quests.Application
 
             if (!subscribers.TryGetValue(type, out var list))
             {
-                list = new List<Action<object, IQuestEvent>>();
+                list = new List<SubscriptionEntry>();
                 subscribers[type] = list;
             }
 
-            list.Add((src, e) => handler(src, (T)e));
+            list.Add(new SubscriptionEntry
+            {
+                Original = handler,
+                Wrapped = (src, e) => handler(src, (T)e)
+            });
         }
 
         public static void Unsubscribe<T>(Action<object, T> handler)
@@ -31,7 +41,7 @@ namespace Features.Quests.Application
             if (!subscribers.TryGetValue(type, out var list))
                 return;
 
-            list.RemoveAll(a => a.Method == handler.Method);
+            list.RemoveAll(entry => Equals(entry.Original, handler));
         }
 
         public static void Publish(IQuestEvent e)
@@ -41,8 +51,9 @@ namespace Features.Quests.Application
             if (!subscribers.TryGetValue(type, out var list))
                 return;
 
-            foreach (var handler in list)
-                handler(e.Source, e);
+            var snapshot = list.ToArray();
+            for (int i = 0; i < snapshot.Length; i++)
+                snapshot[i].Wrapped(e.Source, e);
         }
     }
 }

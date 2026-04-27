@@ -26,22 +26,53 @@ public class SettingsMenuController : MonoBehaviour
 
         resolutionDropdown.ClearOptions();
 
-        List<string> options = new List<string>();
-        int currentIndex = 0;
+        List<Resolution> uniqueResolutions = new List<Resolution>();
+        HashSet<string> seen = new HashSet<string>();
 
         for (int i = 0; i < resolutions.Length; i++)
         {
-            string option = resolutions[i].width + " x " + resolutions[i].height;
-            options.Add(option);
+            string key = resolutions[i].width + "x" + resolutions[i].height;
 
-            if (resolutions[i].width == Screen.currentResolution.width &&
-                resolutions[i].height == Screen.currentResolution.height)
+            if (seen.Add(key))
             {
-                currentIndex = i;
+                uniqueResolutions.Add(resolutions[i]);
             }
         }
 
+        uniqueResolutions.Sort((a, b) =>
+            (b.width * b.height).CompareTo(a.width * a.height));
+
+        resolutions = uniqueResolutions.ToArray();
+
+        List<string> options = new List<string>();
+
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            int w = resolutions[i].width;
+            int h = resolutions[i].height;
+
+            string aspect = GetAspectRatio(w, h);
+
+            bool isCurrent =
+                w == Screen.currentResolution.width &&
+                h == Screen.currentResolution.height;
+
+            string label = $"{w} x {h} ({aspect})";
+
+            if (isCurrent)
+            {
+                label += " <color=#00FFAA>(Current)</color>";
+            }
+
+            options.Add(label);
+        }
+
         resolutionDropdown.AddOptions(options);
+
+        if (SettingsStorage.ResolutionIndex < 0 || SettingsStorage.ResolutionIndex >= resolutions.Length)
+        {
+            SettingsStorage.ResolutionIndex = GetCurrentResolutionIndex();
+        }
 
         resolutionDropdown.value = SettingsStorage.ResolutionIndex;
         resolutionDropdown.RefreshShownValue();
@@ -54,6 +85,26 @@ public class SettingsMenuController : MonoBehaviour
             "Windowed"
         });
         LoadSettings();
+    }
+
+    private string GetAspectRatio(int width, int height)
+    {
+        int gcd = GCD(width, height);
+        int w = width / gcd;
+        int h = height / gcd;
+
+        return $"{w}:{h}";
+    }
+
+    private int GCD(int a, int b)
+    {
+        while (b != 0)
+        {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
     }
 
     public void ApplySettings()
@@ -97,16 +148,36 @@ public class SettingsMenuController : MonoBehaviour
     private void LoadSettings()
     {
         masterSlider.value = SettingsStorage.MasterVolume;
-        musicSlider.value  = SettingsStorage.MusicVolume;
-        sfxSlider.value    = SettingsStorage.SFXVolume;
+        musicSlider.value = SettingsStorage.MusicVolume;
+        sfxSlider.value = SettingsStorage.SFXVolume;
+
+        if (SettingsStorage.ResolutionIndex < 0 || SettingsStorage.ResolutionIndex >= resolutions.Length)
+        {
+            SettingsStorage.ResolutionIndex = GetCurrentResolutionIndex();
+        }
 
         resolutionDropdown.value = SettingsStorage.ResolutionIndex;
-        screenModeDropdown.value = SettingsStorage.ScreenMode;
+        resolutionDropdown.RefreshShownValue();
 
+        screenModeDropdown.value = SettingsStorage.ScreenMode;
         qualityDropdown.value = SettingsStorage.Quality;
-        vsyncToggle.isOn      = SettingsStorage.VSync;
+        vsyncToggle.isOn = SettingsStorage.VSync;
 
         sensitivitySlider.value = SettingsStorage.Sensitivity;
+    }
+
+    private int GetCurrentResolutionIndex()
+    {
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            if (resolutions[i].width == Screen.currentResolution.width &&
+                resolutions[i].height == Screen.currentResolution.height)
+            {
+                return i;
+            }
+        }
+
+        return 0;
     }
 
     public void LoadSettingsUI() {

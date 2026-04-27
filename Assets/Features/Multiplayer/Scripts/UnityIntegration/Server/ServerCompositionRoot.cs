@@ -56,4 +56,13 @@ public sealed class ServerCompositionRoot : MonoBehaviour
 
         Debug.Log("[CompositionRoot] Server systems initialized");
     }
+
+    public void ResetForMainMenu()
+    {
+        Flow?.Shutdown();
+        Sessions?.ResetAll();
+        CurrentWorldType = WorldType.Static;
+
+        Debug.Log("[CompositionRoot] Reset for main menu");
+    }
 }

@@ -61,17 +61,17 @@ namespace Features.Buffs.UI
                 return;
 
             foreach (var view in buffView.Active)
-                CreateIcon(view.buffId);
+                CreateIcon(view.buffId, view.stacks);
         }
 
-        private void CreateIcon(string buffId)
+        private void CreateIcon(string buffId, int stacks)
         {
             var ui = Instantiate(iconPrefab, container);
-            ui.Bind(buffId);
+            ui.Bind(buffId, stacks);
 
             var tt = ui.GetComponentInChildren<BuffTooltipTrigger>();
             if (tt != null)
-                tt.Bind(buffId);
+                tt.Bind(buffId, stacks);
 
             icons[buffId] = ui;
         }

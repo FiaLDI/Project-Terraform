@@ -1,5 +1,6 @@
 #nullable enable
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Features.Quests.Domain
 {
@@ -21,6 +22,20 @@ namespace Features.Quests.Domain
 
             _activeChains[chain.Id] = new QuestChainState(chain, 0);
             _questService.StartQuest(chain.Quests[0]);
+        }
+
+        public void RestoreChain(QuestChainDefinition chain, int index)
+        {
+            if (chain == null || chain.Quests.Count == 0)
+                return;
+
+            int clampedIndex = index;
+            if (clampedIndex < 0)
+                clampedIndex = 0;
+            if (clampedIndex >= chain.Quests.Count)
+                clampedIndex = chain.Quests.Count - 1;
+
+            _activeChains[chain.Id] = new QuestChainState(chain, clampedIndex);
         }
 
         public void Advance(QuestId completedQuestId)
@@ -51,6 +66,20 @@ namespace Features.Quests.Domain
             }
 
             return null;
+        }
+
+        public IReadOnlyCollection<QuestChainStateSnapshot> GetSnapshots()
+        {
+            return _activeChains
+                .Values
+                .Select(state => new QuestChainStateSnapshot(state.Chain.Id.Value, state.Index))
+                .ToList()
+                .AsReadOnly();
+        }
+
+        public void Clear()
+        {
+            _activeChains.Clear();
         }
 
         private sealed class QuestChainState

@@ -27,6 +27,9 @@ namespace Features.Items.Data
         public bool isStackable = false;
         public int maxStackAmount = 1;
 
+        [Header("Consumption")]
+        public bool isConsumable = false;
+
         // =============================
         // BUFFS
         // =============================

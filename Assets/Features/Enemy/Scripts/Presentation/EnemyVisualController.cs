@@ -23,7 +23,7 @@ public sealed class EnemyVisualController : NetworkBehaviour
         attackHandler = GetComponent<EnemyAttackHandler>();
         lodView = GetComponent<EnemyLODView>();
 
-        em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        em = Unity.Entities.World.DefaultGameObjectInjectionWorld.EntityManager;
 
         if (lodView != null)
             lodView.OnModelChanged += OnModelChanged;

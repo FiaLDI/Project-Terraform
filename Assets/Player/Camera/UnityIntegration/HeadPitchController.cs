@@ -38,10 +38,9 @@ public class HeadPitchController : MonoBehaviour
 
         if (netObj.IsOwner)
         {
-            if (playerCamera != null)
-                pitch = playerCamera.CurrentPitch;
-            else
-                pitch = CameraServiceProvider.Control.State.Pitch;
+            pitch = playerCamera != null
+                ? playerCamera.CurrentPitch
+                : CameraServiceProvider.Control.State.Pitch;
         }
         else
         {
@@ -51,6 +50,9 @@ public class HeadPitchController : MonoBehaviour
         pitch = Mathf.Clamp(pitch, maxDown, maxUp);
         pitch *= pitchWeight;
 
-        transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        Quaternion animRotation = transform.localRotation;
+        Quaternion pitchOffset = Quaternion.Euler(pitch, 0f, 0f);
+
+        transform.localRotation = animRotation * pitchOffset;
     }
 }

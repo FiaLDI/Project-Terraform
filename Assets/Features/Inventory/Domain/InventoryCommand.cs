@@ -5,11 +5,8 @@ namespace Features.Inventory.Domain
         None = 0,
         PickupWorldItem,
         MoveItem,
+        SetActiveSlot,
         DropFromSlot,
-        EquipRightHand,
-        EquipLeftHand,
-        UnequipRightHand,
-        UnequipLeftHand,
         CraftRecipe,
         UpgradeItem,
         GiveReward

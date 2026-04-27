@@ -150,15 +150,72 @@ namespace Biomes.UnityIntegration {
                     random = value - Mathf.Floor(value);
                 }
 
+                bool alignToNormal = (inst.extraData & SpawnInstanceFlags.AlignToNormal) != 0;
+                bool randomYRotation = (inst.extraData & SpawnInstanceFlags.RandomYRotation) != 0;
+                float yRotationDegrees = randomYRotation ? random * 360f : 0f;
+                Vector3 snappedPosition = new Vector3(inst.position.x, inst.position.y, inst.position.z);
+                Vector3 snappedNormal = new Vector3(inst.normal.x, inst.normal.y, inst.normal.z);
+
+                SnapInstancedToTerrain(ref snappedPosition, ref snappedNormal);
+
                 ChunkedGameObjectStorage.RegisterInstanced(task.coord, inst.prefabIndex, new InstanceData
                 {
-                    position = new Vector3(inst.position.x, inst.position.y, inst.position.z),
-                    normal = new Vector3(inst.normal.x, inst.normal.y, inst.normal.z),
+                    position = snappedPosition,
+                    normal = snappedNormal,
                     scale = inst.scale <= 0f ? 1f : inst.scale,
                     random = random,
+                    yRotationDegrees = yRotationDegrees,
+                    alignToNormal = alignToNormal,
                     biomeId = inst.biomeId
                 });
             }
+        }
+
+        private static void SnapInstancedToTerrain(ref Vector3 position, ref Vector3 normal)
+        {
+            Vector3 origin = position + Vector3.up * 20f;
+
+            RaycastHit[] hits = Physics.RaycastAll(
+                origin,
+                Vector3.down,
+                100f,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore);
+
+            if (hits == null || hits.Length == 0)
+                return;
+
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var hit = hits[i];
+                if (!IsTerrainSnapCandidate(hit))
+                    continue;
+
+                position = hit.point;
+                if (hit.normal.sqrMagnitude > 0.0001f)
+                    normal = hit.normal.normalized;
+                return;
+            }
+        }
+
+        private static bool IsTerrainSnapCandidate(RaycastHit hit)
+        {
+            if (hit.collider == null)
+                return false;
+
+            if (hit.collider.GetComponentInParent<FishNet.Object.NetworkObject>() != null)
+                return false;
+
+            if (hit.collider is not MeshCollider)
+                return false;
+
+            if (hit.collider.gameObject.name == "Mesh_Collider_LOD0")
+                return true;
+
+            Transform parent = hit.collider.transform.parent;
+            return parent != null && parent.name.StartsWith("Chunk_");
         }
 
         // ==== DEBUG API ====

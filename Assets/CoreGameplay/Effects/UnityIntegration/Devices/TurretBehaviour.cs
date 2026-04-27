@@ -3,8 +3,9 @@ using System.Collections;
 using FishNet.Object;
 using Features.Stats.Domain;
 using Features.Effects.Domain;
-using Features.Effects.Application;
 using Features.Buffs.Domain;
+using Features.Effects.Application;
+using Features.Weapons.Domain;
 
 [RequireComponent(typeof(IStatsOwner))]
 [RequireComponent(typeof(IBuffSource))]
@@ -13,7 +14,7 @@ public sealed class TurretBehaviour : NetworkBehaviour
     [Header("Refs")]
     public Transform turretHead;
     public Transform muzzlePoint;
-    public LineRenderer laser;
+    public ProjectileConfig projectileConfig;
 
     [Header("Config")]
     public float baseRange = 15f;
@@ -21,22 +22,14 @@ public sealed class TurretBehaviour : NetworkBehaviour
     public LayerMask targetMask;
 
     private IBuffSource source;
-
     private Transform target;
     private float fireTimer;
     private float retargetTimer;
 
     private readonly float sphereHeight = 0.8f;
 
-    // =============================
-    // Lazy access (БЕЗ кеширования)
-    // =============================
-
-    private IStatsOwner StatsOwner =>
-        GetComponent<IStatsOwner>();
-
-    private IStatsFacade Stats =>
-        StatsOwner?.Facade;
+    private IStatsOwner StatsOwner => GetComponent<IStatsOwner>();
+    private IStatsFacade Stats => StatsOwner?.Facade;
 
     private void Awake()
     {
@@ -48,8 +41,8 @@ public sealed class TurretBehaviour : NetworkBehaviour
 
     private void Start()
     {
-        SetupLaser();
-        StartCoroutine(LifeTimer());
+        if (IsServerInitialized)
+            StartCoroutine(LifeTimer());
     }
 
     private IEnumerator LifeTimer()
@@ -57,19 +50,21 @@ public sealed class TurretBehaviour : NetworkBehaviour
         yield return new WaitForSeconds(lifetime);
 
         if (IsServerInitialized)
-            GetComponent<NetworkObject>().Despawn();
+            base.NetworkObject.Despawn();
     }
 
     private void Update()
     {
-        if (!IsServerInitialized)
-            return;
+        if (IsServerInitialized)
+        {
+            var owner = StatsOwner;
+            if (owner == null || !owner.IsReady || owner.Facade == null)
+                return;
 
-        var owner = StatsOwner;
-        if (owner == null || !owner.IsReady || owner.Facade == null)
-            return;
+            TickCombat();
+        }
 
-        TickCombat();
+        UpdateVisualsLocal();
     }
 
     private void TickCombat()
@@ -85,13 +80,8 @@ public sealed class TurretBehaviour : NetworkBehaviour
 
         if (target != null)
         {
-            RotateToTarget();
+            RotateToTargetServer();
             FireIfPossible();
-            UpdateLaser();
-        }
-        else
-        {
-            DisableLaser();
         }
     }
 
@@ -120,7 +110,9 @@ public sealed class TurretBehaviour : NetworkBehaviour
         }
     }
 
-    private void RotateToTarget()
+    private Quaternion syncedHeadRotation;
+
+    private void RotateToTargetServer()
     {
         if (!turretHead || target == null)
             return;
@@ -132,13 +124,34 @@ public sealed class TurretBehaviour : NetworkBehaviour
         Vector3 dir = target.position - turretHead.position;
         dir.y = 0f;
 
+        if (dir.sqrMagnitude < 0.0001f)
+            return;
+
         float speed = stats.Movement.RotationSpeed;
 
-        turretHead.rotation = Quaternion.Slerp(
+        Quaternion nextRotation = Quaternion.Slerp(
             turretHead.rotation,
             Quaternion.LookRotation(dir),
             speed * Time.deltaTime
         );
+
+        turretHead.rotation = nextRotation;
+        syncedHeadRotation = nextRotation;
+        ObserversSetHeadRotation(nextRotation);
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void ObserversSetHeadRotation(Quaternion rotation)
+    {
+        syncedHeadRotation = rotation;
+    }
+
+    private void UpdateVisualsLocal()
+    {
+        if (turretHead != null && !IsServerInitialized)
+        {
+            turretHead.rotation = syncedHeadRotation;
+        }
     }
 
     private float FireInterval
@@ -165,54 +178,99 @@ public sealed class TurretBehaviour : NetworkBehaviour
 
     private void FireIfPossible()
     {
-        if (fireTimer > 0f || target == null)
+        if (fireTimer > 0f || target == null || muzzlePoint == null)
             return;
 
+        Vector3 hitPoint = ResolveTargetPoint(target);
+        Vector3 direction = (hitPoint - muzzlePoint.position).normalized;
+
+        if (direction.sqrMagnitude < 0.0001f)
+            return;
+
+        if (projectileConfig != null)
+        {
+            FireProjectile(hitPoint, direction);
+            fireTimer = FireInterval;
+            return;
+        }
+
+        FireDirectDamage(hitPoint, direction);
+        fireTimer = FireInterval;
+    }
+
+    private void FireProjectile(Vector3 hitPoint, Vector3 direction)
+    {
+        var ctx = new HitEffectContext(
+            source,
+            null,
+            muzzlePoint.position,
+            direction,
+            hitPoint,
+            -direction
+        );
+
+        new SpawnProjectileEffect(projectileConfig).Apply(ctx);
+
+        if (ShouldSpawnClientProjectileVisual())
+            ObserversPlayProjectileVisual(muzzlePoint.position, hitPoint);
+    }
+
+    private void FireDirectDamage(Vector3 hitPoint, Vector3 direction)
+    {
         if (!target.TryGetComponent<IBuffTarget>(out var buffTarget))
             return;
 
         float damage = DamagePerShot;
-
         if (damage <= 0f)
-        {
             return;
-        }
 
         var ctx = new EffectContext(
             source,
             new[] { buffTarget },
             muzzlePoint.position,
-            (target.position - muzzlePoint.position).normalized
+            direction
         );
 
         var effect = new DealDamageEffect(damage, DamageType.Generic);
         effect.Apply(ctx);
-
-        fireTimer = FireInterval;
     }
 
-    private void SetupLaser()
+    private Vector3 ResolveTargetPoint(Transform targetTransform)
     {
-        if (!laser) return;
+        if (targetTransform.TryGetComponent<Collider>(out var collider))
+            return collider.bounds.center;
 
-        laser.enabled = false;
-        laser.startWidth = 0.05f;
-        laser.endWidth = 0.05f;
+        return targetTransform.position;
     }
 
-    private void UpdateLaser()
+    private bool ShouldSpawnClientProjectileVisual()
     {
-        if (!laser || target == null || !muzzlePoint)
+        return projectileConfig != null &&
+               !projectileConfig.useServerProjectile &&
+               projectileConfig.clientProjectilePrefab != null;
+    }
+
+    [ObserversRpc]
+    private void ObserversPlayProjectileVisual(Vector3 spawnPos, Vector3 hitPoint)
+    {
+        if (!ShouldSpawnClientProjectileVisual())
             return;
 
-        laser.enabled = true;
-        laser.SetPosition(0, muzzlePoint.position);
-        laser.SetPosition(1, target.position);
-    }
+        if (ProjectilePool.Instance == null)
+            return;
 
-    private void DisableLaser()
-    {
-        if (laser)
-            laser.enabled = false;
+        Quaternion rotation = projectileConfig.visualType == ProjectileVisualType.Projectile
+            ? Quaternion.LookRotation((hitPoint - spawnPos).normalized)
+            : Quaternion.identity;
+
+        var go = ProjectilePool.Instance.Get(
+            projectileConfig.clientProjectilePrefab,
+            spawnPos,
+            rotation
+        );
+
+        var visual = go != null ? go.GetComponent<IProjectileVisual>() : null;
+        if (visual != null)
+            visual.Init(spawnPos, hitPoint, projectileConfig.lifetime);
     }
 }

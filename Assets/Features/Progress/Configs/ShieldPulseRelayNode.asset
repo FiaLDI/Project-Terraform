@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 749445612031d42459db886b1fdf6dfb, type: 3}
+  m_Name: ShieldPulseRelay Node
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressionNodeSO
+  id: shield_pulse_relay-node
+  displayName: "Shield Grid: Pulse Relay"
+  description: "Shield Grid relays an overload pulse at the chosen point."
+  requiredLevel: 5
+  passive: {fileID: 11400000, guid: bb7ad5359de749a88cf18de3262a9472, type: 2}
+  position: {x: 0, y: -260}
+  uiSize: 76

@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 5996046911851083023}
   - component: {fileID: 8539235162580694826}
   - component: {fileID: 7348829560662059472}
+  - component: {fileID: 5127577179898483690}
+  - component: {fileID: 5184635722303615137}
   m_Layer: 0
   m_Name: Drone
   m_TagString: Untagged
@@ -47,6 +49,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38366dae878828a42a42efaed362689d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RepairDroneBehaviour
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 7348829560662059472}
+  _networkObjectCache: {fileID: 7348829560662059472}
+  speed: 5
+  offset: {x: 2, y: 3, z: 0}
 --- !u!114 &8539235162580694826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59,7 +66,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c1e344222d0fc545baf873df46dee72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Features.Buffs.UnityIntegration.AreaBuffEmitter
-  _componentIndexCache: 0
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 7348829560662059472}
   _networkObjectCache: {fileID: 7348829560662059472}
   area: {fileID: 11400000, guid: 58446d82329eaaf46bca096e1ccb2a80, type: 2}
@@ -82,8 +89,9 @@ MonoBehaviour:
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
+  - {fileID: 5996046911851083023}
   - {fileID: 8539235162580694826}
-  - {fileID: 0}
+  - {fileID: 5127577179898483690}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -94,7 +102,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584250999913164421
+  _initializedTimestamp: -8584244941146371619
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -109,7 +117,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 22
+  <PrefabId>k__BackingField: 25
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 14622794977849008595
   SceneId: 0
@@ -118,6 +126,64 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     Scale: {x: 1, y: 1, z: 1}
     IsValid: 1
+--- !u!114 &5127577179898483690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7817172014945752216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
+  _componentIndexCache: 2
+  _addedNetworkObject: {fileID: 7348829560662059472}
+  _networkObjectCache: {fileID: 7348829560662059472}
+  _componentConfiguration: 0
+  _synchronizeParent: 0
+  _packing:
+    Position: 1
+    Rotation: 1
+    Scale: 0
+  _useScaledTime: 1
+  _interpolation: 2
+  _extrapolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  _clientAuthoritative: 0
+  _sendToOwner: 1
+  _interval: 1
+  _synchronizePosition: 1
+  _positionSensitivity: 0.001
+  _positionSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+  _synchronizeRotation: 1
+  _rotationSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+  _synchronizeScale: 1
+  _scaleSensitivity: 0.001
+  _scaleSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+--- !u!114 &5184635722303615137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7817172014945752216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 641e8f78c2a4c384fb9035e4b9c5cca8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Effects.Application.SpawnedObjectContext
 --- !u!1001 &1694410525645975029
 PrefabInstance:
   m_ObjectHideFlags: 0

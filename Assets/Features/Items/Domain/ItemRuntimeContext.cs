@@ -20,6 +20,7 @@ public class ItemRuntimeContext : IItemTickable
     private float tickTimer;
 
     private int burstRemaining;
+    private bool waitingForRelease;
 
     public System.Action<Vector3, Vector3> OnFire;
 
@@ -39,27 +40,49 @@ public class ItemRuntimeContext : IItemTickable
     {
         targetPoint = hitPoint;
         hasTargetPoint = true;
+        burstRemaining = action.burstCount;
+        tickTimer = 0f;
+        waitingForRelease = action.fireOnRelease;
 
         if (action.windupTime > 0)
         {
             state = ItemActionState.Windup;
             timer = action.windupTime;
+            ItemTickSystem.Register(this);
+        }
+        else if (action.fireOnRelease)
+        {
+            state = ItemActionState.Active;
         }
         else
         {
             state = ItemActionState.Active;
+            FireActive();
+
+            if (state != ItemActionState.Idle)
+                ItemTickSystem.Register(this);
         }
-
-        burstRemaining = action.burstCount;
-        tickTimer = 0f;
-
-        ItemTickSystem.Register(this);
     }
 
     // ======================================================
 
     public void StopUse()
     {
+        if (action.fireOnRelease)
+        {
+            if (state == ItemActionState.Active)
+            {
+                waitingForRelease = false;
+                FireActive();
+
+                if (state != ItemActionState.Idle)
+                    ItemTickSystem.Register(this);
+
+                return;
+            }
+        }
+
+        waitingForRelease = false;
         state = ItemActionState.Idle;
         ItemTickSystem.Unregister(this);
     }
@@ -113,19 +136,40 @@ public class ItemRuntimeContext : IItemTickable
         timer -= dt;
 
         if (timer <= 0f)
+        {
             state = ItemActionState.Active;
+
+            if (action.fireOnRelease)
+            {
+                ItemTickSystem.Unregister(this);
+                return;
+            }
+
+            FireActive();
+        }
     }
 
     // ======================================================
 
     private void TickActive(float dt)
     {
+        if (waitingForRelease)
+            return;
+
         tickTimer -= dt;
 
         if (tickTimer > 0f)
             return;
 
+        FireActive();
+    }
+
+    private void FireActive()
+    {
         ExecuteEffects();
+
+        if (state == ItemActionState.Idle)
+            return;
 
         if (action.burstCount > 0)
         {
@@ -150,10 +194,17 @@ public class ItemRuntimeContext : IItemTickable
     private void StartCooldown()
     {
         if (action.cooldown <= 0f)
+        {
+            state = ItemActionState.Idle;
+            waitingForRelease = false;
+            ItemTickSystem.Unregister(this);
             return;
+        }
 
         state = ItemActionState.Cooldown;
+        waitingForRelease = false;
         timer = action.cooldown;
+        ItemTickSystem.Register(this);
     }
 
     private void TickCooldown(float dt)
@@ -163,6 +214,7 @@ public class ItemRuntimeContext : IItemTickable
         if (timer <= 0f)
         {
             state = ItemActionState.Idle;
+            waitingForRelease = false;
             ItemTickSystem.Unregister(this);
         }
     }
@@ -179,11 +231,7 @@ public class ItemRuntimeContext : IItemTickable
         if (hasTargetPoint)
         {
             dir = (targetPoint - fireOrigin).normalized;
-
-            if (Physics.Raycast(fireOrigin, dir, out var hit, 1.0f))
-            {
-                dir = (hit.point - fireOrigin).normalized;
-            }
+            TryAdjustDirectionForNearObstacle(fireOrigin, ref dir);
         }
         else
         {
@@ -221,5 +269,43 @@ public class ItemRuntimeContext : IItemTickable
     #endif
 
         OnFire?.Invoke(fireOrigin, dir);
+    }
+
+    private void TryAdjustDirectionForNearObstacle(Vector3 fireOrigin, ref Vector3 dir)
+    {
+        if (dir.sqrMagnitude <= 0.0001f)
+            return;
+
+        var hits = Physics.RaycastAll(
+            fireOrigin,
+            dir,
+            1.0f,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        var sourceComponent = source as Component;
+        Transform sourceRoot = sourceComponent != null ? sourceComponent.transform : null;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit.collider == null)
+                continue;
+
+            if (sourceRoot != null && hit.collider.transform.IsChildOf(sourceRoot))
+                continue;
+
+            Vector3 delta = hit.point - fireOrigin;
+            if (delta.sqrMagnitude <= 0.0001f)
+                continue;
+
+            dir = delta.normalized;
+            return;
+        }
     }
 }

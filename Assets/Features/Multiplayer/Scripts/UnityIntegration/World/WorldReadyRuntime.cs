@@ -49,5 +49,6 @@ public sealed class WorldReadyRuntime : NetworkBehaviour
         root.SetWorldType(WorldType.Dynamic);
 
         root.Spawner.RespawnAllOnline();
+        LoadingScreenService.Hide();
     }
 }

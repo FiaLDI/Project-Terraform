@@ -9,6 +9,8 @@ public class UIStackManager : MonoBehaviour
 
     private readonly Stack<IUIScreen> stack = new();
 
+    public Stack<IUIScreen> stackDebug => stack;
+
     private void Awake()
     {
         if (I != null && I != this)

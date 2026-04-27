@@ -1,4 +1,4 @@
-﻿using Features.Input;
+using Features.Input;
 using Features.Inventory.Domain;
 using Features.Inventory.UI;
 using Features.Player;
@@ -130,7 +130,7 @@ namespace Features.Inventory.UnityIntegration
 
 
             drop = player.FindAction("Drop", true);
-            drop.performed += _ => DropFromHands();
+            drop.performed += _ => DropFromActiveSlot();
 
 
             Debug.Log("[InventoryInputHandler] Actions bound successfully");
@@ -200,12 +200,12 @@ namespace Features.Inventory.UnityIntegration
         // ======================================================
 
 
-        private void DropFromHands()
+        private void DropFromActiveSlot()
         {
             var net = GetNet();
             if (net == null)
             {
-                Debug.LogWarning("[InventoryInputHandler] DropFromHands: net is NULL");
+                Debug.LogWarning("[InventoryInputHandler] DropFromActiveSlot: net is NULL");
                 return;
             }
             
@@ -217,11 +217,14 @@ namespace Features.Inventory.UnityIntegration
 
             var dropPos = playerTransform.position + playerTransform.forward * 1.5f;
             var dropForward = playerTransform.forward;
+            var selectedSlot = LocalPlayerContext.Inventory != null
+                ? LocalPlayerContext.Inventory.Model.ActiveSlotIndex
+                : 0;
 
             net.RequestInventoryCommand(new InventoryCommandData
             {
                 Command = InventoryCommand.DropFromSlot,
-                Section = InventorySection.RightHand,
+                Section = SectionFromActiveSlot(selectedSlot),
                 Index = 0,
                 Amount = int.MaxValue,
                 WorldPos = dropPos,
@@ -262,6 +265,16 @@ namespace Features.Inventory.UnityIntegration
                 a.Enable();
                 Debug.Log($"[InventoryInputHandler] Enabled action {map.name}/{n}");
             }
+        }
+
+        private static InventorySection SectionFromActiveSlot(int index)
+        {
+            return InventoryModel.ClampActiveSlotIndex(index) switch
+            {
+                0 => InventorySection.ActiveSlot0,
+                1 => InventorySection.ActiveSlot1,
+                _ => InventorySection.ActiveSlot2
+            };
         }
     }
 }

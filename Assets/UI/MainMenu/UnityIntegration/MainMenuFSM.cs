@@ -35,7 +35,7 @@ public class MainMenuFSM : MonoBehaviour
             MainMenuStateId.Play => MainMenuStateId.Play,
             MainMenuStateId.CharacterSelect => MainMenuStateId.Play,
             MainMenuStateId.CharacterCreate => MainMenuStateId.CharacterSelect,
-        MainMenuStateId.StartGame => MainMenuStateId.CharacterSelect,
+            MainMenuStateId.StartGame => MainMenuStateId.CharacterSelect,
             MainMenuStateId.Settings => MainMenuStateId.Play,
             _ => MainMenuStateId.Play
         };

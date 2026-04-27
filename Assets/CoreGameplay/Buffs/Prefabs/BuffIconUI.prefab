@@ -427,5 +427,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffIconUI
   icon: {fileID: 8282596167172932044}
-  radialFill: {fileID: 7626734248579438340}
-  timer: {fileID: 5700209357900386700}
+  label: {fileID: 5700209357900386700}

@@ -15,21 +15,17 @@ public class UpgradeItemButtonUI : MonoBehaviour
     private InventorySlotRef slotRef;
     private ItemInstance inst;
     private UpgradeRecipeSO recipe;
-    private UpgradeStationUIController ui;
-
-    // ======================================================
-    // INIT
-    // ======================================================
+    private UpgradeStationUI ui;
 
     public void Init(
         ItemInstance inst,
         UpgradeRecipeSO recipe,
-        UpgradeStationUIController ui,
+        UpgradeStationUI ui,
         InventorySlotRef slotRef)
     {
-        this.inst    = inst;
-        this.recipe  = recipe;
-        this.ui      = ui;
+        this.inst = inst;
+        this.recipe = recipe;
+        this.ui = ui;
         this.slotRef = slotRef;
 
         RefreshVisuals();
@@ -38,10 +34,6 @@ public class UpgradeItemButtonUI : MonoBehaviour
         button.onClick.AddListener(OnClick);
     }
 
-    // ======================================================
-    // VISUALS
-    // ======================================================
-
     public void RefreshVisuals()
     {
         if (inst == null || inst.itemDefinition == null)
@@ -49,17 +41,14 @@ public class UpgradeItemButtonUI : MonoBehaviour
 
         Item def = inst.itemDefinition;
 
-        // ICON
         if (icon != null)
             icon.sprite = def.icon;
 
-        // TITLE
         if (title != null)
             title.text = def.itemName;
 
         int maxLv = def.upgrades?.Length ?? 0;
 
-        // LEVEL TEXT
         if (levelText != null)
         {
             if (inst.level >= maxLv && maxLv > 0)
@@ -68,22 +57,17 @@ public class UpgradeItemButtonUI : MonoBehaviour
                 levelText.text = $"Lv {inst.level}/{maxLv}";
         }
 
-        // INTERACTABLE
         bool canUpgrade = maxLv > 0 && inst.level < maxLv;
         if (button != null)
             button.interactable = canUpgrade;
     }
-
-    // ======================================================
-    // BUTTON
-    // ======================================================
 
     private void OnClick()
     {
         if (inst == null || recipe == null || ui == null)
             return;
 
-        var def = inst.itemDefinition;
+        Item def = inst.itemDefinition;
         int maxLv = def?.upgrades?.Length ?? 0;
 
         Debug.Log($"[UpgradeItemButtonUI] Click item={def?.id} lvl={inst.level}/{maxLv}");
@@ -93,5 +77,4 @@ public class UpgradeItemButtonUI : MonoBehaviour
 
         ui.OnUpgradeItemSelected(inst, recipe, slotRef);
     }
-
 }

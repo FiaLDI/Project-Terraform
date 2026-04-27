@@ -20,7 +20,9 @@ namespace Features.Effects.Domain
         MeleeDamage,
         HitscanDamage,
         ScanResourceEffect,
-        SpawnImpact
+        SpawnImpact,
+        PlaySound,
+        ChainDamage
     }
 
     public enum OwnershipFilter
@@ -36,6 +38,14 @@ namespace Features.Effects.Domain
         Area,
         Directional,
         Explicit
+    }
+
+    public enum SpawnPositionMode
+    {
+        Legacy,
+        Source,
+        TargetPoint,
+        SourceForwardGrounded
     }
 
     [System.Serializable]
@@ -73,6 +83,7 @@ namespace Features.Effects.Domain
         public string prefabId;
         public float lifetime;
         public bool useSourcePosition;
+        public SpawnPositionMode spawnPositionMode;
         [Header("Ownership")]
         public OwnershipFilter ownership;
         [Header("Mining")]
@@ -84,6 +95,15 @@ namespace Features.Effects.Domain
 
         public ProjectileConfig projectileConfig;
         public EffectDefinition[] childEffects;
+
+        [Header("Sound")]
+        public SoundEffectConfig soundConfig;
+
+        [Header("Chain")]
+        public int chainCount;
+        public float chainRadius;
+        [Range(0f, 1f)]
+        public float chainDamageFalloff;
         
         public EffectDefinition Build()
         {

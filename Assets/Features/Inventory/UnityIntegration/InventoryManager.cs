@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Features.Equipment.UnityIntegration;
 using Features.Inventory.Domain;
@@ -6,8 +6,8 @@ using Features.Items.Data;
 using Features.Items.Domain;
 using Features.Quests.Application;
 using Features.Quests.Domain;
-using UnityEngine;
 using FishNet.Object;
+using UnityEngine;
 
 namespace Features.Inventory.UnityIntegration
 {
@@ -19,20 +19,21 @@ namespace Features.Inventory.UnityIntegration
         public event Action OnInventoryChanged;
         public event Action<ItemInstance> OnItemAddedInstance;
         public event Action OnReady;
-        private bool receivedFirstSync;
 
         [SerializeField] private int bagSize = 12;
 
         private EquipmentManager equipment;
-
-        private float saveTimer;
+        private NetworkObject networkObject;
 
         public bool IsReady { get; private set; }
 
-        private bool isLoading;
+        // ======================================================
+        // INIT
+        // ======================================================
 
         private void Awake()
         {
+            networkObject = GetComponent<NetworkObject>();
             CreateModel();
             CreateService();
             InitEquipment();
@@ -41,20 +42,6 @@ namespace Features.Inventory.UnityIntegration
 
             IsReady = true;
             OnReady?.Invoke();
-        }
-
-        private void Start()
-        {
-            if (!IsLocalClient())
-                return;
-
-            var progress = PlayerProgressService.Instance;
-            var character = progress?.GetActiveCharacter();
-
-            if (character?.characterInventoryData != null)
-            {
-                LoadFromSave(character.characterInventoryData);
-            }
         }
 
         private void OnDestroy()
@@ -88,35 +75,7 @@ namespace Features.Inventory.UnityIntegration
 
         private void HandleInventoryChanged()
         {
-            OnInventoryChanged?.Invoke();
-
-            if (IsLocalClient() && !isLoading)
-            {
-                SaveInventory();
-            }
-
-        }
-
-        // ======================================================
-        // SAVE
-        // ======================================================
-
-        private void SaveInventory()
-        {
-            if (!receivedFirstSync)
-                return;
-
-            if (isLoading)
-                return;
-
-            var progress = PlayerProgressService.Instance;
-            if (progress == null) return;
-
-            var character = progress.GetActiveCharacter();
-            if (character == null) return;
-
-            character.characterInventoryData = BuildSaveData();
-            progress.Save();
+            NotifyInventoryChanged();
         }
 
         // ======================================================
@@ -125,34 +84,34 @@ namespace Features.Inventory.UnityIntegration
 
         public void LoadFromSave(InventorySaveData data)
         {
-            isLoading = true;
+            if (data == null)
+                data = new InventorySaveData();
+
+            if (data.bag == null)
+                data.bag = new List<ItemSaveData>();
+
             Model.main.Clear();
 
-            // фиксированный размер
             for (int i = 0; i < bagSize; i++)
                 Model.main.Add(new InventorySlot());
 
-            if (data?.bag != null)
+            for (int i = 0; i < data.bag.Count && i < bagSize; i++)
             {
-                for (int i = 0; i < data.bag.Count && i < bagSize; i++)
-                {
-                    var item = data.bag[i];
-                    var def = ItemRegistrySO.Instance.Get(item.itemId);
+                var item = data.bag[i];
+                if (item == null)
+                    continue;
 
-                    if (def != null)
-                    {
-                        Model.main[i].item =
-                            new ItemInstance(def, item.quantity, item.level);
-                    }
-                }
+                var def = ItemRegistrySO.Instance?.Get(item.itemId);
+                if (def != null)
+                    Model.main[i].item = new ItemInstance(def, item.quantity, item.level);
             }
 
-            Model.leftHand.item  = FromSave(data?.leftHand);
-            Model.rightHand.item = FromSave(data?.rightHand);
+            Model.activeSlot0.item = FromSave(data.activeSlot0);
+            Model.activeSlot1.item = FromSave(data.activeSlot1);
+            Model.activeSlot2.item = FromSave(data.activeSlot2);
+            Model.SetActiveSlotIndex(data.activeSlotIndex);
 
-            isLoading = false;
-
-            OnInventoryChanged?.Invoke();
+            NotifyInventoryChanged();
         }
 
         private ItemInstance FromSave(ItemSaveData data)
@@ -160,25 +119,28 @@ namespace Features.Inventory.UnityIntegration
             if (data == null)
                 return ItemInstance.Empty;
 
-            var def = ItemRegistrySO.Instance.Get(data.itemId);
+            var def = ItemRegistrySO.Instance?.Get(data.itemId);
             if (def == null)
                 return ItemInstance.Empty;
 
             return new ItemInstance(def, data.quantity, data.level);
         }
 
+        // ======================================================
+        // BUILD SAVE
+        // ======================================================
+
         public InventorySaveData BuildSaveData()
         {
             var data = new InventorySaveData();
 
             for (int i = 0; i < Model.main.Count; i++)
-            {
-                var slot = Model.main[i];
-                data.bag.Add(ToSave(slot.item));
-            }
+                data.bag.Add(ToSave(Model.main[i].item));
 
-            data.leftHand  = ToSave(Model.leftHand.item);
-            data.rightHand = ToSave(Model.rightHand.item);
+            data.activeSlot0 = ToSave(Model.activeSlot0.item);
+            data.activeSlot1 = ToSave(Model.activeSlot1.item);
+            data.activeSlot2 = ToSave(Model.activeSlot2.item);
+            data.activeSlotIndex = Model.ActiveSlotIndex;
 
             return data;
         }
@@ -218,40 +180,68 @@ namespace Features.Inventory.UnityIntegration
             return Service.TryRemove(def, amount);
         }
 
+        public bool ConsumeActiveItem(int amount = 1)
+        {
+            if (Service == null)
+                return false;
+
+            return Service.ConsumeActiveItem(amount, gameObject);
+        }
+
         public int GetItemCount(Item def)
         {
             return Service.GetItemCount(def);
         }
 
+        public bool SetActiveSlotIndex(int index)
+        {
+            if (!Model.SetActiveSlotIndex(index))
+                return false;
+
+            NotifyInventoryChanged();
+            return true;
+        }
+
+        public void MarkDirty()
+        {
+            NotifyInventoryChanged();
+        }
+
+        // ======================================================
+        // NET APPLY
+        // ======================================================
+
         public void ApplyNetState(
             IReadOnlyList<InventorySlotNet> bagNet,
-            InventorySlotNet left,
-            InventorySlotNet right)
+            InventorySlotNet active0,
+            InventorySlotNet active1,
+            InventorySlotNet active2,
+            int activeSlotIndex)
         {
-            isLoading = true;
-
             ApplySection(Model.main, bagNet);
-            ApplySlot(Model.leftHand, left);
-            ApplySlot(Model.rightHand, right);
+            ApplySlot(Model.activeSlot0, active0);
+            ApplySlot(Model.activeSlot1, active1);
+            ApplySlot(Model.activeSlot2, active2);
+            Model.SetActiveSlotIndex(activeSlotIndex);
 
-            isLoading = false;
-
-            receivedFirstSync = true;
-
-            OnInventoryChanged?.Invoke();
+            NotifyInventoryChanged();
         }
 
-        public void ApplyHandsNetState(InventorySlotNet left, InventorySlotNet right)
+        public void ApplyActiveSlotsNetState(
+            InventorySlotNet active0,
+            InventorySlotNet active1,
+            InventorySlotNet active2,
+            int activeSlotIndex)
         {
-            Model.leftHand.item = FromNet(left);
-            Model.rightHand.item = FromNet(right);
+            Model.activeSlot0.item = FromNet(active0);
+            Model.activeSlot1.item = FromNet(active1);
+            Model.activeSlot2.item = FromNet(active2);
+            Model.SetActiveSlotIndex(activeSlotIndex);
 
-            OnInventoryChanged?.Invoke();
+            NotifyInventoryChanged();
         }
 
-        private void ApplySection(
-            IList<InventorySlot> slots,
-            IReadOnlyList<InventorySlotNet> net)
+        private void ApplySection(IList<InventorySlot> slots, IReadOnlyList<InventorySlotNet> net)
         {
             int count = Mathf.Min(slots.Count, net.Count);
 
@@ -267,14 +257,6 @@ namespace Features.Inventory.UnityIntegration
                 return;
             }
 
-            if (!slot.item.IsEmpty &&
-                slot.item.itemDefinition.id == net.itemId &&
-                slot.item.level == net.level)
-            {
-                slot.item.quantity = net.quantity;
-                return;
-            }
-
             var def = ItemRegistrySO.Instance?.Get(net.itemId);
             if (def == null)
             {
@@ -283,12 +265,6 @@ namespace Features.Inventory.UnityIntegration
             }
 
             slot.item = new ItemInstance(def, net.quantity, net.level);
-        }
-
-        private bool IsLocalClient()
-        {
-            var net = GetComponent<NetworkObject>();
-            return net != null && net.IsOwner;
         }
 
         private ItemInstance FromNet(InventorySlotNet net)
@@ -320,5 +296,30 @@ namespace Features.Inventory.UnityIntegration
                 )
             );
         }
+
+        private void NotifyInventoryChanged()
+        {
+            TryPersistInventory();
+            OnInventoryChanged?.Invoke();
+        }
+
+        private void TryPersistInventory()
+        {
+            var progress = PlayerProgressService.Instance;
+            if (progress == null || progress.Data == null)
+                return;
+
+            var activeCharacter = progress.GetActiveCharacter();
+            if (activeCharacter == null)
+                return;
+
+            // Save only local-owner inventory in multiplayer.
+            if (networkObject != null && networkObject.IsSpawned && !networkObject.IsOwner)
+                return;
+
+            activeCharacter.characterInventoryData = BuildSaveData();
+            progress.Save();
+        }
     }
 }
+

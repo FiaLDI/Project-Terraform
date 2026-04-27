@@ -35,6 +35,8 @@ namespace Features.Stats.UnityIntegration
 
         public void Show()
         {
+            RefreshStreamer();
+
             if (statsPanel != null)
                 statsPanel.SetActive(true);
 
@@ -56,6 +58,14 @@ namespace Features.Stats.UnityIntegration
         public void Open()
         {
             UIStackManager.I.Push(this);
+        }
+
+        private void RefreshStreamer()
+        {
+            var root = GetComponentInParent<PlayerUIRoot>();
+            var player = root != null ? root.BoundPlayer : null;
+            if (player != null)
+                streamer = player.GetComponent<StatsDebugStreamer>();
         }
     }
 }

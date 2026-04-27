@@ -40,5 +40,13 @@ public sealed class BuffInstance
         if (LifetimeMode == BuffLifetimeMode.Duration)
             Remaining -= dt;
     }
+
+    public void RefreshDuration()
+    {
+        if (LifetimeMode != BuffLifetimeMode.Duration)
+            return;
+
+        Remaining = Config.duration;
+    }
 }
 }

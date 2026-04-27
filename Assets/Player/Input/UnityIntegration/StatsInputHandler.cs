@@ -37,13 +37,7 @@ namespace Features.Stats.UnityIntegration
             streamer = GetComponent<LocalPlayerController>().
                 BoundPlayer.GetComponent<StatsDebugStreamer>();
 
-            statsScreen = UIRegistry.I?.Get<StatsScreen>();
-
-            if (statsScreen == null)
-            {
-                Debug.LogError("[StatsInputHandler] StatsScreen not found");
-                return;
-            }
+            statsScreen = ResolveStatsScreen();
 
             togglePlayer = input.Actions.Player.FindAction("ToggleStats", true);
             toggleUI = input.Actions.UI.FindAction("ToggleStats", true);
@@ -86,6 +80,13 @@ namespace Features.Stats.UnityIntegration
 
         private void OnToggle(InputAction.CallbackContext _)
         {
+            statsScreen = ResolveStatsScreen();
+            if (statsScreen == null)
+            {
+                Debug.LogWarning("[StatsInputHandler] Toggle ignored: StatsScreen not ready yet");
+                return;
+            }
+
             if (streamer == null)
             {
                 streamer = GetComponent<LocalPlayerController>().
@@ -115,6 +116,15 @@ namespace Features.Stats.UnityIntegration
             statsScreen.Open();
 
             streamer?.StartStreaming();
+        }
+
+        private static StatsScreen ResolveStatsScreen()
+        {
+            var screen = UIRegistry.I?.Get<StatsScreen>();
+            if (screen != null)
+                return screen;
+
+            return Object.FindFirstObjectByType<StatsScreen>(FindObjectsInactive.Include);
         }
     }
 }

@@ -55,6 +55,7 @@ namespace Features.Quests.Domain
         public string Name { get; }
         public string Description { get; }
         public QuestScope Scope { get; }
+        public int ExperienceReward { get; }
 
         public IReadOnlyList<IQuestCondition> Conditions { get; }
 
@@ -65,6 +66,7 @@ namespace Features.Quests.Domain
             string name,
             string description,
             QuestScope scope,
+            int experienceReward,
             IReadOnlyList<IQuestCondition> conditions,
             IReadOnlyList<QuestReward> rewards)
         {
@@ -72,6 +74,7 @@ namespace Features.Quests.Domain
             Name = name;
             Description = description;
             Scope = scope;
+            ExperienceReward = Math.Max(0, experienceReward);
             Conditions = conditions;
             Rewards = rewards ?? Array.Empty<QuestReward>();
         }

@@ -175,6 +175,9 @@ namespace Features.Player.UnityIntegration
             else
             {
                 Debug.Log("[fix-net] Ownership removed", this);
+                if (LocalPlayerController.I != null && LocalPlayerController.I.BoundPlayer == this)
+                    LocalPlayerController.I.Unbind(this);
+
                 DisableLocalComponents();
             }
 
@@ -192,12 +195,20 @@ namespace Features.Player.UnityIntegration
 
             registry.SetLocalPlayer(gameObject);
             OnLocalPlayerSpawned?.Invoke(this);
+            ClientConnectionController.I?.GetFlow()?.NotifyPlayerSpawned();
+            LoadingScreenService.Hide();
 
             Debug.Log($"[NetworkPlayer] Set as LOCAL player: {name}", this);
         }
 
         public override void OnStopClient()
         {
+            if (LocalPlayerController.I != null && LocalPlayerController.I.BoundPlayer == this)
+                LocalPlayerController.I.Unbind(this);
+
+            DisableLocalComponents();
+            visual?.SetLocal(false);
+
             base.OnStopClient();
 
             var registry = PlayerRegistry.Instance;
@@ -403,7 +414,7 @@ namespace Features.Player.UnityIntegration
             if (!IsServerStarted)
                 return;
 
-            var world = World.DefaultGameObjectInjectionWorld;
+            var world = Unity.Entities.World.DefaultGameObjectInjectionWorld;
             if (world == null)
                 return;
 

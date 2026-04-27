@@ -64,6 +64,15 @@ MonoBehaviour:
   spawnPointCount: 4
   spawnRadius: 15
   customPrefab: {fileID: 5502989716011450611, guid: 12b39b97c144da94682c029abc2ff1a4, type: 3}
+  spawnExitBeacon: 1
+  exitBeaconPrefab: {fileID: 9179591387364473893, guid: c34d4edcc30db2d4d83d86a43373dd48, type: 3}
+  exitBeaconMinDistance: 90
+  exitBeaconMaxDistance: 160
+  exitBeaconTriggerRadius: 5
+  exitBeaconPlacementAttempts: 64
+  spawnCheckpointOnBeaconRoute: 1
+  checkpointRouteT: 0.45
+  checkpointTriggerRadius: 4
   loadDistance: 5
   unloadDistance: 8
   spawnHeightCheck: 20
@@ -87,6 +96,7 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: 2359123666482985354}
+  - {fileID: 8302628338921983725}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -97,7 +107,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584267458430362879
+  _initializedTimestamp: -8584244941146371619
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -112,7 +122,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 18
+  <PrefabId>k__BackingField: 3
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 2253178460253432610
   SceneId: 0
@@ -165,14 +175,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b1749e82ca04c447b64f5c018b028f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BiomeEnemySpawner
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 7688760262762765644}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 7688760262762765644}
   world: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
   spawnInterval: 1.2
   spawnRadiusMin: 20
   spawnRadiusMax: 40
+  despawnDistance: 80
   maxPerPlayer: 12
+  maxPerBiome: 24
   maxGlobal: 120
 --- !u!1 &1710447925271196028
 GameObject:

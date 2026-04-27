@@ -90,6 +90,7 @@ public class CraftingProcessor : MonoBehaviour
     private void FinishRecipe(RecipeSO recipe)
     {   
         isProcessing = false;
+        currentRoutine = null;
 
         var player = LocalPlayerContext.Player;
         if (player == null)
@@ -115,4 +116,16 @@ public class CraftingProcessor : MonoBehaviour
     // ======================================================
 
     public bool IsProcessing => isProcessing;
+
+    public void Cancel()
+    {
+        if (!isProcessing)
+            return;
+
+        if (currentRoutine != null)
+            StopCoroutine(currentRoutine);
+
+        currentRoutine = null;
+        isProcessing = false;
+    }
 }

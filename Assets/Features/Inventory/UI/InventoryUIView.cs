@@ -10,13 +10,13 @@ namespace Features.Inventory.UI
     {
         [Header("Windows")]
         [SerializeField] private GameObject bagWindow;
-        [SerializeField] private GameObject leftHandWindow;
-        [SerializeField] private GameObject rightHandWindow;
+        [SerializeField] private GameObject activeSlotsWindow;
 
         [Header("Slots")]
         [SerializeField] private InventorySlotUI[] bagSlots;
-        [SerializeField] private InventorySlotUI leftHandSlot;
-        [SerializeField] private InventorySlotUI rightHandSlot;
+        [SerializeField] private InventorySlotUI activeSlot0Slot;
+        [SerializeField] private InventorySlotUI activeSlot1Slot;
+        [SerializeField] private InventorySlotUI activeSlot2Slot;
 
         [Header("Input")]
         [SerializeField] private InventoryUIInputController inventoryInput; // ВИСИТ НА UI, НЕ НА PLAYER
@@ -31,6 +31,9 @@ namespace Features.Inventory.UI
         {
             if (bagWindow != null)
                 bagWindow.SetActive(false);
+
+            if (activeSlotsWindow != null)
+                activeSlotsWindow.SetActive(true);
         }
 
         private void Start()
@@ -78,6 +81,8 @@ namespace Features.Inventory.UI
 
                 if (bagWindow != null)
                     bagWindow.SetActive(false);
+                if (activeSlotsWindow != null)
+                    activeSlotsWindow.SetActive(true);
 
                 return;
             }
@@ -140,6 +145,9 @@ namespace Features.Inventory.UI
             if (bagWindow != null)
                 bagWindow.SetActive(true);
 
+            if (activeSlotsWindow != null)
+                activeSlotsWindow.SetActive(true);
+
             if (inventoryInput != null)
                 inventoryInput.enabled = true;
 
@@ -150,6 +158,9 @@ namespace Features.Inventory.UI
         {
             if (bagWindow != null)
                 bagWindow.SetActive(false);
+
+            if (activeSlotsWindow != null)
+                activeSlotsWindow.SetActive(true);
 
             if (inventoryInput != null)
                 inventoryInput.enabled = false;
@@ -180,8 +191,23 @@ namespace Features.Inventory.UI
             for (int i = 0; i < bagSlots.Length && i < model.main.Count; i++)
                 bagSlots[i].Bind(model.main[i], InventorySection.Bag, i);
 
-            leftHandSlot.Bind(model.leftHand, InventorySection.LeftHand, 0);
-            rightHandSlot.Bind(model.rightHand, InventorySection.RightHand, 0);
+            if (activeSlot0Slot != null)
+            {
+                activeSlot0Slot.Bind(model.activeSlot0, InventorySection.ActiveSlot0, 0);
+                activeSlot0Slot.SetSelected(model.ActiveSlotIndex == 0);
+            }
+
+            if (activeSlot1Slot != null)
+            {
+                activeSlot1Slot.Bind(model.activeSlot1, InventorySection.ActiveSlot1, 0);
+                activeSlot1Slot.SetSelected(model.ActiveSlotIndex == 1);
+            }
+
+            if (activeSlot2Slot != null)
+            {
+                activeSlot2Slot.Bind(model.activeSlot2, InventorySection.ActiveSlot2, 0);
+                activeSlot2Slot.SetSelected(model.ActiveSlotIndex == 2);
+            }
         }
     }
 }

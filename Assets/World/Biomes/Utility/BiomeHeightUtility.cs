@@ -5,14 +5,16 @@ using Biomes.Data;
 namespace Biomes.Utility { 
     public static class BiomeHeightUtility
     {
-        public static float GetHeight(BiomeConfig biome, float x, float z)
+        public static float GetHeight(BiomeConfig biome, float x, float z, int seed = 0)
         {
             if (biome == null)
                 return 0f;
 
+            Vector2 seedOffset = GetSeedOffset(seed, 17 + (int)biome.terrainType * 131);
+
             float baseNoise = SafePerlin(
-                x * biome.terrainScale * 0.01f,
-                z * biome.terrainScale * 0.01f
+                x * biome.terrainScale * 0.01f + seedOffset.x,
+                z * biome.terrainScale * 0.01f + seedOffset.y
             );
 
             float y = 0f;
@@ -38,8 +40,8 @@ namespace Biomes.Utility {
                 case TerrainType.Dunes:
                     {
                         float dune = SafePerlin(
-                            x * biome.terrainScale * 0.05f,
-                            0f
+                            x * biome.terrainScale * 0.05f + seedOffset.x,
+                            seedOffset.y
                         );
                         y = dune * biome.heightMultiplier * 0.5f;
                         break;
@@ -58,7 +60,7 @@ namespace Biomes.Utility {
 
                 case TerrainType.Canyons:
                     {
-                        float canyon = Mathf.Abs(SafePerlin(x * 0.05f, 0f) - 0.5f) * 2f;
+                        float canyon = Mathf.Abs(SafePerlin(x * 0.05f + seedOffset.x, seedOffset.y) - 0.5f) * 2f;
                         y = baseNoise * biome.heightMultiplier * canyon;
                         break;
                     }
@@ -69,7 +71,8 @@ namespace Biomes.Utility {
                         biome.terrainScale * 0.01f,
                         biome.fractalOctaves,
                         biome.fractalPersistence,
-                        biome.fractalLacunarity
+                        biome.fractalLacunarity,
+                        seedOffset
                     ) * biome.heightMultiplier;
                     break;
             }
@@ -78,6 +81,28 @@ namespace Biomes.Utility {
                 y = 0f;
 
             return y;
+        }
+
+        private static Vector2 GetSeedOffset(int seed, int salt)
+        {
+            unchecked
+            {
+                uint h = (uint)seed;
+                h ^= (uint)salt * 0x9E3779B9u;
+                h ^= h >> 16;
+                h *= 0x85EBCA6Bu;
+                h ^= h >> 13;
+                h *= 0xC2B2AE35u;
+                h ^= h >> 16;
+
+                uint x = h & 0xFFFFu;
+                uint z = (h >> 16) & 0xFFFFu;
+
+                return new Vector2(
+                    x / 65535f * 10000f,
+                    z / 65535f * 10000f
+                );
+            }
         }
 
         private static float SafePerlin(float x, float z)
@@ -97,7 +122,7 @@ namespace Biomes.Utility {
 
         private static float RidgedNoise(
             float x, float z,
-            float scale, int octaves, float persistence, float lacunarity)
+            float scale, int octaves, float persistence, float lacunarity, Vector2 seedOffset)
         {
             float total = 0f;
             float amplitude = 1f;
@@ -107,8 +132,8 @@ namespace Biomes.Utility {
             for (int i = 0; i < octaves; i++)
             {
                 float n = SafePerlin(
-                    x * scale * frequency,
-                    z * scale * frequency
+                    x * scale * frequency + seedOffset.x,
+                    z * scale * frequency + seedOffset.y
                 );
                 n = 1f - Mathf.Abs(n * 2f - 1f);
                 total += n * amplitude;

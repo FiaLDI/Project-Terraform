@@ -3,6 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Game/Turret/Preset")]
 public class TurretPresetSO : ScriptableObject
 {
+    [Header("Legacy")]
     public float baseDamageMultiplier = 1f;
 
     [Header("HP")]
@@ -14,6 +15,9 @@ public class TurretPresetSO : ScriptableObject
 
     [Header("Attack")]
     public float baseFireRate = 1f;
+
+    [Header("Combat")]
+    public CombatBlock combat = new CombatBlock();
 
     [System.Serializable]
     public class CombatBlock

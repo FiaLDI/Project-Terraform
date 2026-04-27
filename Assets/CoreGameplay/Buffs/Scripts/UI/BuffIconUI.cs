@@ -13,10 +13,12 @@ namespace Features.Buffs.UI
         public TextMeshProUGUI label;
 
         private string buffId;
+        private int stacks;
 
-        public void Bind(string buffId)
+        public void Bind(string buffId, int stacks)
         {
             this.buffId = buffId;
+            this.stacks = stacks;
 
             var cfg = BuffRegistrySO.Instance.GetById(buffId);
             if (cfg == null)
@@ -26,9 +28,12 @@ namespace Features.Buffs.UI
                 icon.sprite = cfg.icon;
 
             if (label != null)
-                label.text = cfg.displayName;
+                label.text = stacks > 1
+                    ? $"{cfg.displayName} x{stacks}"
+                    : cfg.displayName;
         }
 
         public string BuffId => buffId;
+        public int Stacks => stacks;
     }
 }

@@ -11,15 +11,17 @@ namespace Features.Stats.UnityIntegration
     [RequireComponent(typeof(StatsBuffTarget))]
     public sealed class PlayerStats : StatsOwnerBase
     {
+        [Header("Defaults")]
+        [SerializeField] private StatsPresetSO defaultPreset;
+
         public StatsFacadeAdapter Adapter { get; private set; }
 
         private ServerGamePhase phase;
         private int level = 1;
+        private float appliedHpMultiplier = 1f;
+        private float appliedDamageMultiplier = 1f;
+        private float appliedEnergyMultiplier = 1f;
         public int Level => level;
-
-        // =====================================================
-        // SERVER
-        // =====================================================
 
         protected override void InitStats()
         {
@@ -28,14 +30,25 @@ namespace Features.Stats.UnityIntegration
             phase = GetComponent<ServerGamePhase>();
             Adapter = GetComponent<StatsFacadeAdapter>();
 
-            ApplyClassDefaults();
+            ApplyDefaultPreset();
             InitServerAdapters();
 
-            Debug.Log("[PlayerStats] SERVER ready → StatsReady", this);
+            Debug.Log("[PlayerStats] SERVER ready -> StatsReady", this);
             phase.Reach(GamePhase.StatsReady);
         }
 
-        private void ApplyClassDefaults()
+        private void ApplyDefaultPreset()
+        {
+            if (defaultPreset != null)
+            {
+                ApplyPresetValues(defaultPreset);
+                return;
+            }
+
+            ApplyLegacyFallbackDefaults();
+        }
+
+        private void ApplyLegacyFallbackDefaults()
         {
             if (Facade.Health != null)
             {
@@ -44,9 +57,7 @@ namespace Features.Stats.UnityIntegration
             }
 
             if (Facade.Energy != null)
-            {
                 Facade.Energy.ApplyBase(150f, 8f);
-            }
 
             if (Facade.Combat != null)
             {
@@ -55,8 +66,8 @@ namespace Features.Stats.UnityIntegration
                     fireRate: 6f,
                     spread: 2f,
                     aimSpread: 0.5f,
-                    recoil: 1f,
                     range: 100f,
+                    recoil: 1f,
                     magazineSize: 30,
                     critChance: 0.2f,
                     critMultiplier: 2f,
@@ -78,9 +89,7 @@ namespace Features.Stats.UnityIntegration
             }
 
             if (Facade.Mining != null)
-            {
                 Facade.Mining.ApplyBase(1f);
-            }
 
             if (Facade.Protect != null)
             {
@@ -99,80 +108,9 @@ namespace Features.Stats.UnityIntegration
             }
         }
 
-        private void InitServerAdapters()
+        private void ApplyPresetValues(StatsPresetSO preset)
         {
-            if (Adapter == null || Facade == null)
-                return;
-
-            Adapter.CombatStats?.Init(Facade.Combat);
-            Adapter.MovementStats?.Init(Facade.Movement);
-            Adapter.MiningStats?.Init(Facade.Mining);
-            Adapter.ProtectStats?.Init(Facade.Protect);
-        }
-
-        // =====================================================
-        // CLIENT (VIEW ONLY)
-        // =====================================================
-
-        public override void OnStartClient()
-        {
-            base.OnStartClient();
-
-            Adapter = GetComponent<StatsFacadeAdapter>();
-            if (Adapter == null)
-                Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
-
-            Debug.Log("[PlayerStats] CLIENT ready (view only)", this);
-        }
-
-        // =====================================================
-        // SERVER ROLE API
-        // =====================================================
-
-        [Server]
-        public void SetLevel(int newLevel)
-        {
-            if (!IsReady)
-                return;
-
-            level = Mathf.Max(1, newLevel);
-
-            ApplyLevelScaling();
-
-            Debug.Log($"[PlayerStats] Level set to {level}", this);
-        }
-
-        [Server]
-        private void ApplyLevelScaling()
-        {
-            float hpMultiplier = 1f + (level - 1) * 0.05f;     // +5% HP за уровень
-            float dmgMultiplier = 1f + (level - 1) * 0.03f;    // +3% урона
-            float energyMultiplier = 1f + (level - 1) * 0.04f; // +4% энергии
-
-            //if (Facade.Health != null)
-            //    Facade.Health.ApplyMultiplier(hpMultiplier);
-
-            //if (Facade.Combat != null)
-            //    Facade.Combat.ApplyDamageMultiplier(dmgMultiplier);
-
-            //if (Facade.Energy != null)
-            //    Facade.Energy.ApplyMaxMultiplier(energyMultiplier);
-        }
-
-        [Server]
-        public void ResetAndApplyDefaults()
-        {
-            if (!IsReady)
-                return;
-
-            Facade.ResetAll();
-            ApplyClassDefaults();
-        }
-
-        [Server]
-        public void ApplyPreset(StatsPresetSO preset)
-        {
-            if (!IsReady || preset == null)
+            if (preset == null)
                 return;
 
             if (Facade.Health != null)
@@ -192,13 +130,13 @@ namespace Features.Stats.UnityIntegration
             if (Facade.Combat != null)
             {
                 Facade.Combat.ApplyBase(
-                    preset.combat.baseDamageMultiplier,
-                    preset.combat.baseFireRate, 
-                    preset.combat.baseRange,
-                    preset.combat.baseSpread,
-                    preset.combat.baseAimSpread,
-                    preset.combat.baseRecoil,
-                    preset.combat.baseMagazineSize,
+                    baseDamage: preset.combat.baseDamageMultiplier,
+                    fireRate: preset.combat.baseFireRate,
+                    spread: preset.combat.baseSpread,
+                    aimSpread: preset.combat.baseAimSpread,
+                    range: preset.combat.baseRange,
+                    recoil: preset.combat.baseRecoil,
+                    magazineSize: preset.combat.baseMagazineSize,
                     critChance: 0.2f,
                     critMultiplier: 2f,
                     penetration: 0f
@@ -219,11 +157,7 @@ namespace Features.Stats.UnityIntegration
             }
 
             if (Facade.Mining != null)
-            {
-                Facade.Mining.ApplyBase(
-                    preset.mining.baseMining
-                );
-            }
+                Facade.Mining.ApplyBase(preset.mining.baseMining);
 
             if (Facade.Protect != null)
             {
@@ -240,6 +174,127 @@ namespace Features.Stats.UnityIntegration
                     preset.protect.acid
                 );
             }
+        }
+
+        private void InitServerAdapters()
+        {
+            if (Adapter == null || Facade == null)
+                return;
+
+            Adapter.CombatStats?.Init(Facade.Combat);
+            Adapter.MovementStats?.Init(Facade.Movement);
+            Adapter.MiningStats?.Init(Facade.Mining);
+            Adapter.ProtectStats?.Init(Facade.Protect);
+        }
+
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+
+            Adapter = GetComponent<StatsFacadeAdapter>();
+            if (Adapter == null)
+                Adapter = gameObject.AddComponent<StatsFacadeAdapter>();
+
+            Debug.Log("[PlayerStats] CLIENT ready (view only)", this);
+        }
+
+        [Server]
+        public void SetLevel(int newLevel)
+        {
+            if (!IsReady)
+                return;
+
+            level = Mathf.Max(1, newLevel);
+            ApplyLevelScaling();
+
+            Debug.Log($"[PlayerStats] Level set to {level}", this);
+        }
+
+        [Server]
+        private void ApplyLevelScaling()
+        {
+            bool shouldRefillHp =
+                Facade.Health != null &&
+                Facade.Health.CurrentHp >= Facade.Health.MaxHp - 0.01f;
+
+            bool shouldRefillEnergy =
+                Facade.Energy != null &&
+                Facade.Energy.CurrentEnergy >= Facade.Energy.MaxEnergy - 0.01f;
+
+            RemoveLevelScaling();
+
+            float hpMultiplier = 1f + (level - 1) * 0.05f;
+            float damageMultiplier = 1f + (level - 1) * 0.03f;
+            float energyMultiplier = 1f + (level - 1) * 0.04f;
+
+            if (Facade.Health != null)
+            {
+                Facade.TryMultiply(StatKeys.MaxHp, hpMultiplier);
+                appliedHpMultiplier = hpMultiplier;
+            }
+
+            if (Facade.Combat != null)
+            {
+                Facade.TryMultiply(StatKeys.DamageMultiplier, damageMultiplier);
+                appliedDamageMultiplier = damageMultiplier;
+            }
+
+            if (Facade.Energy != null)
+            {
+                Facade.TryMultiply(StatKeys.MaxEnergy, energyMultiplier);
+                appliedEnergyMultiplier = energyMultiplier;
+            }
+
+            if (shouldRefillHp && Facade.Health != null)
+                Facade.Health.SetCurrentHp(Facade.Health.MaxHp);
+
+            if (shouldRefillEnergy && Facade.Energy != null)
+                Facade.Energy.SetCurrentEnergy(Facade.Energy.MaxEnergy);
+        }
+
+        [Server]
+        private void RemoveLevelScaling()
+        {
+            if (Facade.Health != null && !Mathf.Approximately(appliedHpMultiplier, 1f))
+                Facade.TryMultiply(StatKeys.MaxHp, 1f / appliedHpMultiplier);
+
+            if (Facade.Combat != null && !Mathf.Approximately(appliedDamageMultiplier, 1f))
+                Facade.TryMultiply(StatKeys.DamageMultiplier, 1f / appliedDamageMultiplier);
+
+            if (Facade.Energy != null && !Mathf.Approximately(appliedEnergyMultiplier, 1f))
+                Facade.TryMultiply(StatKeys.MaxEnergy, 1f / appliedEnergyMultiplier);
+
+            ResetLevelScalingTracking();
+        }
+
+        private void ResetLevelScalingTracking()
+        {
+            appliedHpMultiplier = 1f;
+            appliedDamageMultiplier = 1f;
+            appliedEnergyMultiplier = 1f;
+        }
+
+        [Server]
+        public void ResetAndApplyDefaults()
+        {
+            if (!IsReady)
+                return;
+
+            Facade.ResetAll();
+            ResetLevelScalingTracking();
+            ApplyDefaultPreset();
+            ApplyLevelScaling();
+        }
+
+        [Server]
+        public void ApplyPreset(StatsPresetSO preset)
+        {
+            if (!IsReady || preset == null)
+                return;
+
+            RemoveLevelScaling();
+            ApplyPresetValues(preset);
+            ApplyLevelScaling();
         }
     }
 }

@@ -6,61 +6,54 @@ using Features.Items.Domain;
 using Features.Quests.Application;
 using Features.Quests.Domain;
 
-
 namespace Features.Inventory.Domain
 {
     /// <summary>
-    /// Application-слой инвентаря.
-    /// НЕ использует Unity API.
-    /// Работает ТОЛЬКО с ItemInstance.Empty.
+    /// Application layer of inventory.
+    /// Does not use Unity API except debug/event integration.
+    /// Works only with ItemInstance.Empty sentinel for empty slots.
     /// </summary>
     public sealed class InventoryService : IInventoryService
     {
         private readonly InventoryModel model;
 
-
         public event Action OnChanged;
         public event Action<ItemInstance, int> OnItemAdded;
-
 
         public InventoryService(InventoryModel model)
         {
             this.model = model;
         }
 
-
         // =====================================================
         // ADD
         // =====================================================
-
 
         public bool AddItem(ItemInstance inst)
         {
             if (inst == null || inst.IsEmpty || inst.quantity <= 0)
                 return false;
 
-
             int remaining = inst.quantity;
-
 
             if (inst.IsStackable)
             {
                 foreach (var slot in model.main)
                 {
                     var item = slot.item;
-                    if (item.IsEmpty) continue;
+                    if (item.IsEmpty)
+                        continue;
+
                     if (item.itemDefinition != inst.itemDefinition ||
                         item.level != inst.level ||
                         item.quantity >= item.MaxStack)
                         continue;
-
 
                     int add = Math.Min(item.MaxStack - item.quantity, remaining);
                     item.quantity += add;
                     remaining -= add;
 
                     OnItemAdded?.Invoke(item, add);
-
 
                     if (remaining <= 0)
                     {
@@ -70,11 +63,10 @@ namespace Features.Inventory.Domain
                 }
             }
 
-
             foreach (var slot in model.main)
             {
-                if (!slot.item.IsEmpty) continue;
-
+                if (!slot.item.IsEmpty)
+                    continue;
 
                 slot.item = new ItemInstance(
                     inst.itemDefinition,
@@ -82,12 +74,10 @@ namespace Features.Inventory.Domain
                     inst.level
                 );
 
-
                 OnItemAdded?.Invoke(slot.item, remaining);
                 OnChanged?.Invoke();
                 return true;
             }
-
 
             return false;
         }
@@ -100,45 +90,40 @@ namespace Features.Inventory.Domain
         {
             int left = count;
 
-
             foreach (var slot in model.main)
             {
                 var item = slot.item;
                 if (item.IsEmpty || item.itemDefinition != def)
                     continue;
 
-
                 int take = Math.Min(left, item.quantity);
                 item.quantity -= take;
                 left -= take;
 
-
                 if (item.quantity <= 0)
                     slot.item = ItemInstance.Empty;
-
 
                 if (left <= 0)
                 {
                     OnChanged?.Invoke();
+
                     if (source is UnityEngine.GameObject go)
                     {
                         QuestEventBus.Publish(
                             new ItemRemovedEvent(go, def.id, count)
                         );
                     }
+
                     return true;
                 }
             }
 
-
             return false;
         }
-
 
         // =====================================================
         // COUNT
         // =====================================================
-
 
         public int GetItemCount(Item def)
         {
@@ -147,11 +132,9 @@ namespace Features.Inventory.Domain
                 .Sum(s => s.item.quantity);
         }
 
-
         // =====================================================
         // MOVE
         // =====================================================
-
 
         public bool MoveItem(
             int fromIndex,
@@ -160,28 +143,12 @@ namespace Features.Inventory.Domain
             InventorySection toSection)
         {
             var from = GetSlot(fromSection, fromIndex);
-            var to   = GetSlot(toSection, toIndex);
-
+            var to = GetSlot(toSection, toIndex);
 
             if (from == null || to == null || from.item.IsEmpty)
                 return false;
 
-
-            // forbid: two-handed → left hand
-            if (toSection == InventorySection.LeftHand &&
-                model.rightHand.item.itemDefinition?.isTwoHanded == true)
-                return false;
-
-
-            // two-handed → right clears left
-            if (toSection == InventorySection.RightHand &&
-                from.item.itemDefinition?.isTwoHanded == true)
-                model.leftHand.item = ItemInstance.Empty;
-
-
             Swap(from, to);
-            HandleTwoHandedIfNeeded();
-
 
             OnChanged?.Invoke();
             return true;
@@ -201,22 +168,22 @@ namespace Features.Inventory.Domain
                 InventorySection.Bag =>
                     ExtractFromBag(index, amount),
 
-                InventorySection.LeftHand or InventorySection.RightHand =>
-                    DropFromHands(),
+                InventorySection.ActiveSlot0 or InventorySection.ActiveSlot1 or
+                InventorySection.ActiveSlot2 =>
+                    ExtractFromActiveSlot(section),
 
                 _ => ItemInstance.Empty
             };
         }
+
         private ItemInstance ExtractFromBag(int index, int amount)
         {
             if (index < 0 || index >= model.main.Count)
                 return ItemInstance.Empty;
 
-
             var slot = model.main[index];
             return ExtractFromSlotInternal(slot, amount);
         }
-
 
         private ItemInstance ExtractFromSlotInternal(
             InventorySlot slot,
@@ -226,46 +193,56 @@ namespace Features.Inventory.Domain
             if (inst.IsEmpty)
                 return ItemInstance.Empty;
 
-
             int take = Math.Min(amount, inst.quantity);
             var extracted = inst.CloneWithQuantity(take);
-
 
             inst.quantity -= take;
             if (inst.quantity <= 0)
                 slot.item = ItemInstance.Empty;
 
-
             OnChanged?.Invoke();
             return extracted;
         }
 
-        public ItemInstance DropFromHands()
+        private ItemInstance ExtractFromActiveSlot(InventorySection section)
         {
-            if (!model.rightHand.item.IsEmpty)
+            var slot = GetSlot(section, 0);
+            if (slot == null || slot.item.IsEmpty)
+                return ItemInstance.Empty;
+
+            var dropped = slot.item;
+            slot.item = ItemInstance.Empty;
+
+            OnChanged?.Invoke();
+            return dropped;
+        }
+
+        public ItemInstance DropFromActiveSlots()
+        {
+            var selectedSlot = model.GetActiveSlot(model.ActiveSlotIndex);
+
+            if (selectedSlot != null && !selectedSlot.item.IsEmpty)
             {
-                var item = model.rightHand.item;
+                var item = selectedSlot.item;
                 UnityEngine.Debug.Log(
-                    $"[InventoryService] DropFromHands RIGHT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
+                    $"[InventoryService] DropFromActiveSlots ACTIVE({model.ActiveSlotIndex}): def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
                     $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
                 );
 
-                var dropped = model.rightHand.item;
-                model.rightHand.item = ItemInstance.Empty;
+                var dropped = selectedSlot.item;
+                selectedSlot.item = ItemInstance.Empty;
                 OnChanged?.Invoke();
                 return dropped;
             }
 
-            if (!model.leftHand.item.IsEmpty)
+            for (int i = 0; i < InventoryModel.ActiveSlotCount; i++)
             {
-                var item = model.leftHand.item;
-                UnityEngine.Debug.Log(
-                    $"[InventoryService] DropFromHands LEFT: def={(item.itemDefinition != null ? item.itemDefinition.name : "NULL")}, " +
-                    $"id='{item.itemDefinition?.id}', qty={item.quantity}, level={item.level}"
-                );
+                var fallbackSlot = model.GetActiveSlot(i);
+                if (fallbackSlot == null || fallbackSlot.item.IsEmpty)
+                    continue;
 
-                var dropped = model.leftHand.item;
-                model.leftHand.item = ItemInstance.Empty;
+                var dropped = fallbackSlot.item;
+                fallbackSlot.item = ItemInstance.Empty;
                 OnChanged?.Invoke();
                 return dropped;
             }
@@ -273,39 +250,60 @@ namespace Features.Inventory.Domain
             return ItemInstance.Empty;
         }
 
+        public bool ConsumeActiveItem(int amount = 1, object source = null)
+        {
+            if (amount <= 0)
+                return false;
 
+            var slot = model.GetActiveSlot(model.ActiveSlotIndex);
+            if (slot == null || slot.item.IsEmpty)
+                return false;
+
+            var item = slot.item;
+            var def = item.itemDefinition;
+            int consumed = Math.Min(amount, item.quantity);
+
+            item.quantity -= consumed;
+            if (item.quantity <= 0)
+                slot.item = ItemInstance.Empty;
+
+            OnChanged?.Invoke();
+
+            if (source is UnityEngine.GameObject go && def != null)
+            {
+                QuestEventBus.Publish(
+                    new ItemRemovedEvent(go, def.id, consumed)
+                );
+            }
+
+            return true;
+        }
 
         // =====================================================
         // INGREDIENTS
         // =====================================================
-
 
         public bool HasIngredients(RecipeIngredient[] ingredients)
         {
             if (ingredients == null || ingredients.Length == 0)
                 return true;
 
-
             foreach (var ing in ingredients)
             {
                 if (ing.item == null)
                     continue;
 
-
                 if (GetItemCount(ing.item) < ing.amount)
                     return false;
             }
 
-
             return true;
         }
-
 
         public bool ConsumeIngredients(RecipeIngredient[] ingredients)
         {
             if (!HasIngredients(ingredients))
                 return false;
-
 
             foreach (var ing in ingredients)
             {
@@ -313,35 +311,24 @@ namespace Features.Inventory.Domain
                     TryRemove(ing.item, ing.amount);
             }
 
-
             return true;
         }
-
 
         // =====================================================
         // HELPERS
         // =====================================================
 
-
         private InventorySlot GetSlot(InventorySection section, int index)
         {
             return section switch
             {
-                InventorySection.Bag      => model.main[index],
-                InventorySection.LeftHand => model.leftHand,
-                InventorySection.RightHand=> model.rightHand,
+                InventorySection.Bag => model.main[index],
+                InventorySection.ActiveSlot0 => model.activeSlot0,
+                InventorySection.ActiveSlot1 => model.activeSlot1,
+                InventorySection.ActiveSlot2 => model.activeSlot2,
                 _ => null
             };
         }
-
-
-        private void HandleTwoHandedIfNeeded()
-        {
-            var item = model.rightHand.item;
-            if (!item.IsEmpty && item.itemDefinition.isTwoHanded)
-                model.leftHand.item = ItemInstance.Empty;
-        }
-
 
         private static void Swap(InventorySlot a, InventorySlot b)
         {
@@ -351,3 +338,4 @@ namespace Features.Inventory.Domain
         }
     }
 }
+

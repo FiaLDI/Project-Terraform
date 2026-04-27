@@ -13,22 +13,42 @@ public sealed class ConnectionObject : NetworkBehaviour
 
         string pid = PersistentIdProvider.GetOrCreate();
 
-        var active = PlayerProgressService.Instance.GetActiveCharacter();
+        var progress = PlayerProgressService.Instance;
+        if (progress == null)
+        {
+            Debug.LogError("[LOGIN] PlayerProgressService is missing");
+            return;
+        }
+
+        var active = progress.GetActiveCharacter();
+        if (active == null)
+        {
+            Debug.LogError("[LOGIN] Active character not found");
+            return;
+        }
+
         Debug.Log($"[LOGIN] Sending classId = {active.classId}");
+
+        ClientConnectionController.I?.GetFlow()?.NotifyLoginSent();
+        LoadingScreenService.SetMessage("Entering hub", "Preparing player session...");
         
         SendLoginServerRpc(
             pid,
             active.characterId,
+            active.nickname,
             active.classId,
-            active.level);
+            active.level,
+            active.experience);
     }
 
     [ServerRpc]
     private void SendLoginServerRpc(
         string persistentId,
         string characterId,
+        string nickname,
         string classId,
         int level,
+        int experience,
         NetworkConnection sender = null)
     {
         
@@ -39,7 +59,9 @@ public sealed class ConnectionObject : NetworkBehaviour
             sender,
             persistentId,
             characterId,
+            nickname,
             classId,
-            level);
+            level,
+            experience);
     }
 }

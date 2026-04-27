@@ -24,7 +24,7 @@ public sealed class EnemyAttackHandler : MonoBehaviour
     {
         binder = GetComponent<EnemyEcsRuntimeBinder>();
 
-        var world = World.DefaultGameObjectInjectionWorld;
+        var world = Unity.Entities.World.DefaultGameObjectInjectionWorld;
         if (world != null)
             em = world.EntityManager;
     }

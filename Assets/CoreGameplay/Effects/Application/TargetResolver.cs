@@ -98,9 +98,7 @@ namespace Features.Effects.Application
                 if (col == null)
                     continue;
 
-                IBuffTarget target =
-                    col.GetComponentInParent<StatsBuffTarget>() as IBuffTarget
-                    ?? col.GetComponentInParent<ResourceNodeNetwork>() as IBuffTarget;
+                IBuffTarget target = ExtractTarget(col);
 
                 if (target == null)
                     continue;
@@ -136,17 +134,53 @@ namespace Features.Effects.Application
                 ctx.Direction,
                 out RaycastHit hit,
                 def.radius,
-                def.layerMask))
+                def.layerMask,
+                QueryTriggerInteraction.Ignore))
             {
-                var target =
-                    hit.collider.GetComponentInParent<StatsBuffTarget>() as IBuffTarget
-                    ?? hit.collider.GetComponentInParent<ResourceNodeNetwork>() as IBuffTarget;
+                var target = ExtractTarget(hit.collider);
 
                 if (target != null)
                 {
                     targetBuffer[0] = target;
                     return 1;
                 }
+            }
+
+            if (ctx is IHitPointData hitData)
+                return ResolveDirectionalAtHitPoint(def, ctx, hitData);
+
+            return 0;
+        }
+
+        private static int ResolveDirectionalAtHitPoint(
+            EffectDefinition def,
+            EffectContext ctx,
+            IHitPointData hitData)
+        {
+            if (def.layerMask.value == 0)
+                return 0;
+
+            Vector3 hitPoint = hitData.HitPoint;
+            float maxDistance = def.radius + 0.35f;
+            if ((hitPoint - ctx.Origin).sqrMagnitude > maxDistance * maxDistance)
+                return 0;
+
+            const float probeRadius = 0.2f;
+            int hits = Physics.OverlapSphereNonAlloc(
+                hitPoint,
+                probeRadius,
+                colliderBuffer,
+                def.layerMask,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < hits; i++)
+            {
+                var target = ExtractTarget(colliderBuffer[i]);
+                if (target == null)
+                    continue;
+
+                targetBuffer[0] = target;
+                return 1;
             }
 
             return 0;
@@ -271,6 +305,15 @@ namespace Features.Effects.Application
         {
             Array.Copy(src, dst, count);
             return count;
+        }
+
+        private static IBuffTarget ExtractTarget(Collider collider)
+        {
+            if (collider == null)
+                return null;
+
+            return collider.GetComponentInParent<StatsBuffTarget>() as IBuffTarget
+                ?? collider.GetComponentInParent<ResourceNodeNetwork>() as IBuffTarget;
         }
     }
 }

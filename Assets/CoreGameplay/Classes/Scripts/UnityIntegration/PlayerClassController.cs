@@ -1,43 +1,28 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Features.Classes.Data;
 using Features.Classes.Application;
 using Features.Passives.UnityIntegration;
 using Features.Abilities.Application;
+using Features.Abilities.Domain;
 using Features.Passives.Net;
 using Features.Buffs.Application;
 
 [RequireComponent(typeof(PlayerVisualController))]
 public sealed class PlayerClassController : MonoBehaviour
 {
-    // =====================================================
-    // CONFIG
-    // =====================================================
-
     [Header("Classes Library")]
     [SerializeField] private PlayerClassLibrarySO library;
-
-    // =====================================================
-    // COMPONENTS
-    // =====================================================
 
     private PassiveSystem passiveSystem;
     private AbilityCaster abilityCaster;
     private BuffSystem buffSystem;
     private ServerGamePhase phase;
 
-    // =====================================================
-    // DOMAIN
-    // =====================================================
-
     private PlayerClassService classService;
     private PlayerClassConfigSO currentClass;
     public PlayerClassConfigSO currentClassOut => currentClass;
 
     public event System.Action OnClassApplied;
-
-    // =====================================================
-    // LIFECYCLE
-    // =====================================================
 
     private void Awake()
     {
@@ -64,13 +49,9 @@ public sealed class PlayerClassController : MonoBehaviour
         );
     }
 
-    // =====================================================
-    // SERVER API
-    // =====================================================
-
     public void ApplyClass(string classId)
     {
-       Debug.Log($"[CLASS] Requested classId = {classId}");
+        Debug.Log($"[CLASS] Requested classId = {classId}");
 
         var cfg = library.FindById(classId);
 
@@ -83,9 +64,19 @@ public sealed class PlayerClassController : MonoBehaviour
             cfg = library.FindById(safeDefault);
         }
 
+        if (cfg == null)
+        {
+            Debug.LogError("[PlayerClassController] No valid class config to apply", this);
+            return;
+        }
+
         currentClass = cfg;
         classService.SelectClass(cfg);
-        abilityCaster.SetAbilities(cfg.abilities.ToArray());
+        abilityCaster.SetAbilities(
+            cfg.abilities != null
+                ? cfg.abilities.ToArray()
+                : System.Array.Empty<AbilitySO>()
+        );
 
         if (phase.IsAtLeast(GamePhase.BuffsReady))
         {
@@ -93,13 +84,10 @@ public sealed class PlayerClassController : MonoBehaviour
         }
         else
         {
+            phase.OnPhaseReached -= OnPhaseReached;
             phase.OnPhaseReached += OnPhaseReached;
         }
     }
-
-    // =====================================================
-    // PHASE
-    // =====================================================
 
     private void OnPhaseReached(GamePhase p)
     {
@@ -114,5 +102,11 @@ public sealed class PlayerClassController : MonoBehaviour
         phase.Reach(GamePhase.PassivesApplied);
 
         OnClassApplied?.Invoke();
+    }
+
+    private void OnDestroy()
+    {
+        if (phase != null)
+            phase.OnPhaseReached -= OnPhaseReached;
     }
 }

@@ -24,9 +24,12 @@ namespace Biomes.UnityIntegration
         public int    sampleStep;
         public int    vertsPerLine;
         public float3 chunkOffset;
-    
-        public float safeRadius;
+        public float2 safeCenter;
+        public float safeFlatRadius;
         public float safeBlendRadius;
+        public int spawnResources;
+        public int spawnEnemies;
+        public int spawnQuests;
 
         private static bool IsFinite(float3 v) =>
             math.isfinite(v.x) && math.isfinite(v.y) && math.isfinite(v.z);
@@ -87,6 +90,22 @@ namespace Biomes.UnityIntegration
             return math.degrees(math.acos(dot));
         }
 
+        private float ComputeSafeFactor(float2 worldXZ)
+        {
+            float flatRadius = math.max(0f, safeFlatRadius);
+            float blendRadius = math.max(flatRadius, safeBlendRadius);
+            float dist = math.distance(worldXZ, safeCenter);
+
+            if (dist < flatRadius)
+                return 0f;
+
+            if (dist >= blendRadius || blendRadius <= flatRadius)
+                return 1f;
+
+            float t = (dist - flatRadius) / (blendRadius - flatRadius);
+            return t * t * (3f - 2f * t);
+        }
+
         // ==============================
         // MAIN
         // ==============================
@@ -110,20 +129,9 @@ namespace Biomes.UnityIntegration
             float  slope  = ComputeSlope(normal);
 
             float3 worldBasePos = localPos + chunkOffset;
-
-            float dist = math.length(worldBasePos.xz);
-
-            float safeFactor = 1f;
-
-            if (dist < safeRadius)
-            {
-                safeFactor = 0f;
-            }
-            else if (dist < safeBlendRadius)
-            {
-                float t = (dist - safeRadius) / (safeBlendRadius - safeRadius);
-                safeFactor = t * t * (3f - 2f * t); // smoothstep
-            }
+            float safeFactor = ComputeSafeFactor(worldBasePos.xz);
+            if (safeFactor <= 0f)
+                return;
 
             // ---------------------------------
             // ENVIRONMENT INSTANCED
@@ -136,6 +144,11 @@ namespace Biomes.UnityIntegration
                 if (slope < r.minSlope || slope > r.maxSlope) continue;
 
                 float scale = math.lerp(r.minScale, r.maxScale, rng.NextFloat());
+                int flags = 0;
+                if (r.alignToNormal != 0)
+                    flags |= SpawnInstanceFlags.AlignToNormal;
+                if (r.randomYRotation != 0)
+                    flags |= SpawnInstanceFlags.RandomYRotation;
 
                 output.AddNoResize(new SpawnInstance
                 {
@@ -144,6 +157,7 @@ namespace Biomes.UnityIntegration
                     prefabIndex = r.prefabIndex,
                     biomeId     = biome.biomeId,
                     scale       = scale,
+                    extraData   = flags,
                     spawnType   = (int)SpawnKind.EnvironmentInstanced,
                     random01    = rng.NextFloat()
                 });
@@ -152,51 +166,60 @@ namespace Biomes.UnityIntegration
             // ---------------------------------
             // RESOURCES (clusters)
             // ---------------------------------
-            for (int i = 0; i < biome.resRuleCount; i++)
+            if (spawnResources != 0)
             {
-                var r = resRules[biome.resRuleStart + i];
-                SpawnResource(ref rng, r, localPos, normal, slope);
+                for (int i = 0; i < biome.resRuleCount; i++)
+                {
+                    var r = resRules[biome.resRuleStart + i];
+                    SpawnResource(ref rng, r, localPos, normal, slope, safeFactor);
+                }
             }
 
             // ---------------------------------
             // ENEMIES
             // ---------------------------------
-            for (int i = 0; i < biome.enemyRuleCount; i++)
+            if (spawnEnemies != 0)
             {
-                var r = enemyRules[biome.enemyRuleStart + i];
-
-                if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
-                if (slope < r.minSlope || slope > r.maxSlope) continue;
-
-                output.AddNoResize(new SpawnInstance
+                for (int i = 0; i < biome.enemyRuleCount; i++)
                 {
-                    position    = worldBasePos,
-                    normal      = normal,
-                    prefabIndex = r.prefabIndex,
-                    biomeId     = biome.biomeId,
-                    scale       = 1f,
-                    spawnType   = (int)SpawnKind.EnemyGameObject
-                });
+                    var r = enemyRules[biome.enemyRuleStart + i];
+
+                    if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
+                    if (slope < r.minSlope || slope > r.maxSlope) continue;
+
+                    output.AddNoResize(new SpawnInstance
+                    {
+                        position    = worldBasePos,
+                        normal      = normal,
+                        prefabIndex = r.prefabIndex,
+                        biomeId     = biome.biomeId,
+                        scale       = 1f,
+                        spawnType   = (int)SpawnKind.EnemyGameObject
+                    });
+                }
             }
 
             // ---------------------------------
             // QUESTS
             // ---------------------------------
-            for (int i = 0; i < biome.questRuleCount; i++)
+            if (spawnQuests != 0)
             {
-                var r = questRules[biome.questRuleStart + i];
-
-                if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
-
-                output.AddNoResize(new SpawnInstance
+                for (int i = 0; i < biome.questRuleCount; i++)
                 {
-                    position    = worldBasePos,
-                    normal      = normal,
-                    prefabIndex = r.prefabIndex,
-                    biomeId     = biome.biomeId,
-                    scale       = 1f,
-                    spawnType   = (int)SpawnKind.QuestGameObject
-                });
+                    var r = questRules[biome.questRuleStart + i];
+
+                    if (rng.NextFloat() > r.spawnChance * safeFactor) continue;
+
+                    output.AddNoResize(new SpawnInstance
+                    {
+                        position    = worldBasePos,
+                        normal      = normal,
+                        prefabIndex = r.prefabIndex,
+                        biomeId     = biome.biomeId,
+                        scale       = 1f,
+                        spawnType   = (int)SpawnKind.QuestGameObject
+                    });
+                }
             }
         }
 
@@ -209,9 +232,10 @@ namespace Biomes.UnityIntegration
             ResourceRule r,
             float3 localBasePos,
             float3 baseNormal,
-            float slope)
+            float slope,
+            float safeFactor)
         {
-            if (rng.NextFloat() > r.spawnChance) return;
+            if (rng.NextFloat() > r.spawnChance * safeFactor) return;
             if (slope < r.minSlope || slope > r.maxSlope) return;
 
             int count =
@@ -252,6 +276,8 @@ namespace Biomes.UnityIntegration
                     scale = 1f;
 
                 float3 worldP = localP + chunkOffset;
+                if (ComputeSafeFactor(worldP.xz) <= 0f)
+                    continue;
 
                 output.AddNoResize(new SpawnInstance
                 {

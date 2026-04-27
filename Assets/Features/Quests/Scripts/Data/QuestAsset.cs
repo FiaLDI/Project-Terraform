@@ -30,6 +30,9 @@ namespace Features.Quests.Data
 
         [Header("Rewards")]
 
+        [Min(0)]
+        public int experienceReward;
+
         public RewardItemConfig[] rewards;
 
         public QuestDefinition ToDefinition()
@@ -109,11 +112,16 @@ namespace Features.Quests.Data
                 }
             }
 
+            // Quest XP is intentionally disabled so run completion controls
+            // the pacing of level progression.
+            int resolvedExperienceReward = 0;
+
             return new QuestDefinition(
                 new QuestId(questId),
                 questName,
                 description,
                 scope,
+                resolvedExperienceReward,
                 conditions,
                 rewardsDomain
             );

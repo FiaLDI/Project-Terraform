@@ -11,7 +11,7 @@ namespace Biomes.Data
     {
         [Header("World Generation")]
         public int seed = 12345;
-        
+
         [Header("Chunk Settings")]
         public int chunkSize = 64;
 
@@ -20,6 +20,14 @@ namespace Biomes.Data
 
         [Header("Global Ground Material")]
         public Material worldGroundMaterial;
+
+        [Header("Loading Screen")]
+        public Sprite loadingBackground;
+
+        [Header("Safe Spawn Zone")]
+        public float safeSpawnFlatRadius = 50f;
+        public float safeSpawnBlendRadius = 65f;
+        public float safeSpawnHeightOffset = 5f;
 
         public BiomeConfig GetBiomeAtChunk(Vector2Int chunk)
         {
@@ -40,16 +48,18 @@ namespace Biomes.Data
             float best = float.MinValue;
             BiomeConfig result = biomes[0].config;
 
-            foreach (var layer in biomes)
+            for (int i = 0; i < biomes.Length; i++)
             {
+                var layer = biomes[i];
                 if (layer.config == null)
                     continue;
 
-                float noise =
-                    Mathf.PerlinNoise(
-                        pos.x * layer.scale + layer.offset.x,
-                        pos.z * layer.scale + layer.offset.y
-                    );
+                Vector2 seedOffset = GetSeedOffset(i);
+
+                float noise = Mathf.PerlinNoise(
+                    pos.x * layer.scale + layer.offset.x + seedOffset.x,
+                    pos.z * layer.scale + layer.offset.y + seedOffset.y
+                );
 
                 float v = noise * layer.weight;
 
@@ -72,18 +82,23 @@ namespace Biomes.Data
         {
             var list = new List<BiomeBlendResult>(4);
 
-            foreach (var layer in biomes)
+            if (biomes == null || biomes.Length == 0)
+                return new[] { new BiomeBlendResult(null, 0f) };
+
+            for (int i = 0; i < biomes.Length; i++)
             {
+                var layer = biomes[i];
                 if (layer.config == null)
                     continue;
 
+                Vector2 seedOffset = GetSeedOffset(i);
+
                 float noise = Mathf.PerlinNoise(
-                    worldPos.x * layer.scale + layer.offset.x,
-                    worldPos.z * layer.scale + layer.offset.y
+                    worldPos.x * layer.scale + layer.offset.x + seedOffset.x,
+                    worldPos.z * layer.scale + layer.offset.y + seedOffset.y
                 );
 
                 float maskW = layer.mask != null ? layer.mask.GetWeight(worldPos) : 1f;
-
                 float w = noise * layer.weight * maskW;
 
                 if (w > 0.0001f)
@@ -94,7 +109,8 @@ namespace Biomes.Data
                 return new[] { new BiomeBlendResult(null, 0f) };
 
             float sum = 0f;
-            foreach (var b in list) sum += b.weight;
+            foreach (var b in list)
+                sum += b.weight;
 
             if (sum > 0f)
             {
@@ -132,68 +148,92 @@ namespace Biomes.Data
             return best;
         }
 
-
         public float GetHeight(float2 pos)
         {
-            // ================= BASE TERRAIN =================
-            var blends = GetBiomeBlend(new Vector3(pos.x, 0, pos.y));
-            if (blends == null || blends.Length == 0) return 0f;
+            float terrainHeight = GetTerrainHeight(pos);
+            float safeFactor = GetSafeSpawnFactor(pos);
+            if (safeFactor >= 1f)
+                return terrainHeight;
 
-            float sum = 0f, wsum = 0f;
+            var biome = GetBiomeBlend(GetSafeSpawnCenter()).biome;
+            float seaLevel = biome != null ? biome.seaLevel : 0f;
+            float safeHeight = seaLevel + safeSpawnHeightOffset;
+
+            return math.lerp(safeHeight, terrainHeight, safeFactor);
+        }
+
+        public float GetSafeSpawnFactor(float2 pos)
+        {
+            float flatRadius = Mathf.Max(0f, safeSpawnFlatRadius);
+            float blendRadius = Mathf.Max(flatRadius, safeSpawnBlendRadius);
+            float dist = math.distance(pos, GetSafeSpawnCenter());
+
+            if (dist < flatRadius)
+                return 0f;
+
+            if (dist >= blendRadius || blendRadius <= flatRadius)
+                return 1f;
+
+            float t = (dist - flatRadius) / (blendRadius - flatRadius);
+            return t * t * (3f - 2f * t);
+        }
+
+        public float2 GetSafeSpawnCenter()
+        {
+            return new float2(chunkSize * 0.5f, chunkSize * 0.5f);
+        }
+
+        private float GetTerrainHeight(float2 pos)
+        {
+            var blends = GetBiomeBlend(new Vector3(pos.x, 0, pos.y));
+            if (blends == null || blends.Length == 0)
+                return 0f;
+
+            float sum = 0f;
+            float wsum = 0f;
 
             foreach (var b in blends)
             {
-                if (b.biome == null || b.weight <= 0f) continue;
+                if (b.biome == null || b.weight <= 0f)
+                    continue;
 
-                float h = BiomeHeightUtility.GetHeight(b.biome, pos.x, pos.y);
-
-                sum  += h * b.weight;
+                float h = BiomeHeightUtility.GetHeight(b.biome, pos.x, pos.y, seed);
+                sum += h * b.weight;
                 wsum += b.weight;
             }
 
-            float terrainHeight = wsum > 0f ? sum / wsum : 0f;
-
-            // ================= SAFE SPAWN PLATFORM =================
-
-            float2 center = float2.zero;
-            float dist = math.distance(pos, center);
-
-            float flatRadius = 50f;     // радиус плоской зоны
-            float blendRadius = 65f;    // радиус перехода
-
-            var biome = GetBiomeBlend(float2.zero).biome;
-
-            float seaLevel = biome != null ? biome.seaLevel : 0f;
-
-            float baseHeight = seaLevel + 5f; // ВСЕГДА выше воды
-
-            // ================= LOGIC =================
-
-            if (dist < flatRadius)
-            {
-                return baseHeight;
-            }
-
-            if (dist < blendRadius)
-            {
-                float t = (dist - flatRadius) / (blendRadius - flatRadius);
-
-                // smoothstep
-                float smooth = t * t * (3f - 2f * t);
-
-                return math.lerp(baseHeight, terrainHeight, smooth);
-            }
-
-            return terrainHeight;
+            return wsum > 0f ? sum / wsum : 0f;
         }
 
         public TerrainJobData GetJobData()
         {
             return new TerrainJobData
             {
-                chunkSize = this.chunkSize,
-                biomes = this.biomes
+                chunkSize = chunkSize,
+                biomes = biomes
             };
+        }
+
+        private Vector2 GetSeedOffset(int layerIndex)
+        {
+            unchecked
+            {
+                uint h = (uint)seed;
+                h ^= (uint)(layerIndex + 1) * 0x9E3779B9u;
+                h ^= h >> 16;
+                h *= 0x85EBCA6Bu;
+                h ^= h >> 13;
+                h *= 0xC2B2AE35u;
+                h ^= h >> 16;
+
+                uint x = h & 0xFFFFu;
+                uint z = (h >> 16) & 0xFFFFu;
+
+                return new Vector2(
+                    x / 65535f * 10000f,
+                    z / 65535f * 10000f
+                );
+            }
         }
     }
 

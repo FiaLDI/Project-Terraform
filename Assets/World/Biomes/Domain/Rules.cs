@@ -3,6 +3,12 @@ using Unity.Mathematics;
 
 namespace Biomes.Domain
 {
+    public static class SpawnInstanceFlags
+    {
+        public const int AlignToNormal = 1 << 0;
+        public const int RandomYRotation = 1 << 1;
+    }
+
     public enum SpawnKind
     {
         EnvironmentInstanced = 0,

@@ -53,6 +53,9 @@ public sealed class ClientConnectionController : MonoBehaviour
         else if (args.ConnectionState == LocalConnectionState.Stopped)
         {
             flow.NotifyDisconnected();
+
+            if (!SceneTransitionService.IsReturnToMainMenuInProgress)
+                SceneTransitionService.LoadMainMenuSceneLocal();
         }
     }
 }

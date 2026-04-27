@@ -29,7 +29,7 @@ public class CharacterSelectController : MonoBehaviour
         for (int i = 0; i < _profile.characters.Count; i++)
         {
             var card = Instantiate(characterCardPrefab, characterListRoot);
-            card.Setup(_profile.characters[i], i, SelectCharacter);
+            card.Setup(_profile.characters[i], i, SelectCharacter, _selectedIndex);
             _cards.Add(card);
         }
 

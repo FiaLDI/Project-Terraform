@@ -1,6 +1,6 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class RecipeButtonUI : MonoBehaviour
 {
@@ -9,16 +9,34 @@ public class RecipeButtonUI : MonoBehaviour
     [SerializeField] private Button button;
 
     private RecipeSO recipe;
-    private BaseStationUI ui;
+    private PlayerBoundStationUI ui;
+    private BaseStationUI legacyUi;
+
+    public void Init(RecipeSO recipe, PlayerBoundStationUI ui)
+    {
+        this.recipe = recipe;
+        this.ui = ui;
+        legacyUi = null;
+
+        BindVisuals();
+    }
 
     public void Init(RecipeSO recipe, BaseStationUI ui)
     {
         this.recipe = recipe;
-        this.ui = ui;
+        legacyUi = ui;
+        this.ui = null;
+
+        BindVisuals();
+    }
+
+    private void BindVisuals()
+    {
+        if (recipe == null)
+            return;
 
         if (recipe.recipeType == RecipeType.Upgrade)
         {
-            // Рецепт улучшения
             if (icon != null)
                 icon.sprite = recipe.upgradeBaseItem.icon;
 
@@ -27,7 +45,6 @@ public class RecipeButtonUI : MonoBehaviour
         }
         else
         {
-            // Обычный крафт
             if (icon != null)
                 icon.sprite = recipe.outputItem.icon;
 
@@ -36,6 +53,17 @@ public class RecipeButtonUI : MonoBehaviour
         }
 
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => ui.ShowRecipe(recipe));
+        button.onClick.AddListener(OnClick);
+    }
+
+    private void OnClick()
+    {
+        if (ui != null)
+        {
+            ui.ShowRecipe(recipe);
+            return;
+        }
+
+        legacyUi?.ShowRecipe(recipe);
     }
 }

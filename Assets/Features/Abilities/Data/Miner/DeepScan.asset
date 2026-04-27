@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 180c9b516f983834499194b2901977c2, type: 3}
+  m_Name: DeepScan
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Abilities.Domain.AbilitySO
+  id: miner.deep-scan
+  displayName: Deep Scan
+  tags: 0
+  icon: {fileID: 21300000, guid: 2f6b3098f32cc3a4eb8e212b5ae68813, type: 3}
+  description: Reveals nearby resource nodes in a wide radius.
+  energyCost: 10
+  cooldown: 18
+  castType: 0
+  castTime: 0
+  effects:
+  - type: 13
+    targetMode: 0
+    radius: 140
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 64
+    value: 0
+    damageType: 0
+    buff: {fileID: 0}
+    onlySpecificBuff: 0
+    buffId: 
+    heightOffset: 1.5
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
+    impactFxId: 
+    prefabId: scan-item
+    lifetime: 4
+    useSourcePosition: 0
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 0}
+    childEffects: []
+    soundConfig: {fileID: 0}
+    chainCount: 0
+    chainRadius: 0
+    chainDamageFalloff: 0

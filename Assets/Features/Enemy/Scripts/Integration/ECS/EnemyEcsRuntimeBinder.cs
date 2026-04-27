@@ -16,7 +16,7 @@ public sealed class EnemyEcsRuntimeBinder : NetworkBehaviour
 
     private EntityManager GetEM()
     {
-        var world = World.DefaultGameObjectInjectionWorld;
+        var world = Unity.Entities.World.DefaultGameObjectInjectionWorld;
         return world != null ? world.EntityManager : default;
     }
 

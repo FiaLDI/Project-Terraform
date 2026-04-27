@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 749445612031d42459db886b1fdf6dfb, type: 3}
+  m_Name: ChargePulseRelease Node
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressionNodeSO
+  id: charge_pulse_release-node
+  displayName: "Charge Device: Pulse Release"
+  description: "Charge Device detonates an overload pulse after a full charge."
+  requiredLevel: 2
+  passive: {fileID: 11400000, guid: b0732492dbea4b67b21629a1bbe9e1aa, type: 2}
+  position: {x: 260, y: 130}
+  uiSize: 76

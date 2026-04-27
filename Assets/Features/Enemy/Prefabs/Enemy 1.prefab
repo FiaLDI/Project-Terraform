@@ -161,7 +161,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584250257068491935
+  _initializedTimestamp: -8584244941146371619
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -176,7 +176,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 10
+  <PrefabId>k__BackingField: 12
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 8267521181958873596
   SceneId: 0
@@ -447,6 +447,10 @@ MonoBehaviour:
     duration: 0
     projectileConfig: {fileID: 0}
     childEffects: []
+    soundConfig: {fileID: 0}
+    chainCount: 0
+    chainRadius: 0
+    chainDamageFalloff: 0
 --- !u!114 &7859063946524322795
 MonoBehaviour:
   m_ObjectHideFlags: 0

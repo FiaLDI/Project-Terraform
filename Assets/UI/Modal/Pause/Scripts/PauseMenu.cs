@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using Features.Input;
 using Features.Game;
 
@@ -37,6 +36,9 @@ public class PauseMenu : MonoBehaviour, IUIScreen
 
     public void Show()
     {
+        if (returnToHubButton != null)
+            returnToHubButton.interactable = !SceneTransitionService.IsLocalSceneActive(SceneTransitionService.NameHubScene);
+
         canvas.enabled = true;
         canvasGroup.alpha = 1;
         canvasGroup.interactable = true;
@@ -64,12 +66,17 @@ public class PauseMenu : MonoBehaviour, IUIScreen
     private void OnSettings()
     {
         if (SettingsMenu.I != null)
+        {
+            SettingsMenu.I.Show();
             SettingsMenu.I.Open();
+        }
+            
     }
 
     private void OnExit()
     {
-        Application.Quit(); 
+        SceneTransitionService.ReturnToMainMenu();
+        UIStackManager.I.Clear();
     }
 
     private void onHubReturn()

@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MainMenuController : MonoBehaviour
+public class MainMenuController : MonoBehaviour, IUIScreen
 {
+    public InputMode Mode => InputMode.Pause;
+
     private void Start()
     {
+        LoadingScreenService.Hide();
+
         var fsm = MainMenuFSM.Instance;
         var controller = Object.FindFirstObjectByType<CharacterSelectController>();
 
@@ -18,6 +22,7 @@ public class MainMenuController : MonoBehaviour
         });
 
         fsm.Switch(MainMenuStateId.Play);
+        UIStackManager.I.Push(this);
     }
 
     public void OnPlayPressed()
@@ -34,5 +39,20 @@ public class MainMenuController : MonoBehaviour
     public void OnExitPressed()
     {
         Application.Quit();
+    }
+
+    private void OnDestroy()
+    {
+        UIStackManager.I.Clear();
+    }
+
+    public void Show()
+    {
+        
+    }
+
+    public void Hide()
+    {
+        
     }
 }

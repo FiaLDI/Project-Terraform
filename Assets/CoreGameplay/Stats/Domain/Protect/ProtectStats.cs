@@ -112,6 +112,17 @@ namespace Features.Stats.Domain
 
         public void Reset()
         {
+            _baseGenericResistance = 0f;
+            _baseExplosionResistance = 0f;
+            _baseEnergyResistance = 0f;
+            _baseMiningResistance = 0f;
+            _baseMeleeResistance = 0f;
+            _baseFireResistance = 0f;
+            _baseElectricResistance = 0f;
+            _basePoisonResistance = 0f;
+            _baseFrostResistance = 0f;
+            _baseAcidResistance = 0f;
+
             _addGenericResistance = 0f;
             _addExplosionResistance = 0f;
             _addEnergyResistance = 0f;

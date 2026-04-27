@@ -93,9 +93,10 @@ public sealed class PlayerCameraController : MonoBehaviour
         Cursor.visible = false;
 
         CameraRegistry.Instance?.InitializeFPS();
-        CameraRegistry.Instance?.SetFPSVisible(isFPS);
+        CameraRegistry.Instance?.SetFPSVisible(false);
         CameraRegistry.Instance.OnCameraChanged += OnCameraChanged;
         ResolveCamera();
+        GetComponent<Features.Equipment.UnityIntegration.EquipmentManager>()?.RefreshViewModelVisibility();
     }
 
     public void SetLookInput(Vector2 input)
@@ -123,7 +124,7 @@ public sealed class PlayerCameraController : MonoBehaviour
             return;
 
         isFPS = !isFPS;
-        CameraRegistry.Instance?.SetFPSVisible(isFPS);
+        GetComponent<Features.Equipment.UnityIntegration.EquipmentManager>()?.RefreshViewModelVisibility();
     }
 
     public bool IsFPS()
@@ -133,6 +134,11 @@ public sealed class PlayerCameraController : MonoBehaviour
 
     public float CurrentPitch => pitch;
     public float CurrentYaw => yaw;
+
+    public void SetWeaponPose(int pose)
+    {
+        CameraRegistry.Instance?.SetWeaponPose(Mathf.Clamp(pose, 0, 2));
+    }
 
     public void SetAiming(bool value)
     {
@@ -294,4 +300,5 @@ public sealed class PlayerCameraController : MonoBehaviour
 
         return resolvedDistance;
     }
+
 }

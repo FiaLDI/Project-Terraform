@@ -29,6 +29,8 @@ namespace Biomes.Application
         public Vector3 normal;
         public float scale;
         public float random;
+        public float yRotationDegrees;
+        public bool alignToNormal;
         public int biomeId;
     }
 }

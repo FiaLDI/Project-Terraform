@@ -13,15 +13,16 @@ MonoBehaviour:
   m_Name: miner
   m_EditorClassIdentifier: Assembly-CSharp::Features.Classes.Data.PlayerClassConfigSO
   id: miner
-  displayName: Techimas
-  description: 
+  displayName: Miner
+  description: Mining specialist focused on resource control, explosives and deployables.
   preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
   visualPreset: {fileID: 11400000, guid: ffc13c66519696d408de5657c3919e32, type: 2}
   passives:
-  - {fileID: 11400000, guid: 567f67ac3af28ad4e9e3629be706bd9e, type: 2}
+  - {fileID: 11400000, guid: 96150a45eb80412b8d3ef542acfd7a8d, type: 2}
   abilities:
-  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
-  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
-  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
-  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
-  - {fileID: 11400000, guid: ad7a0d1f8ae93b242a20686bc8f81ea3, type: 2}
+  - {fileID: 11400000, guid: c5232958dbf149a0a27d05543146ecce, type: 2}
+  - {fileID: 11400000, guid: 38799b60e9ae45c180bb20d309d8d320, type: 2}
+  - {fileID: 11400000, guid: 93fc3dd486174701b5e4603cfe649689, type: 2}
+  - {fileID: 11400000, guid: f4c369ac8fe44ec09df4c72fe1f37111, type: 2}
+  - {fileID: 11400000, guid: 94db1f4a08934478bc51654719372f79, type: 2}
+  progression: {fileID: 0}

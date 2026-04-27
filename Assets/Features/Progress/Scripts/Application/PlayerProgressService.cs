@@ -9,6 +9,7 @@ public class PlayerProgressService : MonoBehaviour
     private const string FileName = "player_progress.json";
 
     public PlayerProgressData Data { get; private set; }
+    public event Action<PlayerCharacterState> ActiveCharacterChanged;
 
     private string FilePath =>
         Path.Combine(Application.persistentDataPath, FileName);
@@ -48,6 +49,8 @@ public class PlayerProgressService : MonoBehaviour
         {
             CreateNew(defaultClassId);
         }
+
+        NotifyActiveCharacterChanged();
     }
 
     private void CreateNew(string defaultClassId)
@@ -100,6 +103,7 @@ public class PlayerProgressService : MonoBehaviour
     {
         Data.profile.activeCharacterIndex = index;
         Save();
+        NotifyActiveCharacterChanged();
     }
 
     public PlayerCharacterState AddCharacter(string classId, string nickname)
@@ -117,6 +121,7 @@ public class PlayerProgressService : MonoBehaviour
         Data.profile.activeCharacterIndex = Data.profile.characters.Count - 1;
 
         Save();
+        NotifyActiveCharacterChanged();
 
         return newChar;
     }
@@ -133,5 +138,42 @@ public class PlayerProgressService : MonoBehaviour
         profile.activeCharacterIndex = profile.characters.Count > 0 ? 0 : -1;
 
         Save();
+        NotifyActiveCharacterChanged();
+    }
+
+    public void SetActiveCharacterProgress(int level, int experience)
+    {
+        var active = GetActiveCharacter();
+        if (active == null)
+            return;
+
+        active.level = PlayerProgressionRules.NormalizeLevel(level);
+        active.experience = PlayerProgressionRules.NormalizeExperience(experience);
+
+        Save();
+        NotifyActiveCharacterChanged();
+    }
+
+    public void AddExperience(int amount)
+    {
+        var active = GetActiveCharacter();
+        if (active == null)
+            return;
+
+        int level = active.level;
+        int experience = active.experience;
+
+        PlayerProgressionRules.ApplyExperience(ref level, ref experience, amount);
+
+        active.level = level;
+        active.experience = experience;
+
+        Save();
+        NotifyActiveCharacterChanged();
+    }
+
+    private void NotifyActiveCharacterChanged()
+    {
+        ActiveCharacterChanged?.Invoke(GetActiveCharacter());
     }
 }

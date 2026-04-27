@@ -13,10 +13,12 @@ namespace Features.Buffs.UI
         IPointerMoveHandler
     {
         private string buffId;
+        private int stacks;
 
-        public void Bind(string buffId)
+        public void Bind(string buffId, int stacks)
         {
             this.buffId = buffId;
+            this.stacks = stacks;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -25,7 +27,7 @@ namespace Features.Buffs.UI
             if (cfg == null)
                 return;
 
-            TooltipController.Instance?.ShowBuff(cfg);
+            TooltipController.Instance?.ShowBuff(cfg, stacks);
             TooltipController.Instance?.SetPointerPosition(eventData.position);
         }
 

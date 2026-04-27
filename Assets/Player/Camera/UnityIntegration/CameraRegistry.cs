@@ -22,6 +22,7 @@ namespace Features.Camera.UnityIntegration
         [Header("FPS View")]
         [SerializeField] private Transform viewModelRoot;
         [SerializeField] private GameObject fpsArmsPrefab;
+        [SerializeField] private GameObject fpsArmsOneHandPrefab;
 
         private Transform weaponSocket;
         public Transform WeaponSocket => weaponSocket;
@@ -29,6 +30,10 @@ namespace Features.Camera.UnityIntegration
         public event Action<bool> OnFPSModeChanged;
 
         private GameObject fpsInstance;
+        private GameObject currentFpsArmsPrefab;
+        private Animator fpsArmsAnimator;
+        private int weaponPose;
+        private static readonly int ArmsOneHandPoseHash = Animator.StringToHash("arms_onehand_pose");
         public bool IsFPSActive => fpsInstance != null && fpsInstance.activeSelf;
 
         private void Awake()
@@ -70,7 +75,9 @@ namespace Features.Camera.UnityIntegration
                 Destroy(fpsInstance);
 
             fpsInstance = null;
+            currentFpsArmsPrefab = null;
             weaponSocket = null;
+            fpsArmsAnimator = null;
             OnFPSModeChanged?.Invoke(false);
         }
 
@@ -139,17 +146,27 @@ namespace Features.Camera.UnityIntegration
                 return;
             }
 
-            if (fpsArmsPrefab == null)
+            var prefab = SelectFpsArmsPrefab();
+            if (prefab == null)
                 return;
+
+            if (fpsInstance != null && currentFpsArmsPrefab == prefab)
+                return;
+
+            bool keepVisible = fpsInstance == null || fpsInstance.activeSelf;
 
             if (fpsInstance != null)
-                return;
+                Destroy(fpsInstance);
 
-            fpsInstance = Instantiate(fpsArmsPrefab, viewModelRoot);
+            fpsInstance = Instantiate(prefab, viewModelRoot);
             fpsInstance.transform.localPosition = Vector3.zero;
             fpsInstance.transform.localRotation = Quaternion.identity;
 
+            currentFpsArmsPrefab = prefab;
             weaponSocket = fpsInstance.transform.Find("WeaponSocket");
+            fpsArmsAnimator = fpsInstance.GetComponentInChildren<Animator>(true);
+            ApplyFpsArmsPose();
+            fpsInstance.SetActive(keepVisible);
 
             OnFPSModeChanged?.Invoke(true);
         }
@@ -161,6 +178,76 @@ namespace Features.Camera.UnityIntegration
 
             fpsInstance.SetActive(visible);
             OnFPSModeChanged?.Invoke(visible);
+        }
+
+        private GameObject SelectFpsArmsPrefab()
+        {
+            if (weaponPose == 1 && fpsArmsOneHandPrefab != null)
+                return fpsArmsOneHandPrefab;
+
+            return fpsArmsPrefab;
+        }
+
+        public void SetWeaponPose(int pose)
+        {
+            int clamped = Mathf.Clamp(pose, 0, 2);
+            if (weaponPose == clamped)
+            {
+                ApplyFpsArmsPose();
+                return;
+            }
+
+            weaponPose = clamped;
+
+            var desiredPrefab = SelectFpsArmsPrefab();
+            if (fpsInstance != null && desiredPrefab != null && currentFpsArmsPrefab != desiredPrefab)
+            {
+                bool wasVisible = fpsInstance.activeSelf;
+                InitializeFPS();
+                if (fpsInstance != null)
+                    fpsInstance.SetActive(wasVisible);
+            }
+
+            ApplyFpsArmsPose();
+        }
+
+        private void ApplyFpsArmsPose()
+        {
+            if (fpsArmsAnimator == null)
+                return;
+
+            bool oneHandPose = weaponPose == 1;
+
+            for (int i = 0; i < fpsArmsAnimator.parameterCount; i++)
+            {
+                var parameter = fpsArmsAnimator.parameters[i];
+                if (parameter.nameHash != ArmsOneHandPoseHash)
+                    continue;
+
+                switch (parameter.type)
+                {
+                    case AnimatorControllerParameterType.Bool:
+                        fpsArmsAnimator.SetBool(ArmsOneHandPoseHash, oneHandPose);
+                        break;
+
+                    case AnimatorControllerParameterType.Int:
+                        fpsArmsAnimator.SetInteger(ArmsOneHandPoseHash, oneHandPose ? 1 : 0);
+                        break;
+
+                    case AnimatorControllerParameterType.Float:
+                        fpsArmsAnimator.SetFloat(ArmsOneHandPoseHash, oneHandPose ? 1f : 0f);
+                        break;
+
+                    case AnimatorControllerParameterType.Trigger:
+                        if (oneHandPose)
+                            fpsArmsAnimator.SetTrigger(ArmsOneHandPoseHash);
+                        else
+                            fpsArmsAnimator.ResetTrigger(ArmsOneHandPoseHash);
+                        break;
+                }
+
+                return;
+            }
         }
     }
 }

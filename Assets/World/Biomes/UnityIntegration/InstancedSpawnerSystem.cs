@@ -30,6 +30,8 @@ namespace Biomes.UnityIntegration
             public Vector3 normal;
             public float scale;
             public float random;
+            public float yRotationDegrees;
+            public bool alignToNormal;
             public int biomeId;
         }
 
@@ -126,7 +128,9 @@ namespace Biomes.UnityIntegration
                 }
 
                 float3 p = inst.position;
-                float random = math.frac(math.sin(p.x * 12.9898f + p.z * 78.233f) * 43758.5453f);
+                float random = inst.random01;
+                if (random <= 0f)
+                    random = math.frac(math.sin(p.x * 12.9898f + p.z * 78.233f) * 43758.5453f);
 
                 bucket.Instances.Add(new InstanceData
                 {
@@ -134,6 +138,8 @@ namespace Biomes.UnityIntegration
                     normal = new Vector3(inst.normal.x, inst.normal.y, inst.normal.z),
                     scale = inst.scale <= 0f ? 1f : inst.scale,
                     random = random,
+                    yRotationDegrees = (inst.extraData & SpawnInstanceFlags.RandomYRotation) != 0 ? random * 360f : 0f,
+                    alignToNormal = (inst.extraData & SpawnInstanceFlags.AlignToNormal) != 0,
                     biomeId = inst.biomeId
                 });
             }
@@ -201,6 +207,8 @@ namespace Biomes.UnityIntegration
                     if (!TryBuildMatrix(
                             inst.position,
                             inst.normal,
+                            inst.alignToNormal,
+                            inst.yRotationDegrees,
                             inst.scale,
                             bucket.RootScale,
                             bucket.LocalMatrix,
@@ -274,6 +282,8 @@ namespace Biomes.UnityIntegration
         private static bool TryBuildMatrix(
             Vector3 pos,
             Vector3 normal,
+            bool alignToNormal,
+            float yRotationDegrees,
             float scale,
             Vector3 rootScale,
             Matrix4x4 localMatrix,
@@ -286,12 +296,21 @@ namespace Biomes.UnityIntegration
                 return false;
             }
 
-            if (!IsFinite(normal) || normal.sqrMagnitude < 0.0001f)
-                normal = Vector3.up;
+            Vector3 up = Vector3.up;
+            Quaternion rot = Quaternion.identity;
 
-            normal.Normalize();
+            if (alignToNormal && IsFinite(normal) && normal.sqrMagnitude > 0.0001f)
+            {
+                up = normal.normalized;
+                rot = Quaternion.FromToRotation(Vector3.up, up);
+            }
 
-            Quaternion rot = Quaternion.FromToRotation(Vector3.up, normal);
+            if (!float.IsNaN(yRotationDegrees) &&
+                !float.IsInfinity(yRotationDegrees) &&
+                Mathf.Abs(yRotationDegrees) > 0.001f)
+            {
+                rot = Quaternion.AngleAxis(yRotationDegrees, up) * rot;
+            }
 
             if (!IsFinite(new Vector3(rot.x, rot.y, rot.z)))
                 rot = Quaternion.identity;

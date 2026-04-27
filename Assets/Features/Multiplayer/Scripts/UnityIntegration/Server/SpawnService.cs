@@ -8,6 +8,7 @@ using Multiplayer.Application;
 using Features.Class.Net;
 using Features.Stats.UnityIntegration;
 using Features.Player.UnityIntegration;
+using System.Linq;
 
 public sealed class SpawnService
 {
@@ -117,15 +118,12 @@ public sealed class SpawnService
     // =============================
    private NetworkObject SpawnInternal(NetworkConnection conn, PlayerSession session)
     {
-        if (!PlayerSpawnRegistry.I.TryGetRandom(out var provider))
-            return null;
-
-        if (!provider.TryGetSpawnPoint(out var pos, out var rot))
+        if (!PlayerSpawnRegistry.I.TryGetSpawnPoint(conn.ClientId, out var pos, out var rot))
             return null;
 
         var playerObj = Object.Instantiate(playerPrefab, pos, rot);
         var state = playerObj.GetComponent<PlayerStateNetwork>();
-        state.PreInit(session.ClassId, session.Level);
+        state.PreInit(session.ClassId, session.Level, session.PassiveIds.ToArray());
 
         nm.ServerManager.Spawn(playerObj, conn);
 

@@ -7,16 +7,32 @@ public class RecipeDatabase : ScriptableObject
 {
     [Header("All recipes in game")]
     public RecipeSO[] recipes;
-    public static RecipeDatabase Instance;
+
+    private static RecipeDatabase instance;
 
     private Dictionary<string, RecipeSO> recipeById;
     private RecipeSO[] cachedWorkbench;
     private RecipeSO[] cachedProcessor;
     private RecipeSO[] cachedUpgrade;
 
+    public static RecipeDatabase Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = Resources.Load<RecipeDatabase>("Databases/RecipeDatabase");
+                if (instance != null)
+                    instance.BuildCache();
+            }
+
+            return instance;
+        }
+    }
+
     private void OnEnable()
     {
-        Instance = this;
+        instance = this;
         BuildCache();
     }
 
@@ -41,6 +57,9 @@ public class RecipeDatabase : ScriptableObject
 
     public RecipeSO GetRecipeById(string id)
     {
+        if (string.IsNullOrEmpty(id) || recipeById == null)
+            return null;
+
         if (recipeById.TryGetValue(id, out var r)) return r;
         return null;
     }
