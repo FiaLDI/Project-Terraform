@@ -1,101 +1,43 @@
 # CoreGameplay Buffs
 
-Этот документ фиксирует текущее устройство системы бафов в `CoreGameplay/Buffs` и поясняет роль полей `isStackable` и `isDebuff`.
+This subsystem owns runtime buffs for an entity, including application, ticking, removal, stacking rules, and client-facing buff state sync.
 
-## Что входит в систему
+## Main pieces
 
-- `BuffSO` хранит данные бафа: `buffId`, `displayName`, `description`, `icon`, `isDebuff`, список `effects`, `duration`, `isStackable`.
-- `BuffInstance` хранит runtime-состояние конкретного наложения: `Config`, `Target`, `Source`, `LifetimeMode`, `Remaining`.
-- `BuffService` хранит список активных инстансов, решает вопрос повторного наложения и удаляет истекшие бафы.
-- `BuffSystem` является серверной точкой входа на объекте-цели: добавление, снятие и синхронизация активных бафов на клиент.
-- `BuffExecutor` применяет, тикает и снимает эффекты из `BuffSO.effects`.
-- `BuffTickSystem` на серверном тике обновляет все `BuffSystem` и `AreaBuffEmitter`.
-- `StatsBuffTarget` связывает бафы с `IStatsFacade` конкретной сущности.
-- `ClientBuffView`, `BuffHUD` и `BuffIconUI` отображают клиенту `buffId` и количество стаков.
+- `BuffSO` stores authoring data such as `buffId`, effects, duration, `isStackable`, and UI fields.
+- `BuffInstance` is the runtime object for one applied buff on one target from one source.
+- `BuffService` stores active instances and handles add, remove, tick, and source-based cleanup.
+- `BuffSystem` is the server-side entity component that owns one `BuffService`.
+- `BuffExecutor` applies, ticks, and expires the effects declared by the buff asset.
+- `BuffTickSystem` updates all registered buff systems on the server.
+- `StatsBuffTarget` bridges buffs to the entity `IStatsFacade`.
+- `ClientBuffView`, `BuffHUD`, and `BuffIconUI` expose aggregated buff state to the client UI.
 
-## Поток выполнения
+## Runtime flow
 
-1. Источник вызывает `BuffSystem.Add`.
-2. `BuffSystem` передает запрос в `BuffService.AddBuff`.
-3. `BuffService` либо создает новый `BuffInstance`, либо переиспользует существующий, если баф не должен стекаться.
-4. При новом инстансе `BuffSystem.HandleBuffAdded` вызывает `BuffExecutor.Apply`.
-5. На каждом серверном тике `BuffService.Tick` уменьшает `Remaining` у `Duration`-бафов.
-6. После этого `BuffExecutor.Tick` вызывает tick-логику каждого эффекта.
-7. При снятии бафа `BuffExecutor.Expire` откатывает эффекты, а `BuffSystem` пересобирает синхронизированное клиентское состояние.
+1. A source calls `BuffSystem.Add(...)`.
+2. `BuffSystem` forwards the request into `BuffService.AddBuff(...)`.
+3. If the buff is non-stackable and the same source already applied the same `buffId`, the existing instance is reused.
+4. Otherwise a new `BuffInstance` is created and `BuffExecutor.Apply(...)` is called.
+5. On every server tick, `BuffService.Tick(dt)` updates lifetime and removes expired instances.
+6. `BuffExecutor.Tick(...)` runs per-buff tick behavior.
+7. When a buff is removed, `BuffExecutor.Expire(...)` rolls back its gameplay effect.
 
-Система сейчас server-authoritative: клиент не считает эффекты сам, а получает уже подготовленное состояние от сервера.
+## Lifetime model
 
-## Источники бафов в проекте
+- `BuffLifetimeMode.Duration` counts down `Remaining` and expires automatically.
+- `BuffLifetimeMode.WhileSourceAlive` stays active until the owning source is explicitly removed.
 
-- `ApplyBuffEffect` вешает `BuffSO` на цели с lifetime `Duration`.
-- `PassiveExecutor` вешает бафы из пассивок с lifetime из `PassiveEffectData`.
-- `EquipmentManager` вешает бафы экипировки с lifetime `WhileSourceAlive`.
-- `AreaBuffEmitter` выдает баф при входе в радиус и снимает его через `RemoveBySource` при выходе или уничтожении источника.
+This source-based removal model is important because passives, equipment, and area emitters all rely on `RemoveBySource(...)` or `RemoveBySourceAndId(...)` for cleanup.
 
-## Lifetime
+## Stacking rule
 
-- `BuffLifetimeMode.Duration`: у инстанса есть таймер `Remaining`, который уменьшается в `BuffService.Tick`.
-- `BuffLifetimeMode.WhileSourceAlive`: таймер фактически бесконечный, баф живет, пока источник не снимет его вручную.
+The current stacking rule is source-based:
 
-Это важно для аур, экипировки и пассивов: сама система не отслеживает пропажу источника автоматически, она полагается на вызовы `RemoveBySource` и `RemoveBySourceAndId`.
+- `isStackable = false` means one source cannot duplicate the same `buffId`.
+- Reapplying a non-stackable duration buff from the same source refreshes duration instead of creating another instance.
+- Different sources may still contribute separate instances of the same `buffId`.
 
-## Как устроена синхронизация на клиент
+## Client sync contract
 
-- `BuffSystem.SyncActiveBuffs` агрегирует активные инстансы по `buffId`.
-- На клиент уходит список состояний вида `buffId|count`.
-- `ClientBuffView` декодирует эти состояния в `ActiveBuffView(buffId, stacks)`.
-- `BuffHUD` и `BuffIconUI` показывают количество стаков, если оно больше `1`.
-- Tooltip тоже показывает `Stacks: N`, если стаков больше одного.
-
-Следствие: клиент теперь видит наличие бафа и количество стаков, но всё ещё не видит:
-
-- источник бафа;
-- оставшееся время;
-- различие между двумя одинаковыми бафами с разными источниками, если у них один `buffId`.
-
-## Комментарий по `isStackable`
-
-`isStackable` теперь реально участвует в серверной логике.
-
-Текущее правило специально выбрано безопасным для существующей архитектуры:
-
-- правило применяется для пары `source + buffId`;
-- если `isStackable = false` и тот же `source` повторно вешает тот же `buffId`, новый `BuffInstance` не создается;
-- если такой баф использует `BuffLifetimeMode.Duration`, повторное наложение от того же `source` обновляет таймер существующего инстанса;
-- если `isStackable = true`, создается новый инстанс и клиент видит увеличенный stack count.
-
-Почему правило именно такое:
-
-- в системе снятие бафов активно завязано на `RemoveBySource` и `RemoveBySourceAndId`;
-- если бы non-stackable работал глобально только по `buffId`, это легко ломало бы ауры и экипировку от разных источников;
-- текущий вариант совместим с уже существующим жизненным циклом source-based бафов.
-
-Практический смысл:
-
-- один предмет, пассивка или эффект не смогут бесконечно дублировать свой же non-stackable баф;
-- несколько разных источников все еще могут дать один и тот же `buffId`, и клиент увидит это как несколько стаков;
-- то есть текущий stack count показывает число активных инстансов данного `buffId`, а не число уникальных "слоев логики" высокого уровня.
-
-Если позже понадобится более жесткое правило "этот `buffId` вообще не должен суммироваться между любыми источниками", для этого уже потребуется отдельная модель владения несколькими источниками внутри одного бафа.
-
-## Комментарий по `isDebuff`
-
-`isDebuff` по-прежнему не влияет на игровую логику и остается UI-меткой.
-
-Факты по коду:
-
-- поле объявлено в `BuffSO`;
-- в `TooltipController.ShowBuff` оно влияет на подпись `Buff` или `Debuff`;
-- в логике наложения, тиков, снятия, фильтрации и очистки это поле не участвует.
-
-Практический эффект:
-
-- `isDebuff` не делает баф "негативным" для системы автоматически;
-- отрицательные значения статов действительно задаются самими эффектами, например через `AddStatEffectSO` с отрицательным `value` или через множитель меньше `1`;
-- будущая способность снятия дебаффов не сможет просто "магически" работать по `isDebuff`, пока серверная логика такого снятия не будет явно написана.
-
-То есть ваш текущий подход нормальный: негативность эффекта задается конфигом самих стат-модификаторов, а `isDebuff` остается флагом для UI и презентации.
-
-## Текущее состояние системы в одном абзаце
-
-Система бафов уже рабочая и чисто разделена на данные, runtime и executor. `isStackable` теперь управляет повторным наложением бафа от одного источника и отражается на клиенте через stack count, а `isDebuff` остается чисто UI-флагом. Следующий естественный шаг, если он когда-нибудь понадобится, это синхронизация оставшегося времени бафа, а не только факта наличия и количества стаков.
+`BuffSystem.SyncActiveBuffs()` aggregates active buffs by `buffId` and publishes them as encoded `buffId|count` states. The client UI receives stack counts, but not full per-instance details such as remaining time or exact source identity.
