@@ -15,7 +15,7 @@ MonoBehaviour:
   id: miner.deep-scan
   displayName: Deep Scan
   tags: 0
-  icon: {fileID: 21300000, guid: 2f6b3098f32cc3a4eb8e212b5ae68813, type: 3}
+  icon: {fileID: 21300000, guid: a24d237868c33fa4fbf72c495ca01f16, type: 3}
   description: Reveals nearby resource nodes in a wide radius.
   energyCost: 10
   cooldown: 18
@@ -41,6 +41,7 @@ MonoBehaviour:
     prefabId: scan-item
     lifetime: 4
     useSourcePosition: 0
+    spawnPositionMode: 0
     ownership: 0
     miningValue: 0
     tickInterval: 0

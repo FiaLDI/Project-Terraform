@@ -15,7 +15,7 @@ MonoBehaviour:
   id: miner.seismic-blast
   displayName: Seismic Blast
   tags: 8
-  icon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
+  icon: {fileID: 21300000, guid: 86757c9d6346ed640ac5e913a90c49f4, type: 3}
   description: Detonates an explosive pulse around the miner.
   energyCost: 15
   cooldown: 8
@@ -41,6 +41,7 @@ MonoBehaviour:
     prefabId: 
     lifetime: 0
     useSourcePosition: 0
+    spawnPositionMode: 0
     ownership: 2
     miningValue: 0
     tickInterval: 0

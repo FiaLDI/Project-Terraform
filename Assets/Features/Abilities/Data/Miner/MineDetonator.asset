@@ -15,7 +15,7 @@ MonoBehaviour:
   id: miner.mine-detonator
   displayName: Mine Detonator
   tags: 0
-  icon: {fileID: 21300000, guid: 647aa02f302cc754ba260c37400daa46, type: 3}
+  icon: {fileID: 21300000, guid: 12c7d5cf520b7ac45bbdaf2f9bee58be, type: 3}
   description: Detonates every mine deployed by this miner.
   energyCost: 5
   cooldown: 2
@@ -41,6 +41,7 @@ MonoBehaviour:
     prefabId: miner-detonator
     lifetime: 1
     useSourcePosition: 1
+    spawnPositionMode: 0
     ownership: 0
     miningValue: 0
     tickInterval: 0
