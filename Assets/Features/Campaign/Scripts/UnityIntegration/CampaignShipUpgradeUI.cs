@@ -19,13 +19,9 @@ public sealed class CampaignShipUpgradeUI : PlayerBoundStationUI
     [SerializeField] private TMP_Text upgradeButtonLabel;
 
     private InventoryManager inventory;
-    private bool initialized;
 
     protected override void OnPlayerBound(GameObject player)
     {
-        if (initialized)
-            return;
-
         inventory = LocalPlayerContext.Inventory != null
             ? LocalPlayerContext.Inventory
             : player.GetComponent<InventoryManager>();
@@ -41,8 +37,6 @@ public sealed class CampaignShipUpgradeUI : PlayerBoundStationUI
             upgradeButton.onClick.RemoveListener(OnUpgradeClicked);
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
         }
-
-        initialized = true;
     }
 
     public override void Show()
@@ -181,5 +175,10 @@ public sealed class CampaignShipUpgradeUI : PlayerBoundStationUI
 
         GameObject go = new GameObject(nameof(PlayerProgressService));
         return go.AddComponent<PlayerProgressService>();
+    }
+
+    protected override void OnPlayerUnbound(GameObject player)
+    {
+        inventory = null;
     }
 }

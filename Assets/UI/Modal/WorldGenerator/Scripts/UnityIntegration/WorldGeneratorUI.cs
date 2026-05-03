@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Biomes.Data;
+using FishNet;
 using Features.Input;
 using Features.Quests.Data;
 using Features.UI;
@@ -34,6 +35,12 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
     [SerializeField] private RectTransform mapRegionsRoot;
     [SerializeField] private WorldRegionButtonView regionButtonPrefab;
 
+    [Header("Campaign Planet List")]
+    [SerializeField] private Vector2 campaignPlanetButtonSize = new(260f, 88f);
+    [SerializeField] private float campaignPlanetButtonSpacing = 96f;
+    [SerializeField] private float campaignPlanetButtonStartY = -20f;
+    [SerializeField] private float campaignPlanetButtonX = 0f;
+
     [Header("Details")]
     [SerializeField] private TextMeshProUGUI selectedWorldTitle;
     [SerializeField] private TextMeshProUGUI selectedWorldDescription;
@@ -55,6 +62,10 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
     [Header("Difficulty")]
     [SerializeField] private Button difficultyButton;
     [SerializeField] private TextMeshProUGUI difficultyButtonLabel;
+
+    [Header("Planet Mission")]
+    [SerializeField] private Button launchPlanetMissionButton;
+    [SerializeField] private TextMeshProUGUI launchPlanetMissionButtonLabel;
 
     public InputMode Mode => InputMode.Dialog;
 
@@ -206,6 +217,83 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         RefreshDifficultyLabel();
     }
 
+    public void OnLaunchPlanetMissionClicked()
+    {
+        if (!UseCampaignFlow)
+            return;
+
+        if (isGeneratingWorld)
+        {
+            Debug.LogWarning("WorldGeneratorUI: planet mission launch ignored while busy", this);
+            return;
+        }
+
+        PlanetProgressData existingProgress = CampaignProgressService.I != null && selectedPlanet != null
+            ? CampaignProgressService.I.GetOrCreatePlanetProgress(selectedPlanet.planetId)
+            : null;
+
+        if (existingProgress != null && existingProgress.isPlanetMissionCompleted)
+        {
+            RefreshPlanetMissionButton();
+            return;
+        }
+
+        if (!TryGetSelectedPlanetMission(out PlanetConfig planet, out PlanetProgressData progress, out string failureReason))
+        {
+            if (!string.IsNullOrWhiteSpace(failureReason))
+                Debug.LogWarning("[WorldGeneratorUI] " + failureReason, this);
+
+            RefreshPlanetMissionButton();
+            return;
+        }
+
+        if (progress != null && progress.isPlanetMissionCompleted)
+        {
+            RefreshPlanetMissionButton();
+            return;
+        }
+
+        if (InstanceFinder.NetworkManager == null || !InstanceFinder.NetworkManager.IsServerStarted)
+        {
+            Debug.LogWarning("[WorldGeneratorUI] Only host can launch planet missions.", this);
+            RefreshPlanetMissionButton();
+            return;
+        }
+
+        isGeneratingWorld = true;
+
+        if (generateWorldButton != null)
+            generateWorldButton.interactable = false;
+
+        if (launchPlanetMissionButton != null)
+            launchPlanetMissionButton.interactable = false;
+
+        LoadingScreenService.Show(
+            GetPlanetDisplayName(planet, selectedWorldIndex),
+            "Loading planet mission...");
+
+        if (!CampaignPlanetMissionBootstrap.TryPrepareMission(
+                campaignCatalog,
+                planet.planetId,
+                resetExistingQuests: true,
+                out _,
+                out string bootstrapFailure))
+        {
+            isGeneratingWorld = false;
+
+            if (generateWorldButton != null)
+                generateWorldButton.interactable = true;
+
+            RefreshPlanetMissionButton();
+            Debug.LogError("[WorldGeneratorUI] " + bootstrapFailure, this);
+            return;
+        }
+
+        CampaignRuntimeState.SetCatalog(campaignCatalog);
+        SceneTransitionService.LoadScene(planet.planetMissionSceneName);
+        UIStackManager.I?.Clear();
+    }
+
     private void Initialize()
     {
         if (initialized)
@@ -240,11 +328,20 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             difficultyButton.onClick.AddListener(OnCycleDifficultyClicked);
         }
 
+        if (launchPlanetMissionButton != null)
+        {
+            launchPlanetMissionButton.onClick.RemoveListener(OnLaunchPlanetMissionClicked);
+            launchPlanetMissionButton.onClick.AddListener(OnLaunchPlanetMissionClicked);
+        }
+
         if (difficultyButtonLabel != null)
             difficultyButtonLabel.raycastTarget = false;
 
         if (worldConfigButtonLabel != null)
             worldConfigButtonLabel.raycastTarget = false;
+
+        if (launchPlanetMissionButtonLabel != null)
+            launchPlanetMissionButtonLabel.raycastTarget = false;
 
         if (mapRegionsRoot != null)
         {
@@ -311,6 +408,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
 
         RefreshFallbackWorldLabel();
         RefreshDifficultyLabel();
+        RefreshPlanetMissionButton();
 
         if (regionViews.Count == 0)
         {
@@ -456,6 +554,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         RefreshQuestSelection();
         RefreshFallbackWorldLabel();
         RefreshDifficultyLabel();
+        RefreshPlanetMissionButton();
     }
 
     private void CycleBiomeSelection()
@@ -482,6 +581,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         RefreshQuestSelection();
         RefreshFallbackWorldLabel();
         RefreshDifficultyLabel();
+        RefreshPlanetMissionButton();
     }
 
     private void RebuildQuestButtons(List<QuestAsset> quests)
@@ -590,6 +690,62 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             $"Difficulty: {selectedDifficulty} - {WorldRunBalance.GetDifficultyLabel(selectedDifficulty)}";
     }
 
+    private void RefreshPlanetMissionButton()
+    {
+        if (launchPlanetMissionButton == null)
+            return;
+
+        bool visible = UseCampaignFlow;
+        launchPlanetMissionButton.gameObject.SetActive(visible);
+
+        if (!visible)
+            return;
+
+        string label = "Launch Planet Mission";
+        bool interactable = false;
+
+        PlanetProgressData existingProgress = CampaignProgressService.I != null && selectedPlanet != null
+            ? CampaignProgressService.I.GetOrCreatePlanetProgress(selectedPlanet.planetId)
+            : null;
+
+        if (existingProgress != null && existingProgress.isPlanetMissionCompleted)
+        {
+            label = "Planet Mission Completed";
+
+            launchPlanetMissionButton.interactable = false;
+
+            if (launchPlanetMissionButtonLabel != null)
+                launchPlanetMissionButtonLabel.text = label;
+
+            return;
+        }
+
+        if (!TryGetSelectedPlanetMission(out PlanetConfig planet, out PlanetProgressData progress, out string failureReason))
+        {
+            label = string.IsNullOrWhiteSpace(failureReason)
+                ? "Planet Mission Unavailable"
+                : failureReason;
+        }
+        else if (progress != null && progress.isPlanetMissionCompleted)
+        {
+            label = "Planet Mission Completed";
+        }
+        else if (InstanceFinder.NetworkManager == null || !InstanceFinder.NetworkManager.IsServerStarted)
+        {
+            label = "Host Launches Planet Mission";
+        }
+        else
+        {
+            label = $"Launch {GetPlanetDisplayName(planet, selectedWorldIndex)} Mission";
+            interactable = !isGeneratingWorld;
+        }
+
+        launchPlanetMissionButton.interactable = interactable;
+
+        if (launchPlanetMissionButtonLabel != null)
+            launchPlanetMissionButtonLabel.text = label;
+    }
+
     private void ShowNoWorldState()
     {
         if (selectedWorldTitle != null)
@@ -609,6 +765,7 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             selectedQuestDescription.text = "No starting quests are configured.";
 
         ClearQuestButtons();
+        RefreshPlanetMissionButton();
     }
 
     private void ClearRegionButtons()
@@ -858,7 +1015,8 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
             : 1;
 
         int maxThreat = GetMaxSelectableThreat();
-        return $"{description}\n{biomeLine}\nUnlocked Threat: {Mathf.Min(unlockedThreat, maxThreat)} / {maxThreat}";
+        string planetMissionLine = GetPlanetMissionProgressText(selectedPlanet, selectedBiome);
+        return $"{description}\n{biomeLine}\nUnlocked Threat: {Mathf.Min(unlockedThreat, maxThreat)} / {maxThreat}\n{planetMissionLine}";
     }
 
     private string GetSelectedBiomeName()
@@ -905,6 +1063,8 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
 
         if (generateWorldButton != null)
             generateWorldButton.interactable = true;
+
+        RefreshPlanetMissionButton();
     }
 
     private string GetDefaultPlanetId()
@@ -930,19 +1090,22 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
     private WorldSelectionEntry GetVisualEntry(PlanetConfig planet, int index)
     {
         WorldSelectionEntry existing = FindLegacyEntry(planet);
-        if (existing != null)
-            return existing;
 
         return new WorldSelectionEntry
         {
             worldConfig = planet != null ? planet.worldConfig : null,
             displayName = GetPlanetDisplayName(planet, index),
             description = planet != null ? planet.description : "Campaign planet.",
-            position = Vector2.zero,
-            size = new Vector2(190f, 200f),
+            position = GetCampaignPlanetButtonPosition(index),
+            size = campaignPlanetButtonSize,
             rotation = 0f,
-            idleColor = new Color(0.25f, 0.55f, 0.58f, 0.24f),
-            selectedColor = new Color(0.45f, 0.8f, 0.84f, 0.38f),
+            regionSprite = existing != null ? existing.regionSprite : null,
+            idleColor = existing != null
+                ? existing.idleColor
+                : new Color(0.25f, 0.55f, 0.58f, 0.92f),
+            selectedColor = existing != null
+                ? existing.selectedColor
+                : new Color(0.45f, 0.8f, 0.84f, 0.98f),
             lockedColor = new Color(0f, 0f, 0f, 0f),
             availableQuests = new QuestAsset[0],
             availableChains = new QuestChainAsset[0]
@@ -957,5 +1120,118 @@ public sealed class WorldGeneratorUI : PlayerBoundUIView, IUIScreen
         return worldSelectionCatalog.entries.FirstOrDefault(x =>
             x != null &&
             x.worldConfig == planet.worldConfig);
+    }
+
+    private Vector2 GetCampaignPlanetButtonPosition(int index)
+    {
+        return new Vector2(
+            campaignPlanetButtonX,
+            campaignPlanetButtonStartY - (campaignPlanetButtonSpacing * index));
+    }
+
+    private bool TryGetSelectedPlanetMission(
+        out PlanetConfig planet,
+        out PlanetProgressData progress,
+        out string failureReason)
+    {
+        planet = selectedPlanet;
+        progress = null;
+        failureReason = string.Empty;
+
+        if (!UseCampaignFlow)
+        {
+            failureReason = "Planet mission is available only in campaign mode.";
+            return false;
+        }
+
+        if (planet == null)
+        {
+            failureReason = "Select a planet first.";
+            return false;
+        }
+
+        CampaignProgressService campaignProgress = CampaignProgressService.I;
+        if (campaignProgress == null || campaignProgress.ActiveExpedition == null)
+        {
+            failureReason = "Active expedition is not selected.";
+            return false;
+        }
+
+        campaignProgress.TryUnlockPlanetMission(planet, selectedBiome != null ? selectedBiome.biomeID : string.Empty);
+
+        progress = campaignProgress.GetOrCreatePlanetProgress(planet.planetId);
+        if (progress == null)
+        {
+            failureReason = "Planet progress is not available.";
+            return false;
+        }
+
+        if (!progress.isPlanetMissionUnlocked)
+        {
+            failureReason = GetPlanetMissionLockedLabel(planet, selectedBiome);
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(planet.planetMissionSceneName))
+        {
+            failureReason = "Planet mission scene is not assigned.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private string GetPlanetMissionProgressText(PlanetConfig planet, BiomeConfig biome)
+    {
+        if (planet == null)
+            return "Planet Mission: unavailable.";
+
+        if (biome == null)
+            return $"Planet Mission: select region and reach Threat {planet.planetMissionUnlockThreatLevel}.";
+
+        CampaignProgressService campaignProgress = CampaignProgressService.I;
+        if (campaignProgress == null || campaignProgress.ActiveExpedition == null)
+            return $"Planet Mission: region needs Threat {planet.planetMissionUnlockThreatLevel}.";
+
+        BiomeThreatProgressData biomeProgress = campaignProgress.GetOrCreateBiomeProgress(
+            planet.planetId,
+            biome.biomeID);
+
+        bool unlocked = biomeProgress != null &&
+                        biomeProgress.completedThreatLevels != null &&
+                        biomeProgress.completedThreatLevels.Contains(planet.planetMissionUnlockThreatLevel);
+
+        PlanetProgressData planetProgress = campaignProgress.GetOrCreatePlanetProgress(planet.planetId);
+        if (planetProgress != null && planetProgress.isPlanetMissionCompleted)
+            return "Planet Mission: completed.";
+
+        if (planetProgress != null && planetProgress.isPlanetMissionUnlocked)
+            return $"Planet Mission: ready for region {GetSelectedBiomeName()}.";
+
+        int currentThreat = biomeProgress != null ? biomeProgress.maxUnlockedThreatLevel : 1;
+        return $"Planet Mission: region {GetSelectedBiomeName()} needs Threat {planet.planetMissionUnlockThreatLevel} (current {Mathf.Max(1, currentThreat)}).";
+    }
+
+    private string GetPlanetMissionLockedLabel(PlanetConfig planet, BiomeConfig biome)
+    {
+        if (planet == null)
+            return "Planet Mission Locked";
+
+        if (biome == null)
+            return "Select Region First";
+
+        CampaignProgressService campaignProgress = CampaignProgressService.I;
+        if (campaignProgress == null || campaignProgress.ActiveExpedition == null)
+            return $"Locked (Threat {planet.planetMissionUnlockThreatLevel})";
+
+        BiomeThreatProgressData biomeProgress = campaignProgress.GetOrCreateBiomeProgress(
+            planet.planetId,
+            biome.biomeID);
+
+        int currentThreat = biomeProgress != null
+            ? Mathf.Max(1, biomeProgress.maxUnlockedThreatLevel)
+            : 1;
+
+        return $"Locked (Region Threat {currentThreat}/{planet.planetMissionUnlockThreatLevel})";
     }
 }

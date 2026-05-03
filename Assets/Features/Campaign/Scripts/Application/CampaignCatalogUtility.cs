@@ -6,6 +6,33 @@ using UnityEngine;
 
 public static class CampaignCatalogUtility
 {
+    public static HashSet<string> GetUnlockedPlanetIds(CampaignCatalogSO catalog, int shipLevel)
+    {
+        var result = new HashSet<string>();
+        if (catalog == null || catalog.shipLevels == null)
+            return result;
+
+        int normalizedShipLevel = Mathf.Max(1, shipLevel);
+
+        foreach (ShipLevelConfig config in catalog.shipLevels
+                     .Where(x => x != null)
+                     .Where(x => x.shipLevel <= normalizedShipLevel)
+                     .OrderBy(x => x.shipLevel))
+        {
+            if (config.unlockedPlanetIds == null)
+                continue;
+
+            for (int i = 0; i < config.unlockedPlanetIds.Count; i++)
+            {
+                string planetId = config.unlockedPlanetIds[i];
+                if (!string.IsNullOrWhiteSpace(planetId))
+                    result.Add(planetId);
+            }
+        }
+
+        return result;
+    }
+
     public static ShipLevelConfig GetShipLevelConfig(CampaignCatalogSO catalog, int shipLevel)
     {
         if (catalog == null || catalog.shipLevels == null)
@@ -38,8 +65,8 @@ public static class CampaignCatalogUtility
             return result;
 
         int shipLevel = Mathf.Max(1, expedition.shipLevel);
-        ShipLevelConfig shipConfig = GetShipLevelConfig(catalog, shipLevel);
-        if (shipConfig == null || shipConfig.unlockedPlanetIds == null)
+        HashSet<string> unlockedPlanetIds = GetUnlockedPlanetIds(catalog, shipLevel);
+        if (unlockedPlanetIds.Count == 0)
             return result;
 
         return catalog.planets
@@ -47,7 +74,7 @@ public static class CampaignCatalogUtility
             .Where(x => !string.IsNullOrWhiteSpace(x.planetId))
             .Where(x => x.worldConfig != null)
             .Where(x => x.requiredShipLevel <= shipLevel)
-            .Where(x => shipConfig.unlockedPlanetIds.Contains(x.planetId))
+            .Where(x => unlockedPlanetIds.Contains(x.planetId))
             .ToList();
     }
 
@@ -119,10 +146,24 @@ public static class CampaignCatalogUtility
         return Mathf.Max(1, Mathf.Min(unlocked, shipCap));
     }
 
-    public static bool CanUnlockPlanetMission(PlanetConfig planet, CampaignProgressService progressService)
+    public static bool CanUnlockPlanetMission(
+        PlanetConfig planet,
+        CampaignProgressService progressService,
+        string biomeId = null)
     {
         if (planet == null || progressService == null || progressService.ActiveExpedition == null)
             return false;
+
+        if (!string.IsNullOrWhiteSpace(biomeId))
+        {
+            BiomeThreatProgressData progress = progressService.GetOrCreateBiomeProgress(
+                planet.planetId,
+                biomeId);
+
+            return progress != null &&
+                   progress.completedThreatLevels != null &&
+                   progress.completedThreatLevels.Contains(planet.planetMissionUnlockThreatLevel);
+        }
 
         List<BiomeConfig> biomes = GetPlanetBiomes(planet);
         if (biomes.Count == 0)

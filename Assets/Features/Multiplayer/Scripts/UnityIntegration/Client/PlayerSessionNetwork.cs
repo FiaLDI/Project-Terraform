@@ -204,7 +204,7 @@ public class PlayerSessionNetwork : NetworkBehaviour
         {
             PlanetConfig planet = CampaignCatalogUtility.FindPlanet(catalog, run.PlanetId);
             if (planet != null)
-                progress.TryUnlockPlanetMission(planet);
+                progress.TryUnlockPlanetMission(planet, run.BiomeId);
         }
 
         run.Clear();

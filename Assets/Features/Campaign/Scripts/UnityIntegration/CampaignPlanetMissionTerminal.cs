@@ -48,6 +48,17 @@ public sealed class CampaignPlanetMissionTerminal : MonoBehaviour, IInteractable
             return false;
         }
 
+        if (!CampaignPlanetMissionBootstrap.TryPrepareMission(
+                catalog,
+                planet.planetId,
+                resetExistingQuests: true,
+                out _,
+                out string failureReason))
+        {
+            Debug.LogError("[CampaignPlanetMissionTerminal] " + failureReason, this);
+            return false;
+        }
+
         CampaignRuntimeState.SetCatalog(catalog);
         SceneTransitionService.LoadScene(planet.planetMissionSceneName);
         return true;

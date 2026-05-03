@@ -278,9 +278,9 @@ public sealed class CampaignProgressService : MonoBehaviour
         Save();
     }
 
-    public bool TryUnlockPlanetMission(PlanetConfig planet)
+    public bool TryUnlockPlanetMission(PlanetConfig planet, string biomeId = null)
     {
-        if (!CampaignCatalogUtility.CanUnlockPlanetMission(planet, this))
+        if (!CampaignCatalogUtility.CanUnlockPlanetMission(planet, this, biomeId))
             return false;
 
         PlanetProgressData progress = GetOrCreatePlanetProgress(planet.planetId);

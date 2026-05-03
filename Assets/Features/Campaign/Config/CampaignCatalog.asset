@@ -61,11 +61,12 @@ MonoBehaviour:
   planets:
   - planetId: planet_dust_frontier
     displayName: Dust Frontier
-    description: Mixed desert frontier with multiple biomes and a flexible early expedition route.
+    description: Mixed desert frontier with multiple biomes and a flexible early
+      expedition route.
     requiredShipLevel: 1
     worldConfig: {fileID: 11400000, guid: 2d7bf8dd92376ec4eac01ff882cd8c60, type: 2}
     planetMissionId: mission_planet_dust_frontier
-    planetMissionSceneName: 
+    planetMissionSceneName: StaticScene
     planetMissionUnlockThreatLevel: 2
   - planetId: planet_crater_fields
     displayName: Crater Fields
@@ -73,29 +74,32 @@ MonoBehaviour:
     requiredShipLevel: 1
     worldConfig: {fileID: 11400000, guid: 2a94bd5fd5cf4ac2a6d8623911aa5105, type: 2}
     planetMissionId: mission_planet_crater_fields
-    planetMissionSceneName: 
+    planetMissionSceneName: StaticScene
     planetMissionUnlockThreatLevel: 2
   - planetId: planet_toxic_mire
     displayName: Toxic Mire
-    description: Swampy toxic lowlands with wet traversal and volatile organic resource pressure.
+    description: Swampy toxic lowlands with wet traversal and volatile organic resource
+      pressure.
     requiredShipLevel: 2
     worldConfig: {fileID: 11400000, guid: 6a7f437d1a3c48b78f4e680a51cfd107, type: 2}
     planetMissionId: mission_planet_toxic_mire
-    planetMissionSceneName: 
+    planetMissionSceneName: StaticScene
     planetMissionUnlockThreatLevel: 2
   - planetId: planet_crystal_hollows
     displayName: Crystal Hollows
-    description: Canyon-like crystal caverns focused on risky extraction and visibility control.
+    description: Canyon-like crystal caverns focused on risky extraction and visibility
+      control.
     requiredShipLevel: 2
     worldConfig: {fileID: 11400000, guid: 4d2d8670f02a4486987c77b644e6c106, type: 2}
     planetMissionId: mission_planet_crystal_hollows
-    planetMissionSceneName: 
+    planetMissionSceneName: StaticScene
     planetMissionUnlockThreatLevel: 2
   - planetId: planet_ruined_expanse
     displayName: Ruined Expanse
-    description: Late-campaign combat planet with ruins, plateaus, and denser hostile pressure.
+    description: Late-campaign combat planet with ruins, plateaus, and denser hostile
+      pressure.
     requiredShipLevel: 3
     worldConfig: {fileID: 11400000, guid: 8c2bced8450e4637a35fb4b8e9239108, type: 2}
     planetMissionId: mission_planet_ruined_expanse
-    planetMissionSceneName: 
+    planetMissionSceneName: StaticScene
     planetMissionUnlockThreatLevel: 3

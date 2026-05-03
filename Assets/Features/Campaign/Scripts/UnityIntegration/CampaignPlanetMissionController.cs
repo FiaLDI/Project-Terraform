@@ -29,12 +29,25 @@ public sealed class CampaignPlanetMissionController : MonoBehaviour
         CampaignCatalogSO catalog = ResolveCatalog();
         CampaignProgressService progress = CampaignProgressService.EnsureExists();
 
-        if (catalog == null || progress == null || progress.ActiveExpedition == null)
+        if (catalog == null || progress == null)
             yield break;
 
-        activePlanetId = progress.ActiveExpedition.activePlanetId;
+        if (CampaignPlanetMissionRuntimeState.HasActiveMission)
+        {
+            activePlanetId = CampaignPlanetMissionRuntimeState.ActivePlanetId;
+            activeMissionId = CampaignPlanetMissionRuntimeState.ActiveMissionId;
+        }
+        else
+        {
+            if (progress.ActiveExpedition == null)
+                yield break;
+
+            activePlanetId = progress.ActiveExpedition.activePlanetId;
+            PlanetConfig expeditionPlanet = CampaignCatalogUtility.FindPlanet(catalog, activePlanetId);
+            activeMissionId = expeditionPlanet != null ? expeditionPlanet.planetMissionId : string.Empty;
+        }
+
         PlanetConfig activePlanet = CampaignCatalogUtility.FindPlanet(catalog, activePlanetId);
-        activeMissionId = activePlanet != null ? activePlanet.planetMissionId : string.Empty;
 
         if (activePlanet == null || string.IsNullOrWhiteSpace(activeMissionId))
         {
@@ -103,6 +116,7 @@ public sealed class CampaignPlanetMissionController : MonoBehaviour
 
         completionApplied = true;
         CampaignProgressService.EnsureExists()?.MarkPlanetMissionCompleted(activePlanetId);
+        CampaignPlanetMissionRuntimeState.Clear();
 
         if (returnPlayersToHubOnComplete)
             SceneTransitionService.ReturnAllPlayersToHub();

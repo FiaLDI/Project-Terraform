@@ -46,8 +46,12 @@ public sealed class WorldRegionButtonView : MonoBehaviour
     {
         if (baseImage != null)
         {
-            baseImage.sprite = entry.regionSprite;
-            baseImage.useSpriteMesh = true;
+            if (entry.regionSprite != null)
+            {
+                baseImage.sprite = entry.regionSprite;
+                baseImage.useSpriteMesh = true;
+            }
+
             baseImage.rectTransform.sizeDelta = entry.size;
             baseImage.rectTransform.anchoredPosition = Vector2.zero;
             baseImage.color = entry.idleColor;
@@ -55,8 +59,12 @@ public sealed class WorldRegionButtonView : MonoBehaviour
 
         if (glowImage != null)
         {
-            glowImage.sprite = entry.regionSprite;
-            glowImage.useSpriteMesh = true;
+            if (entry.regionSprite != null)
+            {
+                glowImage.sprite = entry.regionSprite;
+                glowImage.useSpriteMesh = true;
+            }
+
             glowImage.rectTransform.sizeDelta = entry.size;
             glowImage.rectTransform.anchoredPosition = Vector2.zero;
             glowImage.color = entry.idleColor;
