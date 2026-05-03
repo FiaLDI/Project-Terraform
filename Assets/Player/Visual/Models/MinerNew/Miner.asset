@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3364e546c1c200b4ca8b7d308f614943, type: 3}
+  m_Name: Miner
+  m_EditorClassIdentifier: Assembly-CSharp::RobotVisualPresetSO
+  id: miner-mode-preset
+  modelPrefab: {fileID: 7259729968499645700, guid: 106db2a6acac05c4b8a6356ffa5075f2, type: 3}
+  deathBurstPrefab: {fileID: 7259729968499645700, guid: 6b81c3698d0f4d5486dd4e34f8b8a73d, type: 3}
+  animator: {fileID: 9100000, guid: edcf6c4b25ead3e4f9adc405508ac897, type: 2}

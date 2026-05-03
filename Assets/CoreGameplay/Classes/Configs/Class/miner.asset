@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Miner
   description: Mining specialist focused on resource control, explosives and deployables.
   preset: {fileID: 11400000, guid: 1b09640c50e9bbe4daf9a4f19b492721, type: 2}
-  visualPreset: {fileID: 11400000, guid: ffc13c66519696d408de5657c3919e32, type: 2}
+  visualPreset: {fileID: 11400000, guid: 670e3c25f066c3748acb4b71f27340f2, type: 2}
   passives:
   - {fileID: 11400000, guid: 96150a45eb80412b8d3ef542acfd7a8d, type: 2}
   abilities:
