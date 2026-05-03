@@ -11,14 +11,53 @@ public class CharacterCreateController : MonoBehaviour
 
     private void Start()
     {
-        _progress = PlayerProgressService.Instance;
+        _progress = EnsureProgressService();
+        EnterCharacterCreate();
+    }
 
-        classDropdown.ClearOptions();
-        classDropdown.AddOptions(new List<string> { "tech", "miner", "fighter", "comms" });
+    public void EnterCharacterCreate()
+    {
+        if (classDropdown != null)
+        {
+            classDropdown.gameObject.SetActive(true);
+            classDropdown.ClearOptions();
+            classDropdown.AddOptions(new List<string> { "tech", "miner", "fighter", "comms" });
+            classDropdown.value = 0;
+            classDropdown.RefreshShownValue();
+        }
+
+        if (nicknameInput != null)
+            nicknameInput.text = string.Empty;
     }
 
     public void OnCreate()
     {
+        _progress = EnsureProgressService();
+
+        if (nicknameInput == null)
+        {
+            Debug.LogError("CharacterCreateController.nicknameInput is not assigned.");
+            return;
+        }
+
+        if (classDropdown == null)
+        {
+            Debug.LogError("CharacterCreateController.classDropdown is not assigned.");
+            return;
+        }
+
+        if (classDropdown.options == null || classDropdown.options.Count == 0)
+        {
+            Debug.LogError("CharacterCreateController.classDropdown has no options.");
+            return;
+        }
+
+        if (_progress == null)
+        {
+            Debug.LogError("PlayerProgressService is missing and could not be created.");
+            return;
+        }
+
         string nick = nicknameInput.text.Trim();
         string cls = classDropdown.options[classDropdown.value].text;
 
@@ -35,4 +74,17 @@ public class CharacterCreateController : MonoBehaviour
 
     public void OnCancel()
         => MainMenuFSM.Instance.Switch(MainMenuStateId.CharacterSelect);
+
+    private static PlayerProgressService EnsureProgressService()
+    {
+        if (PlayerProgressService.Instance != null)
+            return PlayerProgressService.Instance;
+
+        PlayerProgressService existing = FindFirstObjectByType<PlayerProgressService>(FindObjectsInactive.Include);
+        if (existing != null)
+            return existing;
+
+        GameObject go = new GameObject(nameof(PlayerProgressService));
+        return go.AddComponent<PlayerProgressService>();
+    }
 }

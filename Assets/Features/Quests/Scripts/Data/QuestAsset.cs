@@ -27,6 +27,7 @@ namespace Features.Quests.Data
         public ItemHaveConditionConfig[] haveItems;
 
         public string reachPointId;
+        public string interactionPointId;
 
         [Header("Rewards")]
 
@@ -75,6 +76,13 @@ namespace Features.Quests.Data
             {
                 conditions.Add(
                     new ReachPointCondition(reachPointId)
+                );
+            }
+
+            if (!string.IsNullOrEmpty(interactionPointId))
+            {
+                conditions.Add(
+                    new InteractPointCondition(interactionPointId)
                 );
             }
 

@@ -10,6 +10,8 @@ public class MainMenuFSM : MonoBehaviour
 
     private Dictionary<MainMenuStateId, IMainMenuState> _states;
 
+    public MainMenuStateId CurrentStateId => _currentStateId;
+
     private void Awake()
     {
         Instance = this;
@@ -35,7 +37,9 @@ public class MainMenuFSM : MonoBehaviour
             MainMenuStateId.Play => MainMenuStateId.Play,
             MainMenuStateId.CharacterSelect => MainMenuStateId.Play,
             MainMenuStateId.CharacterCreate => MainMenuStateId.CharacterSelect,
-            MainMenuStateId.StartGame => MainMenuStateId.CharacterSelect,
+            MainMenuStateId.ExpeditionSelect => MainMenuStateId.CharacterSelect,
+            MainMenuStateId.ExpeditionCreate => MainMenuStateId.ExpeditionSelect,
+            MainMenuStateId.StartGame => MainMenuStateId.ExpeditionSelect,
             MainMenuStateId.Settings => MainMenuStateId.Play,
             _ => MainMenuStateId.Play
         };
@@ -53,6 +57,8 @@ public enum MainMenuStateId
     Play,
     CharacterSelect,
     CharacterCreate,
+    ExpeditionSelect,
+    ExpeditionCreate,
     StartGame,
     Settings
 }

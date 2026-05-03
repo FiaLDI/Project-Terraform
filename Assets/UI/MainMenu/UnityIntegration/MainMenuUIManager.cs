@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class MainMenuUIManager : MonoBehaviour
 {
@@ -8,6 +9,8 @@ public class MainMenuUIManager : MonoBehaviour
     public GameObject playPanel;
     public GameObject characterSelectPanel;
     public GameObject characterCreatePanel;
+    public GameObject expeditionSelectPanel;
+    public GameObject expeditionCreatePanel;
     public GameObject startGamePanel;
     public GameObject SettingsMenuPanel;
 
@@ -22,6 +25,8 @@ public class MainMenuUIManager : MonoBehaviour
             { MainMenuStateId.Play, playPanel },
             { MainMenuStateId.CharacterSelect, characterSelectPanel },
             { MainMenuStateId.CharacterCreate, characterCreatePanel },
+            { MainMenuStateId.ExpeditionSelect, expeditionSelectPanel },
+            { MainMenuStateId.ExpeditionCreate, expeditionCreatePanel },
             { MainMenuStateId.StartGame, startGamePanel },
             { MainMenuStateId.Settings, SettingsMenuPanel }
         };
@@ -35,7 +40,9 @@ public class MainMenuUIManager : MonoBehaviour
             return;
         }
 
-        foreach (var p in _panels)
-            p.Value.SetActive(p.Key == state);
+        GameObject activePanel = _panels[state];
+
+        foreach (GameObject panel in _panels.Values.Where(x => x != null).Distinct())
+            panel.SetActive(panel == activePanel);
     }
 }
