@@ -23,6 +23,9 @@ public partial struct PlayerSpatialUpdateSystem : ISystem
             if (!PlayerRegistryECS.TryGetNetId(entity, out int netId))
                 continue;
 
+            if (!em.HasComponent<LocalTransform>(entity))
+                continue;
+
             var pos = em.GetComponentData<LocalTransform>(entity).Position;
 
             PlayerSpatialGrid.Add(netId, pos);

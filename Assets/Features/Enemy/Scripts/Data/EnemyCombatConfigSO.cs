@@ -1,3 +1,4 @@
+using Features.Effects.Domain;
 using UnityEngine;
 
 namespace Features.Enemy.Data
@@ -6,9 +7,12 @@ namespace Features.Enemy.Data
     public class EnemyCombatConfigSO : ScriptableObject
     {
         [Header("Attack")]
+        public EnemyAttackType attackType = EnemyAttackType.Melee;
         public float attackRange = 2f;
         public float attackDamage = 10f;
         public float attackCooldown = 1.2f;
+        public float attackDelay = 0.3f;
+        public EffectDefinition attackEffect;
 
         [Header("Behavior")]
         public float attackEnterOffset = 0.5f;

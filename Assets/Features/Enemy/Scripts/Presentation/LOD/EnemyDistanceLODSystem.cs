@@ -54,6 +54,14 @@ namespace Features.Enemy.Presentation.LOD
                     config.render.lod1Prefab,
                     config.render.lod2Prefab
                 );
+
+                // Keep a visible fallback model even when distance LOD updates are disabled.
+                view.SetLOD(0);
+                currentLOD = 0;
+            }
+            else
+            {
+                currentLOD = -1;
             }
 
             enabled = HasValidLODConfig();
@@ -92,10 +100,16 @@ namespace Features.Enemy.Presentation.LOD
             bool useInstancing =
                 config.render.useGPUInstancing &&
                 dist > instancingDistance;
+            bool wasInstancing = instancing != null && instancing.IsInstancingActive;
 
             if (useInstancing)
             {
                 instancing?.EnableInstancing();
+                if (currentLOD != 2)
+                {
+                    currentLOD = 2;
+                    logic?.ApplyLOD(2);
+                }
                 return;
             }
 
@@ -105,7 +119,7 @@ namespace Features.Enemy.Presentation.LOD
                 dist <= lod0Distance ? 0 :
                 dist <= lod1Distance ? 1 : 2;
 
-            if (lod == currentLOD)
+            if (lod == currentLOD && !wasInstancing)
                 return;
 
             currentLOD = lod;

@@ -33,6 +33,9 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
     [Header("Layers")]
     [SerializeField] private LayerMask obstacleMask;
     [SerializeField] private LayerMask groundMask;
+    [SerializeField] private LayerMask enemyMask;
+
+    private readonly Collider[] separationBuffer = new Collider[32];
 
     private Vector3 smoothDir;
     private float jumpCooldown;
@@ -47,10 +50,13 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         rb = GetComponent<Rigidbody>();
 
         if (obstacleMask.value == 0)
-            obstacleMask = ~0;
+            obstacleMask = Physics.DefaultRaycastLayers;
 
         if (groundMask.value == 0)
-            groundMask = ~0;
+            groundMask = Physics.DefaultRaycastLayers;
+
+        if (enemyMask.value == 0)
+            enemyMask = Physics.DefaultRaycastLayers;
 
         rb.constraints =
             RigidbodyConstraints.FreezeRotationX |
@@ -119,6 +125,11 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         Vector3 pos = rb.position;
         Vector3 target = targetData.Value;
         Vector3 moveTarget = target;
+        float avoidDistanceValue = steering.avoidDistance > 0f ? steering.avoidDistance : avoidDistance;
+        float sideAvoidDistanceValue = steering.sideAvoidDistance > 0f ? steering.sideAvoidDistance : sideAvoidDistance;
+        float separationRadiusValue = steering.separationRadius > 0f ? steering.separationRadius : separationRadius;
+        float rotationSpeedValue = steering.rotationSpeed > 0f ? steering.rotationSpeed : rotationSpeed;
+        float directionSmoothingValue = steering.directionSmoothing > 0f ? steering.directionSmoothing : 8f;
 
         Vector3 flatTarget = new Vector3(moveTarget.x, pos.y, moveTarget.z);
         Vector3 toTarget = flatTarget - pos;
@@ -160,25 +171,33 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         Vector3 left = Quaternion.Euler(0, -30, 0) * forward;
         Vector3 rightDir = Quaternion.Euler(0, 30, 0) * forward;
 
-        if (Physics.Raycast(origin, forward, out var hitF, avoidDistance, obstacleMask))
+        if (Physics.Raycast(origin, forward, out var hitF, avoidDistanceValue, obstacleMask))
         {
             avoid += hitF.normal;
             forwardBlocked = true;
         }
 
-        if (Physics.Raycast(origin, left, out var hitL, sideAvoidDistance, obstacleMask))
+        if (Physics.Raycast(origin, left, out var hitL, sideAvoidDistanceValue, obstacleMask))
             avoid += hitL.normal;
 
-        if (Physics.Raycast(origin, rightDir, out var hitR, sideAvoidDistance, obstacleMask))
+        if (Physics.Raycast(origin, rightDir, out var hitR, sideAvoidDistanceValue, obstacleMask))
             avoid += hitR.normal;
 
         // ===== SEPARATION =====
         Vector3 separation = Vector3.zero;
 
-        var neighbors = Physics.OverlapSphere(pos, separationRadius);
+        int neighborCount = Physics.OverlapSphereNonAlloc(
+            pos,
+            separationRadiusValue,
+            separationBuffer,
+            enemyMask,
+            QueryTriggerInteraction.Ignore
+        );
 
-        foreach (var col in neighbors)
+        for (int i = 0; i < neighborCount; i++)
         {
+            var col = separationBuffer[i];
+            if (col == null) continue;
             if (col.attachedRigidbody == rb) continue;
             if (!col.CompareTag("Enemy")) continue;
 
@@ -218,7 +237,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         smoothDir = Vector3.Lerp(
             smoothDir,
             desiredDir,
-            8f * Time.fixedDeltaTime
+            directionSmoothingValue * Time.fixedDeltaTime
         );
 
         Vector3 finalDir = smoothDir.normalized;
@@ -227,14 +246,14 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
             forwardBlocked &&
             jumpCooldown <= 0f &&
             IsGrounded(pos) &&
-            HasJumpClearance(pos, finalDir);
+            HasJumpClearance(pos, finalDir, avoidDistanceValue);
 
         bool canDoHighJump =
             forwardBlocked &&
             !canDoNormalJump &&
             jumpCooldown <= 0f &&
             IsGrounded(pos) &&
-            HasHighJumpClearance(pos, finalDir);
+            HasHighJumpClearance(pos, finalDir, avoidDistanceValue);
 
         if (forwardBlocked && !canDoNormalJump && !canDoHighJump)
         {
@@ -260,7 +279,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
                 smoothDir = Vector3.Lerp(
                     smoothDir,
                     detourDesiredDir,
-                    8f * Time.fixedDeltaTime
+                    directionSmoothingValue * Time.fixedDeltaTime
                 );
 
                 finalDir = smoothDir.normalized;
@@ -299,7 +318,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
             rb.MoveRotation(Quaternion.Slerp(
                 rb.rotation,
                 targetRot,
-                rotationSpeed * Time.fixedDeltaTime
+                rotationSpeedValue * Time.fixedDeltaTime
             ));
         }
 
@@ -322,7 +341,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         );
     }
 
-    private bool HasJumpClearance(Vector3 pos, Vector3 direction)
+    private bool HasJumpClearance(Vector3 pos, Vector3 direction, float avoidDistanceValue)
     {
         if (direction.sqrMagnitude < 0.001f)
             return false;
@@ -333,7 +352,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         bool lowBlocked = Physics.Raycast(
             lowOrigin,
             direction,
-            avoidDistance,
+            avoidDistanceValue,
             obstacleMask,
             QueryTriggerInteraction.Ignore
         );
@@ -344,7 +363,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         bool highBlocked = Physics.Raycast(
             highOrigin,
             direction,
-            avoidDistance,
+            avoidDistanceValue,
             obstacleMask,
             QueryTriggerInteraction.Ignore
         );
@@ -352,7 +371,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         return !highBlocked;
     }
 
-    private bool HasHighJumpClearance(Vector3 pos, Vector3 direction)
+    private bool HasHighJumpClearance(Vector3 pos, Vector3 direction, float avoidDistanceValue)
     {
         if (direction.sqrMagnitude < 0.001f)
             return false;
@@ -363,7 +382,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         bool lowBlocked = Physics.Raycast(
             lowOrigin,
             direction,
-            avoidDistance,
+            avoidDistanceValue,
             obstacleMask,
             QueryTriggerInteraction.Ignore
         );
@@ -374,7 +393,7 @@ public sealed class EnemyEcsMoveBridge : NetworkBehaviour
         bool highBlocked = Physics.Raycast(
             highOrigin,
             direction,
-            avoidDistance,
+            avoidDistanceValue,
             obstacleMask,
             QueryTriggerInteraction.Ignore
         );

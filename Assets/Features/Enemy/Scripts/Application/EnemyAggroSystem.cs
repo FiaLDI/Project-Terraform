@@ -1,7 +1,10 @@
 using Unity.Burst;
 using Unity.Entities;
+using Unity.Mathematics;
 
 [BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateBefore(typeof(EnemyTargetingSystem))]
 public partial struct EnemyAggroSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
@@ -44,6 +47,38 @@ public partial struct EnemyAggroSystem : ISystem
             }
 
             damageBuffer.Clear();
+        }
+
+        float deltaTime = SystemAPI.Time.DeltaTime;
+
+        foreach (var (aggroBuffer, settings) in SystemAPI
+                     .Query<DynamicBuffer<EnemyAggroElement>, RefRO<EnemyAggroSettings>>()
+                     .WithNone<EnemyInactive>())
+        {
+            var buffer = aggroBuffer;
+            float decay = math.max(0f, settings.ValueRO.ThreatDecayPerSecond) * deltaTime;
+
+            for (int i = buffer.Length - 1; i >= 0; i--)
+            {
+                var entry = buffer[i];
+
+                if (entry.Target == Entity.Null ||
+                    !SystemAPI.Exists(entry.Target) ||
+                    SystemAPI.HasComponent<PlayerDead>(entry.Target))
+                {
+                    buffer.RemoveAt(i);
+                    continue;
+                }
+
+                entry.Value -= decay;
+                if (entry.Value <= 0.01f)
+                {
+                    buffer.RemoveAt(i);
+                    continue;
+                }
+
+                buffer[i] = entry;
+            }
         }
     }
 }

@@ -13,10 +13,18 @@ public struct EnemyAI : IComponentData
 
     public float AttackRange;
     public float AttackCooldown;
+    public EnemyAttackType AttackType;
 
     public float AttackEnterOffset;
     public float AttackExitOffset;
     public float StopDistanceMultiplier;
+    public float PreferredCombatDistance;
+    public float RetreatDistance;
+    public float ReengageDistance;
+    public float AggroConfirmTime;
+    public float LostSightGraceTime;
+    public float AttackMoveGoalTolerance;
+    public float ReturnReachDistance;
 
     public float VisionAngle;
     public float VisionRange;
@@ -32,7 +40,9 @@ public struct EnemyTarget : IComponentData
 
 public struct EnemyAggroSettings : IComponentData
 {
-    public float SwitchDistance;
+    public float ThreatDecayPerSecond;
+    public float TargetSwitchThreshold;
+    public float CurrentTargetBias;
     public float LoseDistance; 
 }
 
@@ -86,6 +96,21 @@ public struct EnemyAggroState : IComponentData
 {
     public float Timer;
 }
+
+public struct EnemyPerceptionState : IComponentData
+{
+    public bool HasTarget;
+    public bool HasValidLos;
+    public bool InsideVisionCone;
+    public float DistToTarget;
+    public float3 TargetPosition;
+    public float PreferredCombatDistance;
+    public float RetreatDistance;
+    public float AttackEnterDistance;
+    public float AttackExitDistance;
+}
+
+public struct EnemyStateFrameLock : IComponentData, IEnableableComponent {}
 
 // =========================
 // ATTACK
@@ -179,6 +204,7 @@ public struct EnemySteeringData : IComponentData
 
     public float rotationSpeed;
     public float orbitStrength;
+    public float directionSmoothing;
 
     public bool enableSeparation;
     public bool enableAvoidance;

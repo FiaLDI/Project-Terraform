@@ -13,6 +13,7 @@ namespace Features.Enemy.Data
 
         private void OnValidate()
         {
+            _map = null;
             ValidateUniqueIds();
         }
 
