@@ -53,7 +53,7 @@ public class EnergyBarUI : PlayerBoundUIView
         targetFill = max > 0f ? current / max : 0f;
 
         if (label != null)
-            label.text = $"{Mathf.RoundToInt(current)}/{Mathf.RoundToInt(max)}";
+            label.text = $"{Mathf.RoundToInt(targetFill * 100f)}%";
     }
 
     private void Update()
