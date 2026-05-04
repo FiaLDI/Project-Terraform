@@ -41,7 +41,7 @@ MonoBehaviour:
     impactFxId: 
     prefabId: miner-mine
     lifetime: 120
-    useSourcePosition: 0
+    useSourcePosition: 1
     spawnPositionMode: 3
     ownership: 0
     miningValue: 0

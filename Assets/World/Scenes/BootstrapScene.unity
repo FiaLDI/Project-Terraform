@@ -17494,6 +17494,63 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Mask
   m_ShowMaskGraphic: 0
+--- !u!1001 &5693023998539645532
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 468.21283
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00006
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 905.38745
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4344976991118223482, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6198651800497087901, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
+      propertyPath: m_Name
+      value: MineExplosionVfx
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fa2090e37506eb846ba2f4b79675fc05, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -17506,3 +17563,4 @@ SceneRoots:
   - {fileID: 1900769105}
   - {fileID: 669638675}
   - {fileID: 386090759}
+  - {fileID: 5693023998539645532}
