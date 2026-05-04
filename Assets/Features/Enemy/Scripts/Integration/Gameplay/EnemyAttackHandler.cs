@@ -32,6 +32,10 @@ public sealed class EnemyAttackHandler : MonoBehaviour
         var world = Unity.Entities.World.DefaultGameObjectInjectionWorld;
         if (world != null)
             em = world.EntityManager;
+
+        // Clients also need the combat config so projectile visuals can be resolved from RPCs.
+        if (binder != null && binder.Config != null)
+            ApplyCombatConfig(binder.Config.combat);
     }
 
     public void ApplyCombatConfig(Features.Enemy.Data.EnemyCombatConfigSO combatConfig)
@@ -140,6 +144,8 @@ public sealed class EnemyAttackHandler : MonoBehaviour
 
                         runtimeProjectileConfig = Instantiate(runtimeEffect.projectileConfig);
                         runtimeProjectileConfig.damage = resolvedDamage;
+                        runtimeProjectileConfig.damageType = runtimeEffect.damageType;
+                        OverrideEnemyProjectileHitMask(runtimeProjectileConfig);
                         runtimeEffect.projectileConfig = runtimeProjectileConfig;
                     }
                     break;
@@ -147,6 +153,16 @@ public sealed class EnemyAttackHandler : MonoBehaviour
         }
 
         return runtimeEffect;
+    }
+
+    private static void OverrideEnemyProjectileHitMask(ProjectileConfig projectileConfig)
+    {
+        if (projectileConfig == null)
+            return;
+
+        int playerMask = LayerMask.GetMask("Player");
+        if (playerMask != 0)
+            projectileConfig.hitMask = playerMask;
     }
 
     private static bool HasConfiguredEffect(EffectDefinition effectDefinition)
