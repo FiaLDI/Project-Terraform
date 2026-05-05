@@ -8,6 +8,10 @@ namespace Features.Enemy.Data
         [Header("Aggro")]
         public float aggroRadius = 12f;
         public float loseAggroRadius = 18f;
+        public float threatDecayPerSecond = 4f;
+        public float targetSwitchThreshold = 1.2f;
+        public float currentTargetBias = 2f;
+        public float aggroConfirmTime = 0.3f;
 
         [Header("Movement")]
         public float moveSpeed = 3f;
@@ -32,8 +36,17 @@ namespace Features.Enemy.Data
 
         [Header("Movement Feel")]
         public float orbitStrength = 0.6f;
+        public float directionSmoothing = 8f;
 
-        [Header("Behavior")]
+        [Header("Brain")]
+        public float lostSightGraceTime = 0.25f;
+        public float attackMoveGoalTolerance = 0.15f;
+        public float returnReachDistance = 1f;
+        public float preferredCombatDistance = 0f;
+        public float retreatDistance = 0f;
+        public float reengageDistance = 0f;
+
+        [Header("Behavior Toggles")]
         public bool enableSeparation = true;
         public bool enableAvoidance = true;
         public bool enableOrbit = true;

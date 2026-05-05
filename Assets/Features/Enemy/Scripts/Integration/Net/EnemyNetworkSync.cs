@@ -5,8 +5,14 @@ public class EnemyNetworkSync : NetworkBehaviour
 {
     private Vector3 targetPos;
     private Quaternion targetRot;
+    private Vector3 lastSentPos;
+    private Quaternion lastSentRot;
+    private float sendTimer;
 
     [SerializeField] private float lerpRate = 15f;
+    [SerializeField] private float sendInterval = 0.1f;
+    [SerializeField] private float positionThreshold = 0.05f;
+    [SerializeField] private float rotationThreshold = 2f;
 
     public override void OnStartClient()
     {
@@ -35,10 +41,23 @@ public class EnemyNetworkSync : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (IsServer)
-        {
-            SendStateObserversRpc(transform.position, transform.rotation);
-        }
+        if (!IsServer)
+            return;
+
+        sendTimer -= Time.fixedDeltaTime;
+
+        Vector3 pos = transform.position;
+        Quaternion rot = transform.rotation;
+        bool movedEnough = Vector3.Distance(lastSentPos, pos) >= positionThreshold;
+        bool rotatedEnough = Quaternion.Angle(lastSentRot, rot) >= rotationThreshold;
+
+        if (sendTimer > 0f && !movedEnough && !rotatedEnough)
+            return;
+
+        sendTimer = Mathf.Max(0.02f, sendInterval);
+        lastSentPos = pos;
+        lastSentRot = rot;
+        SendStateObserversRpc(pos, rot);
     }
 
     [ObserversRpc(BufferLast = true)]

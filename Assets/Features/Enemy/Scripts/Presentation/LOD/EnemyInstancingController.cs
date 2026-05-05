@@ -6,6 +6,7 @@ namespace Features.Enemy.Presentation.LOD
     public class EnemyInstancingController : MonoBehaviour
     {
         private bool active;
+        public bool IsInstancingActive => active;
 
         private EnemyLODView view;
 

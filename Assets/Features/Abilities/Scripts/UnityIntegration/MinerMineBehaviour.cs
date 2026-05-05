@@ -4,6 +4,7 @@ using Features.Buffs.Domain;
 using Features.Effects.Application;
 using Features.Effects.Domain;
 using UnityEngine;
+using System.Collections;
 
 namespace Features.Abilities.UnityIntegration
 {
@@ -22,6 +23,15 @@ namespace Features.Abilities.UnityIntegration
 
         [Header("Ownership")]
         [SerializeField] private int maxOwnedMines = 5;
+
+        [Header("Visuals")]
+        [SerializeField] private RadiusCircleVisual radiusCircleVisual;
+
+        [Header("Explosion Visuals")]
+        [SerializeField] private GameObject explosionVfxPrefab;
+        [SerializeField] private float explosionVfxLifetime = 4f;
+        [SerializeField] private bool scaleExplosionVfxByRadius = true;
+        [SerializeField] private float explosionVfxScaleMultiplier = 1f;
 
         private NetworkObject networkObject;
         private SpawnedObjectContext spawnedContext;
@@ -54,6 +64,9 @@ namespace Features.Abilities.UnityIntegration
 
             if (targetMask.value == 0)
                 targetMask = LayerMask.GetMask("Enemy");
+
+            if (radiusCircleVisual != null)
+                radiusCircleVisual.SetRadius(explosionRadius, transform.position);
         }
 
         public override void OnStartServer()
@@ -120,6 +133,37 @@ namespace Features.Abilities.UnityIntegration
                     Vector3.up
                 )
             );
+
+            PlayExplosionVfxRpc(transform.position, transform.rotation, explosionRadius);
+
+            StartCoroutine(DespawnAfterVfxRpc());
+        }
+
+        [ObserversRpc]
+        private void PlayExplosionVfxRpc(Vector3 position, Quaternion rotation, float radius)
+        {
+            if (explosionVfxPrefab == null)
+                return;
+
+            GameObject vfx = Instantiate(
+                explosionVfxPrefab,
+                position,
+                rotation
+            );
+
+            if (scaleExplosionVfxByRadius)
+            {
+                float scale = radius * explosionVfxScaleMultiplier;
+                vfx.transform.localScale = Vector3.one * scale;
+            }
+
+            Destroy(vfx, explosionVfxLifetime);
+        }
+
+        [Server]
+        private IEnumerator DespawnAfterVfxRpc()
+        {
+            yield return null;
 
             DespawnSelf();
         }

@@ -22,18 +22,17 @@ public sealed class UpgradeStationUI : PlayerBoundStationUI
     private ItemInstance selectedInstance;
     private UpgradeRecipeSO selectedRecipe;
     private InventorySlotRef selectedSlot;
-    private bool initialized;
+    private bool subscribed;
 
     protected override void OnPlayerBound(GameObject player)
     {
-        if (initialized)
-            return;
-
         if (processor == null || recipePanel == null)
         {
             Debug.LogError("[UpgradeStationUI] Missing required references", this);
             return;
         }
+
+        UnsubscribeInventoryEvents();
 
         IInventoryContext localInventory = LocalPlayerContext.Inventory;
         if (localInventory == null)
@@ -57,14 +56,13 @@ public sealed class UpgradeStationUI : PlayerBoundStationUI
         processor.OnProgress += HandleProgress;
         processor.OnComplete += HandleComplete;
         inventory.OnInventoryChanged += OnInventoryChanged;
+        subscribed = true;
 
         if (closeButton != null)
         {
             closeButton.onClick.RemoveListener(Close);
             closeButton.onClick.AddListener(Close);
         }
-
-        initialized = true;
     }
 
     public override void Show()
@@ -76,15 +74,7 @@ public sealed class UpgradeStationUI : PlayerBoundStationUI
 
     private void OnDestroy()
     {
-        if (processor != null)
-        {
-            processor.OnStart -= HandleStart;
-            processor.OnProgress -= HandleProgress;
-            processor.OnComplete -= HandleComplete;
-        }
-
-        if (inventory != null)
-            inventory.OnInventoryChanged -= OnInventoryChanged;
+        UnsubscribeInventoryEvents();
     }
 
     private void BuildUpgradeList()
@@ -222,5 +212,33 @@ public sealed class UpgradeStationUI : PlayerBoundStationUI
 
         if (recipePanel != null)
             recipePanel.ResetProgress();
+    }
+
+    protected override void OnPlayerUnbound(GameObject player)
+    {
+        CancelProcessing();
+        UnsubscribeInventoryEvents();
+        inventory = null;
+        selectedInstance = null;
+        selectedRecipe = null;
+        selectedSlot = default;
+    }
+
+    private void UnsubscribeInventoryEvents()
+    {
+        if (!subscribed)
+            return;
+
+        if (processor != null)
+        {
+            processor.OnStart -= HandleStart;
+            processor.OnProgress -= HandleProgress;
+            processor.OnComplete -= HandleComplete;
+        }
+
+        if (inventory != null)
+            inventory.OnInventoryChanged -= OnInventoryChanged;
+
+        subscribed = false;
     }
 }

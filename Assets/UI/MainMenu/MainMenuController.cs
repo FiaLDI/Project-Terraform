@@ -10,19 +10,37 @@ public class MainMenuController : MonoBehaviour, IUIScreen
         LoadingScreenService.Hide();
 
         var fsm = MainMenuFSM.Instance;
-        var controller = Object.FindFirstObjectByType<CharacterSelectController>();
+        var characterSelectController = GetRequiredController<CharacterSelectController>();
+        var characterCreateController = GetRequiredController<CharacterCreateController>();
+        var expeditionSelectController = GetRequiredController<ExpeditionSelectController>();
+        var expeditionCreateController = GetRequiredController<ExpeditionCreateController>();
 
         fsm.Init(new Dictionary<MainMenuStateId, IMainMenuState>
         {
             { MainMenuStateId.Play, new PlayMenuState() },
-            { MainMenuStateId.CharacterSelect, new CharacterSelectState(controller) },
-            { MainMenuStateId.CharacterCreate, new CharacterCreateState() },
+            { MainMenuStateId.CharacterSelect, new CharacterSelectState(characterSelectController) },
+            { MainMenuStateId.CharacterCreate, new CharacterCreateState(characterCreateController) },
+            { MainMenuStateId.ExpeditionSelect, new ExpeditionSelectState(expeditionSelectController) },
+            { MainMenuStateId.ExpeditionCreate, new ExpeditionCreateState(expeditionCreateController) },
             { MainMenuStateId.StartGame, new StartGameState() },
             { MainMenuStateId.Settings, new SettingsState() }
         });
 
         fsm.Switch(MainMenuStateId.Play);
-        UIStackManager.I.Push(this);
+
+        if (UIStackManager.I != null)
+            UIStackManager.I.Push(this);
+        else
+            Debug.LogWarning("UIStackManager is missing. Main menu will work without stack registration.");
+    }
+
+    private T GetRequiredController<T>() where T : Component
+    {
+        T controller = GetComponent<T>();
+        if (controller == null)
+            Debug.LogError($"{typeof(T).Name} is missing on '{name}'.");
+
+        return controller;
     }
 
     public void OnPlayPressed()
@@ -43,7 +61,7 @@ public class MainMenuController : MonoBehaviour, IUIScreen
 
     private void OnDestroy()
     {
-        UIStackManager.I.Clear();
+        UIStackManager.I?.Clear();
     }
 
     public void Show()

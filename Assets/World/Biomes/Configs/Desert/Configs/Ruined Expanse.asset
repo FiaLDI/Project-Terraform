@@ -109,7 +109,28 @@ MonoBehaviour:
   resourceDensity: 0.0038
   resourceSpawnYOffset: 0.3
   resourceEdgeFalloff: 1
-  possibleQuests: []
+  possibleQuests:
+  - questAsset: {fileID: 11400000, guid: f764e69a9b22cf94d95eee67e3c3e0e6, type: 2}
+    questPointPrefab: {fileID: 0}
+    spawnChance: 1
+    spawnPointsMin: 1
+    spawnPointsMax: 3
+    requiredTargets: 1
+    safetyRadius: 5
+  - questAsset: {fileID: 11400000, guid: fda4d22d481ccaf4b9e422a08ecdb472, type: 2}
+    questPointPrefab: {fileID: 0}
+    spawnChance: 1
+    spawnPointsMin: 1
+    spawnPointsMax: 3
+    requiredTargets: 1
+    safetyRadius: 5
+  - questAsset: {fileID: 11400000, guid: bb2f1e8d5c794d5fabce2610a1b29002, type: 2}
+    questPointPrefab: {fileID: 0}
+    spawnChance: 1
+    spawnPointsMin: 1
+    spawnPointsMax: 3
+    requiredTargets: 1
+    safetyRadius: 5
   questTargetsMin: 2
   questTargetsMax: 5
   enemyTable:

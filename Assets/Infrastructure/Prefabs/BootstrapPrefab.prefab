@@ -571,6 +571,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6859285547468634790}
   - component: {fileID: 5688479761019667739}
+  - component: {fileID: 7894752723740136723}
+  - component: {fileID: 2103111099919605235}
   m_Layer: 0
   m_Name: Progress
   m_TagString: Untagged
@@ -605,6 +607,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fac4bc79ddac0c4f8c0ca6b56cffbcf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProgressService
+--- !u!114 &7894752723740136723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1156155118929613152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ea2cdb3376920545b7ab8d0ab553b72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CampaignProgressService
+--- !u!114 &2103111099919605235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1156155118929613152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a3c348468ae42747b96a9a8cdb6f577, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CampaignRunContext
 --- !u!1 &1327126382982323042
 GameObject:
   m_ObjectHideFlags: 0

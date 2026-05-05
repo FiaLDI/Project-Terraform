@@ -36,6 +36,6 @@ public sealed class StartGameController : MonoBehaviour
 
     public void OnBackPressed()
     {
-        MainMenuFSM.Instance.Switch(MainMenuStateId.CharacterSelect);
+        MainMenuFSM.Instance.Switch(MainMenuStateId.ExpeditionSelect);
     }
 }

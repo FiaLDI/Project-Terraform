@@ -67,7 +67,8 @@ namespace Features.Abilities.Application
         private void Awake()
         {
             phase = GetComponent<ServerGamePhase>();
-            buffSource = GetComponent<IBuffSource>();
+            buffSource = GetComponent<StatsBuffTarget>() as IBuffSource
+                ?? GetComponent<IBuffSource>();
 
             Cooldowns.OnChange += OnCooldownSync;
             NetIsChanneling.OnChange += OnChannelStateChanged;

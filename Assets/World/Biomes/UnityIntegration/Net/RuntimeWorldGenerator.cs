@@ -424,12 +424,11 @@ namespace Biomes.UnityIntegration
             if (root.GetComponent<WorldExitBeacon>() == null)
                 root.AddComponent<WorldExitBeacon>();
 
-            var trigger = root.GetComponent<SphereCollider>();
+            var trigger = root.GetComponent<BoxCollider>();
             if (trigger == null)
-                trigger = root.AddComponent<SphereCollider>();
+                trigger = root.AddComponent<BoxCollider>();
 
             trigger.isTrigger = true;
-            trigger.radius = Mathf.Max(0.5f, exitBeaconTriggerRadius);
         }
 
         private void AttachCheckpointTrigger(GameObject root)

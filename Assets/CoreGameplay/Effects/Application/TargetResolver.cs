@@ -27,6 +27,15 @@ namespace Features.Effects.Application
                         targetBuffer[0] = self;
                         count = 1;
                     }
+                    else if (ctx.Source is Component sourceComponent)
+                    {
+                        var selfTarget = sourceComponent.GetComponentInParent<IBuffTarget>();
+                        if (selfTarget != null)
+                        {
+                            targetBuffer[0] = selfTarget;
+                            count = 1;
+                        }
+                    }
                     break;
 
                 case TargetMode.Area:

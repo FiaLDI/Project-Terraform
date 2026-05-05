@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public abstract class CraftingRecipeStationUIBase : PlayerBoundStationUI
 {
     private IInventoryContext inventory;
-    private bool initialized;
+    private bool subscribed;
 
     protected IInventoryContext Inventory => inventory;
 
@@ -18,14 +18,13 @@ public abstract class CraftingRecipeStationUIBase : PlayerBoundStationUI
 
     protected sealed override void OnPlayerBound(GameObject player)
     {
-        if (initialized)
-            return;
-
         if (Processor == null || RecipePanel == null)
         {
             Debug.LogError($"[{GetType().Name}] Missing required references", this);
             return;
         }
+
+        UnsubscribeProcessorEvents();
 
         inventory = LocalPlayerContext.Inventory;
         if (inventory == null)
@@ -41,6 +40,7 @@ public abstract class CraftingRecipeStationUIBase : PlayerBoundStationUI
         Processor.OnStart += HandleStart;
         Processor.OnProgress += HandleProgress;
         Processor.OnComplete += HandleComplete;
+        subscribed = true;
 
         if (CloseButton != null)
         {
@@ -49,17 +49,11 @@ public abstract class CraftingRecipeStationUIBase : PlayerBoundStationUI
         }
 
         OnInitialized();
-        initialized = true;
     }
 
     protected virtual void OnDestroy()
     {
-        if (Processor == null)
-            return;
-
-        Processor.OnStart -= HandleStart;
-        Processor.OnProgress -= HandleProgress;
-        Processor.OnComplete -= HandleComplete;
+        UnsubscribeProcessorEvents();
     }
 
     public override void ShowRecipe(RecipeSO recipe)
@@ -92,6 +86,13 @@ public abstract class CraftingRecipeStationUIBase : PlayerBoundStationUI
 
     protected virtual void OnInitialized()
     {
+    }
+
+    protected override void OnPlayerUnbound(GameObject player)
+    {
+        CancelProcessing();
+        UnsubscribeProcessorEvents();
+        inventory = null;
     }
 
     protected abstract RecipeSO[] GetRecipes(RecipeDatabase recipeDatabase);
@@ -136,5 +137,16 @@ public abstract class CraftingRecipeStationUIBase : PlayerBoundStationUI
 
         if (RecipePanel != null)
             RecipePanel.ResetProgress();
+    }
+
+    private void UnsubscribeProcessorEvents()
+    {
+        if (!subscribed || Processor == null)
+            return;
+
+        Processor.OnStart -= HandleStart;
+        Processor.OnProgress -= HandleProgress;
+        Processor.OnComplete -= HandleComplete;
+        subscribed = false;
     }
 }

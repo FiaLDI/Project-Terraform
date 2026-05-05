@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -13,7 +14,8 @@ public partial struct EnemyLOSSystemECS : ISystem
                      RefRO<LocalTransform>,
                      RefRO<EnemyTarget>,
                      RefRO<EnemyAI>,
-                     RefRW<EnemyHasLineOfSight>>())
+                     RefRW<EnemyHasLineOfSight>>()
+                     .WithNone<EnemyInactive>())
         {
             if (!ai.ValueRO.RequireLOS)
             {
@@ -45,6 +47,17 @@ public partial struct EnemyLOSSystemECS : ISystem
             }
 
             dir /= dist;
+
+            float3 forward = math.mul(transform.ValueRO.Rotation, new float3(0f, 0f, 1f));
+            float3 flatForward = math.normalizesafe(new float3(forward.x, 0f, forward.z), new float3(0f, 0f, 1f));
+            float3 flatDir = math.normalizesafe(new float3(dir.x, 0f, dir.z), new float3(0f, 0f, 1f));
+            float minDot = math.cos(math.radians(ai.ValueRO.VisionAngle * 0.5f));
+
+            if (math.dot(flatForward, flatDir) < minDot)
+            {
+                los.ValueRW.Value = false;
+                continue;
+            }
 
             bool blocked = Physics.Raycast(
                 origin,

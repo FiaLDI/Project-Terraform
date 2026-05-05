@@ -1,13 +1,17 @@
 using UnityEngine;
 using Features.Quests.Domain;
 using Features.Quests.Application;
+using FishNet.Object;
+using Features.Player.UnityIntegration;
+using System.Collections.Generic;
 
 namespace Features.Quests.UnityIntegration
 {
     [RequireComponent(typeof(SphereCollider))]
-    public sealed class QuestPointTrigger : MonoBehaviour
+    public sealed class QuestPointTrigger : NetworkBehaviour
     {
         [SerializeField] private string pointId;
+        private readonly HashSet<int> activeActors = new();
 
         private void Awake()
         {
@@ -20,17 +24,18 @@ namespace Features.Quests.UnityIntegration
 
         private void OnTriggerEnter(Collider other)
         {
-            var local = LocalPlayerController.I;
-
-            if (local == null || local.BoundPlayer == null)
+            if (!IsServerStarted || string.IsNullOrWhiteSpace(pointId))
                 return;
 
-            if (other.gameObject != local.BoundPlayer.gameObject)
+            if (!TryResolvePlayer(other, out NetworkPlayer player))
+                return;
+
+            if (!activeActors.Add(player.gameObject.GetInstanceID()))
                 return;
 
             QuestEventBus.Publish(
                 new PointReachedEvent(
-                    other.gameObject,
+                    player.gameObject,
                     pointId
                 )
             );
@@ -38,20 +43,27 @@ namespace Features.Quests.UnityIntegration
 
         private void OnTriggerExit(Collider other)
         {
-            var local = LocalPlayerController.I;
-
-            if (local == null || local.BoundPlayer == null)
+            if (!IsServerStarted || string.IsNullOrWhiteSpace(pointId))
                 return;
 
-            if (other.gameObject != local.BoundPlayer.gameObject)
+            if (!TryResolvePlayer(other, out NetworkPlayer player))
+                return;
+
+            if (!activeActors.Remove(player.gameObject.GetInstanceID()))
                 return;
 
             QuestEventBus.Publish(
                 new PointLeftEvent(
-                    other.gameObject,
+                    player.gameObject,
                     pointId
                 )
             );
+        }
+
+        private static bool TryResolvePlayer(Collider other, out NetworkPlayer player)
+        {
+            player = other.GetComponentInParent<NetworkPlayer>();
+            return player != null;
         }
     }
 }

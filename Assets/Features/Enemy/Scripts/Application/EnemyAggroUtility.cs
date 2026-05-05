@@ -2,6 +2,20 @@ using Unity.Entities;
 
 public static class EnemyAggroUtility
 {
+    public static void AddDamageEvent(EntityManager em, Entity enemy, Entity source, float value)
+    {
+        if (!em.Exists(enemy)) return;
+        if (!em.HasBuffer<DamageEvent>(enemy)) return;
+        if (source == Entity.Null || value <= 0f) return;
+
+        var buffer = em.GetBuffer<DamageEvent>(enemy);
+        buffer.Add(new DamageEvent
+        {
+            Source = source,
+            Value = value
+        });
+    }
+
     public static void AddAggro(EntityManager em, Entity enemy, Entity source, float value)
     {
         if (!em.Exists(enemy)) return;

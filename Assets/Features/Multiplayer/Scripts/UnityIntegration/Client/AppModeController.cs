@@ -1,5 +1,5 @@
-using UnityEngine;
 using FishNet.Managing;
+using UnityEngine;
 
 public sealed class AppModeController : MonoBehaviour
 {
@@ -21,14 +21,10 @@ public sealed class AppModeController : MonoBehaviour
     public void StartServerAndClient(ushort port)
     {
         ClientConnectionController.I?.GetFlow()?.StartConnect();
+        ClientConnectionController.I?.SuppressNextStoppedEvent();
 
-        // Устанавливаем порт
         networkManager.TransportManager.Transport.SetPort(port);
-
-        // Стартуем сервер
         networkManager.ServerManager.StartConnection();
-
-        // Стартуем клиент
         networkManager.ClientManager.StartConnection();
     }
 }

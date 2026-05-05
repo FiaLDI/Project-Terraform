@@ -172,11 +172,41 @@ public class PlayerSessionNetwork : NetworkBehaviour
         int previousLevel = active != null ? active.level : level;
 
         progress.SetActiveCharacterProgress(level, experience);
+        ApplyCampaignRunCompletion();
 
         if (level > previousLevel)
             Debug.Log($"[LEVEL] Run complete -> level {level} (+{gainedExperience} XP)");
         else
             Debug.Log(
                 $"[LEVEL] Run complete -> +{gainedExperience} XP ({experience}/{PlayerProgressionRules.GetRequiredExperienceForLevel(level)})");
+    }
+
+    private static void ApplyCampaignRunCompletion()
+    {
+        CampaignProgressService progress = CampaignProgressService.I;
+        CampaignRunContext run = CampaignRunContext.I;
+        CampaignCatalogSO catalog = CampaignRuntimeState.CurrentCatalog;
+
+        if (progress == null || run == null || !run.HasActiveRun)
+            return;
+
+        int threatCap = run.ShipThreatCap > 0
+            ? run.ShipThreatCap
+            : CampaignCatalogUtility.GetShipThreatCap(catalog, progress.ShipLevel);
+
+        progress.CompleteBiomeThreat(
+            run.PlanetId,
+            run.BiomeId,
+            run.ThreatLevel,
+            threatCap);
+
+        if (catalog != null)
+        {
+            PlanetConfig planet = CampaignCatalogUtility.FindPlanet(catalog, run.PlanetId);
+            if (planet != null)
+                progress.TryUnlockPlanetMission(planet, run.BiomeId);
+        }
+
+        run.Clear();
     }
 }

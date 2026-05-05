@@ -57,6 +57,8 @@ public sealed class SpawnProjectileEffect : IEffect
                 if ((_config.hitMask.value & (1 << hit.collider.gameObject.layer)) != 0)
                 {
                     target =
+                        hit.collider.GetComponentInParent<StatsBuffTarget>() as IBuffTarget ??
+                        hit.collider.GetComponentInParent<ResourceNodeNetwork>() as IBuffTarget ??
                         hit.collider.GetComponent<IBuffTarget>() ??
                         hit.collider.GetComponentInParent<IBuffTarget>();
                 }
@@ -80,7 +82,8 @@ public sealed class SpawnProjectileEffect : IEffect
                     {
                         type = EffectType.DealDamage,
                         value = _config.damage,
-                        targetMode = TargetMode.Explicit
+                        targetMode = TargetMode.Explicit,
+                        damageType = _config.damageType
                     },
                     ctx
                 );

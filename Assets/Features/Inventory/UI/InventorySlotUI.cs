@@ -5,12 +5,13 @@ using UnityEngine.EventSystems;
 using Features.Inventory.Domain;
 using Features.Menu.Tooltip;
 using Features.Inventory.UnityIntegration;
+using Features.Player;
 
 namespace Features.Inventory.UI
 {
     public class InventorySlotUI : MonoBehaviour,
         IBeginDragHandler, IEndDragHandler, IDragHandler, IDropHandler,
-        IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
+        IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IPointerClickHandler
     {
         [Header("UI")]
         [SerializeField] private Image background;
@@ -201,6 +202,36 @@ namespace Features.Inventory.UI
             isPointerOver = false;
             Drag?.ClearHovered(this);
             TooltipController.Instance?.Hide();
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button != PointerEventData.InputButton.Right)
+                return;
+
+            if (Section != InventorySection.Bag || boundSlot == null || boundSlot.item == null || boundSlot.item.IsEmpty)
+                return;
+
+            var inventory = LocalPlayerContext.Inventory;
+            var net = inventory != null ? inventory.GetComponent<InventoryStateNetwork>() : null;
+            if (inventory == null || net == null || inventory.Model == null)
+                return;
+
+            var targetSection = inventory.Model.ActiveSlotIndex switch
+            {
+                0 => InventorySection.ActiveSlot0,
+                1 => InventorySection.ActiveSlot1,
+                _ => InventorySection.ActiveSlot2
+            };
+
+            net.RequestInventoryCommand(new InventoryCommandData
+            {
+                Command = InventoryCommand.MoveItem,
+                FromSection = Section,
+                FromIndex = Index,
+                ToSection = targetSection,
+                ToIndex = 0
+            });
         }
     }
 }

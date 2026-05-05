@@ -1,5 +1,5 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using Features.Interaction.UnityIntegration;
 using Features.Player.UI;
 using Features.Interaction.Application;
@@ -14,10 +14,7 @@ public sealed class InteractionPromptUI : MonoBehaviour
     private INearbyInteractables nearby;
 
     private bool initialized;
-
-    // ======================================================
-    // UNITY
-    // ======================================================
+    private bool subscribedToPlayerRoot;
 
     private void Awake()
     {
@@ -28,37 +25,73 @@ public sealed class InteractionPromptUI : MonoBehaviour
             return;
         }
 
-        promptText.text = "";
+        promptText.text = string.Empty;
         promptText.enabled = false;
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        if (PlayerUIRoot.I == null)
+        TrySubscribePlayerRoot();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribePlayerRoot();
+        InteractionServiceProvider.OnRayInitialized -= InitResolver;
+        ResetBindingState();
+    }
+
+    private void Update()
+    {
+        if (!subscribedToPlayerRoot)
+            TrySubscribePlayerRoot();
+
+        if (!initialized ||
+            resolver == null ||
+            Camera.main == null ||
+            nearby == null ||
+            nearby is UnityEngine.Object o && o == null)
         {
-            Debug.LogError("[InteractionPromptUI] PlayerUIRoot.I is NULL in Start");
+            promptText.enabled = false;
             return;
         }
 
-        PlayerUIRoot.I.OnPlayerBound += OnPlayerBound;
-    }
+        var target = resolver.Resolve(Camera.main);
 
-    private void OnDestroy()
-    {
-        if (PlayerUIRoot.I != null)
-            PlayerUIRoot.I.OnPlayerBound -= OnPlayerBound;
-    }
+        switch (target.Type)
+        {
+            case InteractionTargetType.Pickup:
+            {
+                var worldItem = target.WorldItem;
+                if (worldItem == null || !worldItem.IsPickupAvailable)
+                    break;
 
-    // ======================================================
-    // PLAYER BIND
-    // ======================================================
+                var inst = worldItem.GetComponent<ItemRuntimeHolder>()?.Instance;
+                if (inst == null || inst.itemDefinition == null)
+                    break;
+
+                promptText.enabled = true;
+                promptText.text =
+                    inst.quantity > 1
+                        ? $"[E] РџРѕРґРѕР±СЂР°С‚СЊ: {inst.itemDefinition.itemName} x{inst.quantity}"
+                        : $"[E] РџРѕРґРѕР±СЂР°С‚СЊ: {inst.itemDefinition.itemName}";
+                return;
+            }
+
+            case InteractionTargetType.Interactable:
+            {
+                promptText.enabled = true;
+                promptText.text = $"[E] {target.Interactable.InteractionPrompt}";
+                return;
+            }
+        }
+
+        promptText.enabled = false;
+    }
 
     private void OnPlayerBound(GameObject player)
     {
-        // 🔥 СБРОС старых ссылок (обязательно)
-        resolver = null;
-        nearby = null;
-        initialized = false;
+        ResetBindingState();
 
         if (player == null)
             return;
@@ -78,64 +111,52 @@ public sealed class InteractionPromptUI : MonoBehaviour
         }
         else
         {
+            InteractionServiceProvider.OnRayInitialized -= InitResolver;
             InteractionServiceProvider.OnRayInitialized += InitResolver;
         }
     }
 
     private void InitResolver(InteractionRayService ray)
     {
+        InteractionServiceProvider.OnRayInitialized -= InitResolver;
+
+        if (nearby == null)
+            return;
+
         resolver = new InteractionResolver(ray, nearby);
         initialized = true;
         Debug.Log("[InteractionPromptUI] Resolver initialized");
     }
 
-    // ======================================================
-    // UPDATE
-    // ======================================================
-
-    private void Update()
+    private void TrySubscribePlayerRoot()
     {
-        // 🔒 полная защита
-        if (!initialized ||
-            resolver == null ||
-            Camera.main == null ||
-            nearby == null ||
-            nearby is UnityEngine.Object o && o == null)
-        {
-            promptText.enabled = false;
+        var root = PlayerUIRoot.I;
+        if (root == null)
             return;
-        }
 
-        var target = resolver.Resolve(Camera.main);
+        root.OnPlayerBound -= OnPlayerBound;
+        root.OnPlayerBound += OnPlayerBound;
+        subscribedToPlayerRoot = true;
 
-        switch (target.Type)
-        {
-            case InteractionTargetType.Pickup:
-            {
-                WorldItemNetwork worldItem = target.WorldItem;
-                if (worldItem == null || !worldItem.IsPickupAvailable)
-                    break;
+        if (root.BoundPlayer != null)
+            OnPlayerBound(root.BoundPlayer);
+    }
 
-                var inst = worldItem.GetComponent<ItemRuntimeHolder>()?.Instance;
-                if (inst == null || inst.itemDefinition == null)
-                    break;
+    private void UnsubscribePlayerRoot()
+    {
+        if (PlayerUIRoot.I != null)
+            PlayerUIRoot.I.OnPlayerBound -= OnPlayerBound;
 
-                promptText.enabled = true;
-                promptText.text =
-                    inst.quantity > 1
-                        ? $"[E] Подобрать: {inst.itemDefinition.itemName} x{inst.quantity}"
-                        : $"[E] Подобрать: {inst.itemDefinition.itemName}";
-                return;
-            }
+        subscribedToPlayerRoot = false;
+    }
 
-            case InteractionTargetType.Interactable:
-            {
-                promptText.enabled = true;
-                promptText.text = $"[E] {target.Interactable.InteractionPrompt}";
-                return;
-            }
-        }
+    private void ResetBindingState()
+    {
+        resolver = null;
+        nearby = null;
+        initialized = false;
 
-        promptText.enabled = false;
+        if (promptText != null)
+            promptText.enabled = false;
     }
 }

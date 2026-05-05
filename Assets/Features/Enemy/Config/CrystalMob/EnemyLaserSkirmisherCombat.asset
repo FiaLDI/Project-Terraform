@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe1562863d4b1de488f057dbb29431b1, type: 3}
+  m_Name: EnemyLaserSkirmisherCombat
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Data.EnemyCombatConfigSO
+  attackType: 2
+  attackRange: 12
+  attackDamage: 11
+  attackCooldown: 0.75
+  attackDelay: 0.16
+  attackEffect:
+    type: 10
+    targetMode: 2
+    radius: 12
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 128
+    value: 11
+    damageType: 7
+    buff: {fileID: 0}
+    onlySpecificBuff: 0
+    buffId: 
+    heightOffset: 0
+    coneAngle: 0
+    coneDistance: 0
+    selectClosest: 0
+    impactFxId: 
+    prefabId: 
+    lifetime: 0
+    useSourcePosition: 0
+    spawnPositionMode: 0
+    ownership: 0
+    miningValue: 0
+    tickInterval: 0
+    duration: 0
+    projectileConfig: {fileID: 11400000, guid: 265d0ff5bb274454eb8d304cf0d05ce6, type: 2}
+    childEffects: []
+    soundConfig: {fileID: 0}
+    chainCount: 0
+    chainRadius: 0
+    chainDamageFalloff: 0
+  attackEnterOffset: 0.4
+  attackExitOffset: 1.6
+  stopDistanceMultiplier: 0.72

@@ -1,81 +1,31 @@
-# Equipment System
+# Features Equipment
 
-## Overview
-`Features/Equipment` now works with a single selected active slot (0..2), not left/right hands.
+This subsystem equips the currently selected active-slot item, spawns the proper world and owner-only view models, and connects equipped items to runtime item usage.
 
-System responsibilities:
-- equip world item model from selected active slot;
-- spawn owner-only FPS view model;
-- control FPS hands visibility based on camera mode and view model presence;
-- apply/remove equipped buffs on server;
-- forward use input to network adapter.
+## Main pieces
 
-## Inventory Model (Current)
-Active slots:
-- `ActiveSlot0`
-- `ActiveSlot1`
-- `ActiveSlot2`
+- `EquipmentManager` is the main equip pipeline and visual/runtime coordinator.
+- `EquipmentRuntime` caches and runs `ItemRuntimeContext` for equipped item actions.
+- `PlayerUsageController` handles local use input and active-slot switching.
+- `EquipmentItemBuffApplier` applies or removes equipped buffs on the server.
+- `PlayerEquipmentNetwork` and related multiplayer classes synchronize visible equipment state.
 
-Selected slot:
-- `ActiveSlotIndex` (0..2)
+## Current equipment model
 
-Legacy left/right runtime sections are not used.
+- The system uses one selected active slot out of `ActiveSlot0`, `ActiveSlot1`, and `ActiveSlot2`.
+- It no longer relies on legacy left/right-hand runtime sections.
 
-## Core Components
-- `UnityIntegration/EquipmentManager.cs`
-  Main equip pipeline, view model spawn, pose update, muzzle wiring.
-- `UnityIntegration/PlayerUsageController.cs`
-  Gameplay input (`Use`, `SecondaryUse`, `Reload`, `Scroll`) and active-slot switching.
-- `UnityIntegration/EquipmentRuntime.cs`
-  Caches and runs `ItemRuntimeContext`.
-- `Features/Multiplayer/Scripts/UnityIntegration/Net/PlayerUsageNetAdapter.cs`
-  Server-authoritative item use, aim sync, FX replication.
-- `Player/Camera/UnityIntegration/CameraRegistry.cs`
-  Owns FPS hands prefab(s), weapon socket, and one-hand pose support.
+## Runtime flow
 
-## Equip Flow
-1. `InventoryManager` changes -> `EquipmentManager.EquipFromInventory()`.
-2. Selected active slot item is resolved from `Model.ActiveSlotIndex`.
-3. World equipped prefab is spawned in `activeItemSocket` (3rd person representation).
-4. Owner-only FPS view model is spawned into camera weapon socket if `viewModelPrefab` exists.
-5. Muzzles are passed to `PlayerUsageNetAdapter` (`worldMuzzle` + `viewMuzzle`).
-6. Weapon pose is applied to owner animation/camera and synchronized via `PlayerEquipmentNetwork`.
-7. Equipped buffs are applied/removed on server.
+1. `Inventory` changes or active-slot changes trigger reequip.
+2. `EquipmentManager` resolves the selected slot item.
+3. A world equipped prefab is attached for shared third-person representation.
+4. An owner-only FPS view model is spawned when available.
+5. Equipped buffs are applied on the server.
+6. Item use is forwarded into runtime item execution.
 
-## FPS/TPS Hands Rules
-- Hands visibility is controlled by equipment state, not by camera toggle alone.
-- Hands are visible only when:
-  - local player is in FPS mode; and
-  - current item has spawned `currentViewWeapon`.
-- If active slot is empty, switching `FPS <-> TPS` must not show hands.
-- In TPS, FPS hands stay hidden.
+## Integration points
 
-## Weapon Pose
-- Pose source: `Item.GetWeaponPose()`.
-- `isTwoHanded == true` forces pose `2`.
-- One-hand visual support in `CameraRegistry`:
-  - `fpsArmsPrefab` (default);
-  - `fpsArmsOneHandPrefab` (used when pose is one-hand);
-  - optional animator parameter `arms_onehand_pose`.
-
-## Multiplayer Sync
-- Active slot changes go through `InventoryCommand.SetActiveSlot`.
-- Server updates inventory state and replicates active slots to observers.
-- Other players see equipped world weapon and usage effects via network replication.
-- Local FPS view model remains owner-only.
-
-## Inventory Persistence
-- Inventory is persisted on every change via `InventoryManager.NotifyInventoryChanged()`.
-- Local owner save path:
-  - `BuildSaveData()` -> `activeCharacter.characterInventoryData` -> `PlayerProgressService.Save()`.
-- Manual dirty mark exists for direct mutations:
-  - `InventoryManager.MarkDirty()` (used, for example, after upgrade level increment).
-
-## Required Item Data
-- `equippedPrefab` (world equipped model)
-- optional `viewModelPrefab` (owner FPS model)
-- optional `equippedBuffs`
-- `actions[]`
-- pose data:
-  - `isTwoHanded`
-  - `weaponPose` (0 none, 1 one-hand, 2 two-hand)
+- `Inventory` provides active-slot contents.
+- `Items` supplies the item definition, actions, view model, and equipped buffs.
+- `Multiplayer` replicates visible equipment state to other players.

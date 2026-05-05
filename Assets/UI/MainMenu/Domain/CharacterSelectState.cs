@@ -10,7 +10,14 @@ public class CharacterSelectState : IMainMenuState
     public void Enter()
     {
         MainMenuUIManager.Instance.Show(MainMenuStateId.CharacterSelect);
-        _controller.RefreshList();
+
+        if (_controller == null)
+        {
+            UnityEngine.Debug.LogError("CharacterSelectController not found in scene.");
+            return;
+        }
+
+        _controller.EnterCharacterSelect();
     }
 
     public void Exit() {}

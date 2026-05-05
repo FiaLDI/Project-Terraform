@@ -399,6 +399,27 @@ public class PlayerQuestComponent : NetworkBehaviour
     }
 
     [Server]
+    public bool HasQuest(string questId)
+    {
+        if (service == null || string.IsNullOrWhiteSpace(questId))
+            return false;
+
+        return service.TryGetQuest(new QuestId(questId), out _);
+    }
+
+    [Server]
+    public bool IsQuestCompleted(string questId)
+    {
+        if (service == null || string.IsNullOrWhiteSpace(questId))
+            return false;
+
+        if (!service.TryGetQuest(new QuestId(questId), out QuestRuntime quest))
+            return false;
+
+        return quest.State == QuestState.Completed;
+    }
+
+    [Server]
     public void GiveQuests(List<string> questIds)
     {
         foreach (var id in questIds)

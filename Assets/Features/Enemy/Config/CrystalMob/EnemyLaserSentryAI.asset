@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0f110b15d840364188d66b961b821a2, type: 3}
+  m_Name: EnemyLaserSentryAI
+  m_EditorClassIdentifier: Assembly-CSharp::Features.Enemy.Data.EnemyAIConfigSO
+  aggroRadius: 20
+  loseAggroRadius: 28
+  threatDecayPerSecond: 3
+  targetSwitchThreshold: 1.35
+  currentTargetBias: 3
+  aggroConfirmTime: 0.18
+  moveSpeed: 2.4
+  rotationSpeed: 10
+  visionAngle: 55
+  visionRange: 18
+  requireLineOfSight: 1
+  seekWeight: 1
+  avoidWeight: 2.4
+  separationWeight: 1.2
+  orbitWeight: 0.2
+  avoidDistance: 1.8
+  sideAvoidDistance: 1.4
+  separationRadius: 1.8
+  orbitStrength: 0.15
+  directionSmoothing: 10
+  lostSightGraceTime: 0.45
+  attackMoveGoalTolerance: 0.4
+  returnReachDistance: 1.4
+  preferredCombatDistance: 12
+  retreatDistance: 8
+  reengageDistance: 13.5
+  enableSeparation: 1
+  enableAvoidance: 1
+  enableOrbit: 0

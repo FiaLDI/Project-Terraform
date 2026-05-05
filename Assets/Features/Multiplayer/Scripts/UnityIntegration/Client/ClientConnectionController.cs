@@ -10,6 +10,7 @@ public sealed class ClientConnectionController : MonoBehaviour
     [SerializeField] private NetworkManager networkManager;
 
     private ClientGameFlow flow;
+    private bool suppressNextStoppedEvent;
 
     private void Awake()
     {
@@ -28,7 +29,21 @@ public sealed class ClientConnectionController : MonoBehaviour
         networkManager.ClientManager.OnClientConnectionState += OnClientState;
     }
 
+    private void OnDestroy()
+    {
+        if (networkManager != null && networkManager.ClientManager != null)
+            networkManager.ClientManager.OnClientConnectionState -= OnClientState;
+
+        if (I == this)
+            I = null;
+    }
+
     public ClientGameFlow GetFlow() => flow;
+
+    public void SuppressNextStoppedEvent()
+    {
+        suppressNextStoppedEvent = true;
+    }
 
     public void Connect(string ip, ushort port)
     {
@@ -48,10 +63,18 @@ public sealed class ClientConnectionController : MonoBehaviour
     {
         if (args.ConnectionState == LocalConnectionState.Started)
         {
+            suppressNextStoppedEvent = false;
             flow.NotifyConnected();
         }
         else if (args.ConnectionState == LocalConnectionState.Stopped)
         {
+            if (suppressNextStoppedEvent)
+            {
+                suppressNextStoppedEvent = false;
+                Debug.Log("[ClientConnectionController] Suppressed stale stopped event.");
+                return;
+            }
+
             flow.NotifyDisconnected();
 
             if (!SceneTransitionService.IsReturnToMainMenuInProgress)

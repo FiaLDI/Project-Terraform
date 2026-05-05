@@ -33,6 +33,7 @@ namespace Features.Enemy.Presentation.LOD
                 return;
             }
 
+            CleanupInstances();
             lodPrefabs = new[] { lod0, lod1, lod2 };
 
             instances = new GameObject[lodPrefabs.Length];
@@ -42,6 +43,20 @@ namespace Features.Enemy.Presentation.LOD
                 instances[i] = Instantiate(lodPrefabs[i], anchor);
                 instances[i].SetActive(false);
             }
+        }
+
+        private void CleanupInstances()
+        {
+            if (instances == null)
+                return;
+
+            for (int i = 0; i < instances.Length; i++)
+            {
+                if (instances[i] != null)
+                    Destroy(instances[i]);
+            }
+
+            instances = null;
         }
 
         public void SetLOD(int lod)

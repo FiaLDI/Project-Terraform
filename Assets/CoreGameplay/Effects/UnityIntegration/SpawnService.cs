@@ -4,6 +4,7 @@ using FishNet.Object;
 using FishNet.Connection;
 using Features.Effects.Domain;
 using Features.Buffs.Domain;
+using Features.Stats.UnityIntegration;
 
 namespace Features.Effects.Application
 {
@@ -67,6 +68,10 @@ namespace Features.Effects.Application
             spawnedContext.Source = ResolveSourceGameObject(effectContext.Source);
             spawnedContext.Target = ResolveFirstTargetGameObject(effectContext.Targets);
             spawnedContext.Lifetime = lifetime;
+
+            var turretStats = go.GetComponent<TurretStats>();
+            if (turretStats != null && effectContext.Source != null)
+                turretStats.InitOwner(effectContext.Source);
 
             if (!go.TryGetComponent(out NetworkObject netObj))
             {

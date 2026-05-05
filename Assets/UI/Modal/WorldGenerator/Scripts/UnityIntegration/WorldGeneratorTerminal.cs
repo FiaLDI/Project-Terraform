@@ -1,11 +1,21 @@
+using FishNet;
 using UnityEngine;
 
 public sealed class WorldGeneratorTerminal : MonoBehaviour, IInteractable
 {
-    public string InteractionPrompt => "Открыть генератор мира";
+    public string InteractionPrompt =>
+        InstanceFinder.IsHostStarted
+            ? "Открыть генератор мира"
+            : "Только хост может открыть генератор мира";
 
     public bool Interact()
     {
+        if (!InstanceFinder.IsHostStarted)
+        {
+            InteractionDebug.Log("WorldGeneratorTerminal.Interact() rejected: only host can open this", this);
+            return false;
+        }
+
         InteractionDebug.Log("WorldGeneratorTerminal.Interact()", this);
 
         var ui = UIRegistry.I?.Get<WorldGeneratorUI>();
